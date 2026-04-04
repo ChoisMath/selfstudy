@@ -13,8 +13,18 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // JWT 토큰에서 세션 확인 (Edge Runtime 호환 - Prisma 불필요)
-  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
+  // Auth.js v5: 쿠키 접두사가 authjs로 변경됨 → salt/cookieName 명시 필요
+  const isSecure = req.url.startsWith("https://");
+  const cookieName = isSecure
+    ? "__Secure-authjs.session-token"
+    : "authjs.session-token";
+
+  const token = await getToken({
+    req,
+    secret: process.env.NEXTAUTH_SECRET,
+    salt: cookieName,
+    cookieName,
+  });
 
   // 미인증 → 로그인 페이지
   if (!token) {
