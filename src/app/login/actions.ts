@@ -1,7 +1,7 @@
 "use server";
 
 import { signIn } from "@/lib/auth";
-import { AuthError } from "next-auth";
+import { isRedirectError } from "next/dist/client/components/redirect-error";
 
 export async function loginTeacher(formData: FormData) {
   const loginId = formData.get("loginId") as string;
@@ -14,10 +14,11 @@ export async function loginTeacher(formData: FormData) {
       redirectTo: "/",
     });
   } catch (error) {
-    if (error instanceof AuthError) {
-      return { error: "ID 또는 비밀번호가 올바르지 않습니다." };
+    // Next.js redirect는 에러로 throw됨 — 다시 throw해야 리다이렉트 동작
+    if (isRedirectError(error)) {
+      throw error;
     }
-    throw error; // NextAuth redirect는 에러로 throw됨 - 다시 throw해야 리다이렉트 동작
+    return { error: "ID 또는 비밀번호가 올바르지 않습니다." };
   }
 }
 
@@ -36,9 +37,9 @@ export async function loginStudent(formData: FormData) {
       redirectTo: "/",
     });
   } catch (error) {
-    if (error instanceof AuthError) {
-      return { error: "이름 또는 학번이 올바르지 않습니다." };
+    if (isRedirectError(error)) {
+      throw error;
     }
-    throw error;
+    return { error: "이름 또는 학번이 올바르지 않습니다." };
   }
 }
