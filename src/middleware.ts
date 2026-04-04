@@ -7,7 +7,8 @@ export default auth((req) => {
   // 공개 경로
   if (
     pathname.startsWith("/login") ||
-    pathname.startsWith("/api/auth")
+    pathname.startsWith("/api/auth") ||
+    pathname.startsWith("/api/debug-auth")
   ) {
     return NextResponse.next();
   }
