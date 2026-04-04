@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>자율학습 출석부</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #f1f5f9;
+    color: #1e293b;
+    min-height: 100vh;
+  }
+
+  .app {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 12px;
+  }
+
+  /* 오늘 날짜 헤더 */
+  .date-header {
+    background: linear-gradient(135deg, #1e40af, #2563eb);
+    color: white;
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .date-header .date-text {
+    font-size: clamp(15px, 4vw, 20px);
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .date-header .summary {
+    display: flex;
+    gap: 10px;
+    font-size: clamp(11px, 2.8vw, 13px);
+    white-space: nowrap;
+  }
+  .date-header .summary span { opacity: 0.9; }
+  .date-header .summary b { opacity: 1; }
+
+  .date-header .teacher-info {
+    width: 100%;
+    font-size: clamp(11px, 2.6vw, 13px);
+    opacity: 0.9;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+  }
+  .date-header .teacher-badge {
+    background: rgba(255,255,255,0.2);
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+  }
+
+  /* 탭 */
+  .tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 12px;
+  }
+  .tab {
+    flex: 1;
+    text-align: center;
+    padding: 10px 8px;
+    border-radius: 10px 10px 0 0;
+    font-size: clamp(13px, 3.2vw, 15px);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .tab.active {
+    background: white;
+    color: #2563eb;
+    box-shadow: 0 -2px 8px rgba(0,0,0,0.06);
+  }
+  .tab.inactive {
+    background: #e2e8f0;
+    color: #94a3b8;
+  }
+
+  /* 교실 컨테이너 */
+  .classrooms {
+    background: white;
+    border-radius: 0 0 12px 12px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  }
+
+  .classroom {
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .classroom-title {
+    background: #f8fafc;
+    padding: 10px 14px;
+    font-size: clamp(12px, 3vw, 14px);
+    font-weight: 700;
+    color: #334155;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .classroom-title .seat-count {
+    font-size: clamp(10px, 2.5vw, 12px);
+    color: #94a3b8;
+    font-weight: 500;
+  }
+
+  /* 좌석 그리드 - 반응형 */
+  .seat-grid {
+    display: grid;
+    gap: clamp(3px, 0.8vw, 6px);
+    padding: clamp(6px, 1.5vw, 12px);
+  }
+  .seat-grid.cols-5 { grid-template-columns: repeat(5, 1fr); }
+  .seat-grid.cols-4 { grid-template-columns: repeat(4, 1fr); }
+
+  /* 개별 좌석 */
+  .seat {
+    border-radius: clamp(4px, 1vw, 6px);
+    padding: clamp(6px, 1.5vw, 10px) clamp(2px, 0.5vw, 6px);
+    text-align: center;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: all 0.15s;
+    min-width: 0; /* 그리드 오버플로 방지 */
+  }
+  .seat:active { transform: scale(0.95); }
+  .seat .name {
+    font-weight: 700;
+    font-size: clamp(10px, 2.5vw, 13px);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .seat .class-num {
+    font-size: clamp(8px, 2vw, 10px);
+    color: #6b7280;
+    margin-top: 1px;
+  }
+  .seat.empty {
+    background: #f8fafc;
+    border: 1px dashed #d1d5db;
+  }
+
+  /* 좌석 상태 색상 */
+  .seat.unchecked { background: #dbeafe; }
+  .seat.present { background: #bbf7d0; }
+  .seat.absent { background: #fecaca; }
+  .seat.selected {
+    background: #2563eb;
+    color: white;
+    border-color: #1d4ed8;
+    box-shadow: 0 2px 8px rgba(37,99,235,0.3);
+  }
+  .seat.selected .class-num { color: #bfdbfe; }
+
+  /* 주간 출석 팝업 */
+  .weekly-popup {
+    background: #eff6ff;
+    border: 2px solid #2563eb;
+    border-radius: 8px;
+    padding: clamp(8px, 2vw, 14px);
+    margin: 4px 0;
+    grid-column: 1 / -1; /* 전체 열 차지 */
+    position: relative;
+  }
+  .weekly-popup .arrow {
+    position: absolute;
+    top: -8px;
+    width: 14px; height: 14px;
+    background: #eff6ff;
+    border-left: 2px solid #2563eb;
+    border-top: 2px solid #2563eb;
+    transform: rotate(45deg);
+  }
+  .weekly-popup .popup-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .weekly-popup .student-info {
+    font-weight: 700;
+    font-size: clamp(11px, 2.8vw, 13px);
+    color: #1e40af;
+    white-space: nowrap;
+  }
+  .weekly-popup .week-label {
+    font-size: clamp(9px, 2.2vw, 11px);
+    color: #6b7280;
+    white-space: nowrap;
+  }
+
+  /* 주간 출석 그리드 */
+  .weekly-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: clamp(2px, 0.6vw, 4px);
+    text-align: center;
+  }
+  .weekly-grid .day-header {
+    font-size: clamp(10px, 2.5vw, 12px);
+    font-weight: 500;
+    color: #6b7280;
+    padding: 2px;
+  }
+  .weekly-grid .day-header.today {
+    font-size: clamp(11px, 2.8vw, 13px);
+    font-weight: 800;
+    color: #1e40af;
+    position: relative;
+    padding-bottom: 6px;
+  }
+  .weekly-grid .day-header.today::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 20%; right: 20%;
+    height: 3px;
+    background: #2563eb;
+    border-radius: 2px;
+  }
+  .weekly-grid .day-cell {
+    border-radius: 4px;
+    padding: clamp(4px, 1vw, 6px) 2px;
+    font-size: clamp(9px, 2.2vw, 11px);
+    font-weight: 500;
+  }
+  .weekly-grid .day-cell.p { background: #bbf7d0; color: #166534; }
+  .weekly-grid .day-cell.a { background: #fecaca; color: #991b1b; }
+  .weekly-grid .day-cell.none { background: #f3f4f6; color: #9ca3af; }
+  .weekly-grid .day-cell.today-cell {
+    border: 2px solid #2563eb;
+    font-weight: 700;
+    font-size: clamp(10px, 2.5vw, 12px);
+  }
+
+  .absence-reason {
+    margin-top: 6px;
+    font-size: clamp(9px, 2.2vw, 11px);
+    color: #dc2626;
+  }
+
+  /* 교탁 */
+  .podium {
+    text-align: center;
+    padding: 6px;
+    background: #f9fafb;
+    border-top: 1px dashed #d1d5db;
+    color: #9ca3af;
+    font-size: clamp(10px, 2.5vw, 12px);
+  }
+
+  /* 범례 */
+  .legend {
+    display: flex;
+    gap: clamp(8px, 2vw, 16px);
+    justify-content: center;
+    padding: 10px;
+    flex-wrap: wrap;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: clamp(9px, 2.2vw, 11px);
+    white-space: nowrap;
+  }
+  .legend-dot {
+    width: clamp(10px, 2.5vw, 14px);
+    height: clamp(10px, 2.5vw, 14px);
+    border-radius: 3px;
+    flex-shrink: 0;
+  }
+
+  /* 구분선 라벨 */
+  .section-divider {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 8px 0;
+    padding: 0 4px;
+  }
+  .section-divider::before,
+  .section-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #e2e8f0;
+  }
+  .section-divider span {
+    font-size: clamp(10px, 2.5vw, 12px);
+    color: #94a3b8;
+    white-space: nowrap;
+    font-weight: 500;
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- 오늘 날짜 -->
+  <div class="date-header">
+    <div class="date-text">2026. 4. 4 (금)</div>
+    <div class="summary">
+      <span>출석 <b style="color:#86efac">38</b></span>
+      <span>결석 <b style="color:#fca5a5">2</b></span>
+      <span>미체크 <b>5</b></span>
+    </div>
+    <div class="teacher-info">
+      감독교사 <span class="teacher-badge">김영수</span>
+    </div>
+  </div>
+
+  <!-- 탭 -->
+  <div class="tabs">
+    <div class="tab active">오후자습</div>
+    <div class="tab inactive">야간자습</div>
+  </div>
+
+  <!-- 모든 교실 한 페이지 -->
+  <div class="classrooms">
+
+    <!-- ===== 2-4반 교실 ===== -->
+    <div class="classroom">
+      <div class="classroom-title">
+        2-4반 교실
+        <span class="seat-count">15석</span>
+      </div>
+      <div class="seat-grid cols-5">
+        <!-- 1행 -->
+        <div class="seat present"><div class="name">김서현</div><div class="class-num">2-1</div></div>
+        <div class="seat selected"><div class="name">이서연</div><div class="class-num">2-1</div></div>
+        <div class="seat present"><div class="name">김수현</div><div class="class-num">2-2</div></div>
+        <div class="seat present"><div class="name">이서연</div><div class="class-num">2-2</div></div>
+        <div class="seat unchecked"><div class="name">권민찬</div><div class="class-num">2-3</div></div>
+
+        <!-- 이서연 주간 출석 팝업 -->
+        <div class="weekly-popup">
+          <div class="arrow" style="left:calc(20% + 8px);"></div>
+          <div class="popup-header">
+            <div class="student-info">이서연 (2-1)</div>
+            <div class="week-label">4월 1주차</div>
+          </div>
+          <div class="weekly-grid">
+            <div class="day-header">월</div>
+            <div class="day-header">화</div>
+            <div class="day-header">수</div>
+            <div class="day-header">목</div>
+            <div class="day-header today">금</div>
+            <div class="day-cell p">출석</div>
+            <div class="day-cell p">출석</div>
+            <div class="day-cell a">결석</div>
+            <div class="day-cell p">출석</div>
+            <div class="day-cell p today-cell">출석</div>
+          </div>
+          <div class="absence-reason">수: 병결 (담임교사 등록)</div>
+        </div>
+
+        <!-- 2행 -->
+        <div class="seat present"><div class="name">양민서</div><div class="class-num">2-1</div></div>
+        <div class="seat present"><div class="name">이연정</div><div class="class-num">2-1</div></div>
+        <div class="seat present"><div class="name">백소정</div><div class="class-num">2-2</div></div>
+        <div class="seat present"><div class="name">임강연</div><div class="class-num">2-2</div></div>
+        <div class="seat absent"><div class="name">김기태</div><div class="class-num">2-3</div></div>
+
+        <!-- 3행 -->
+        <div class="seat present"><div class="name">오연빈</div><div class="class-num">2-1</div></div>
+        <div class="seat present"><div class="name">이주현</div><div class="class-num">2-1</div></div>
+        <div class="seat present"><div class="name">설혜인</div><div class="class-num">2-2</div></div>
+        <div class="seat present"><div class="name">강민성</div><div class="class-num">2-2</div></div>
+        <div class="seat present"><div class="name">김은우</div><div class="class-num">2-3</div></div>
+      </div>
+      <div class="podium">교탁</div>
+    </div>
+
+    <!-- ===== 2-5반 교실 ===== -->
+    <div class="classroom">
+      <div class="classroom-title">
+        2-5반 교실
+        <span class="seat-count">15석</span>
+      </div>
+      <div class="seat-grid cols-5">
+        <div class="seat present"><div class="name">김하은</div><div class="class-num">2-3</div></div>
+        <div class="seat present"><div class="name">장우진</div><div class="class-num">2-3</div></div>
+        <div class="seat present"><div class="name">권지빈</div><div class="class-num">2-4</div></div>
+        <div class="seat present"><div class="name">서지호</div><div class="class-num">2-4</div></div>
+        <div class="seat present"><div class="name">윤승은</div><div class="class-num">2-4</div></div>
+
+        <div class="seat present"><div class="name">류새아</div><div class="class-num">2-3</div></div>
+        <div class="seat present"><div class="name">전수안</div><div class="class-num">2-3</div></div>
+        <div class="seat present"><div class="name">남현아</div><div class="class-num">2-4</div></div>
+        <div class="seat unchecked"><div class="name">양지훈</div><div class="class-num">2-4</div></div>
+        <div class="seat present"><div class="name">윤범호</div><div class="class-num">2-4</div></div>
+
+        <div class="seat present"><div class="name">신승규</div><div class="class-num">2-3</div></div>
+        <div class="seat present"><div class="name">정시무</div><div class="class-num">2-3</div></div>
+        <div class="seat present"><div class="name">서지솔</div><div class="class-num">2-4</div></div>
+        <div class="seat present"><div class="name">엄주은</div><div class="class-num">2-4</div></div>
+        <div class="seat absent"><div class="name">전지윤</div><div class="class-num">2-4</div></div>
+      </div>
+      <div class="podium">교탁</div>
+    </div>
+
+    <!-- ===== 2-6반 교실 ===== -->
+    <div class="classroom">
+      <div class="classroom-title">
+        2-6반 교실
+        <span class="seat-count">12석</span>
+      </div>
+      <div class="seat-grid cols-4">
+        <div class="seat present"><div class="name">최민우</div><div class="class-num">2-4</div></div>
+        <div class="seat present"><div class="name">김민서</div><div class="class-num">2-5</div></div>
+        <div class="seat present"><div class="name">전민경</div><div class="class-num">2-5</div></div>
+        <div class="seat unchecked"><div class="name">한지윤</div><div class="class-num">2-6</div></div>
+
+        <div class="seat present"><div class="name">곽연준</div><div class="class-num">2-5</div></div>
+        <div class="seat present"><div class="name">김현우</div><div class="class-num">2-5</div></div>
+        <div class="seat present"><div class="name">진채민</div><div class="class-num">2-6</div></div>
+        <div class="seat present"><div class="name">최동준</div><div class="class-num">2-6</div></div>
+
+        <div class="seat present"><div class="name">권윤철</div><div class="class-num">2-5</div></div>
+        <div class="seat present"><div class="name">주만경</div><div class="class-num">2-5</div></div>
+        <div class="seat present"><div class="name">최효인</div><div class="class-num">2-6</div></div>
+        <div class="seat present"><div class="name">김정경</div><div class="class-num">2-6</div></div>
+      </div>
+      <div class="podium">교탁</div>
+    </div>
+
+    <!-- 범례 -->
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot" style="background:#dbeafe;"></div>미체크</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#bbf7d0;"></div>출석</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#fecaca;"></div>결석</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#2563eb;"></div>선택됨</div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

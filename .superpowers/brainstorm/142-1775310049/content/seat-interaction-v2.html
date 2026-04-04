@@ -1,0 +1,157 @@
+<h2>좌석 배치도 + 오늘 날짜 표시 + 오늘 요일 강조</h2>
+<p class="subtitle">오늘 날짜가 상단에 표시되고, 주간 출석현황에서 오늘 요일이 강조됩니다</p>
+
+<div class="mockup">
+  <div class="mockup-header">오후자습 - 2-4반 교실</div>
+  <div class="mockup-body" style="padding:20px;font-family:sans-serif;font-size:13px;">
+
+    <!-- 탭 -->
+    <div style="display:flex;gap:0;margin-bottom:16px;">
+      <div style="padding:10px 28px;background:#2563eb;color:white;border-radius:8px 8px 0 0;font-weight:bold;font-size:14px;">오후자습</div>
+      <div style="padding:10px 28px;background:#e5e7eb;border-radius:8px 8px 0 0;font-size:14px;color:#6b7280;">야간자습</div>
+    </div>
+
+    <!-- 오늘 날짜 + 교실 선택 -->
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;padding:12px 16px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:10px;">
+      <div>
+        <div style="font-size:18px;font-weight:bold;color:#0c4a6e;">2026년 4월 4일 (금)</div>
+        <div style="font-size:12px;color:#0369a1;margin-top:2px;">오후자습 16:30 ~ 18:20</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div style="font-size:12px;color:#6b7280;">출석 <span style="font-weight:bold;color:#16a34a;">12</span> / 결석 <span style="font-weight:bold;color:#dc2626;">1</span> / 미체크 <span style="font-weight:bold;color:#6b7280;">2</span></div>
+      </div>
+    </div>
+
+    <!-- 교실 서브탭 -->
+    <div style="display:flex;gap:6px;margin-bottom:16px;">
+      <div style="padding:6px 16px;background:#2563eb;color:white;border-radius:20px;font-size:12px;font-weight:bold;">2-4반 교실</div>
+      <div style="padding:6px 16px;background:#f3f4f6;border-radius:20px;font-size:12px;color:#6b7280;">2-5반 교실</div>
+      <div style="padding:6px 16px;background:#f3f4f6;border-radius:20px;font-size:12px;color:#6b7280;">2-6반 교실</div>
+    </div>
+
+    <!-- 좌석 배치도 -->
+    <div style="max-width:520px;margin:0 auto;">
+
+      <!-- 1행 -->
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:6px;">
+        <div style="background:#bbf7d0;border-radius:6px;padding:10px 6px;text-align:center;cursor:pointer;border:2px solid transparent;">
+          <div style="font-weight:bold;font-size:12px;">김서현</div>
+          <div style="font-size:10px;color:#6b7280;">2-1</div>
+        </div>
+        <!-- 클릭된 학생 -->
+        <div style="background:#2563eb;border-radius:6px;padding:10px 6px;text-align:center;cursor:pointer;color:white;border:2px solid #1d4ed8;box-shadow:0 2px 8px rgba(37,99,235,0.3);">
+          <div style="font-weight:bold;font-size:12px;">이서연</div>
+          <div style="font-size:10px;color:#bfdbfe;">2-1</div>
+        </div>
+        <div style="background:#bbf7d0;border-radius:6px;padding:10px 6px;text-align:center;cursor:pointer;border:2px solid transparent;">
+          <div style="font-weight:bold;font-size:12px;">김수현</div>
+          <div style="font-size:10px;color:#6b7280;">2-2</div>
+        </div>
+        <div style="background:#bbf7d0;border-radius:6px;padding:10px 6px;text-align:center;cursor:pointer;border:2px solid transparent;">
+          <div style="font-weight:bold;font-size:12px;">이서연</div>
+          <div style="font-size:10px;color:#6b7280;">2-2</div>
+        </div>
+        <div style="background:#dbeafe;border-radius:6px;padding:10px 6px;text-align:center;cursor:pointer;border:2px solid transparent;">
+          <div style="font-weight:bold;font-size:12px;">권민찬</div>
+          <div style="font-size:10px;color:#6b7280;">2-3</div>
+        </div>
+      </div>
+
+      <!-- 이서연 주간 출석현황 (오늘=금요일 강조) -->
+      <div style="background:#eff6ff;border:2px solid #2563eb;border-radius:8px;padding:12px 14px;margin-bottom:6px;position:relative;">
+        <div style="position:absolute;top:-8px;left:calc(20% + 10px);width:14px;height:14px;background:#eff6ff;border-left:2px solid #2563eb;border-top:2px solid #2563eb;transform:rotate(45deg);"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+          <div style="font-weight:bold;font-size:13px;color:#1e40af;">이서연 (2-1) 주간 출석현황</div>
+          <div style="font-size:11px;color:#6b7280;">4월 1주차</div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:4px;text-align:center;">
+          <!-- 요일 헤더 -->
+          <div style="font-size:11px;font-weight:500;color:#6b7280;padding:2px;">월</div>
+          <div style="font-size:11px;font-weight:500;color:#6b7280;padding:2px;">화</div>
+          <div style="font-size:11px;font-weight:500;color:#6b7280;padding:2px;">수</div>
+          <div style="font-size:11px;font-weight:500;color:#6b7280;padding:2px;">목</div>
+          <!-- 오늘(금) 강조: 배경색 + 굵은 글자 + 밑줄 인디케이터 -->
+          <div style="font-size:13px;font-weight:800;color:#1e40af;padding:2px;position:relative;">
+            금 <span style="font-size:9px;color:#2563eb;">(오늘)</span>
+            <div style="position:absolute;bottom:-2px;left:15%;right:15%;height:3px;background:#2563eb;border-radius:2px;"></div>
+          </div>
+          <!-- 출석 데이터 -->
+          <div style="background:#bbf7d0;border-radius:4px;padding:6px 4px;font-size:11px;color:#166534;">출석</div>
+          <div style="background:#bbf7d0;border-radius:4px;padding:6px 4px;font-size:11px;color:#166534;">출석</div>
+          <div style="background:#fecaca;border-radius:4px;padding:6px 4px;font-size:11px;color:#991b1b;">결석</div>
+          <div style="background:#bbf7d0;border-radius:4px;padding:6px 4px;font-size:11px;color:#166534;">출석</div>
+          <!-- 오늘(금) 출석 칸도 강조 -->
+          <div style="background:#bfdbfe;border-radius:4px;padding:6px 4px;font-size:12px;color:#1e40af;font-weight:bold;border:2px solid #2563eb;">출석</div>
+        </div>
+        <div style="margin-top:8px;font-size:11px;color:#dc2626;">수요일: 병결 (담임교사 등록)</div>
+      </div>
+
+      <!-- 2행 -->
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:6px;">
+        <div style="background:#bbf7d0;border-radius:6px;padding:10px 6px;text-align:center;cursor:pointer;border:2px solid transparent;">
+          <div style="font-weight:bold;font-size:12px;">양민서</div>
+          <div style="font-size:10px;color:#6b7280;">2-1</div>
+        </div>
+        <div style="background:#bbf7d0;border-radius:6px;padding:10px 6px;text-align:center;cursor:pointer;border:2px solid transparent;">
+          <div style="font-weight:bold;font-size:12px;">이연정</div>
+          <div style="font-size:10px;color:#6b7280;">2-1</div>
+        </div>
+        <div style="background:#bbf7d0;border-radius:6px;padding:10px 6px;text-align:center;cursor:pointer;border:2px solid transparent;">
+          <div style="font-weight:bold;font-size:12px;">백소정</div>
+          <div style="font-size:10px;color:#6b7280;">2-2</div>
+        </div>
+        <div style="background:#bbf7d0;border-radius:6px;padding:10px 6px;text-align:center;cursor:pointer;border:2px solid transparent;">
+          <div style="font-weight:bold;font-size:12px;">임강연</div>
+          <div style="font-size:10px;color:#6b7280;">2-2</div>
+        </div>
+        <div style="background:#fecaca;border-radius:6px;padding:10px 6px;text-align:center;cursor:pointer;border:2px solid transparent;">
+          <div style="font-weight:bold;font-size:12px;">김기태</div>
+          <div style="font-size:10px;color:#6b7280;">2-3</div>
+        </div>
+      </div>
+
+      <!-- 3행 + 우측에 김주형, 김천희 추가 -->
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:6px;">
+        <div style="background:#bbf7d0;border-radius:6px;padding:10px 6px;text-align:center;cursor:pointer;border:2px solid transparent;">
+          <div style="font-weight:bold;font-size:12px;">오연빈</div>
+          <div style="font-size:10px;color:#6b7280;">2-1</div>
+        </div>
+        <div style="background:#bbf7d0;border-radius:6px;padding:10px 6px;text-align:center;cursor:pointer;border:2px solid transparent;">
+          <div style="font-weight:bold;font-size:12px;">이주현</div>
+          <div style="font-size:10px;color:#6b7280;">2-1</div>
+        </div>
+        <div style="background:#bbf7d0;border-radius:6px;padding:10px 6px;text-align:center;cursor:pointer;border:2px solid transparent;">
+          <div style="font-weight:bold;font-size:12px;">설혜인</div>
+          <div style="font-size:10px;color:#6b7280;">2-2</div>
+        </div>
+        <div style="background:#bbf7d0;border-radius:6px;padding:10px 6px;text-align:center;cursor:pointer;border:2px solid transparent;">
+          <div style="font-weight:bold;font-size:12px;">강민성</div>
+          <div style="font-size:10px;color:#6b7280;">2-2</div>
+        </div>
+        <div style="background:#bbf7d0;border-radius:6px;padding:10px 6px;text-align:center;cursor:pointer;border:2px solid transparent;">
+          <div style="font-weight:bold;font-size:12px;">김은우</div>
+          <div style="font-size:10px;color:#6b7280;">2-3</div>
+        </div>
+      </div>
+
+      <!-- 범례 -->
+      <div style="display:flex;gap:16px;justify-content:center;margin-top:14px;padding-top:12px;border-top:1px solid #e5e7eb;">
+        <div style="display:flex;align-items:center;gap:4px;font-size:11px;">
+          <div style="width:14px;height:14px;background:#dbeafe;border-radius:3px;"></div> 미체크
+        </div>
+        <div style="display:flex;align-items:center;gap:4px;font-size:11px;">
+          <div style="width:14px;height:14px;background:#bbf7d0;border-radius:3px;"></div> 출석
+        </div>
+        <div style="display:flex;align-items:center;gap:4px;font-size:11px;">
+          <div style="width:14px;height:14px;background:#fecaca;border-radius:3px;"></div> 결석
+        </div>
+        <div style="display:flex;align-items:center;gap:4px;font-size:11px;">
+          <div style="width:14px;height:14px;background:#2563eb;border-radius:3px;"></div> 선택됨
+        </div>
+      </div>
+
+      <!-- 교탁 -->
+      <div style="text-align:center;margin-top:16px;padding:8px;background:#f9fafb;border:1px dashed #d1d5db;border-radius:6px;color:#9ca3af;font-size:12px;">교탁</div>
+    </div>
+  </div>
+</div>

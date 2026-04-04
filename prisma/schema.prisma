@@ -1,0 +1,285 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ==================== 사용자 ====================
+
+model Student {
+  id            Int      @id @default(autoincrement())
+  grade         Int
+  classNumber   Int      @map("class_number")
+  studentNumber Int      @map("student_number")
+  name          String
+  isActive      Boolean  @default(true) @map("is_active")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  seatLayouts       SeatLayout[]
+  attendances       Attendance[]
+  participationDays ParticipationDay[]
+  absenceRequests   AbsenceRequest[]
+
+  @@unique([grade, classNumber, studentNumber])
+  @@index([name])
+  @@map("students")
+}
+
+model Teacher {
+  id           Int      @id @default(autoincrement())
+  loginId      String   @unique @map("login_id")
+  passwordHash String   @map("password_hash")
+  name         String
+  googleId     String?  @unique @map("google_id")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  roles                 TeacherRole[]
+  homeroomAssignments   HomeroomAssignment[]
+  subAdminAssignments   SubAdminAssignment[]
+  supervisorAssignments SupervisorAssignment[]
+  checkedAttendances    Attendance[]            @relation("checker")
+  registeredReasons     AbsenceReason[]         @relation("registrar")
+  reviewedRequests      AbsenceRequest[]        @relation("reviewer")
+  swapsAsOriginal       SupervisorSwapHistory[] @relation("original")
+  swapsAsReplacement    SupervisorSwapHistory[] @relation("replacement")
+
+  @@map("teachers")
+}
+
+model TeacherRole {
+  id        Int  @id @default(autoincrement())
+  teacherId Int  @map("teacher_id")
+  role      Role
+
+  teacher Teacher @relation(fields: [teacherId], references: [id])
+
+  @@unique([teacherId, role])
+  @@map("teacher_roles")
+}
+
+enum Role {
+  admin
+  supervisor
+  homeroom
+}
+
+// ==================== 배정 ====================
+
+model HomeroomAssignment {
+  id          Int @id @default(autoincrement())
+  teacherId   Int @map("teacher_id")
+  grade       Int
+  classNumber Int @map("class_number")
+
+  teacher Teacher @relation(fields: [teacherId], references: [id])
+
+  @@unique([grade, classNumber])
+  @@map("homeroom_assignments")
+}
+
+model SubAdminAssignment {
+  id        Int @id @default(autoincrement())
+  teacherId Int @map("teacher_id")
+  grade     Int
+
+  teacher Teacher @relation(fields: [teacherId], references: [id])
+
+  @@unique([teacherId, grade])
+  @@map("sub_admin_assignments")
+}
+
+model SupervisorAssignment {
+  id          Int         @id @default(autoincrement())
+  teacherId   Int         @map("teacher_id")
+  date        DateTime    @db.Date
+  grade       Int
+  sessionType SessionType @map("session_type")
+  createdAt   DateTime    @default(now()) @map("created_at")
+
+  teacher     Teacher                 @relation(fields: [teacherId], references: [id])
+  swapHistory SupervisorSwapHistory[]
+
+  @@unique([date, grade, sessionType])
+  @@index([teacherId, date])
+  @@map("supervisor_assignments")
+}
+
+model SupervisorSwapHistory {
+  id                   Int      @id @default(autoincrement())
+  assignmentId         Int      @map("assignment_id")
+  originalTeacherId    Int      @map("original_teacher_id")
+  replacementTeacherId Int      @map("replacement_teacher_id")
+  reason               String?
+  isCrossGrade         Boolean  @default(false) @map("is_cross_grade")
+  swappedAt            DateTime @default(now()) @map("swapped_at")
+
+  assignment         SupervisorAssignment @relation(fields: [assignmentId], references: [id])
+  originalTeacher    Teacher              @relation("original", fields: [originalTeacherId], references: [id])
+  replacementTeacher Teacher              @relation("replacement", fields: [replacementTeacherId], references: [id])
+
+  @@map("supervisor_swap_history")
+}
+
+enum SessionType {
+  afternoon
+  night
+}
+
+// ==================== 자습 공간 ====================
+
+model StudySession {
+  id        Int         @id @default(autoincrement())
+  type      SessionType
+  grade     Int
+  name      String
+  timeStart String      @map("time_start")
+  timeEnd   String      @map("time_end")
+
+  rooms Room[]
+
+  @@unique([type, grade])
+  @@map("study_sessions")
+}
+
+model Room {
+  id        Int    @id @default(autoincrement())
+  sessionId Int    @map("session_id")
+  name      String
+  cols      Int
+  rows      Int
+  sortOrder Int    @default(0) @map("sort_order")
+
+  session     StudySession @relation(fields: [sessionId], references: [id])
+  seatLayouts SeatLayout[]
+
+  @@map("rooms")
+}
+
+model SeatingPeriod {
+  id        Int      @id @default(autoincrement())
+  name      String
+  startDate DateTime @map("start_date") @db.Date
+  endDate   DateTime @map("end_date") @db.Date
+  grade     Int
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  seatLayouts SeatLayout[]
+
+  @@map("seating_periods")
+}
+
+model SeatLayout {
+  id        Int  @id @default(autoincrement())
+  periodId  Int  @map("period_id")
+  roomId    Int  @map("room_id")
+  rowIndex  Int  @map("row_index")
+  colIndex  Int  @map("col_index")
+  studentId Int? @map("student_id")
+
+  period  SeatingPeriod @relation(fields: [periodId], references: [id])
+  room    Room          @relation(fields: [roomId], references: [id])
+  student Student?      @relation(fields: [studentId], references: [id])
+
+  @@unique([periodId, roomId, rowIndex, colIndex])
+  @@index([roomId, periodId])
+  @@map("seat_layouts")
+}
+
+// ==================== 출석 ====================
+
+model Attendance {
+  id          Int              @id @default(autoincrement())
+  studentId   Int              @map("student_id")
+  sessionType SessionType      @map("session_type")
+  date        DateTime         @db.Date
+  status      AttendanceStatus @default(unchecked)
+  checkedBy   Int?             @map("checked_by")
+  createdAt   DateTime         @default(now()) @map("created_at")
+  updatedAt   DateTime         @updatedAt @map("updated_at")
+
+  student       Student        @relation(fields: [studentId], references: [id])
+  checker       Teacher?       @relation("checker", fields: [checkedBy], references: [id])
+  absenceReason AbsenceReason?
+
+  @@unique([studentId, sessionType, date])
+  @@index([date, sessionType])
+  @@index([studentId, date])
+  @@map("attendance")
+}
+
+enum AttendanceStatus {
+  unchecked
+  present
+  absent
+}
+
+model AbsenceReason {
+  id           Int        @id @default(autoincrement())
+  attendanceId Int        @unique @map("attendance_id")
+  reasonType   ReasonType @map("reason_type")
+  detail       String?
+  registeredBy Int        @map("registered_by")
+  createdAt    DateTime   @default(now()) @map("created_at")
+
+  attendance Attendance @relation(fields: [attendanceId], references: [id])
+  registrar  Teacher    @relation("registrar", fields: [registeredBy], references: [id])
+
+  @@map("absence_reasons")
+}
+
+enum ReasonType {
+  academy
+  afterschool
+  illness
+  custom
+}
+
+// ==================== 참여 설정 ====================
+
+model ParticipationDay {
+  id              Int         @id @default(autoincrement())
+  studentId       Int         @map("student_id")
+  sessionType     SessionType @map("session_type")
+  isParticipating Boolean     @default(true) @map("is_participating")
+  mon             Boolean     @default(true)
+  tue             Boolean     @default(true)
+  wed             Boolean     @default(true)
+  thu             Boolean     @default(true)
+  fri             Boolean     @default(true)
+
+  student Student @relation(fields: [studentId], references: [id])
+
+  @@unique([studentId, sessionType])
+  @@map("participation_days")
+}
+
+// ==================== 불참 신청 ====================
+
+model AbsenceRequest {
+  id          Int           @id @default(autoincrement())
+  studentId   Int           @map("student_id")
+  sessionType SessionType   @map("session_type")
+  date        DateTime      @db.Date
+  reasonType  ReasonType    @map("reason_type")
+  detail      String?
+  status      RequestStatus @default(pending)
+  reviewedBy  Int?          @map("reviewed_by")
+  reviewedAt  DateTime?     @map("reviewed_at")
+  createdAt   DateTime      @default(now()) @map("created_at")
+
+  student  Student  @relation(fields: [studentId], references: [id])
+  reviewer Teacher? @relation("reviewer", fields: [reviewedBy], references: [id])
+
+  @@unique([studentId, sessionType, date])
+  @@map("absence_requests")
+}
+
+enum RequestStatus {
+  pending
+  approved
+  rejected
+}
