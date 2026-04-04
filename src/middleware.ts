@@ -1,8 +1,7 @@
+import { auth } from "@/lib/auth";
 import { NextResponse } from "next/server";
-import { getToken } from "next-auth/jwt";
-import type { NextRequest } from "next/server";
 
-export async function middleware(req: NextRequest) {
+export default auth((req) => {
   const { pathname } = req.nextUrl;
 
   // 공개 경로
@@ -13,28 +12,15 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // Auth.js v5: 쿠키 접두사가 authjs로 변경됨 → salt/cookieName 명시 필요
-  const isSecure = req.url.startsWith("https://");
-  const cookieName = isSecure
-    ? "__Secure-authjs.session-token"
-    : "authjs.session-token";
-
-  const token = await getToken({
-    req,
-    secret: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET,
-    salt: cookieName,
-    cookieName,
-  });
-
   // 미인증 → 로그인 페이지
-  if (!token) {
+  if (!req.auth) {
     const loginUrl = new URL("/login", req.url);
     return NextResponse.redirect(loginUrl);
   }
 
-  const userType = token.userType as string | undefined;
-  const roles = token.roles as string[] | undefined;
-  const subAdminGrades = token.subAdminGrades as number[] | undefined;
+  const userType = req.auth.user?.userType;
+  const roles = req.auth.user?.roles as string[] | undefined;
+  const subAdminGrades = req.auth.user?.subAdminGrades as number[] | undefined;
 
   // /admin/* → admin 역할만
   if (pathname.startsWith("/admin")) {
@@ -83,7 +69,7 @@ export async function middleware(req: NextRequest) {
   }
 
   return NextResponse.next();
-}
+});
 
 export const config = {
   matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\..*).*)"],
