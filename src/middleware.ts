@@ -8,8 +8,7 @@ export async function middleware(req: NextRequest) {
   // 공개 경로
   if (
     pathname.startsWith("/login") ||
-    pathname.startsWith("/api/auth") ||
-    pathname.startsWith("/api/debug-auth")
+    pathname.startsWith("/api/auth")
   ) {
     return NextResponse.next();
   }
