@@ -18,10 +18,7 @@ export function AdminNav() {
 
   const adminItems: NavItem[] = isAdmin
     ? [
-        { label: "학생 관리", href: "/admin/students" },
-        { label: "교사 관리", href: "/admin/teachers" },
-        { label: "서브관리자", href: "/admin/sub-admins" },
-        { label: "담임배정", href: "/admin/homeroom-assignments" },
+        { label: "사용자 관리", href: "/admin/users" },
         { label: "좌석 배치", href: "/admin/seats" },
         { label: "감독 배정", href: "/admin/supervisors" },
         { label: "교체 이력", href: "/admin/swap-history" },
