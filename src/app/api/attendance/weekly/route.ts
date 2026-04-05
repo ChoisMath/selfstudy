@@ -4,7 +4,7 @@ import { withAuth } from "@/lib/api-auth";
 
 // GET /api/attendance/weekly?studentId=1&date=2026-04-05
 export const GET = withAuth(
-  ["supervisor", "admin", "homeroom", "student"],
+  ["teacher", "student"],
   async (req: Request) => {
     const { searchParams } = new URL(req.url);
     const studentId = parseInt(searchParams.get("studentId") || "");

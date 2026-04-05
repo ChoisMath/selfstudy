@@ -13,9 +13,20 @@ export default function AttendanceLayout({ children }: { children: React.ReactNo
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white border-b border-gray-200 px-4 py-2 flex items-center justify-between">
-        <span className="font-bold text-gray-900">출석부</span>
+        <span className="flex items-center gap-2 font-bold text-gray-900">
+          <img src="/posan.svg" alt="포산고등학교" className="w-8 h-8" />
+          출석부
+        </span>
         {status !== "loading" && (
           <div className="flex items-center gap-3">
+            {roles?.includes("admin") && (
+              <Link
+                href="/admin"
+                className="px-3 py-1.5 text-xs font-medium text-purple-700 bg-purple-50 border border-purple-200 rounded-md hover:bg-purple-100 transition-colors whitespace-nowrap"
+              >
+                관리자
+              </Link>
+            )}
             {subAdminGrades.length > 0 && subAdminGrades.map((g) => (
               <Link
                 key={g}

@@ -5,7 +5,7 @@ import type { SessionType } from "@/generated/prisma/client";
 
 // GET /api/attendance?date=2026-04-05&session=afternoon&grade=2
 export const GET = withAuth(
-  ["supervisor", "admin", "homeroom"],
+  ["teacher"],
   async (req: Request) => {
     const { searchParams } = new URL(req.url);
     const date = searchParams.get("date");

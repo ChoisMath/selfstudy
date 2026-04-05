@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { withAuth } from "@/lib/api-auth";
 
 // GET /api/supervisor-assignments/my-today - 오늘 감독 배정 확인
-export const GET = withAuth(["supervisor", "admin", "homeroom"], async (req: Request, user) => {
+export const GET = withAuth(["teacher"], async (req: Request, user) => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 

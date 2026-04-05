@@ -35,7 +35,8 @@ export default function StudentLayout({
       {/* 헤더 */}
       <header className="bg-white border-b border-gray-200">
         <div className="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div>
+          <div className="flex items-center gap-2">
+            <img src="/posan.svg" alt="포산고등학교" className="w-8 h-8" />
             <h1 className="text-lg font-bold text-gray-900">
               {user.name}{" "}
               <span className="text-sm font-normal text-gray-500">

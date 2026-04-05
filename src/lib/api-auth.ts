@@ -41,6 +41,11 @@ export function withAuth(
       return handler(req, user);
     }
 
+    // "teacher" 의사 역할: 모든 교사 허용
+    if (roles.includes("teacher") && user.userType === "teacher") {
+      return handler(req, user);
+    }
+
     // 역할 검사
     const hasRole = roles.some((r) => user.roles?.includes(r));
     // sub_admin 역할 체크: subAdminGrades가 있으면 sub_admin으로 간주

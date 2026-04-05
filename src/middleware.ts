@@ -74,14 +74,9 @@ export async function middleware(req: NextRequest) {
     }
   }
 
-  // /attendance/*, /api/attendance/* → supervisor, admin, sub_admin, homeroom(읽기)
+  // /attendance/*, /api/attendance/* → 모든 교사 접근 가능
   if (pathname.startsWith("/attendance") || pathname.startsWith("/api/attendance")) {
-    const allowed =
-      roles?.includes("supervisor") ||
-      roles?.includes("admin") ||
-      roles?.includes("homeroom") ||
-      (subAdminGrades && subAdminGrades.length > 0);
-    if (!allowed) {
+    if (userType !== "teacher") {
       if (isApi) return NextResponse.json({ error: "권한이 없습니다." }, { status: 403 });
       return NextResponse.redirect(new URL("/", req.url));
     }

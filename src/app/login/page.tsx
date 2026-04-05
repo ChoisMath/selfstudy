@@ -35,9 +35,12 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <div className="w-full max-w-sm">
-        <h1 className="text-2xl font-bold text-center mb-8 text-gray-900">
-          PosanHS 자습 출석부
-        </h1>
+        <div className="flex flex-col items-center mb-8">
+          <img src="/posan.svg" alt="포산고등학교" className="w-16 h-16 mb-3" />
+          <h1 className="text-2xl font-bold text-gray-900">
+            포산고 자습 출석부
+          </h1>
+        </div>
 
         {/* 탭 */}
         <div className="flex mb-6 bg-gray-200 rounded-lg p-1">

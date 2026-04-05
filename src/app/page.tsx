@@ -19,17 +19,9 @@ export default async function Home() {
     redirect("/admin");
   }
 
-  if (user.roles?.includes("supervisor")) {
+  // 모든 교사는 /attendance로 (감독 배정 시 자동 학년 이동)
+  if (user.userType === "teacher") {
     redirect("/attendance");
-  }
-
-  if (user.roles?.includes("homeroom")) {
-    redirect("/homeroom");
-  }
-
-  // 서브관리자 (role enum에 없지만 subAdminGrades가 있는 경우)
-  if (user.subAdminGrades && user.subAdminGrades.length > 0) {
-    redirect(`/grade-admin/${user.subAdminGrades[0]}`);
   }
 
   redirect("/login");

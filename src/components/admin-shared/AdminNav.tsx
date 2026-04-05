@@ -44,6 +44,7 @@ export function AdminNav() {
       <nav className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex items-center h-14">
+            <img src="/posan.svg" alt="포산고등학교" className="w-8 h-8 mr-2" />
             <span className="text-lg font-bold text-gray-900">출석부</span>
           </div>
         </div>
@@ -58,9 +59,10 @@ export function AdminNav() {
           <div className="flex items-center gap-1 overflow-x-auto">
             <Link
               href="/"
-              className="text-lg font-bold text-gray-900 shrink-0 mr-4"
+              className="flex items-center gap-2 shrink-0 mr-4"
             >
-              출석부
+              <img src="/posan.svg" alt="포산고등학교" className="w-8 h-8" />
+              <span className="text-lg font-bold text-gray-900">출석부</span>
             </Link>
 
             {adminItems.map((item) => (
