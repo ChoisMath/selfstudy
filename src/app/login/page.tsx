@@ -17,6 +17,7 @@ export default function LoginPage() {
     startTransition(async () => {
       const result = await loginTeacher(formData);
       if (result?.error) setError(result.error);
+      else if (result?.success) window.location.href = "/";
     });
   }
 
@@ -27,6 +28,7 @@ export default function LoginPage() {
     startTransition(async () => {
       const result = await loginStudent(formData);
       if (result?.error) setError(result.error);
+      else if (result?.success) window.location.href = "/";
     });
   }
 
@@ -34,7 +36,7 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <div className="w-full max-w-sm">
         <h1 className="text-2xl font-bold text-center mb-8 text-gray-900">
-          자율학습 출석부
+          PosanHS 자습 출석부
         </h1>
 
         {/* 탭 */}

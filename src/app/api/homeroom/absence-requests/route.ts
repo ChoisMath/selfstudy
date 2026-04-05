@@ -4,24 +4,28 @@ import { withAuth } from "@/lib/api-auth";
 
 // GET /api/homeroom/absence-requests - 자기 반 불참 신청 목록
 export const GET = withAuth(["homeroom", "admin"], async (req: Request, user) => {
+  const isAdmin = user.roles?.includes("admin");
   const assignments = user.homeroomAssignments;
-  if (!assignments || assignments.length === 0) {
+  if (!isAdmin && (!assignments || assignments.length === 0)) {
     return NextResponse.json({ error: "담임 배정이 없습니다." }, { status: 403 });
   }
 
   const url = new URL(req.url);
   const statusFilter = url.searchParams.get("status"); // pending, approved, rejected
 
-  const classConditions = assignments.map((a) => ({
-    grade: a.grade,
-    classNumber: a.classNumber,
-  }));
+  // admin은 전체, 담임은 자기 반만
+  const classConditions = isAdmin && (!assignments || assignments.length === 0)
+    ? undefined
+    : assignments!.map((a) => ({
+        grade: a.grade,
+        classNumber: a.classNumber,
+      }));
 
-  // 자기 반 학생 ID 조회
+  // 학생 ID 조회 (admin은 전체)
   const students = await prisma.student.findMany({
     where: {
       isActive: true,
-      OR: classConditions,
+      ...(classConditions ? { OR: classConditions } : {}),
     },
     select: { id: true },
   });

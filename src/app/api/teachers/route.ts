@@ -26,6 +26,7 @@ export const GET = withAuth(
       select: {
         id: true,
         name: true,
+        primaryGrade: true,
         roles: {
           select: {
             role: true,
@@ -38,6 +39,7 @@ export const GET = withAuth(
     const result = teachers.map((t) => ({
       id: t.id,
       name: t.name,
+      primaryGrade: t.primaryGrade,
       roles: t.roles.map((r) => r.role),
     }));
 

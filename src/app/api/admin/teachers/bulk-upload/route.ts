@@ -40,6 +40,7 @@ export async function POST(req: Request) {
         name: string;
         loginId: string;
         password: string;
+        primaryGrade: number | null;
       }[] = [];
 
       sheet.eachRow((row, rowNumber) => {
@@ -48,6 +49,7 @@ export async function POST(req: Request) {
         const nameVal = row.getCell(1).value?.toString().trim();
         const loginIdVal = row.getCell(2).value?.toString().trim();
         const passwordVal = row.getCell(3).value?.toString().trim();
+        const primaryGradeVal = row.getCell(4).value?.toString().trim();
 
         // 빈 행 건너뛰기
         if (!row.getCell(1).value && !row.getCell(2).value && !row.getCell(3).value) {
@@ -70,11 +72,18 @@ export async function POST(req: Request) {
           return;
         }
 
+        let primaryGrade: number | null = null;
+        if (primaryGradeVal) {
+          const pg = parseInt(primaryGradeVal, 10);
+          if (pg >= 1 && pg <= 3) primaryGrade = pg;
+        }
+
         validRows.push({
           row: rowNumber,
           name: nameVal,
           loginId: loginIdVal,
           password: passwordVal,
+          primaryGrade,
         });
       });
 
@@ -131,6 +140,7 @@ export async function POST(req: Request) {
                 loginId: r.loginId,
                 name: r.name,
                 passwordHash,
+                primaryGrade: r.primaryGrade,
               },
             });
             successCount++;

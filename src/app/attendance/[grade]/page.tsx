@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import useSWR from "swr";
+import MiraeHallLayout, { GAP_CONFIG } from "@/components/seats/MiraeHallLayout";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
@@ -24,6 +25,7 @@ interface Room {
   name: string;
   cols: number;
   rows: number;
+  sortOrder: number;
   seats: Seat[];
 }
 
@@ -127,6 +129,199 @@ export default function AttendanceGradePage() {
     setWeeklyData(result.weekly || []);
   }
 
+  // 좌석 그리드만 렌더링 (제목/교탁 없이)
+  function renderAttendanceGrid(room: Room, opts?: { gapAfterRows?: number[] }) {
+    return (
+      <div className="p-[clamp(4px,1vw,8px)]">
+        {Array.from({ length: room.rows }, (_, rowIndex) => {
+          const selectedInThisRow = room.seats.find(
+            (s) => s.rowIndex === rowIndex && s.student?.id === selectedSeat
+          );
+          return (
+            <div key={`row-${rowIndex}`}>
+              <div
+                className="grid"
+                style={{
+                  gridTemplateColumns: `repeat(${room.cols}, 1fr)`,
+                  gap: "clamp(2px, 0.6vw, 4px)",
+                  marginBottom: opts?.gapAfterRows?.includes(rowIndex) ? "10px" : "clamp(2px, 0.6vw, 4px)",
+                }}
+              >
+                {Array.from({ length: room.cols }, (_, colIndex) => {
+                  const seat = room.seats.find(
+                    (s) => s.rowIndex === rowIndex && s.colIndex === colIndex
+                  );
+                  const student = seat?.student;
+                  if (!student) {
+                    return (
+                      <div
+                        key={`${rowIndex}-${colIndex}`}
+                        className="rounded-[clamp(4px,1vw,6px)] bg-[#f9fafb] min-h-[clamp(36px,8vw,48px)]"
+                      />
+                    );
+                  }
+                  const status = attendances[student.id]?.status || "unchecked";
+                  const isApproved = student.isApprovedAbsence;
+                  const isSelected = selectedSeat === student.id;
+                  let seatClass = "";
+                  if (isSelected) {
+                    seatClass = "bg-[#2563eb] text-white border-[#1d4ed8] shadow-[0_2px_8px_rgba(37,99,235,0.3)]";
+                  } else if (isApproved) {
+                    seatClass = "bg-[#fef9c3] border-[#facc15]";
+                  } else if (status === "present") {
+                    seatClass = "bg-[#bbf7d0] border-transparent";
+                  } else if (status === "absent") {
+                    seatClass = "bg-[#fecaca] border-transparent";
+                  } else {
+                    seatClass = "bg-[#dbeafe] border-transparent";
+                  }
+                  return (
+                    <div
+                      key={`${rowIndex}-${colIndex}`}
+                      className={`relative rounded-[clamp(3px,0.8vw,5px)] py-[clamp(4px,1vw,8px)] px-[clamp(1px,0.3vw,4px)] text-center cursor-pointer border-2 transition-all active:scale-95 min-w-0 ${seatClass}`}
+                      onClick={() => handleSeatClick(student.id)}
+                    >
+                      <button
+                        onClick={(e) => handleInfoClick(e, student.id, student.name)}
+                        className={`absolute top-0.5 right-0.5 w-[clamp(12px,3vw,16px)] h-[clamp(12px,3vw,16px)] rounded-full text-[clamp(7px,1.8vw,10px)] font-bold leading-none flex items-center justify-center transition-colors ${
+                          isSelected
+                            ? "bg-white/30 text-white hover:bg-white/50"
+                            : "bg-black/5 text-[#6b7280] hover:bg-black/10 hover:text-[#1e293b]"
+                        }`}
+                        title="주간 출석현황"
+                      >
+                        i
+                      </button>
+                      <div className="font-bold text-[clamp(9px,2.2vw,12px)] whitespace-nowrap overflow-hidden text-ellipsis">
+                        {student.name}
+                      </div>
+                      <div className={`text-[clamp(7px,1.8vw,9px)] mt-0.5 ${isSelected ? "text-[#bfdbfe]" : "text-[#6b7280]"}`}>
+                        {grade}-{student.classNumber}
+                      </div>
+                      {isApproved && !isSelected && (
+                        <div className="text-[7px] text-[#ca8a04] mt-0.5">불참승인</div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+              {/* 주간 출석 팝업 */}
+              {selectedInThisRow && weeklyData.length > 0 && renderWeeklyPopup(room, selectedInThisRow)}
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
+  // 전체 방 카드 렌더링 (제목 + 그리드 + 교탁)
+  function renderAttendanceRoom(room: Room, opts: { compact?: boolean; hideTeacherDesk?: boolean; gapAfterRows?: number[] }) {
+    const roomStudents = room.seats.filter((s) => s.student);
+    return (
+      <div key={room.id} className="border border-[#e2e8f0] rounded-[10px] overflow-hidden">
+        <div className="bg-[#f8fafc] px-3.5 py-2.5 border-b border-[#e2e8f0] flex justify-between items-center">
+          <span className={`font-bold text-[#334155] ${opts.compact ? "text-[clamp(10px,2.5vw,12px)]" : "text-[clamp(12px,3vw,14px)]"}`}>{room.name}</span>
+          <span className="text-[clamp(10px,2.5vw,12px)] text-[#94a3b8] font-medium">{roomStudents.length}석</span>
+        </div>
+        {renderAttendanceGrid(room, { gapAfterRows: opts.gapAfterRows })}
+        {!opts.hideTeacherDesk && (
+          <div className="text-center py-1.5 bg-[#f9fafb] border-t border-dashed border-[#d1d5db] text-[#9ca3af] text-[clamp(10px,2.5vw,12px)]">
+            교탁
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // 주간 출석 팝업
+  function renderWeeklyPopup(room: Room, selectedInThisRow: Seat) {
+    return (
+      <div
+        className="relative bg-[#eff6ff] border-2 border-[#2563eb] rounded-lg p-[clamp(8px,2vw,14px)]"
+        style={{ marginBottom: "clamp(3px, 0.8vw, 6px)" }}
+      >
+        <div
+          className="absolute -top-[8px] w-[14px] h-[14px] bg-[#eff6ff] border-l-2 border-t-2 border-[#2563eb] rotate-45"
+          style={{
+            left: `calc(${(selectedInThisRow.colIndex + 0.5) / room.cols * 100}% - 7px)`,
+          }}
+        />
+        <div className="flex justify-between items-center mb-2 flex-wrap gap-1">
+          <span className="font-bold text-[clamp(11px,2.8vw,13px)] text-[#1e40af] whitespace-nowrap">
+            {weeklyName} ({grade}-{selectedInThisRow.student?.classNumber})
+          </span>
+          <span className="text-[clamp(9px,2.2vw,11px)] text-[#6b7280] whitespace-nowrap">
+            {(() => {
+              const d = new Date(weeklyData[0]?.date);
+              return `${d.getMonth() + 1}월 ${Math.ceil(d.getDate() / 7)}주차`;
+            })()}
+          </span>
+        </div>
+        <div className="grid grid-cols-5 gap-[clamp(2px,0.6vw,4px)] text-center">
+          {weeklyData.map((d) => {
+            const isToday = d.date === today;
+            return (
+              <div
+                key={`h-${d.date}`}
+                className={`text-[clamp(10px,2.5vw,12px)] py-0.5 ${
+                  isToday
+                    ? "font-extrabold text-[#1e40af] border-b-[3px] border-[#2563eb] pb-1.5"
+                    : "font-medium text-[#6b7280]"
+                }`}
+              >
+                {d.dayOfWeek}
+              </div>
+            );
+          })}
+          {weeklyData.map((d) => {
+            const isToday = d.date === today;
+            const participating = tab === "afternoon" ? d.afternoonParticipating : d.nightParticipating;
+            const record = tab === "afternoon" ? d.afternoon : d.night;
+            const status = record?.status;
+            if (!participating) {
+              return (
+                <div
+                  key={`cell-${d.date}`}
+                  className="rounded-[4px] py-[clamp(6px,1.5vw,10px)] px-1 text-[clamp(9px,2.2vw,11px)] font-medium bg-[#e5e7eb] text-[#9ca3af]"
+                >
+                  -
+                </div>
+              );
+            }
+            let cellClass = "bg-[#f3f4f6] text-[#9ca3af]";
+            let label = "-";
+            if (status === "present") { cellClass = "bg-[#bbf7d0] text-[#166534]"; label = "출석"; }
+            else if (status === "absent") { cellClass = "bg-[#fecaca] text-[#991b1b]"; label = "결석"; }
+            return (
+              <div
+                key={`cell-${d.date}`}
+                className={`rounded-[4px] py-[clamp(6px,1.5vw,10px)] px-1 text-[clamp(9px,2.2vw,11px)] font-medium ${cellClass} ${
+                  isToday ? "border-2 border-[#2563eb] font-bold text-[clamp(10px,2.5vw,12px)]" : ""
+                }`}
+              >
+                {label}
+              </div>
+            );
+          })}
+        </div>
+        {weeklyData.some((d) => {
+          const r = tab === "afternoon" ? d.afternoon : d.night;
+          return r?.reason;
+        }) && (
+          <div className="mt-1.5 text-[clamp(9px,2.2vw,11px)] text-[#dc2626]">
+            {weeklyData
+              .filter((d) => (tab === "afternoon" ? d.afternoon : d.night)?.reason)
+              .map((d) => {
+                const r = (tab === "afternoon" ? d.afternoon : d.night)!.reason!;
+                return `${d.dayOfWeek}: ${r.type}${r.detail ? ` (${r.detail})` : ""}`;
+              })
+              .join(", ")}
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="bg-[#f1f5f9] min-h-screen">
       {/* 고정 상단 바 - seat-responsive-v2 디자인 */}
@@ -200,206 +395,49 @@ export default function AttendanceGradePage() {
       {/* 교실 콘텐츠 */}
       <div className="max-w-[960px] mx-auto px-3 pb-3">
         <div className="bg-white rounded-b-xl p-3 flex flex-col gap-5 shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
-          {rooms.map((room) => {
-            const roomStudents = room.seats.filter((s) => s.student);
-            return (
-              <div key={room.id} className="border border-[#e2e8f0] rounded-[10px] overflow-hidden">
-                {/* 교실 제목 */}
-                <div className="bg-[#f8fafc] px-3.5 py-2.5 border-b border-[#e2e8f0] flex justify-between items-center">
-                  <span className="text-[clamp(12px,3vw,14px)] font-bold text-[#334155]">{room.name}</span>
-                  <span className="text-[clamp(10px,2.5vw,12px)] text-[#94a3b8] font-medium">{roomStudents.length}석</span>
-                </div>
-
-                {/* 좌석 그리드 */}
-                <div className="p-[clamp(6px,1.5vw,12px)]">
-                  {Array.from({ length: room.rows }, (_, rowIndex) => {
-                    // 이 행에서 ℹ로 선택된 학생 찾기
-                    const selectedInThisRow = room.seats.find(
-                      (s) => s.rowIndex === rowIndex && s.student?.id === selectedSeat
-                    );
-
-                    return (
-                      <div key={`row-${rowIndex}`}>
-                        {/* 좌석 행 */}
-                        <div
-                          className="grid"
-                          style={{
-                            gridTemplateColumns: `repeat(${room.cols}, 1fr)`,
-                            gap: "clamp(3px, 0.8vw, 6px)",
-                            marginBottom: "clamp(3px, 0.8vw, 6px)",
-                          }}
-                        >
-                          {Array.from({ length: room.cols }, (_, colIndex) => {
-                            const seat = room.seats.find(
-                              (s) => s.rowIndex === rowIndex && s.colIndex === colIndex
-                            );
-                            const student = seat?.student;
-
-                            if (!student) {
-                              return (
-                                <div
-                                  key={`${rowIndex}-${colIndex}`}
-                                  className="rounded-[clamp(4px,1vw,6px)] bg-[#f9fafb] min-h-[clamp(40px,10vw,56px)]"
-                                />
-                              );
-                            }
-
-                            const status = attendances[student.id]?.status || "unchecked";
-                            const isApproved = student.isApprovedAbsence;
-                            const isSelected = selectedSeat === student.id;
-
-                            let seatClass = "";
-                            if (isSelected) {
-                              seatClass = "bg-[#2563eb] text-white border-[#1d4ed8] shadow-[0_2px_8px_rgba(37,99,235,0.3)]";
-                            } else if (isApproved) {
-                              seatClass = "bg-[#fef9c3] border-[#facc15]";
-                            } else if (status === "present") {
-                              seatClass = "bg-[#bbf7d0] border-transparent";
-                            } else if (status === "absent") {
-                              seatClass = "bg-[#fecaca] border-transparent";
-                            } else {
-                              seatClass = "bg-[#dbeafe] border-transparent";
-                            }
-
-                            return (
-                              <div
-                                key={`${rowIndex}-${colIndex}`}
-                                className={`relative rounded-[clamp(4px,1vw,6px)] py-[clamp(6px,1.5vw,10px)] px-[clamp(2px,0.5vw,6px)] text-center cursor-pointer border-2 transition-all active:scale-95 min-w-0 ${seatClass}`}
-                                onClick={() => handleSeatClick(student.id)}
-                              >
-                                {/* ℹ 아이콘 */}
-                                <button
-                                  onClick={(e) => handleInfoClick(e, student.id, student.name)}
-                                  className={`absolute top-0.5 right-0.5 w-[clamp(14px,3.5vw,18px)] h-[clamp(14px,3.5vw,18px)] rounded-full text-[clamp(8px,2vw,11px)] font-bold leading-none flex items-center justify-center transition-colors ${
-                                    isSelected
-                                      ? "bg-white/30 text-white hover:bg-white/50"
-                                      : "bg-black/5 text-[#6b7280] hover:bg-black/10 hover:text-[#1e293b]"
-                                  }`}
-                                  title="주간 출석현황"
-                                >
-                                  i
-                                </button>
-                                <div className="font-bold text-[clamp(10px,2.5vw,13px)] whitespace-nowrap overflow-hidden text-ellipsis">
-                                  {student.name}
-                                </div>
-                                <div className={`text-[clamp(8px,2vw,10px)] mt-0.5 ${isSelected ? "text-[#bfdbfe]" : "text-[#6b7280]"}`}>
-                                  {grade}-{student.classNumber}
-                                </div>
-                                {isApproved && !isSelected && (
-                                  <div className="text-[8px] text-[#ca8a04] mt-0.5">불참승인</div>
-                                )}
-                              </div>
-                            );
-                          })}
+          {grade === 2 && tab === "night" ? (
+            /* 2학년 야간: 미래홀 공간 배치 */
+            <MiraeHallLayout
+              rooms={rooms}
+              renderRoom={(room) => renderAttendanceRoom(room, { compact: true, hideTeacherDesk: true, gapAfterRows: GAP_CONFIG[room.name] })}
+            />
+          ) : tab === "afternoon" ? (
+            /* 오후 자습: 반별 3분단씩 가로 그룹 */
+            <div className="flex flex-col gap-5">
+              {(() => {
+                const sorted = [...rooms].sort((a, b) => a.sortOrder - b.sortOrder);
+                const groups: typeof rooms[] = [];
+                for (let i = 0; i < sorted.length; i += 3) {
+                  groups.push(sorted.slice(i, i + 3));
+                }
+                return groups.map((group, gi) => (
+                  <div key={gi} className="border border-[#e2e8f0] rounded-[10px] overflow-hidden">
+                    <div className="bg-[#f8fafc] px-3.5 py-2.5 border-b border-[#e2e8f0] flex justify-between items-center">
+                      <span className="text-[clamp(12px,3vw,14px)] font-bold text-[#334155]">
+                        {group[0]?.name.split(" ")[0]}
+                      </span>
+                      <span className="text-[clamp(10px,2.5vw,12px)] text-[#94a3b8] font-medium">
+                        {group.reduce((sum, r) => sum + r.seats.filter((s) => s.student).length, 0)}석
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-3 gap-1 p-[clamp(6px,1.5vw,12px)]">
+                      {group.map((room) => (
+                        <div key={room.id}>
+                          {renderAttendanceGrid(room)}
                         </div>
-
-                        {/* ℹ 주간 출석 팝업 - 선택된 좌석 행 바로 아래에 확장 */}
-                        {selectedInThisRow && weeklyData.length > 0 && (
-                          <div
-                            className="relative bg-[#eff6ff] border-2 border-[#2563eb] rounded-lg p-[clamp(8px,2vw,14px)]"
-                            style={{ marginBottom: "clamp(3px, 0.8vw, 6px)" }}
-                          >
-                            {/* 화살표 */}
-                            <div
-                              className="absolute -top-[8px] w-[14px] h-[14px] bg-[#eff6ff] border-l-2 border-t-2 border-[#2563eb] rotate-45"
-                              style={{
-                                left: `calc(${(selectedInThisRow.colIndex + 0.5) / room.cols * 100}% - 7px)`,
-                              }}
-                            />
-                            {/* 헤더 */}
-                            <div className="flex justify-between items-center mb-2 flex-wrap gap-1">
-                              <span className="font-bold text-[clamp(11px,2.8vw,13px)] text-[#1e40af] whitespace-nowrap">
-                                {weeklyName} ({grade}-{selectedInThisRow.student?.classNumber})
-                              </span>
-                              <span className="text-[clamp(9px,2.2vw,11px)] text-[#6b7280] whitespace-nowrap">
-                                {(() => {
-                                  const d = new Date(weeklyData[0]?.date);
-                                  return `${d.getMonth() + 1}월 ${Math.ceil(d.getDate() / 7)}주차`;
-                                })()}
-                              </span>
-                            </div>
-
-                            {/* 요일 헤더 + 출석 1행 그리드 (현재 탭 세션만) */}
-                            <div className="grid grid-cols-5 gap-[clamp(2px,0.6vw,4px)] text-center">
-                              {weeklyData.map((d) => {
-                                const isToday = d.date === today;
-                                return (
-                                  <div
-                                    key={`h-${d.date}`}
-                                    className={`text-[clamp(10px,2.5vw,12px)] py-0.5 ${
-                                      isToday
-                                        ? "font-extrabold text-[#1e40af] border-b-[3px] border-[#2563eb] pb-1.5"
-                                        : "font-medium text-[#6b7280]"
-                                    }`}
-                                  >
-                                    {d.dayOfWeek}
-                                  </div>
-                                );
-                              })}
-                              {weeklyData.map((d) => {
-                                const isToday = d.date === today;
-                                const participating = tab === "afternoon" ? d.afternoonParticipating : d.nightParticipating;
-                                const record = tab === "afternoon" ? d.afternoon : d.night;
-                                const status = record?.status;
-
-                                // 미참여 요일: 회색 음영
-                                if (!participating) {
-                                  return (
-                                    <div
-                                      key={`cell-${d.date}`}
-                                      className="rounded-[4px] py-[clamp(6px,1.5vw,10px)] px-1 text-[clamp(9px,2.2vw,11px)] font-medium bg-[#e5e7eb] text-[#9ca3af]"
-                                    >
-                                      -
-                                    </div>
-                                  );
-                                }
-
-                                let cellClass = "bg-[#f3f4f6] text-[#9ca3af]";
-                                let label = "-";
-                                if (status === "present") { cellClass = "bg-[#bbf7d0] text-[#166534]"; label = "출석"; }
-                                else if (status === "absent") { cellClass = "bg-[#fecaca] text-[#991b1b]"; label = "결석"; }
-                                return (
-                                  <div
-                                    key={`cell-${d.date}`}
-                                    className={`rounded-[4px] py-[clamp(6px,1.5vw,10px)] px-1 text-[clamp(9px,2.2vw,11px)] font-medium ${cellClass} ${
-                                      isToday ? "border-2 border-[#2563eb] font-bold text-[clamp(10px,2.5vw,12px)]" : ""
-                                    }`}
-                                  >
-                                    {label}
-                                  </div>
-                                );
-                              })}
-                            </div>
-
-                            {/* 결석 사유 */}
-                            {weeklyData.some((d) => {
-                              const r = tab === "afternoon" ? d.afternoon : d.night;
-                              return r?.reason;
-                            }) && (
-                              <div className="mt-1.5 text-[clamp(9px,2.2vw,11px)] text-[#dc2626]">
-                                {weeklyData
-                                  .filter((d) => (tab === "afternoon" ? d.afternoon : d.night)?.reason)
-                                  .map((d) => {
-                                    const r = (tab === "afternoon" ? d.afternoon : d.night)!.reason!;
-                                    return `${d.dayOfWeek}: ${r.type}${r.detail ? ` (${r.detail})` : ""}`;
-                                  })
-                                  .join(", ")}
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* 교탁 */}
-                <div className="text-center py-1.5 bg-[#f9fafb] border-t border-dashed border-[#d1d5db] text-[#9ca3af] text-[clamp(10px,2.5vw,12px)]">
-                  교탁
-                </div>
-              </div>
-            );
-          })}
+                      ))}
+                    </div>
+                    <div className="text-center py-1.5 bg-[#f9fafb] border-t border-dashed border-[#d1d5db] text-[#9ca3af] text-[clamp(10px,2.5vw,12px)]">
+                      교탁
+                    </div>
+                  </div>
+                ));
+              })()}
+            </div>
+          ) : (
+            /* 기본: 세로 스택 */
+            rooms.map((room) => renderAttendanceRoom(room, {}))
+          )}
 
           {rooms.length === 0 && (
             <div className="text-center text-gray-500 py-12">

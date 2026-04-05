@@ -15,8 +15,9 @@ export async function PUT(
   }
 
   return withAuth(["homeroom", "admin"], async (req: Request, user) => {
+    const isAdmin = user.roles?.includes("admin");
     const assignments = user.homeroomAssignments;
-    if (!assignments || assignments.length === 0) {
+    if (!isAdmin && (!assignments || assignments.length === 0)) {
       return NextResponse.json({ error: "담임 배정이 없습니다." }, { status: 403 });
     }
 
@@ -44,14 +45,14 @@ export async function PUT(
       return NextResponse.json({ error: "신청을 찾을 수 없습니다." }, { status: 404 });
     }
 
-    // 자기 반 학생인지 확인
-    const isMyStudent = assignments.some(
+    // 자기 반 학생인지 확인 (admin은 전체 접근 가능)
+    const isMyStudent = isAdmin || assignments?.some(
       (a) =>
         a.grade === request.student.grade &&
         a.classNumber === request.student.classNumber
     );
 
-    if (!isMyStudent && !user.roles?.includes("admin")) {
+    if (!isMyStudent) {
       return NextResponse.json(
         { error: "자기 반 학생의 신청만 처리할 수 있습니다." },
         { status: 403 }

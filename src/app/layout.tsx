@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "자율학습 출석부",
-  description: "학교 자율학습 출석 관리 시스템",
+  title: "포산고 자율학습",
+  description: "포산고 자율학습 출석 관리 시스템",
 };
 
 export default function RootLayout({

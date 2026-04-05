@@ -73,18 +73,11 @@ export async function POST(
 
   return withGradeAuth(grade, async (req, user) => {
     const body = await req.json();
-    const { teacherId, date, sessionType } = body;
+    const { teacherId, date } = body;
 
-    if (!teacherId || !date || !sessionType) {
+    if (!teacherId || !date) {
       return NextResponse.json(
-        { error: "teacherId, date, sessionType은 필수 항목입니다." },
-        { status: 400 }
-      );
-    }
-
-    if (sessionType !== "afternoon" && sessionType !== "night") {
-      return NextResponse.json(
-        { error: "sessionType은 afternoon 또는 night이어야 합니다." },
+        { error: "teacherId, date는 필수 항목입니다." },
         { status: 400 }
       );
     }
@@ -105,7 +98,6 @@ export async function POST(
       );
     }
 
-    // 교사 존재 확인
     const teacher = await prisma.teacher.findUnique({
       where: { id: tid },
     });
@@ -117,33 +109,20 @@ export async function POST(
       );
     }
 
-    const assignment = await prisma.supervisorAssignment.upsert({
-      where: {
-        date_grade_sessionType: {
-          date: parsedDate,
-          grade,
-          sessionType,
-        },
-      },
-      update: {
-        teacherId: tid,
-      },
-      create: {
-        teacherId: tid,
-        date: parsedDate,
-        grade,
-        sessionType,
-      },
-      include: {
-        teacher: {
-          select: {
-            id: true,
-            name: true,
+    // 오후 + 야간 동시 배정 (upsert)
+    const [afternoon, night] = await Promise.all(
+      (["afternoon", "night"] as const).map((sessionType) =>
+        prisma.supervisorAssignment.upsert({
+          where: {
+            date_grade_sessionType: { date: parsedDate, grade, sessionType },
           },
-        },
-      },
-    });
+          update: { teacherId: tid },
+          create: { teacherId: tid, date: parsedDate, grade, sessionType },
+          include: { teacher: { select: { id: true, name: true } } },
+        })
+      )
+    );
 
-    return NextResponse.json({ assignment }, { status: 200 });
+    return NextResponse.json({ assignment: afternoon, assignments: [afternoon, night] }, { status: 200 });
   })(req);
 }

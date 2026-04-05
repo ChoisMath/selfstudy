@@ -103,6 +103,7 @@ export const GET = withAuth(
         name: room.name,
         cols: room.cols,
         rows: room.rows,
+        sortOrder: room.sortOrder,
         seats: (seatsByRoom.get(room.id) || []).map((seat) => ({
           rowIndex: seat.rowIndex,
           colIndex: seat.colIndex,

@@ -15,6 +15,7 @@ import {
 } from "@dnd-kit/core";
 import RoomGrid from "./RoomGrid";
 import UnassignedStudents from "./UnassignedStudents";
+import MiraeHallLayout, { GAP_CONFIG } from "./MiraeHallLayout";
 
 type Student = {
   id: number;
@@ -323,15 +324,63 @@ export default function SeatingEditor({
         >
           <div className="grid grid-cols-1 xl:grid-cols-[1fr_280px] gap-6">
             {/* 교실 격자 */}
-            <div className="space-y-6">
-              {rooms.map((room) => (
-                <RoomGrid
-                  key={room.id}
-                  room={room}
-                  seats={seats.get(room.id) ?? new Map()}
-                  onRemoveStudent={handleRemoveStudent}
+            <div>
+              {grade === 2 && sessionType === "night" ? (
+                <MiraeHallLayout
+                  rooms={rooms}
+                  renderRoom={(room) => (
+                    <RoomGrid
+                      room={room}
+                      seats={seats.get(room.id) ?? new Map()}
+                      onRemoveStudent={handleRemoveStudent}
+                      gapAfterRows={GAP_CONFIG[room.name]}
+                      hideTeacherDesk
+                      compact
+                    />
+                  )}
                 />
-              ))}
+              ) : sessionType === "afternoon" ? (
+                /* 오후 자습: 반별 3분단씩 가로 그룹 */
+                <div className="space-y-6">
+                  {(() => {
+                    // sortOrder 기준 3개씩 그룹화 (각 반)
+                    const groups: typeof rooms[] = [];
+                    const sorted = [...rooms].sort((a, b) => a.sortOrder - b.sortOrder);
+                    for (let i = 0; i < sorted.length; i += 3) {
+                      groups.push(sorted.slice(i, i + 3));
+                    }
+                    return groups.map((group, gi) => (
+                      <div key={gi}>
+                        <h3 className="font-semibold text-gray-700 mb-2">
+                          {group[0]?.name.split(" ")[0]}
+                        </h3>
+                        <div className="grid grid-cols-3 gap-3">
+                          {group.map((room) => (
+                            <RoomGrid
+                              key={room.id}
+                              room={room}
+                              seats={seats.get(room.id) ?? new Map()}
+                              onRemoveStudent={handleRemoveStudent}
+                              compact
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    ));
+                  })()}
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {rooms.map((room) => (
+                    <RoomGrid
+                      key={room.id}
+                      room={room}
+                      seats={seats.get(room.id) ?? new Map()}
+                      onRemoveStudent={handleRemoveStudent}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* 미배정 학생 목록 */}

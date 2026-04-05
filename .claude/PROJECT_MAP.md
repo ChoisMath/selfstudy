@@ -34,7 +34,7 @@ src/
 │   ├── admin/                  # 메인관리자 전용
 │   │   ├── layout.tsx          # AdminNav 포함
 │   │   ├── page.tsx            # → /admin/users 리다이렉트
-│   │   ├── users/page.tsx      # 통합 사용자관리 (교사/1학년/2학년/3학년 탭)
+│   │   ├── users/page.tsx      # 통합 사용자관리 (교사/1~3학년 탭, 담당학년 드롭다운, 학생 초기화)
 │   │   ├── seats/page.tsx      # 6탭 좌석배치 (1~3학년 × 오자/야자) + SeatingEditor
 │   │   ├── supervisors/page.tsx # 감독배정 MonthlyCalendar (전학년 6슬롯 모드)
 │   │   ├── statistics/page.tsx # 출결 테이블뷰 + Excel 다운로드
@@ -47,16 +47,17 @@ src/
 │   │   ├── seats/page.tsx      # 2탭 (오후자습/야간자습) + SeatingEditor
 │   │   └── supervisors/page.tsx # MonthlyCalendar (단일학년 2슬롯 모드)
 │   ├── attendance/             # 감독교사
-│   │   ├── layout.tsx
+│   │   ├── layout.tsx          # 모든 교사에게 이동 버튼 (담임교사/감독일정/학년관리)
 │   │   ├── page.tsx            # 자동 학년 라우팅 / 학년 선택
 │   │   └── [grade]/page.tsx    # ★ 핵심: 좌석 출석 그리드 (seat-responsive 디자인)
 │   ├── homeroom/               # 담임교사
-│   │   ├── layout.tsx          # 6개 탭 네비게이션
+│   │   ├── layout.tsx          # 담임 5탭 + 공통 2탭 네비게이션 (세션 로딩 처리)
 │   │   ├── page.tsx            # 자기반 학생 + 주간출석
+│   │   ├── attendance/page.tsx # 담임 월간출결 테이블 + Excel 다운로드
 │   │   ├── participation/page.tsx
 │   │   ├── absence-reasons/page.tsx
 │   │   ├── absence-requests/page.tsx
-│   │   ├── schedule/page.tsx
+│   │   ├── schedule/page.tsx   # 월간 달력 그리드 (전체 학년 감독배정 + 교체)
 │   │   └── password/page.tsx
 │   ├── student/                # 학생
 │   │   ├── layout.tsx          # 3개 탭
@@ -67,9 +68,9 @@ src/
 │
 ├── components/
 │   ├── admin-shared/
-│   │   ├── AdminNav.tsx        # 관리자 네비 (5개: 사용자관리/좌석배치/감독배정/교체이력/통계)
+│   │   ├── AdminNav.tsx        # 관리자 네비 (세션 로딩 처리, 서브관리자용 교사 링크)
 │   │   ├── ParticipationManagement.tsx  # 참여설정 테이블 (grade prop)
-│   │   ├── MonthlyCalendar.tsx  # 월간 감독배정 캘린더 (단일학년 2슬롯 / 전학년 6슬롯)
+│   │   ├── MonthlyCalendar.tsx  # 월간 감독배정 캘린더 (학년당 1슬롯, 텍스트 검색 교사 선택, 담당학년 우선 그룹)
 │   │   └── ExcelUploadModal.tsx # 공용 Excel 업로드 모달 (드래그앤드롭, 교사/학생 공용)
 │   ├── seats/
 │   │   ├── SeatingEditor.tsx       # DndContext + 저장 (props: grade, sessionType)
@@ -83,7 +84,7 @@ src/
 │   ├── api-auth.ts     # withAuth, withGradeAuth, withHomeroomAuth 래퍼
 │   └── prisma.ts       # PrismaClient 싱글톤 (PrismaPg 어댑터)
 │
-├── middleware.ts       # 라우트 보호 (getToken + 명시적 cookieName/salt, Edge Runtime 호환)
+├── middleware.ts       # 라우트 보호 (getToken + 명시적 cookieName/salt, /homeroom 모든 교사 허용)
 ├── types/next-auth.d.ts # Session/JWT 타입 확장
 └── generated/prisma/   # Prisma 자동 생성 (gitignore)
 ```
@@ -105,18 +106,20 @@ src/
 | POST | `absence-reasons` | 불참사유 등록 (트랜잭션) |
 | GET | `absence-requests` | 반 학생 불참신청 목록 |
 | PUT | `absence-requests/[id]` | 승인/반려 (트랜잭션) |
-| GET | `schedule` | 감독일정+교체가능교사 |
+| GET | `schedule` | 전체 학년 감독배정 (본인 포함) |
+| GET | `monthly-attendance` | 담임 월간 출결 데이터 |
+| GET | `export-attendance` | 담임 출결 Excel 다운로드 |
 
 ### 학년관리 (`/api/grade-admin/[grade]/`)
 | 메서드 | 경로 | 설명 |
 |--------|------|------|
 | GET/POST | `students` | 학생 목록/등록 |
 | PUT/DELETE | `students/[id]` | 학생 수정/삭제 |
-| POST | `students/bulk-upload` | Excel 일괄업로드 |
+| POST | `students/bulk-upload` | Excel 일괄업로드 (기존 비활성화 + 새 생성) |
 | GET/PUT | `participation-days` | 참여설정 |
 | GET/POST | `seat-layouts` | 좌석 배치 조회/저장(트랜잭션, roomId 기반) |
-| GET/POST | `supervisor-assignments` | 감독 배정 |
-| DELETE | `supervisor-assignments/[id]` | 배정 해제 |
+| GET/POST | `supervisor-assignments` | 감독 배정 (POST: 오후+야간 동시 생성) |
+| DELETE | `supervisor-assignments/[id]` | 배정 해제 (오후+야간 동시 삭제) |
 
 ### 학생 (`/api/student/`)
 | 메서드 | 경로 | 설명 |
@@ -128,23 +131,24 @@ src/
 ### 관리자 (`/api/admin/`)
 | 메서드 | 경로 | 설명 |
 |--------|------|------|
-| GET/POST | `teachers` | 교사 목록/등록 (includes homeroom/subAdmin assignments) |
-| PUT/DELETE | `teachers/[id]` | 교사 수정/삭제 |
-| GET | `teachers/template` | 교사 Excel 템플릿 다운로드 |
-| POST | `teachers/bulk-upload` | 교사 Excel 일괄업로드 |
+| GET/POST | `teachers` | 교사 목록/등록 (primaryGrade + homeroom/subAdmin) |
+| PUT/DELETE | `teachers/[id]` | 교사 수정/삭제 (primaryGrade 업데이트) |
+| GET | `teachers/template` | 교사 Excel 템플릿 (담당학년 컬럼 포함) |
+| POST | `teachers/bulk-upload` | 교사 Excel 일괄업로드 (담당학년 처리) |
 | GET/POST/DELETE | `sub-admins` | 서브관리자 지정 |
 | GET/POST/DELETE | `homeroom-assignments` | 담임배정 |
 | GET | `supervisor-swap-history` | 감독교체이력 |
 | GET | `statistics?from&to&grade&class` | 출결통계 |
 | GET | `export-excel?from&to&grade` | Excel 다운로드 |
 | GET | `students/template` | 업로드 템플릿 |
+| POST | `students/reset` | 학생 전체 초기화 |
 
 ### 기타
 | 메서드 | 경로 | 설명 |
 |--------|------|------|
 | GET | `/api/supervisor-assignments/my-today` | 오늘 감독배정 확인 |
-| PUT | `/api/supervisor-assignments/[id]` | 감독교체 (swap) |
-| GET | `/api/teachers` | 교사 목록 (드롭다운용) |
+| PUT | `/api/supervisor-assignments/[id]` | 감독교체 (오후+야간 동시, 모든 교사 허용) |
+| GET | `/api/teachers` | 교사 목록 (primaryGrade 포함) |
 | POST | `/api/auth/change-password` | 비밀번호 변경 |
 
 ## 데이터 모델 (13개 모델, 6개 enum)
@@ -159,7 +163,7 @@ Student ──< Attendance >── Teacher (checker)
   └──< SeatLayout >── Room >── StudySession
          (unique: roomId + rowIndex + colIndex)
 
-Teacher ──< TeacherRole (admin/supervisor/homeroom)
+Teacher (+ primaryGrade: nullable int) ──< TeacherRole (admin/supervisor/homeroom)
   ├──< HomeroomAssignment (grade, classNumber)
   ├──< SubAdminAssignment (grade)
   ├──< SupervisorAssignment (date, grade, sessionType)
@@ -208,6 +212,16 @@ Teacher ──< TeacherRole (admin/supervisor/homeroom)
 
 ## 수정 이력 (주요 변경)
 
+### 2026-04-05: 교사 기능 확장 + 감독배정 통합
+- **담임 월간출결**: `/homeroom/attendance` 신규 (월간 테이블 + Excel 다운로드), API 2개 추가 (monthly-attendance, export-attendance)
+- **감독배정 통합**: 오후/야간 → 학년당 하루 1명 (양쪽 동시 처리). MonthlyCalendar 학년당 1슬롯, 텍스트 검색 교사 선택
+- **감독일정 재작성**: `/homeroom/schedule` 월간 달력 그리드 (전체 학년 표시 + 교체)
+- **Teacher.primaryGrade**: 담당학년 필드 추가 (교사 API, 템플릿, 일괄업로드 반영)
+- **학생 관리**: bulk-upload 기존 비활성화+새 생성 방식, 학생 전체 초기화 API 추가
+- **middleware**: /homeroom 접근 모든 교사 허용
+- **UI 개선**: whitespace-nowrap + 가로 스크롤 + 고정열, AdminNav 세션 로딩, attendance layout 이동 버튼
+- **빌드 명령**: `prisma generate && prisma db push && next build`
+
 ### 2026-04-05: 관리자 UI 통합 (feat/admin-ui-consolidation)
 - **학생/교사/서브관리자/담임배정 4페이지** → `/admin/users` 1페이지로 통합 (교사/1~3학년 탭)
 - **AdminNav 메뉴** 8개 → 5개 (사용자관리, 좌석배치, 감독배정, 교체이력, 통계)
@@ -228,7 +242,7 @@ Teacher ──< TeacherRole (admin/supervisor/homeroom)
 
 - **Railway 프로젝트**: courageous-motivation
 - **서비스**: selfstudy + Postgres
-- **빌드**: `prisma generate && next build`
+- **빌드**: `prisma generate && prisma db push && next build`
 - **시작**: `prisma migrate deploy && next start`
 - **배포 브랜치**: `main` (로컬 `master` → `git push origin master:main`)
 - **PORT**: 8080

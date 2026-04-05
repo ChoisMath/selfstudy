@@ -10,6 +10,7 @@ export async function GET(req: Request) {
       { header: "이름", key: "name", width: 20 },
       { header: "아이디", key: "loginId", width: 20 },
       { header: "비밀번호", key: "password", width: 20 },
+      { header: "담당학년", key: "primaryGrade", width: 12 },
     ];
 
     sheet.getRow(1).eachCell((cell) => {
@@ -24,7 +25,7 @@ export async function GET(req: Request) {
       };
     });
 
-    sheet.addRow({ name: "홍길동", loginId: "teacher01", password: "pass1234" });
+    sheet.addRow({ name: "홍길동", loginId: "teacher01", password: "pass1234", primaryGrade: 1 });
 
     const buffer = await workbook.xlsx.writeBuffer();
 

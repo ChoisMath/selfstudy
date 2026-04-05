@@ -4,8 +4,9 @@ import { withAuth } from "@/lib/api-auth";
 
 // GET /api/homeroom/students - 자기 반 학생 + 이번 주 출석 데이터
 export const GET = withAuth(["homeroom", "admin"], async (req: Request, user) => {
+  const isAdmin = user.roles?.includes("admin");
   const assignments = user.homeroomAssignments;
-  if (!assignments || assignments.length === 0) {
+  if (!isAdmin && (!assignments || assignments.length === 0)) {
     return NextResponse.json({ error: "담임 배정이 없습니다." }, { status: 403 });
   }
 
@@ -21,16 +22,18 @@ export const GET = withAuth(["homeroom", "admin"], async (req: Request, user) =>
   friday.setDate(monday.getDate() + 4);
   friday.setHours(23, 59, 59, 999);
 
-  // 모든 담임 반의 학생 조회
-  const classConditions = assignments.map((a) => ({
-    grade: a.grade,
-    classNumber: a.classNumber,
-  }));
+  // admin은 전체 학생, 담임은 자기 반 학생만 조회
+  const classConditions = isAdmin && (!assignments || assignments.length === 0)
+    ? undefined
+    : assignments!.map((a) => ({
+        grade: a.grade,
+        classNumber: a.classNumber,
+      }));
 
   const students = await prisma.student.findMany({
     where: {
       isActive: true,
-      OR: classConditions,
+      ...(classConditions ? { OR: classConditions } : {}),
     },
     orderBy: [{ grade: "asc" }, { classNumber: "asc" }, { studentNumber: "asc" }],
     include: {

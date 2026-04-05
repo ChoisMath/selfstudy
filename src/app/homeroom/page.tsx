@@ -36,7 +36,14 @@ type ResponseData = {
   assignments: { grade: number; classNumber: number }[];
 };
 
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
+const fetcher = async (url: string) => {
+  const res = await fetch(url);
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.error || `${res.status} 오류가 발생했습니다.`);
+  }
+  return res.json();
+};
 
 const DAY_LABELS = ["월", "화", "수", "목", "금"];
 
@@ -66,7 +73,7 @@ function getStatusBadge(status: string | undefined, isParticipating: boolean) {
 }
 
 export default function HomeroomPage() {
-  const { data, isLoading } = useSWR<ResponseData>(
+  const { data, error, isLoading } = useSWR<ResponseData>(
     "/api/homeroom/students",
     fetcher
   );
@@ -156,6 +163,12 @@ export default function HomeroomPage() {
                 <tr>
                   <td colSpan={13} className="px-4 py-8 text-center text-gray-400">
                     불러오는 중...
+                  </td>
+                </tr>
+              ) : error ? (
+                <tr>
+                  <td colSpan={13} className="px-4 py-8 text-center text-red-500">
+                    {error.message}
                   </td>
                 </tr>
               ) : students.length === 0 ? (

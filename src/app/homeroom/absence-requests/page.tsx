@@ -22,7 +22,14 @@ type AbsenceRequestData = {
   createdAt: string;
 };
 
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
+const fetcher = async (url: string) => {
+  const res = await fetch(url);
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.error || `${res.status} 오류가 발생했습니다.`);
+  }
+  return res.json();
+};
 
 const STATUS_LABELS: Record<string, string> = {
   pending: "대기중",
@@ -56,7 +63,7 @@ export default function AbsenceRequestsPage() {
     ? `/api/homeroom/absence-requests?status=${statusFilter}`
     : "/api/homeroom/absence-requests";
 
-  const { data, mutate, isLoading } = useSWR<{
+  const { data, error, mutate, isLoading } = useSWR<{
     requests: AbsenceRequestData[];
   }>(apiUrl, fetcher);
 
@@ -132,6 +139,12 @@ export default function AbsenceRequestsPage() {
                 <tr>
                   <td colSpan={7} className="px-4 py-8 text-center text-gray-400">
                     불러오는 중...
+                  </td>
+                </tr>
+              ) : error ? (
+                <tr>
+                  <td colSpan={7} className="px-4 py-8 text-center text-red-500">
+                    {error.message}
                   </td>
                 </tr>
               ) : requests.length === 0 ? (

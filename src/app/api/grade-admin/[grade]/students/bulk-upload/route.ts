@@ -146,53 +146,63 @@ export async function POST(
         });
       }
 
-      // DB 기존 데이터 중복 체크
+      // DB 기존 학생 조회 (활성 학생만)
       const existingStudents = await prisma.student.findMany({
         where: {
           grade,
+          isActive: true,
           OR: deduplicatedRows.map((r) => ({
             classNumber: r.classNumber,
             studentNumber: r.studentNumber,
           })),
         },
         select: {
+          id: true,
           grade: true,
           classNumber: true,
           studentNumber: true,
+          name: true,
         },
       });
 
-      const existingKeys = new Set(
-        existingStudents.map(
-          (s) => `${s.grade}-${s.classNumber}-${s.studentNumber}`
-        )
+      const existingMap = new Map(
+        existingStudents.map((s) => [
+          `${s.grade}-${s.classNumber}-${s.studentNumber}`,
+          s,
+        ])
       );
 
-      const toCreate: typeof deduplicatedRows = [];
-      for (const r of deduplicatedRows) {
-        const key = `${r.grade}-${r.classNumber}-${r.studentNumber}`;
-        if (existingKeys.has(key)) {
-          failed.push({
-            row: r.row,
-            reason: `DB에 이미 존재하는 학생입니다: ${r.grade}학년 ${r.classNumber}반 ${r.studentNumber}번`,
-          });
-        } else {
-          toCreate.push(r);
-        }
-      }
-
-      // 일괄 생성
+      // 기존 학생 비활성화 + 새 학생 생성
       let successCount = 0;
-      if (toCreate.length > 0) {
-        const result = await prisma.student.createMany({
-          data: toCreate.map((r) => ({
-            grade: r.grade,
-            classNumber: r.classNumber,
-            studentNumber: r.studentNumber,
-            name: r.name,
-          })),
+      if (deduplicatedRows.length > 0) {
+        await prisma.$transaction(async (tx) => {
+          for (const r of deduplicatedRows) {
+            const key = `${r.grade}-${r.classNumber}-${r.studentNumber}`;
+            const existing = existingMap.get(key);
+
+            if (existing) {
+              // 기존 학생 비활성화 + 학번 변경 (unique 제약 해제)
+              await tx.student.update({
+                where: { id: existing.id },
+                data: {
+                  isActive: false,
+                  studentNumber: -(existing.id), // unique 충돌 방지
+                },
+              });
+            }
+
+            // 새 학생 생성
+            await tx.student.create({
+              data: {
+                grade: r.grade,
+                classNumber: r.classNumber,
+                studentNumber: r.studentNumber,
+                name: r.name,
+              },
+            });
+            successCount++;
+          }
         });
-        successCount = result.count;
       }
 
       // 실패 목록을 행 번호 순으로 정렬

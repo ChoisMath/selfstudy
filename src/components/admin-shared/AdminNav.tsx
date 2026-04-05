@@ -11,7 +11,7 @@ interface NavItem {
 
 export function AdminNav() {
   const pathname = usePathname();
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const user = session?.user;
   const isAdmin = user?.roles?.includes("admin");
   const subAdminGrades = user?.subAdminGrades || [];
@@ -38,6 +38,18 @@ export function AdminNav() {
         href: `/grade-admin/${g}`,
       }))
     : gradeAdminItems;
+
+  if (status === "loading") {
+    return (
+      <nav className="bg-white border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="flex items-center h-14">
+            <span className="text-lg font-bold text-gray-900">출석부</span>
+          </div>
+        </div>
+      </nav>
+    );
+  }
 
   return (
     <nav className="bg-white border-b border-gray-200">
@@ -85,7 +97,15 @@ export function AdminNav() {
           </div>
 
           <div className="flex items-center gap-3 shrink-0 ml-4">
-            <span className="text-sm text-gray-500">{user?.name}</span>
+            {!isAdmin && (
+              <Link
+                href={user?.roles?.includes("homeroom") ? "/homeroom" : "/homeroom/schedule"}
+                className="px-3 py-1.5 text-xs font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-md hover:bg-blue-100 transition-colors whitespace-nowrap"
+              >
+                {user?.roles?.includes("homeroom") ? "담임교사" : "감독일정"}
+              </Link>
+            )}
+            <span className="text-sm text-gray-500 whitespace-nowrap">{user?.name}</span>
             <button
               onClick={() => signOut({ callbackUrl: "/login" })}
               className="text-sm text-gray-500 hover:text-gray-700"

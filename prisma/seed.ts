@@ -133,11 +133,17 @@ async function main() {
       },
     });
 
-    // 도면 기준: 첫 교실 5열x3행(15석), 둘째 5열x3행(15석), 셋째 4열x3행(12석)
+    // 실제 도면: 각 반에 분단 3개(2열×3행=6석씩), 반당 18석, 총 54석
     const afternoonRooms = [
-      { name: `${grade}-4반 교실`, cols: 5, rows: 3, sortOrder: 1 },
-      { name: `${grade}-5반 교실`, cols: 5, rows: 3, sortOrder: 2 },
-      { name: `${grade}-6반 교실`, cols: 4, rows: 3, sortOrder: 3 },
+      { name: `${grade}-4반 분단1`, cols: 2, rows: 3, sortOrder: 1 },
+      { name: `${grade}-4반 분단2`, cols: 2, rows: 3, sortOrder: 2 },
+      { name: `${grade}-4반 분단3`, cols: 2, rows: 3, sortOrder: 3 },
+      { name: `${grade}-5반 분단1`, cols: 2, rows: 3, sortOrder: 4 },
+      { name: `${grade}-5반 분단2`, cols: 2, rows: 3, sortOrder: 5 },
+      { name: `${grade}-5반 분단3`, cols: 2, rows: 3, sortOrder: 6 },
+      { name: `${grade}-6반 분단1`, cols: 2, rows: 3, sortOrder: 7 },
+      { name: `${grade}-6반 분단2`, cols: 2, rows: 3, sortOrder: 8 },
+      { name: `${grade}-6반 분단3`, cols: 2, rows: 3, sortOrder: 9 },
     ];
 
     for (const room of afternoonRooms) {
@@ -157,13 +163,14 @@ async function main() {
       },
     });
 
-    // 도면 기준 미래홀 방 구성
+    // 도면 기준 미래홀 방 구성 (2학년은 복도석 추가)
     const nightRooms = [
-      { name: "미래예술실2", cols: 4, rows: 5, sortOrder: 1 },  // 20석
-      { name: "미래202", cols: 3, rows: 2, sortOrder: 2 },       // 6석
-      { name: "미래아띠존", cols: 4, rows: 2, sortOrder: 3 },    // 8석
-      { name: "미래201", cols: 3, rows: 2, sortOrder: 4 },       // 6석
-      { name: "미래예술실1", cols: 5, rows: 10, sortOrder: 5 },  // 50석
+      ...(grade === 2 ? [{ name: "복도석", cols: 1, rows: 12, sortOrder: 0 }] : []),
+      { name: "미래혜윰실2", cols: 5, rows: 4, sortOrder: 1 },   // 20석
+      { name: "미래202", cols: 3, rows: 2, sortOrder: 2 },        // 6석
+      { name: "미래아띠존", cols: 4, rows: 2, sortOrder: 3 },     // 8석
+      { name: "미래201", cols: 3, rows: 2, sortOrder: 4 },        // 6석
+      { name: "미래혜윰실1", cols: 5, rows: 10, sortOrder: 5 },   // 50석
     ];
 
     for (const room of nightRooms) {
@@ -181,25 +188,35 @@ async function main() {
       orderBy: { sortOrder: "asc" },
     });
 
+    // 반별로 분단 3개씩 그룹화하여 학생 배정
+    // sortOrder 1-3 → 4반, 4-6 → 5반, 7-9 → 6반
+    const classRooms = new Map<number, typeof rooms>();
     for (const room of rooms) {
-      const cls = room.sortOrder;
+      const classNumber = Math.floor((room.sortOrder - 1) / 3) + 4;
+      if (!classRooms.has(classNumber)) classRooms.set(classNumber, []);
+      classRooms.get(classNumber)!.push(room);
+    }
+
+    for (const [classNumber, cRooms] of classRooms) {
       const students = await prisma.student.findMany({
-        where: { grade, classNumber: cls },
+        where: { grade, classNumber },
         orderBy: { studentNumber: "asc" },
       });
 
       let idx = 0;
-      for (let row = 0; row < room.rows && idx < students.length; row++) {
-        for (let col = 0; col < room.cols && idx < students.length; col++) {
-          await prisma.seatLayout.create({
-            data: {
-              roomId: room.id,
-              rowIndex: row,
-              colIndex: col,
-              studentId: students[idx].id,
-            },
-          });
-          idx++;
+      for (const room of cRooms) {
+        for (let row = 0; row < room.rows && idx < students.length; row++) {
+          for (let col = 0; col < room.cols && idx < students.length; col++) {
+            await prisma.seatLayout.create({
+              data: {
+                roomId: room.id,
+                rowIndex: row,
+                colIndex: col,
+                studentId: students[idx].id,
+              },
+            });
+            idx++;
+          }
         }
       }
     }

@@ -1,9 +1,8 @@
 "use client";
 
 import { useSession, signOut } from "next-auth/react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { useEffect } from "react";
 
 const TABS = [
   { href: "/student", label: "참여일정" },
@@ -18,16 +17,6 @@ export default function StudentLayout({
 }) {
   const { data: session, status } = useSession();
   const pathname = usePathname();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (status === "unauthenticated") {
-      router.replace("/login");
-    }
-    if (status === "authenticated" && session?.user?.userType !== "student") {
-      router.replace("/login");
-    }
-  }, [status, session, router]);
 
   if (status === "loading") {
     return (
@@ -37,11 +26,8 @@ export default function StudentLayout({
     );
   }
 
-  if (!session?.user || session.user.userType !== "student") {
-    return null;
-  }
-
-  const user = session.user;
+  const user = session?.user;
+  if (!user) return null;
   const displayCode = `${user.grade}-${user.classNumber}-${String(user.studentNumber).padStart(2, "0")}`;
 
   return (

@@ -14,9 +14,10 @@ export async function loginTeacher(formData: FormData) {
       redirectTo: "/",
     });
   } catch (error) {
-    // Next.js redirect는 에러로 throw됨 — 다시 throw해야 리다이렉트 동작
+    // signIn 성공 시 redirect error가 throw됨
+    // 소프트 네비게이션(re-throw) 대신 성공 반환 → 클라이언트에서 full reload
     if (isRedirectError(error)) {
-      throw error;
+      return { success: true };
     }
     return { error: "ID 또는 비밀번호가 올바르지 않습니다." };
   }
@@ -38,7 +39,7 @@ export async function loginStudent(formData: FormData) {
     });
   } catch (error) {
     if (isRedirectError(error)) {
-      throw error;
+      return { success: true };
     }
     return { error: "이름 또는 학번이 올바르지 않습니다." };
   }

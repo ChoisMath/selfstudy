@@ -101,53 +101,68 @@ export default function RoomGrid({
   room,
   seats,
   onRemoveStudent,
+  gapAfterRows,
+  hideTeacherDesk,
+  compact,
 }: {
   room: Room;
   seats: RoomSeats;
   onRemoveStudent: (roomId: number, row: number, col: number) => void;
+  gapAfterRows?: number[];
+  hideTeacherDesk?: boolean;
+  compact?: boolean;
 }) {
   return (
-    <div className="bg-white rounded-lg border p-4">
+    <div className={`bg-white rounded-lg border ${compact ? "p-2" : "p-4"}`}>
       <div className="flex items-center justify-between mb-3">
-        <h3 className="font-semibold text-gray-800">{room.name}</h3>
-        <span className="text-xs text-gray-400">
-          {room.rows}행 x {room.cols}열
-        </span>
-      </div>
-
-      <div
-        className="grid gap-1"
-        style={{
-          gridTemplateColumns: `repeat(${room.cols}, minmax(0, 1fr))`,
-        }}
-      >
-        {Array.from({ length: room.rows }, (_, r) =>
-          Array.from({ length: room.cols }, (_, c) => {
-            const key = `${r}-${c}`;
-            const cell = seats.get(key) ?? {
-              studentId: null,
-              student: null,
-            };
-            return (
-              <SeatCell
-                key={key}
-                roomId={room.id}
-                row={r}
-                col={c}
-                cell={cell}
-                onRemove={() => onRemoveStudent(room.id, r, c)}
-              />
-            );
-          })
+        <h3 className={`font-semibold text-gray-800 ${compact ? "text-sm" : ""}`}>{room.name}</h3>
+        {!compact && (
+          <span className="text-xs text-gray-400">
+            {room.rows}행 x {room.cols}열
+          </span>
         )}
       </div>
 
-      {/* 교탁 표시 (하단) */}
-      <div className="mt-3 text-center">
-        <div className="inline-block bg-gray-200 text-gray-500 text-xs px-6 py-1 rounded">
-          교탁
-        </div>
+      <div className="flex flex-col">
+        {Array.from({ length: room.rows }, (_, r) => (
+          <div key={`row-${r}`}>
+            <div
+              className="grid gap-1"
+              style={{
+                gridTemplateColumns: `repeat(${room.cols}, minmax(0, 1fr))`,
+                marginBottom: gapAfterRows?.includes(r) ? "12px" : "4px",
+              }}
+            >
+              {Array.from({ length: room.cols }, (_, c) => {
+                const key = `${r}-${c}`;
+                const cell = seats.get(key) ?? {
+                  studentId: null,
+                  student: null,
+                };
+                return (
+                  <SeatCell
+                    key={key}
+                    roomId={room.id}
+                    row={r}
+                    col={c}
+                    cell={cell}
+                    onRemove={() => onRemoveStudent(room.id, r, c)}
+                  />
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </div>
+
+      {/* 교탁 표시 (하단) */}
+      {!hideTeacherDesk && (
+        <div className="mt-3 text-center">
+          <div className="inline-block bg-gray-200 text-gray-500 text-xs px-6 py-1 rounded">
+            교탁
+          </div>
+        </div>
+      )}
     </div>
   );
 }

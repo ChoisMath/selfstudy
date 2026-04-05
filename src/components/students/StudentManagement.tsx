@@ -349,9 +349,12 @@ export default function StudentManagement({ grade }: { grade: number }) {
       {/* 테이블 */}
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b border-gray-200">
+          <table className="w-full text-sm whitespace-nowrap">
+            <thead className="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
               <tr>
+                <th className="px-4 py-3 text-left font-medium text-gray-600 sticky left-0 bg-gray-50 z-20">
+                  이름
+                </th>
                 <th className="px-4 py-3 text-left font-medium text-gray-600">
                   학년
                 </th>
@@ -360,9 +363,6 @@ export default function StudentManagement({ grade }: { grade: number }) {
                 </th>
                 <th className="px-4 py-3 text-left font-medium text-gray-600">
                   번호
-                </th>
-                <th className="px-4 py-3 text-left font-medium text-gray-600">
-                  이름
                 </th>
                 <th className="px-4 py-3 text-left font-medium text-gray-600">
                   학번
@@ -394,15 +394,15 @@ export default function StudentManagement({ grade }: { grade: number }) {
                     key={student.id}
                     className={`hover:bg-gray-50 ${!student.isActive ? "opacity-50" : ""}`}
                   >
+                    <td className="px-4 py-3 text-gray-900 font-medium sticky left-0 bg-white z-10">
+                      {student.name}
+                    </td>
                     <td className="px-4 py-3 text-gray-900">{student.grade}</td>
                     <td className="px-4 py-3 text-gray-900">
                       {student.classNumber}
                     </td>
                     <td className="px-4 py-3 text-gray-900">
                       {student.studentNumber}
-                    </td>
-                    <td className="px-4 py-3 text-gray-900 font-medium">
-                      {student.name}
                     </td>
                     <td className="px-4 py-3 text-gray-500 font-mono text-xs">
                       {computeStudentId(

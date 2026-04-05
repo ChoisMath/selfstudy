@@ -18,6 +18,7 @@ export const GET = withAuth(["admin"], async () => {
       id: t.id,
       loginId: t.loginId,
       name: t.name,
+      primaryGrade: t.primaryGrade,
       googleId: t.googleId,
       roles: t.roles.map((r) => r.role),
       homeroomAssignments: t.homeroomAssignments,

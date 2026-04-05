@@ -8,6 +8,7 @@ type Teacher = {
   id: number;
   loginId: string;
   name: string;
+  primaryGrade: number | null;
   roles: string[];
   homeroomAssignments: { id: number; grade: number; classNumber: number }[];
   subAdminGrades: number[];
@@ -34,30 +35,66 @@ const CLASS_OPTIONS = [1, 2, 3].flatMap((g) =>
 
 export default function AdminUsersPage() {
   const [activeIdx, setActiveIdx] = useState(0);
+  const [resetting, setResetting] = useState(false);
+  const [resetKey, setResetKey] = useState(0);
   const activeTab = TABS[activeIdx];
+
+  const handleResetStudents = async () => {
+    const msg = "정말 모든 학생 정보를 초기화하시겠습니까?\n\n" +
+      "학생 명단, 출결기록, 참여설정, 좌석배치, 불참신청 등\n" +
+      "학생과 관련된 모든 데이터가 영구 삭제됩니다.\n\n" +
+      "이 작업은 되돌릴 수 없습니다.";
+    if (!confirm(msg)) return;
+    if (!confirm("최종 확인: 정말 초기화하시겠습니까?")) return;
+
+    setResetting(true);
+    try {
+      const res = await fetch("/api/admin/students/reset", { method: "POST" });
+      if (res.ok) {
+        alert("학생 정보가 초기화되었습니다.");
+        setResetKey((k) => k + 1);
+      } else {
+        const data = await res.json();
+        alert(data.error || "초기화에 실패했습니다.");
+      }
+    } catch {
+      alert("초기화에 실패했습니다.");
+    } finally {
+      setResetting(false);
+    }
+  };
 
   return (
     <div>
-      <div className="flex gap-1 mb-6 bg-gray-100 rounded-lg p-1 w-fit">
-        {TABS.map((tab, idx) => (
-          <button
-            key={idx}
-            onClick={() => setActiveIdx(idx)}
-            className={`px-4 py-2 text-sm rounded-md transition-colors ${
-              activeIdx === idx
-                ? "bg-white text-blue-700 shadow-sm font-medium"
-                : "text-gray-600 hover:text-gray-900"
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex gap-1 bg-gray-100 rounded-lg p-1 w-fit overflow-x-auto">
+          {TABS.map((tab, idx) => (
+            <button
+              key={idx}
+              onClick={() => setActiveIdx(idx)}
+              className={`px-4 py-2 text-sm rounded-md transition-colors whitespace-nowrap ${
+                activeIdx === idx
+                  ? "bg-white text-blue-700 shadow-sm font-medium"
+                  : "text-gray-600 hover:text-gray-900"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+        <button
+          onClick={handleResetStudents}
+          disabled={resetting}
+          className="px-4 py-2 text-xs text-red-600 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 disabled:opacity-50 whitespace-nowrap"
+        >
+          {resetting ? "초기화 중..." : "학생 전체 초기화"}
+        </button>
       </div>
 
       {activeTab.type === "teachers" ? (
         <TeacherTab />
       ) : (
-        <StudentManagement key={activeTab.grade} grade={activeTab.grade} />
+        <StudentManagement key={`${activeTab.grade}-${resetKey}`} grade={activeTab.grade} />
       )}
     </div>
   );
@@ -125,10 +162,8 @@ function TeacherTab() {
     if (!teacher) return;
 
     for (const ha of teacher.homeroomAssignments) {
-      await fetch("/api/admin/homeroom-assignments", {
+      await fetch(`/api/admin/homeroom-assignments?id=${ha.id}`, {
         method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ grade: ha.grade, classNumber: ha.classNumber }),
       });
     }
 
@@ -168,6 +203,16 @@ function TeacherTab() {
     fetchTeachers();
   };
 
+  const handlePrimaryGradeChange = async (teacherId: number, value: string) => {
+    const primaryGrade = value === "" ? null : value;
+    await fetch(`/api/admin/teachers/${teacherId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ primaryGrade }),
+    });
+    fetchTeachers();
+  };
+
   const openCreate = () => {
     setEditTarget(null);
     setForm({ loginId: "", name: "", password: "" });
@@ -197,13 +242,14 @@ function TeacherTab() {
         </button>
       </div>
 
-      <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-        <table className="w-full">
-          <thead>
+      <div className="bg-white border border-gray-200 rounded-lg overflow-x-auto">
+        <table className="w-full whitespace-nowrap">
+          <thead className="sticky top-0 z-10">
             <tr className="bg-gray-50 border-b border-gray-200">
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">이름</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 sticky left-0 bg-gray-50 z-20">이름</th>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">아이디</th>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">역할</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">담당학년</th>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">담임</th>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">서브관리자</th>
               <th className="px-4 py-3 text-center text-xs font-medium text-gray-500">작업</th>
@@ -212,11 +258,11 @@ function TeacherTab() {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={6} className="text-center py-8 text-gray-400">로딩 중...</td>
+                <td colSpan={7} className="text-center py-8 text-gray-400">로딩 중...</td>
               </tr>
             ) : teachers.length === 0 ? (
               <tr>
-                <td colSpan={6} className="text-center py-8 text-gray-400">등록된 교사가 없습니다.</td>
+                <td colSpan={7} className="text-center py-8 text-gray-400">등록된 교사가 없습니다.</td>
               </tr>
             ) : (
               teachers.map((t) => {
@@ -231,10 +277,10 @@ function TeacherTab() {
 
                 return (
                   <tr key={t.id} className="border-b border-gray-100 hover:bg-gray-50">
-                    <td className="px-4 py-3 text-sm font-medium text-gray-900">{t.name}</td>
+                    <td className="px-4 py-3 text-sm font-medium text-gray-900 sticky left-0 bg-white z-10">{t.name}</td>
                     <td className="px-4 py-3 text-sm text-gray-600">{t.loginId}</td>
                     <td className="px-4 py-3">
-                      <div className="flex gap-1 flex-wrap">
+                      <div className="flex gap-1">
                         {t.roles.map((role) => (
                           <span
                             key={role}
@@ -250,6 +296,18 @@ function TeacherTab() {
                           </span>
                         ))}
                       </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <select
+                        value={t.primaryGrade ?? ""}
+                        onChange={(e) => handlePrimaryGradeChange(t.id, e.target.value)}
+                        className="text-sm border border-gray-300 rounded-md px-2 py-1 w-24"
+                      >
+                        <option value="">없음</option>
+                        <option value="1">1학년</option>
+                        <option value="2">2학년</option>
+                        <option value="3">3학년</option>
+                      </select>
                     </td>
                     <td className="px-4 py-3">
                       <select

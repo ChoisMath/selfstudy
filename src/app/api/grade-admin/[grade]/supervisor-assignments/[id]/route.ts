@@ -27,8 +27,12 @@ export async function DELETE(
       );
     }
 
-    await prisma.supervisorAssignment.delete({
-      where: { id },
+    // 같은 날짜, 같은 학년의 오후+야간 모두 삭제
+    await prisma.supervisorAssignment.deleteMany({
+      where: {
+        grade,
+        date: assignment.date,
+      },
     });
 
     return NextResponse.json({ success: true });

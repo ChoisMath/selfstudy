@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 
-type Teacher = { id: number; name: string };
+type Teacher = { id: number; name: string; primaryGrade?: number | null };
 type Assignment = {
   id: number;
   teacherId: number;
@@ -18,10 +18,6 @@ type SlotConfig = {
   label: string;
 };
 
-const SESSION_LABELS: Record<string, string> = {
-  afternoon: "오",
-  night: "야",
-};
 const DAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"];
 
 function formatDate(d: Date) {
@@ -61,14 +57,12 @@ export default function MonthlyCalendar({
 
   const slots: SlotConfig[] = useMemo(() => {
     if (showAllGrades) {
-      return [1, 2, 3].flatMap((g) => [
-        { grade: g, sessionType: "afternoon" as const, label: `${g}학년 ${SESSION_LABELS.afternoon}` },
-        { grade: g, sessionType: "night" as const, label: `${g}학년 ${SESSION_LABELS.night}` },
-      ]);
+      return [1, 2, 3].map((g) => ({
+        grade: g, sessionType: "afternoon" as const, label: `${g}학년`,
+      }));
     }
     return [
-      { grade: grade!, sessionType: "afternoon" as const, label: "오후자습" },
-      { grade: grade!, sessionType: "night" as const, label: "야간자습" },
+      { grade: grade!, sessionType: "afternoon" as const, label: "감독" },
     ];
   }, [grade, showAllGrades]);
 
@@ -133,44 +127,43 @@ export default function MonthlyCalendar({
   const handleAssign = async (
     date: Date,
     g: number,
-    sessionType: string,
+    _sessionType: string,
     teacherId: number | null
   ) => {
     const dateStr = formatDate(date);
-    const cellKey = `${dateStr}-${g}-${sessionType}`;
+    const cellKey = `${dateStr}-${g}-afternoon`;
     setSaving(cellKey);
     try {
       if (teacherId === null) {
-        const existing = getAssignment(date, g, sessionType);
+        // 해당 날짜+학년의 afternoon 배정을 찾아 DELETE (API가 양쪽 모두 삭제)
+        const existing = getAssignment(date, g, "afternoon");
         if (existing) {
           const res = await fetch(
             `/api/grade-admin/${g}/supervisor-assignments/${existing.id}`,
             { method: "DELETE" }
           );
           if (res.ok)
-            setAssignments((prev) => prev.filter((a) => a.id !== existing.id));
+            setAssignments((prev) =>
+              prev.filter((a) => !(a.date.startsWith(dateStr) && a.grade === g))
+            );
         }
       } else {
+        // POST가 오후+야간 동시 생성
         const res = await fetch(
           `/api/grade-admin/${g}/supervisor-assignments`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ teacherId, date: dateStr, sessionType }),
+            body: JSON.stringify({ teacherId, date: dateStr }),
           }
         );
         if (res.ok) {
           const data = await res.json();
           setAssignments((prev) => [
             ...prev.filter(
-              (a) =>
-                !(
-                  a.date.startsWith(dateStr) &&
-                  a.grade === g &&
-                  a.sessionType === sessionType
-                )
+              (a) => !(a.date.startsWith(dateStr) && a.grade === g)
             ),
-            data.assignment,
+            ...(data.assignments || [data.assignment]),
           ]);
         }
       }
@@ -236,12 +229,13 @@ export default function MonthlyCalendar({
         <div className="text-center py-4 text-sm text-gray-400">로딩 중...</div>
       )}
 
-      <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-        <div className="grid grid-cols-7 bg-gray-50 border-b border-gray-200">
+      <div className="bg-white border border-gray-200 rounded-lg overflow-x-auto">
+        <div className="min-w-[700px]">
+        <div className="grid grid-cols-7 bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
           {DAY_LABELS.map((label, i) => (
             <div
               key={i}
-              className={`px-2 py-2 text-center text-xs font-medium ${
+              className={`px-2 py-2 text-center text-sm font-medium ${
                 i === 0 ? "text-red-400" : i === 6 ? "text-blue-400" : "text-gray-500"
               }`}
             >
@@ -251,84 +245,211 @@ export default function MonthlyCalendar({
         </div>
 
         <div className="grid grid-cols-7">
-          {monthDays.map((date, idx) => (
-            <div
-              key={idx}
-              className={`min-h-[100px] border-b border-r border-gray-100 p-1 ${
-                !date
-                  ? "bg-gray-50"
-                  : isWeekend(date)
+          {monthDays.map((date, idx) => {
+            const isSingleSlot = slots.length === 1;
+            return (
+              <div
+                key={idx}
+                className={`${isSingleSlot ? "min-h-[80px] sm:min-h-[100px]" : "min-h-[80px] sm:min-h-[110px]"} border-b border-r border-gray-100 p-1 sm:p-1.5 ${
+                  !date
                     ? "bg-gray-50"
-                    : ""
-              }`}
-            >
-              {date && (
-                <>
-                  <div
-                    className={`text-xs font-medium mb-1 ${
-                      date.getDay() === 0
-                        ? "text-red-400"
-                        : date.getDay() === 6
-                          ? "text-blue-400"
-                          : "text-gray-700"
-                    }`}
-                  >
-                    {date.getDate()}
-                  </div>
-                  {!isWeekend(date) && (
-                    <div className="space-y-0.5">
-                      {slots.map((slot) => {
-                        const assignment = getAssignment(
-                          date,
-                          slot.grade,
-                          slot.sessionType
-                        );
-                        const cellKey = `${formatDate(date)}-${slot.grade}-${slot.sessionType}`;
-                        const isSaving = saving === cellKey;
-                        return (
-                          <div key={cellKey} className="flex items-center gap-0.5">
-                            <span className="text-[10px] text-gray-400 w-12 shrink-0 truncate">
-                              {slot.label}
-                            </span>
-                            <select
-                              value={assignment?.teacherId ?? ""}
-                              disabled={loading || isSaving}
-                              onChange={(e) =>
-                                handleAssign(
-                                  date,
-                                  slot.grade,
-                                  slot.sessionType,
-                                  e.target.value === ""
-                                    ? null
-                                    : parseInt(e.target.value, 10)
-                                )
-                              }
-                              className={`flex-1 text-[11px] border rounded px-1 py-0.5 min-w-0 ${
-                                isSaving
-                                  ? "bg-yellow-50 border-yellow-300"
-                                  : assignment
-                                    ? "bg-blue-50 border-blue-200 text-blue-800"
-                                    : "bg-white border-gray-200 text-gray-400"
-                              }`}
-                            >
-                              <option value="">미배정</option>
-                              {teachers.map((t) => (
-                                <option key={t.id} value={t.id}>
-                                  {t.name}
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-                        );
-                      })}
+                    : isWeekend(date)
+                      ? "bg-gray-50"
+                      : ""
+                }`}
+              >
+                {date && (
+                  <>
+                    <div
+                      className={`text-xs sm:text-sm font-semibold mb-0.5 sm:mb-1 ${
+                        date.getDay() === 0
+                          ? "text-red-400"
+                          : date.getDay() === 6
+                            ? "text-blue-400"
+                            : "text-gray-700"
+                      }`}
+                    >
+                      {date.getDate()}
                     </div>
-                  )}
-                </>
-              )}
-            </div>
-          ))}
+                    {!isWeekend(date) && (
+                      <div className={isSingleSlot ? "mt-1" : "space-y-0.5"}>
+                        {slots.map((slot) => {
+                          const assignment = getAssignment(
+                            date,
+                            slot.grade,
+                            slot.sessionType
+                          );
+                          const cellKey = `${formatDate(date)}-${slot.grade}-${slot.sessionType}`;
+                          const isSaving = saving === cellKey;
+                          return (
+                            <div key={cellKey} className={`flex items-center ${isSingleSlot ? "" : "gap-0.5"}`}>
+                              {!isSingleSlot && (
+                                <span className="text-[10px] text-gray-400 w-8 shrink-0">
+                                  {slot.label}
+                                </span>
+                              )}
+                              <CalendarTeacherSelect
+                                teachers={teachers}
+                                grade={slot.grade}
+                                value={assignment?.teacherId ?? null}
+                                disabled={loading || isSaving}
+                                isSaving={isSaving}
+                                isSingleSlot={isSingleSlot}
+                                onChange={(id) =>
+                                  handleAssign(date, slot.grade, slot.sessionType, id)
+                                }
+                              />
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            );
+          })}
+        </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+function CalendarTeacherSelect({
+  teachers,
+  grade,
+  value,
+  disabled,
+  isSaving,
+  isSingleSlot,
+  onChange,
+}: {
+  teachers: Teacher[];
+  grade: number;
+  value: number | null;
+  disabled: boolean;
+  isSaving: boolean;
+  isSingleSlot: boolean;
+  onChange: (id: number | null) => void;
+}) {
+  const [query, setQuery] = useState("");
+  const [isOpen, setIsOpen] = useState(false);
+  const [highlightIdx, setHighlightIdx] = useState(0);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const listRef = useRef<HTMLUListElement>(null);
+
+  const selectedName = teachers.find((t) => t.id === value)?.name ?? "";
+
+  // 학년 우선 정렬 + 검색 필터
+  const grouped = useMemo(() => {
+    const filtered = query
+      ? teachers.filter((t) => t.name.includes(query))
+      : teachers;
+    const primary = filtered.filter((t) => t.primaryGrade === grade);
+    const others = filtered.filter((t) => t.primaryGrade !== grade);
+    return { primary, others };
+  }, [teachers, query, grade]);
+
+  const allFiltered = useMemo(
+    () => [...grouped.primary, ...grouped.others],
+    [grouped]
+  );
+
+  useEffect(() => { setHighlightIdx(0); }, [allFiltered]);
+
+  useEffect(() => {
+    if (isOpen && listRef.current) {
+      const el = listRef.current.children[highlightIdx] as HTMLElement;
+      el?.scrollIntoView({ block: "nearest" });
+    }
+  }, [highlightIdx, isOpen]);
+
+  const select = (id: number | null) => {
+    onChange(id);
+    setQuery("");
+    setIsOpen(false);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (!isOpen) {
+      if (e.key === "ArrowDown" || e.key === "Enter") { setIsOpen(true); e.preventDefault(); }
+      return;
+    }
+    switch (e.key) {
+      case "ArrowDown": e.preventDefault(); setHighlightIdx((i) => Math.min(i + 1, allFiltered.length - 1)); break;
+      case "ArrowUp": e.preventDefault(); setHighlightIdx((i) => Math.max(i - 1, 0)); break;
+      case "Enter":
+        e.preventDefault();
+        if (allFiltered[highlightIdx]) select(allFiltered[highlightIdx].id);
+        break;
+      case "Escape": setIsOpen(false); setQuery(""); break;
+    }
+  };
+
+  // 리스트 항목에서 구분선 위치 계산
+  const separatorAfter = grouped.primary.length > 0 && grouped.others.length > 0
+    ? grouped.primary.length - 1
+    : -1;
+
+  return (
+    <div className="relative flex-1 min-w-0">
+      <input
+        ref={inputRef}
+        type="text"
+        disabled={disabled}
+        value={isOpen ? query : selectedName}
+        onChange={(e) => { setQuery(e.target.value); setIsOpen(true); }}
+        onFocus={() => { setQuery(""); setIsOpen(true); }}
+        onBlur={() => setTimeout(() => setIsOpen(false), 150)}
+        onKeyDown={handleKeyDown}
+        placeholder={value ? selectedName : "미배정"}
+        className={`w-full ${isSingleSlot
+          ? "text-xs sm:text-sm py-1 sm:py-1.5 px-1 font-medium"
+          : "text-[11px] px-1 py-0.5"
+        } border rounded min-w-0 ${
+          isSaving
+            ? "bg-yellow-50 border-yellow-300"
+            : value
+              ? "bg-blue-50 border-blue-200 text-blue-800"
+              : "bg-white border-gray-200 text-gray-400"
+        }`}
+      />
+      {isOpen && (
+        <ul
+          ref={listRef}
+          className="absolute z-50 w-48 mt-0.5 bg-white border border-gray-200 rounded-md shadow-lg max-h-48 overflow-y-auto text-sm"
+        >
+          <li
+            onMouseDown={() => select(null)}
+            className={`px-2 py-1.5 cursor-pointer text-gray-400 hover:bg-gray-50 ${
+              highlightIdx === -1 ? "bg-blue-50" : ""
+            }`}
+          >
+            미배정
+          </li>
+          {allFiltered.map((t, idx) => (
+            <li
+              key={t.id}
+              onMouseDown={() => select(t.id)}
+              onMouseEnter={() => setHighlightIdx(idx)}
+              className={`px-2 py-1.5 cursor-pointer ${
+                idx === highlightIdx ? "bg-blue-50 text-blue-700" : "text-gray-700 hover:bg-gray-50"
+              } ${t.id === value ? "font-semibold" : ""} ${
+                idx === separatorAfter ? "border-b border-gray-200" : ""
+              }`}
+            >
+              {t.name}
+              {t.primaryGrade && (
+                <span className="text-[10px] text-gray-400 ml-1">{t.primaryGrade}학년</span>
+              )}
+            </li>
+          ))}
+          {allFiltered.length === 0 && query && (
+            <li className="px-2 py-1.5 text-gray-400">검색 결과 없음</li>
+          )}
+        </ul>
+      )}
     </div>
   );
 }
