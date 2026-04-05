@@ -52,8 +52,6 @@ export default function StatisticsPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">출결 통계</h1>
-
       {/* 필터 */}
       <div className="bg-white rounded-lg border border-gray-200 p-4 mb-6">
         <div className="flex flex-wrap gap-3 items-end">

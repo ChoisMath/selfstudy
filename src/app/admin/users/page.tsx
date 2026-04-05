@@ -38,8 +38,6 @@ export default function AdminUsersPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">사용자 관리</h1>
-
       <div className="flex gap-1 mb-6 bg-gray-100 rounded-lg p-1 w-fit">
         {TABS.map((tab, idx) => (
           <button

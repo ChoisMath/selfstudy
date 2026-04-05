@@ -27,8 +27,6 @@ export default function SwapHistoryPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">감독교체 이력</h1>
-
       {history.length === 0 ? (
         <p className="text-gray-500">교체 이력이 없습니다.</p>
       ) : (

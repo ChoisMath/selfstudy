@@ -24,8 +24,6 @@ export default function AdminSeatsPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">좌석 배치</h1>
-
       <div className="flex gap-1 mb-6 bg-gray-100 rounded-lg p-1 w-fit flex-wrap">
         {TABS.map((tab, idx) => (
           <button
