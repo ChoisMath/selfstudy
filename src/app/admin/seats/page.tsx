@@ -1,32 +1,52 @@
 "use client";
 
 import { useState } from "react";
-import SeatingManagement from "@/components/seats/SeatingManagement";
+import SeatingEditor from "@/components/seats/SeatingEditor";
+
+type TabConfig = {
+  label: string;
+  grade: number;
+  sessionType: "afternoon" | "night";
+};
+
+const TABS: TabConfig[] = [
+  { label: "1학년 오자", grade: 1, sessionType: "afternoon" },
+  { label: "1학년 야자", grade: 1, sessionType: "night" },
+  { label: "2학년 오자", grade: 2, sessionType: "afternoon" },
+  { label: "2학년 야자", grade: 2, sessionType: "night" },
+  { label: "3학년 오자", grade: 3, sessionType: "afternoon" },
+  { label: "3학년 야자", grade: 3, sessionType: "night" },
+];
 
 export default function AdminSeatsPage() {
-  const [grade, setGrade] = useState(1);
+  const [activeIdx, setActiveIdx] = useState(0);
+  const active = TABS[activeIdx];
 
   return (
     <div>
-      <div className="flex items-center gap-4 mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">좌석 배치 관리</h1>
-        <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
-          {[1, 2, 3].map((g) => (
-            <button
-              key={g}
-              onClick={() => setGrade(g)}
-              className={`px-4 py-1.5 text-sm rounded-md transition-colors ${
-                grade === g
-                  ? "bg-white text-blue-700 shadow-sm font-medium"
-                  : "text-gray-600 hover:text-gray-900"
-              }`}
-            >
-              {g}학년
-            </button>
-          ))}
-        </div>
+      <h1 className="text-2xl font-bold text-gray-900 mb-6">좌석 배치</h1>
+
+      <div className="flex gap-1 mb-6 bg-gray-100 rounded-lg p-1 w-fit flex-wrap">
+        {TABS.map((tab, idx) => (
+          <button
+            key={idx}
+            onClick={() => setActiveIdx(idx)}
+            className={`px-4 py-2 text-sm rounded-md transition-colors ${
+              activeIdx === idx
+                ? "bg-white text-blue-700 shadow-sm font-medium"
+                : "text-gray-600 hover:text-gray-900"
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
       </div>
-      <SeatingManagement key={grade} grade={grade} />
+
+      <SeatingEditor
+        key={`${active.grade}-${active.sessionType}`}
+        grade={active.grade}
+        sessionType={active.sessionType}
+      />
     </div>
   );
 }
