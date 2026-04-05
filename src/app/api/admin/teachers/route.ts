@@ -10,7 +10,7 @@ export const GET = withAuth(["admin"], async () => {
       homeroomAssignments: true,
       subAdminAssignments: true,
     },
-    orderBy: { id: "asc" },
+    orderBy: { name: "asc" },
   });
 
   return NextResponse.json({
