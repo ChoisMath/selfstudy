@@ -162,18 +162,8 @@ async function main() {
     }
   }
 
-  // ==================== 좌석 배치 기간 ====================
+  // ==================== 좌석 배치 ====================
   for (let grade = 1; grade <= 3; grade++) {
-    const period = await prisma.seatingPeriod.create({
-      data: {
-        name: "2026년 1학기",
-        startDate: new Date("2026-03-02"),
-        endDate: new Date("2026-07-18"),
-        grade,
-        isActive: true,
-      },
-    });
-
     // 오후 교실별 좌석 배치
     const rooms = await prisma.room.findMany({
       where: { session: { grade, type: SessionType.afternoon } },
@@ -192,7 +182,6 @@ async function main() {
         for (let col = 0; col < room.cols && idx < students.length; col++) {
           await prisma.seatLayout.create({
             data: {
-              periodId: period.id,
               roomId: room.id,
               rowIndex: row,
               colIndex: col,
