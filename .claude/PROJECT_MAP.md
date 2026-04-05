@@ -33,20 +33,19 @@ src/
 │   │   └── actions.ts          # Server Action (signIn 호출)
 │   ├── admin/                  # 메인관리자 전용
 │   │   ├── layout.tsx          # AdminNav 포함
-│   │   ├── students/page.tsx   # 학년 탭 + StudentManagement
-│   │   ├── teachers/page.tsx   # 교사 CRUD 모달
-│   │   ├── seats/page.tsx      # 학년 탭 + SeatingManagement
+│   │   ├── page.tsx            # → /admin/users 리다이렉트
+│   │   ├── users/page.tsx      # 통합 사용자관리 (교사/1학년/2학년/3학년 탭)
+│   │   ├── seats/page.tsx      # 6탭 좌석배치 (1~3학년 × 오자/야자) + SeatingEditor
+│   │   ├── supervisors/page.tsx # 감독배정 MonthlyCalendar (전학년 6슬롯 모드)
 │   │   ├── statistics/page.tsx # 출결 테이블뷰 + Excel 다운로드
-│   │   ├── sub-admins/page.tsx
-│   │   ├── homeroom-assignments/page.tsx
 │   │   └── swap-history/page.tsx
 │   ├── grade-admin/[grade]/    # 서브관리자 (학년별)
 │   │   ├── layout.tsx          # AdminNav 포함
-│   │   ├── page.tsx            # 4개 탭 (학생/참여설정/좌석/감독)
+│   │   ├── page.tsx            # 허브 (SeatingEditor + MonthlyCalendar)
 │   │   ├── students/page.tsx
 │   │   ├── participation/page.tsx
-│   │   ├── seats/page.tsx
-│   │   └── supervisors/page.tsx
+│   │   ├── seats/page.tsx      # 2탭 (오후자습/야간자습) + SeatingEditor
+│   │   └── supervisors/page.tsx # MonthlyCalendar (단일학년 2슬롯 모드)
 │   ├── attendance/             # 감독교사
 │   │   ├── layout.tsx
 │   │   ├── page.tsx            # 자동 학년 라우팅 / 학년 선택
@@ -68,18 +67,16 @@ src/
 │
 ├── components/
 │   ├── admin-shared/
-│   │   ├── AdminNav.tsx        # 관리자 네비게이션 (역할별 메뉴)
+│   │   ├── AdminNav.tsx        # 관리자 네비 (5개: 사용자관리/좌석배치/감독배정/교체이력/통계)
 │   │   ├── ParticipationManagement.tsx  # 참여설정 테이블 (grade prop)
-│   │   └── SupervisorManagement.tsx     # 감독배정 주간캘린더 (grade prop)
+│   │   ├── MonthlyCalendar.tsx  # 월간 감독배정 캘린더 (단일학년 2슬롯 / 전학년 6슬롯)
+│   │   └── ExcelUploadModal.tsx # 공용 Excel 업로드 모달 (드래그앤드롭, 교사/학생 공용)
 │   ├── seats/
-│   │   ├── SeatingManagement.tsx   # 기간 목록 or 좌석 편집 전환
-│   │   ├── SeatingPeriodList.tsx   # 기간 CRUD 테이블 + 모달
-│   │   ├── SeatingEditor.tsx       # DndContext + 오후/야간 탭 + 저장
+│   │   ├── SeatingEditor.tsx       # DndContext + 저장 (props: grade, sessionType)
 │   │   ├── RoomGrid.tsx            # 교실 격자 (droppable/draggable 셀)
 │   │   └── UnassignedStudents.tsx  # 미배정 학생 풀 (검색/반별 그룹)
 │   └── students/
-│       ├── StudentManagement.tsx   # 학생 목록 + CRUD 모달 + BulkUpload
-│       └── BulkUpload.tsx          # Excel 업로드 컴포넌트
+│       └── StudentManagement.tsx   # 학생 목록 + CRUD 모달 + ExcelUploadModal
 │
 ├── lib/
 │   ├── auth.ts         # NextAuth 설정 (Credentials×2 + Google, JWT 콜백)
@@ -117,9 +114,7 @@ src/
 | PUT/DELETE | `students/[id]` | 학생 수정/삭제 |
 | POST | `students/bulk-upload` | Excel 일괄업로드 |
 | GET/PUT | `participation-days` | 참여설정 |
-| GET/POST | `seating-periods` | 좌석 기간 관리 |
-| PUT/DELETE | `seating-periods/[id]` | 기간 수정/삭제 |
-| GET/POST | `seat-layouts` | 좌석 배치 조회/저장(트랜잭션) |
+| GET/POST | `seat-layouts` | 좌석 배치 조회/저장(트랜잭션, roomId 기반) |
 | GET/POST | `supervisor-assignments` | 감독 배정 |
 | DELETE | `supervisor-assignments/[id]` | 배정 해제 |
 
@@ -133,8 +128,10 @@ src/
 ### 관리자 (`/api/admin/`)
 | 메서드 | 경로 | 설명 |
 |--------|------|------|
-| GET/POST | `teachers` | 교사 목록/등록 |
+| GET/POST | `teachers` | 교사 목록/등록 (includes homeroom/subAdmin assignments) |
 | PUT/DELETE | `teachers/[id]` | 교사 수정/삭제 |
+| GET | `teachers/template` | 교사 Excel 템플릿 다운로드 |
+| POST | `teachers/bulk-upload` | 교사 Excel 일괄업로드 |
 | GET/POST/DELETE | `sub-admins` | 서브관리자 지정 |
 | GET/POST/DELETE | `homeroom-assignments` | 담임배정 |
 | GET | `supervisor-swap-history` | 감독교체이력 |
@@ -150,7 +147,7 @@ src/
 | GET | `/api/teachers` | 교사 목록 (드롭다운용) |
 | POST | `/api/auth/change-password` | 비밀번호 변경 |
 
-## 데이터 모델 (14개 모델, 6개 enum)
+## 데이터 모델 (13개 모델, 6개 enum)
 
 ```
 Student ──< Attendance >── Teacher (checker)
@@ -160,8 +157,7 @@ Student ──< Attendance >── Teacher (checker)
   ├──< ParticipationDay (afternoon/night × 월~금)
   ├──< AbsenceRequest >── Teacher (reviewer)
   └──< SeatLayout >── Room >── StudySession
-                         │
-                    SeatingPeriod
+         (unique: roomId + rowIndex + colIndex)
 
 Teacher ──< TeacherRole (admin/supervisor/homeroom)
   ├──< HomeroomAssignment (grade, classNumber)
@@ -169,6 +165,8 @@ Teacher ──< TeacherRole (admin/supervisor/homeroom)
   ├──< SupervisorAssignment (date, grade, sessionType)
   └──< SupervisorSwapHistory (original/replacement)
 ```
+
+**삭제된 모델**: SeatingPeriod (기간 개념 제거, SeatLayout이 Room을 통해 직접 grade+sessionType 결정)
 
 ### 주요 Enum
 - `Role`: admin, supervisor, homeroom
@@ -189,6 +187,7 @@ Teacher ──< TeacherRole (admin/supervisor/homeroom)
 
 ### 3. 좌석 배치 저장 (`/api/grade-admin/[grade]/seat-layouts`)
 - 트랜잭션: 기존 SeatLayout 삭제 → 새로 일괄 생성
+- periodId 불필요, roomId 기반으로 직접 조회/저장
 
 ### 4. 학번 파싱
 - 5자리: A(학년) + BC(반) + DE(번호), 예: 20102 = 2학년 1반 2번
@@ -207,7 +206,16 @@ Teacher ──< TeacherRole (admin/supervisor/homeroom)
 - `trustHost: true` (Railway 프록시 대응)
 - `AUTH_URL`, `AUTH_TRUST_HOST` 환경변수 설정
 
-## 수정 이력 (주요 버그픽스)
+## 수정 이력 (주요 변경)
+
+### 2026-04-05: 관리자 UI 통합 (feat/admin-ui-consolidation)
+- **학생/교사/서브관리자/담임배정 4페이지** → `/admin/users` 1페이지로 통합 (교사/1~3학년 탭)
+- **AdminNav 메뉴** 8개 → 5개 (사용자관리, 좌석배치, 감독배정, 교체이력, 통계)
+- **SeatingPeriod 모델 삭제**: 기간 개념 제거, SeatLayout이 Room→StudySession을 통해 grade+sessionType 결정
+- **감독배정**: 주간캘린더(SupervisorManagement) → 월간캘린더(MonthlyCalendar)로 교체
+- **좌석배치**: SeatingManagement/SeatingPeriodList 삭제, SeatingEditor를 직접 사용 (props: grade+sessionType)
+- **Excel 업로드**: BulkUpload → ExcelUploadModal (드래그앤드롭, 교사/학생 공용)
+- **교사 API**: template/bulk-upload 엔드포인트 신규 추가
 
 ### 2026-04-05: 미들웨어 세션 인식 실패 수정
 - **증상**: 로그인 성공 후 모든 보호 경로에서 307 → `/login` 리다이렉트 (앱 사용 불가)
