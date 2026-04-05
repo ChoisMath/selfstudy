@@ -25,6 +25,37 @@ export const GAP_CONFIG: Record<string, number[]> = {
   미래혜윰실1: [1, 3, 5, 7],  // 5 sub-blocks of 5×2
 };
 
+// 인라인 스타일 상수 (렌더링마다 새 객체 생성 방지)
+const GRID_STYLES = {
+  sidebar: { gridArea: "sidebar" } as const,
+  label1: { gridArea: "label1" } as const,
+  room1: { gridArea: "room1" } as const,
+  room2: { gridArea: "room2" } as const,
+  room3: { gridArea: "room3" } as const,
+  room4: { gridArea: "room4" } as const,
+  room5: { gridArea: "room5" } as const,
+  teacher: { gridArea: "teacher" } as const,
+  divider: { gridArea: "divider" } as const,
+  stairs: { gridArea: "stairs" } as const,
+  bath: { gridArea: "bath" } as const,
+  verticalText: { writingMode: "vertical-rl" } as const,
+  container: {
+    display: "grid" as const,
+    gridTemplateColumns: "90px 1fr 44px 1fr",
+    gridTemplateRows: "auto auto 1fr 1fr 1fr auto",
+    gridTemplateAreas: `
+      "sidebar label1   divider stairs"
+      "sidebar room1    divider bath"
+      "sidebar room2    divider room5"
+      "sidebar room3    divider room5"
+      "sidebar room4    divider room5"
+      "sidebar teacher  divider room5"
+    `,
+    gap: "6px",
+    minWidth: "700px",
+  },
+};
+
 export default function MiraeHallLayout<T extends BaseRoom>({
   rooms,
   renderRoom,
@@ -44,25 +75,11 @@ export default function MiraeHallLayout<T extends BaseRoom>({
   return (
     <div
       className="bg-white rounded-lg border p-4 overflow-x-auto"
-      style={{
-        display: "grid",
-        gridTemplateColumns: "90px 1fr 44px 1fr",
-        gridTemplateRows: "auto auto 1fr 1fr 1fr auto",
-        gridTemplateAreas: `
-          "sidebar label1   divider stairs"
-          "sidebar room1    divider bath"
-          "sidebar room2    divider room5"
-          "sidebar room3    divider room5"
-          "sidebar room4    divider room5"
-          "sidebar teacher  divider room5"
-        `,
-        gap: "6px",
-        minWidth: "700px",
-      }}
+      style={GRID_STYLES.container}
     >
       {/* 좌측: 복도석 */}
       <div
-        style={{ gridArea: "sidebar" }}
+        style={GRID_STYLES.sidebar}
         className="border-r border-gray-300 pr-1"
       >
         {renderRoomArea("복도석")}
@@ -70,21 +87,21 @@ export default function MiraeHallLayout<T extends BaseRoom>({
 
       {/* 사감실 라벨 */}
       <div
-        style={{ gridArea: "label1" }}
+        style={GRID_STYLES.label1}
         className="text-center py-2 bg-gray-50 rounded border text-sm font-medium text-gray-600"
       >
         사감실
       </div>
 
       {/* 중앙 교실들 */}
-      <div style={{ gridArea: "room1" }}>{renderRoomArea("미래혜윰실2")}</div>
-      <div style={{ gridArea: "room2" }}>{renderRoomArea("미래202")}</div>
-      <div style={{ gridArea: "room3" }}>{renderRoomArea("미래아띠존")}</div>
-      <div style={{ gridArea: "room4" }}>{renderRoomArea("미래201")}</div>
+      <div style={GRID_STYLES.room1}>{renderRoomArea("미래혜윰실2")}</div>
+      <div style={GRID_STYLES.room2}>{renderRoomArea("미래202")}</div>
+      <div style={GRID_STYLES.room3}>{renderRoomArea("미래아띠존")}</div>
+      <div style={GRID_STYLES.room4}>{renderRoomArea("미래201")}</div>
 
       {/* 감독교사 대기석 */}
       <div
-        style={{ gridArea: "teacher" }}
+        style={GRID_STYLES.teacher}
         className="flex items-center justify-end py-2 px-3"
       >
         <div className="border border-gray-300 px-4 py-1 text-sm bg-gray-100 rounded text-gray-600">
@@ -94,13 +111,13 @@ export default function MiraeHallLayout<T extends BaseRoom>({
 
       {/* 창의홀 디바이더 */}
       <div
-        style={{ gridArea: "divider" }}
+        style={GRID_STYLES.divider}
         className="flex flex-col items-center justify-center border-l border-r border-gray-300 py-4"
       >
         <div className="text-sm text-gray-400 mb-2">&darr;</div>
         <div
           className="font-bold tracking-widest text-base text-gray-500"
-          style={{ writingMode: "vertical-rl" }}
+          style={GRID_STYLES.verticalText}
         >
           창의홀
         </div>
@@ -108,7 +125,7 @@ export default function MiraeHallLayout<T extends BaseRoom>({
 
       {/* 우측 상단: 계단 */}
       <div
-        style={{ gridArea: "stairs" }}
+        style={GRID_STYLES.stairs}
         className="flex items-center justify-center bg-gray-50 rounded border text-sm font-medium text-gray-500"
       >
         계단
@@ -116,7 +133,7 @@ export default function MiraeHallLayout<T extends BaseRoom>({
 
       {/* 우측: 화장실 */}
       <div
-        style={{ gridArea: "bath" }}
+        style={GRID_STYLES.bath}
         className="flex flex-col rounded border overflow-hidden"
       >
         <div className="flex-1 flex items-center justify-center text-xs text-gray-500 border-b bg-gray-50">
@@ -128,7 +145,7 @@ export default function MiraeHallLayout<T extends BaseRoom>({
       </div>
 
       {/* 우측: 미래혜윰실1 */}
-      <div style={{ gridArea: "room5" }}>{renderRoomArea("미래혜윰실1")}</div>
+      <div style={GRID_STYLES.room5}>{renderRoomArea("미래혜윰실1")}</div>
     </div>
   );
 }

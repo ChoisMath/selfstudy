@@ -25,6 +25,7 @@ model Student {
 
   @@unique([grade, classNumber, studentNumber])
   @@index([name])
+  @@index([grade, isActive])
   @@map("students")
 }
 
@@ -156,6 +157,7 @@ model Room {
   session     StudySession @relation(fields: [sessionId], references: [id])
   seatLayouts SeatLayout[]
 
+  @@index([sessionId, sortOrder])
   @@map("rooms")
 }
 
@@ -171,6 +173,7 @@ model SeatLayout {
 
   @@unique([roomId, rowIndex, colIndex])
   @@index([roomId])
+  @@index([studentId])
   @@map("seat_layouts")
 }
 
@@ -260,6 +263,7 @@ model AbsenceRequest {
   reviewer Teacher? @relation("reviewer", fields: [reviewedBy], references: [id])
 
   @@unique([studentId, sessionType, date])
+  @@index([status, studentId])
   @@map("absence_requests")
 }
 

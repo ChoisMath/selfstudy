@@ -54,17 +54,19 @@ export const GET = withAuth(
       };
     }
 
+    // O(1) 룩업을 위한 Map 변환
+    const attMap = new Map<string, typeof attendances[0]>();
+    for (const a of attendances) {
+      attMap.set(`${a.date.toISOString().split("T")[0]}-${a.sessionType}`, a);
+    }
+
     const weekly = weekDates.map((d) => {
       const dateStr = d.toISOString().split("T")[0];
       const dayOfWeekIdx = d.getDay(); // 1=월 ~ 5=금
       const dayKey = dayKeys[dayOfWeekIdx] || "";
 
-      const afternoon = attendances.find(
-        (a) => a.date.toISOString().split("T")[0] === dateStr && a.sessionType === "afternoon"
-      );
-      const night = attendances.find(
-        (a) => a.date.toISOString().split("T")[0] === dateStr && a.sessionType === "night"
-      );
+      const afternoon = attMap.get(`${dateStr}-afternoon`);
+      const night = attMap.get(`${dateStr}-night`);
 
       const afternoonPart = participationMap["afternoon"];
       const nightPart = participationMap["night"];

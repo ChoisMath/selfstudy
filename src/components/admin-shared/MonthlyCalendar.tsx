@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef, memo } from "react";
 
 type Teacher = { id: number; name: string; primaryGrade?: number | null };
 type Assignment = {
@@ -116,13 +116,20 @@ export default function MonthlyCalendar({
     fetchAssignments();
   }, [fetchAssignments]);
 
-  const getAssignment = (date: Date, g: number, sessionType: string) =>
-    assignments.find(
-      (a) =>
-        a.date.startsWith(formatDate(date)) &&
-        a.grade === g &&
-        a.sessionType === sessionType
-    );
+  // O(1) 룩업을 위한 Map
+  const assignmentMap = useMemo(() => {
+    const map = new Map<string, Assignment>();
+    for (const a of assignments) {
+      map.set(`${a.date.split("T")[0]}-${a.grade}-${a.sessionType}`, a);
+    }
+    return map;
+  }, [assignments]);
+
+  const getAssignment = useCallback(
+    (date: Date, g: number, sessionType: string) =>
+      assignmentMap.get(`${formatDate(date)}-${g}-${sessionType}`),
+    [assignmentMap]
+  );
 
   const handleAssign = async (
     date: Date,
@@ -316,7 +323,7 @@ export default function MonthlyCalendar({
   );
 }
 
-function CalendarTeacherSelect({
+const CalendarTeacherSelect = memo(function CalendarTeacherSelect({
   teachers,
   grade,
   value,
@@ -452,4 +459,4 @@ function CalendarTeacherSelect({
       )}
     </div>
   );
-}
+});

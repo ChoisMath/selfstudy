@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import useSWR from "swr";
 import ExcelUploadModal from "@/components/admin-shared/ExcelUploadModal";
 
@@ -172,14 +172,20 @@ export default function StudentManagement({ grade }: { grade: number }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const apiUrl = `/api/grade-admin/${grade}/students${classFilter ? `?class=${classFilter}` : ""}`;
+  const apiUrl = `/api/grade-admin/${grade}/students`;
   const { data, mutate, isLoading } = useSWR<{ students: Student[] }>(apiUrl, fetcher);
 
-  const students = data?.students ?? [];
+  const allStudents = data?.students ?? [];
+
+  // 클라이언트 사이드 필터링 (SWR 키 변경 없이)
+  const students = useMemo(
+    () => classFilter ? allStudents.filter((s) => s.classNumber === parseInt(classFilter, 10)) : allStudents,
+    [allStudents, classFilter]
+  );
 
   // 반 목록 추출 (필터용)
   const classNumbers = Array.from(
-    new Set(students.map((s) => s.classNumber))
+    new Set(allStudents.map((s) => s.classNumber))
   ).sort((a, b) => a - b);
 
   const handleAdd = useCallback(() => {

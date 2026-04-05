@@ -61,6 +61,11 @@ export const GET = withAuth(["homeroom", "admin"], async (req: Request, user) =>
   });
 
   const result = students.map((student) => {
+    // O(1) 룩업을 위한 Map 변환
+    const attMap = new Map<string, typeof student.attendances[0]>();
+    for (const a of student.attendances) {
+      attMap.set(`${a.date.toISOString().split("T")[0]}-${a.sessionType}`, a);
+    }
     const dateMap: Record<string, {
       afternoon?: string;
       night?: string;
@@ -69,12 +74,8 @@ export const GET = withAuth(["homeroom", "admin"], async (req: Request, user) =>
     }> = {};
 
     for (const date of dates) {
-      const afternoon = student.attendances.find(
-        (a) => a.date.toISOString().split("T")[0] === date && a.sessionType === "afternoon"
-      );
-      const night = student.attendances.find(
-        (a) => a.date.toISOString().split("T")[0] === date && a.sessionType === "night"
-      );
+      const afternoon = attMap.get(`${date}-afternoon`);
+      const night = attMap.get(`${date}-night`);
 
       dateMap[date] = {
         afternoon: afternoon?.status,

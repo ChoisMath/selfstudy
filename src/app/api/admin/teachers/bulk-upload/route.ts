@@ -129,17 +129,23 @@ export async function POST(req: Request) {
         }
       }
 
-      // 일괄 생성 (bcrypt 필요하므로 개별 create)
+      // 비밀번호 해싱을 트랜잭션 외부에서 병렬 처리 (DB 커넥션 점유 방지)
       let successCount = 0;
       if (toCreate.length > 0) {
+        const withHashes = await Promise.all(
+          toCreate.map(async (r) => ({
+            ...r,
+            passwordHash: await bcrypt.hash(r.password, 12),
+          }))
+        );
+
         await prisma.$transaction(async (tx) => {
-          for (const r of toCreate) {
-            const passwordHash = await bcrypt.hash(r.password, 12);
+          for (const r of withHashes) {
             await tx.teacher.create({
               data: {
                 loginId: r.loginId,
                 name: r.name,
-                passwordHash,
+                passwordHash: r.passwordHash,
                 primaryGrade: r.primaryGrade,
               },
             });

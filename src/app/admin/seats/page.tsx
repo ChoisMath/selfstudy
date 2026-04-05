@@ -1,7 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import SeatingEditor from "@/components/seats/SeatingEditor";
+import dynamic from "next/dynamic";
+
+const SeatingEditor = dynamic(() => import("@/components/seats/SeatingEditor"), {
+  ssr: false,
+  loading: () => <div className="text-center py-12 text-gray-400">불러오는 중...</div>,
+});
 
 type TabConfig = {
   label: string;

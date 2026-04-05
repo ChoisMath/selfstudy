@@ -44,8 +44,11 @@ export const GET = withAuth(["homeroom", "admin"], async (req: Request, user) =>
             lte: friday,
           },
         },
+        select: { date: true, sessionType: true, status: true },
       },
-      participationDays: true,
+      participationDays: {
+        select: { sessionType: true, isParticipating: true, mon: true, tue: true, wed: true, thu: true, fri: true },
+      },
     },
   });
 

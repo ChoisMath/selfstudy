@@ -48,15 +48,32 @@ export const GET = withAuth(
       orderBy: [{ rowIndex: "asc" }, { colIndex: "asc" }],
     });
 
-    // 해당 날짜 출석 레코드 조회
-    const attendances = await prisma.attendance.findMany({
-      where: {
-        date: dateObj,
-        sessionType: session,
-        student: { grade: gradeNum },
-      },
-      include: { absenceReason: true },
-    });
+    // 독립 쿼리 3개 병렬 실행
+    const [attendances, supervisorAssignment, approvedAbsences] = await Promise.all([
+      prisma.attendance.findMany({
+        where: {
+          date: dateObj,
+          sessionType: session,
+          student: { grade: gradeNum },
+        },
+        include: { absenceReason: true },
+      }),
+      prisma.supervisorAssignment.findUnique({
+        where: {
+          date_grade_sessionType: { date: dateObj, grade: gradeNum, sessionType: session },
+        },
+        include: { teacher: { select: { id: true, name: true } } },
+      }),
+      prisma.absenceRequest.findMany({
+        where: {
+          date: dateObj,
+          sessionType: session,
+          status: "approved",
+          student: { grade: gradeNum },
+        },
+        select: { studentId: true },
+      }),
+    ]);
 
     const attendanceMap: Record<number, { id: number; status: string; absenceReason?: { reasonType: string; detail: string | null } }> = {};
     for (const a of attendances) {
@@ -69,24 +86,6 @@ export const GET = withAuth(
       };
     }
 
-    // 감독교사 정보
-    const supervisorAssignment = await prisma.supervisorAssignment.findUnique({
-      where: {
-        date_grade_sessionType: { date: dateObj, grade: gradeNum, sessionType: session },
-      },
-      include: { teacher: { select: { id: true, name: true } } },
-    });
-
-    // 불참신청 승인 학생 목록
-    const approvedAbsences = await prisma.absenceRequest.findMany({
-      where: {
-        date: dateObj,
-        sessionType: session,
-        status: "approved",
-        student: { grade: gradeNum },
-      },
-      select: { studentId: true },
-    });
     const approvedStudentIds = new Set(approvedAbsences.map((a) => a.studentId));
 
     // Room별 좌석 그룹핑

@@ -26,12 +26,10 @@ export const GET = withAuth(["homeroom", "admin"], async (req: Request, user) =>
   });
 
   const result = students.map((student) => {
-    const afternoon = student.participationDays.find(
-      (p) => p.sessionType === "afternoon"
-    );
-    const night = student.participationDays.find(
-      (p) => p.sessionType === "night"
-    );
+    // O(1) 룩업을 위한 Map 변환
+    const pdMap = new Map(student.participationDays.map((p) => [p.sessionType, p]));
+    const afternoon = pdMap.get("afternoon");
+    const night = pdMap.get("night");
 
     const defaultDays = {
       isParticipating: true,

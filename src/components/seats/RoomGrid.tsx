@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import { useDroppable, useDraggable } from "@dnd-kit/core";
 
 type Student = {
@@ -97,7 +98,7 @@ function SeatCell({
   );
 }
 
-export default function RoomGrid({
+export default memo(function RoomGrid({
   room,
   seats,
   onRemoveStudent,
@@ -165,4 +166,4 @@ export default function RoomGrid({
       )}
     </div>
   );
-}
+});

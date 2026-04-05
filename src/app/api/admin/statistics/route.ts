@@ -55,15 +55,16 @@ export const GET = withAuth(["admin"], async (req: Request) => {
 
   const result = students.map((s) => {
     const records = attendanceMap.get(s.id) || [];
+    // O(1) 룩업을 위한 Map 변환
+    const recordMap = new Map<string, typeof records[0]>();
+    for (const r of records) {
+      recordMap.set(`${r.date.toISOString().split("T")[0]}-${r.sessionType}`, r);
+    }
     const byDate: Record<string, { afternoon?: string; night?: string; afternoonReason?: string; nightReason?: string }> = {};
 
     for (const date of dates) {
-      const afternoon = records.find(
-        (r) => r.date.toISOString().split("T")[0] === date && r.sessionType === "afternoon"
-      );
-      const night = records.find(
-        (r) => r.date.toISOString().split("T")[0] === date && r.sessionType === "night"
-      );
+      const afternoon = recordMap.get(`${date}-afternoon`);
+      const night = recordMap.get(`${date}-night`);
 
       byDate[date] = {
         afternoon: afternoon?.status || "unchecked",

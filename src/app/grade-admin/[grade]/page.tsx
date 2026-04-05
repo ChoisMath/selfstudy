@@ -2,10 +2,24 @@
 
 import { useState } from "react";
 import { useParams } from "next/navigation";
-import StudentManagement from "@/components/students/StudentManagement";
-import ParticipationManagement from "@/components/admin-shared/ParticipationManagement";
-import SeatingEditor from "@/components/seats/SeatingEditor";
-import MonthlyCalendar from "@/components/admin-shared/MonthlyCalendar";
+import dynamic from "next/dynamic";
+
+const StudentManagement = dynamic(() => import("@/components/students/StudentManagement"), {
+  ssr: false,
+  loading: () => <div className="text-center py-12 text-gray-400">불러오는 중...</div>,
+});
+const ParticipationManagement = dynamic(() => import("@/components/admin-shared/ParticipationManagement"), {
+  ssr: false,
+  loading: () => <div className="text-center py-12 text-gray-400">불러오는 중...</div>,
+});
+const SeatingEditor = dynamic(() => import("@/components/seats/SeatingEditor"), {
+  ssr: false,
+  loading: () => <div className="text-center py-12 text-gray-400">불러오는 중...</div>,
+});
+const MonthlyCalendar = dynamic(() => import("@/components/admin-shared/MonthlyCalendar"), {
+  ssr: false,
+  loading: () => <div className="text-center py-12 text-gray-400">불러오는 중...</div>,
+});
 
 const TABS = [
   { key: "students", label: "학생 관리" },

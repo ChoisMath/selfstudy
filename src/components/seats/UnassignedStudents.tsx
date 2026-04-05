@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, memo } from "react";
 import { useDraggable } from "@dnd-kit/core";
 
 type Student = {
@@ -35,7 +35,7 @@ function DraggableStudent({ student }: { student: Student }) {
   );
 }
 
-export default function UnassignedStudents({
+export default memo(function UnassignedStudents({
   students,
 }: {
   students: Student[];
@@ -100,4 +100,4 @@ export default function UnassignedStudents({
       </div>
     </div>
   );
-}
+});

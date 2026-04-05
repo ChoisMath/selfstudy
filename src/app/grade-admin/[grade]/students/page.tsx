@@ -1,7 +1,12 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import StudentManagement from "@/components/students/StudentManagement";
+import dynamic from "next/dynamic";
+
+const StudentManagement = dynamic(() => import("@/components/students/StudentManagement"), {
+  ssr: false,
+  loading: () => <div className="text-center py-12 text-gray-400">불러오는 중...</div>,
+});
 
 export default function GradeStudentsPage() {
   const params = useParams();

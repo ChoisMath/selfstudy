@@ -75,17 +75,20 @@ export const GET = withAuth(["admin"], async (req: Request) => {
       cell.alignment = { horizontal: "center" };
     });
 
+    // O(1) 룩업을 위한 Map 생성
+    const attendanceMap = new Map<string, typeof attendances[0]>();
+    for (const a of attendances) {
+      const key = `${a.studentId}-${a.date.toISOString().split("T")[0]}-${a.sessionType}`;
+      attendanceMap.set(key, a);
+    }
+
     // 데이터 행
     for (const student of students) {
       const row: string[] = [student.name, String(student.classNumber), String(student.studentNumber)];
 
       for (const date of dates) {
-        const afternoon = attendances.find(
-          (a) => a.studentId === student.id && a.date.toISOString().split("T")[0] === date && a.sessionType === "afternoon"
-        );
-        const night = attendances.find(
-          (a) => a.studentId === student.id && a.date.toISOString().split("T")[0] === date && a.sessionType === "night"
-        );
+        const afternoon = attendanceMap.get(`${student.id}-${date}-afternoon`);
+        const night = attendanceMap.get(`${student.id}-${date}-night`);
 
         const statusSymbol = (a: typeof afternoon) => {
           if (!a) return "-";

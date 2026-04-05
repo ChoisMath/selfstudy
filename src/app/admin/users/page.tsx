@@ -1,7 +1,12 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import StudentManagement from "@/components/students/StudentManagement";
+import dynamic from "next/dynamic";
+
+const StudentManagement = dynamic(() => import("@/components/students/StudentManagement"), {
+  ssr: false,
+  loading: () => <div className="text-center py-12 text-gray-400">불러오는 중...</div>,
+});
 import ExcelUploadModal from "@/components/admin-shared/ExcelUploadModal";
 
 type Teacher = {

@@ -21,18 +21,12 @@ export const GET = withAuth(["homeroom", "admin"], async (req: Request, user) =>
         classNumber: a.classNumber,
       }));
 
-  // 학생 ID 조회 (admin은 전체)
-  const students = await prisma.student.findMany({
-    where: {
+  // Prisma 관계 필터로 1회 쿼리로 통합
+  const whereCondition: Record<string, unknown> = {
+    student: {
       isActive: true,
       ...(classConditions ? { OR: classConditions } : {}),
     },
-    select: { id: true },
-  });
-  const studentIds = students.map((s) => s.id);
-
-  const whereCondition: Record<string, unknown> = {
-    studentId: { in: studentIds },
   };
 
   if (statusFilter && ["pending", "approved", "rejected"].includes(statusFilter)) {

@@ -212,6 +212,16 @@ Teacher (+ primaryGrade: nullable int) ──< TeacherRole (admin/supervisor/hom
 
 ## 수정 이력 (주요 변경)
 
+### 2026-04-05: 전체 성능 최적화
+- **API 알고리즘**: 6개 API `.find()` in loop → Map O(1) 룩업 변환 (export-excel, statistics, monthly-attendance, export-attendance, weekly, participation-days)
+- **DB 인덱스**: 4개 복합 인덱스 추가 — Student `[grade, isActive]`, Room `[sessionId, sortOrder]`, SeatLayout `[studentId]`, AbsenceRequest `[status, studentId]`
+- **쿼리 병렬화**: attendance API 3개 독립 쿼리 `Promise.all`, absence-requests 2→1 쿼리 통합, teachers/students API `select` 최적화
+- **트랜잭션**: bulk-upload bcrypt를 트랜잭션 외부로 분리, Prisma 로깅 설정
+- **SWR**: providers.tsx에 글로벌 `SWRConfig` 추가 (`revalidateOnFocus: false`, `dedupingInterval: 5000`)
+- **React 렌더링**: RoomGrid/UnassignedStudents/CalendarTeacherSelect `React.memo`, SeatingEditor `useCallback` + 안정적 빈 Map 상수, MiraeHallLayout 스타일 상수화
+- **클라이언트 최적화**: StudentManagement SWR 키 고정 + `useMemo` 필터링, ParticipationManagement 낙관적 업데이트
+- **동적 임포트**: SeatingEditor, MonthlyCalendar, StudentManagement, ParticipationManagement에 `next/dynamic` 적용
+
 ### 2026-04-05: 교사 기능 확장 + 감독배정 통합
 - **담임 월간출결**: `/homeroom/attendance` 신규 (월간 테이블 + Excel 다운로드), API 2개 추가 (monthly-attendance, export-attendance)
 - **감독배정 통합**: 오후/야간 → 학년당 하루 1명 (양쪽 동시 처리). MonthlyCalendar 학년당 1슬롯, 텍스트 검색 교사 선택

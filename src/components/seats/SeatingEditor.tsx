@@ -61,6 +61,7 @@ type RoomSeats = Map<string, CellState>; // key: "row-col"
 type AllSeats = Map<number, RoomSeats>; // key: roomId
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
+const EMPTY_ROOM_SEATS: RoomSeats = new Map();
 
 export default function SeatingEditor({
   grade,
@@ -150,9 +151,9 @@ export default function SeatingEditor({
     useSensor(KeyboardSensor)
   );
 
-  const handleDragStart = (event: DragStartEvent) => {
+  const handleDragStart = useCallback((event: DragStartEvent) => {
     setActiveId(event.active.id as string);
-  };
+  }, []);
 
   const handleDragEnd = (event: DragEndEvent) => {
     setActiveId(null);
@@ -225,7 +226,7 @@ export default function SeatingEditor({
   };
 
   // 좌석에서 학생 제거
-  const handleRemoveStudent = (roomId: number, row: number, col: number) => {
+  const handleRemoveStudent = useCallback((roomId: number, row: number, col: number) => {
     setSeats((prev) => {
       const next = cloneSeats(prev);
       const roomMap = next.get(roomId);
@@ -234,7 +235,7 @@ export default function SeatingEditor({
       return next;
     });
     setDirty((d) => new Set(d).add(roomId));
-  };
+  }, []);
 
   // 저장
   const handleSave = async () => {
@@ -331,7 +332,7 @@ export default function SeatingEditor({
                   renderRoom={(room) => (
                     <RoomGrid
                       room={room}
-                      seats={seats.get(room.id) ?? new Map()}
+                      seats={seats.get(room.id) ?? EMPTY_ROOM_SEATS}
                       onRemoveStudent={handleRemoveStudent}
                       gapAfterRows={GAP_CONFIG[room.name]}
                       hideTeacherDesk
@@ -359,7 +360,7 @@ export default function SeatingEditor({
                             <RoomGrid
                               key={room.id}
                               room={room}
-                              seats={seats.get(room.id) ?? new Map()}
+                              seats={seats.get(room.id) ?? EMPTY_ROOM_SEATS}
                               onRemoveStudent={handleRemoveStudent}
                               compact
                             />
@@ -375,7 +376,7 @@ export default function SeatingEditor({
                     <RoomGrid
                       key={room.id}
                       room={room}
-                      seats={seats.get(room.id) ?? new Map()}
+                      seats={seats.get(room.id) ?? EMPTY_ROOM_SEATS}
                       onRemoveStudent={handleRemoveStudent}
                     />
                   ))}
