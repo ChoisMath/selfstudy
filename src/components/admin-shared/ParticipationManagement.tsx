@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import useSWR from "swr";
 
 type DaySettings = {
@@ -39,6 +39,15 @@ export default function ParticipationManagement({ grade }: { grade: number }) {
     : students;
   const classNumbers = Array.from(new Set(students.map((s) => s.classNumber))).sort((a, b) => a - b);
 
+  // 전체 참가 상태 계산 (헤더 체크박스용)
+  const allChecked = useMemo(() => {
+    if (filteredStudents.length === 0) return { afternoon: false, night: false };
+    return {
+      afternoon: filteredStudents.every((s) => s.afternoon.isParticipating),
+      night: filteredStudents.every((s) => s.night.isParticipating),
+    };
+  }, [filteredStudents]);
+
   const handleUpdate = useCallback(
     async (studentId: number, sessionType: "afternoon" | "night", field: string, value: boolean) => {
       const student = students.find((s) => s.id === studentId);
@@ -73,7 +82,6 @@ export default function ParticipationManagement({ grade }: { grade: number }) {
       if (!confirm(`${classFilter ? classFilter + "반" : "전체"} 학생 ${targets.length}명의 ${label} 참가를 ${value ? "설정" : "해제"}하시겠습니까?`)) return;
 
       setBulkSaving(sessionType);
-      // 낙관적 업데이트
       const targetIds = new Set(targets.map((s) => s.id));
       mutate({
         students: students.map((s) =>
@@ -118,58 +126,42 @@ export default function ParticipationManagement({ grade }: { grade: number }) {
               <col style={{ width: "80px" }} />
               <col style={{ width: "44px" }} />
               <col style={{ width: "44px" }} />
-              {/* 오후: 전체 + 참가 + 5요일 */}
-              <col style={{ width: "36px" }} />
-              <col style={{ width: "36px" }} />
-              {[...Array(5)].map((_, i) => <col key={`a${i}`} style={{ width: "36px" }} />)}
-              {/* 야간: 전체 + 참가 + 5요일 */}
-              <col style={{ width: "36px" }} />
-              <col style={{ width: "36px" }} />
-              {[...Array(5)].map((_, i) => <col key={`n${i}`} style={{ width: "36px" }} />)}
+              {/* 오후: 참가 + 5요일 = 6열 */}
+              {[...Array(6)].map((_, i) => <col key={`a${i}`} style={{ width: "36px" }} />)}
+              {/* 야간: 참가 + 5요일 = 6열 */}
+              {[...Array(6)].map((_, i) => <col key={`n${i}`} style={{ width: "36px" }} />)}
             </colgroup>
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
                 <th rowSpan={2} className="px-2 py-3 text-left font-medium text-gray-600 border-b border-gray-200">이름</th>
                 <th rowSpan={2} className="py-3 text-center font-medium text-gray-600 border-b border-gray-200">반</th>
                 <th rowSpan={2} className="py-3 text-center font-medium text-gray-600 border-b border-gray-200">번호</th>
-                <th colSpan={7} className="py-2 text-center font-medium text-gray-600 border-l border-gray-200">오후자습</th>
-                <th colSpan={7} className="py-2 text-center font-medium text-gray-600 border-l border-gray-200">야간자습</th>
+                <th colSpan={6} className="py-2 text-center font-medium text-gray-600 border-l border-gray-200">오후자습</th>
+                <th colSpan={6} className="py-2 text-center font-medium text-gray-600 border-l border-gray-200">야간자습</th>
               </tr>
               <tr className="bg-gray-50">
-                {(["afternoon", "night"] as const).map((session) => (
-                  <th key={`bulk-${session}`} className="py-1 text-center border-l border-gray-200" colSpan={2}>
-                    <div className="flex items-center justify-center gap-0.5">
-                      <button
-                        onClick={() => handleBulkToggle(session, true)}
-                        disabled={!!bulkSaving}
-                        className="w-6 h-6 rounded text-[10px] font-bold bg-blue-100 text-blue-600 hover:bg-blue-200 disabled:opacity-50 transition-colors"
-                        title={`${session === "afternoon" ? "오후" : "야간"} 전체 참가`}
-                      >
-                        +
-                      </button>
-                      <button
-                        onClick={() => handleBulkToggle(session, false)}
-                        disabled={!!bulkSaving}
-                        className="w-6 h-6 rounded text-[10px] font-bold bg-red-100 text-red-600 hover:bg-red-200 disabled:opacity-50 transition-colors"
-                        title={`${session === "afternoon" ? "오후" : "야간"} 전체 해제`}
-                      >
-                        -
-                      </button>
-                    </div>
-                  </th>
-                ))}
-                {(["afternoon", "night"] as const).map((_, si) => (
-                  DAY_LABELS.map((l) => (
-                    <th key={`${si}-${l}`} className="py-2 text-center text-xs font-medium text-gray-500">{l}</th>
-                  ))
-                ))}
+                {(["afternoon", "night"] as const).map((session) => [
+                  <th key={`${session}-chk`} className="py-2 text-center text-xs font-medium text-gray-500 border-l border-gray-200">
+                    <input
+                      type="checkbox"
+                      checked={allChecked[session]}
+                      onChange={(e) => handleBulkToggle(session, e.target.checked)}
+                      disabled={!!bulkSaving || filteredStudents.length === 0}
+                      className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50"
+                      title={`${session === "afternoon" ? "오후" : "야간"} 전체 참가 토글`}
+                    />
+                  </th>,
+                  ...DAY_LABELS.map((l) => (
+                    <th key={`${session}-${l}`} className="py-2 text-center text-xs font-medium text-gray-500">{l}</th>
+                  )),
+                ])}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {isLoading ? (
-                <tr><td colSpan={17} className="px-4 py-8 text-center text-gray-400">불러오는 중...</td></tr>
+                <tr><td colSpan={15} className="px-4 py-8 text-center text-gray-400">불러오는 중...</td></tr>
               ) : filteredStudents.length === 0 ? (
-                <tr><td colSpan={17} className="px-4 py-8 text-center text-gray-400">학생이 없습니다.</td></tr>
+                <tr><td colSpan={15} className="px-4 py-8 text-center text-gray-400">학생이 없습니다.</td></tr>
               ) : (
                 filteredStudents.map((student) => (
                   <tr key={student.id} className="hover:bg-gray-50">
@@ -179,10 +171,7 @@ export default function ParticipationManagement({ grade }: { grade: number }) {
                     {(["afternoon", "night"] as const).map((session) => {
                       const settings = student[session];
                       return [
-                        <td key={`${session}-bulk`} className="py-2 text-center border-l border-gray-100">
-                          {/* 빈 셀 — 전체 버튼 열과 정렬용 */}
-                        </td>,
-                        <td key={`${session}-chk`} className="py-2 text-center">
+                        <td key={`${session}-chk`} className="py-2 text-center border-l border-gray-100">
                           <input
                             type="checkbox"
                             checked={settings.isParticipating}

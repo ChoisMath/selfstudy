@@ -91,32 +91,12 @@ export async function PUT(
 
   return withGradeAuth(grade, async (req, user) => {
     const body = await req.json();
-    const { studentId, sessionType, isParticipating, mon, tue, wed, thu, fri } =
-      body;
-
-    if (!studentId || !sessionType) {
-      return NextResponse.json(
-        { error: "studentId와 sessionType은 필수입니다." },
-        { status: 400 }
-      );
-    }
+    const { sessionType, isParticipating } = body;
 
     if (sessionType !== "afternoon" && sessionType !== "night") {
       return NextResponse.json(
         { error: "sessionType은 afternoon 또는 night이어야 합니다." },
         { status: 400 }
-      );
-    }
-
-    // 해당 학년 학생인지 확인
-    const student = await prisma.student.findFirst({
-      where: { id: studentId, grade },
-    });
-
-    if (!student) {
-      return NextResponse.json(
-        { error: "해당 학년의 학생을 찾을 수 없습니다." },
-        { status: 404 }
       );
     }
 
@@ -132,6 +112,27 @@ export async function PUT(
       );
       await prisma.$transaction(updates);
       return NextResponse.json({ count: studentIds.length });
+    }
+
+    const { studentId, mon, tue, wed, thu, fri } = body;
+
+    if (!studentId) {
+      return NextResponse.json(
+        { error: "studentId는 필수입니다." },
+        { status: 400 }
+      );
+    }
+
+    // 해당 학년 학생인지 확인
+    const student = await prisma.student.findFirst({
+      where: { id: studentId, grade },
+    });
+
+    if (!student) {
+      return NextResponse.json(
+        { error: "해당 학년의 학생을 찾을 수 없습니다." },
+        { status: 404 }
+      );
     }
 
     const participationDay = await prisma.participationDay.upsert({
