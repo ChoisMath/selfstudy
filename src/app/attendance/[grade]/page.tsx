@@ -454,7 +454,7 @@ export default function AttendanceGradePage() {
                         {group.reduce((sum, r) => sum + r.seats.filter((s) => s.student).length, 0)}석
                       </span>
                     </div>
-                    <div className={`grid gap-1 p-[clamp(6px,1.5vw,12px)]`} style={{ gridTemplateColumns: `repeat(${group.length}, 1fr)` }}>
+                    <div className={`grid gap-1 p-[clamp(6px,1.5vw,12px)]`} style={{ gridTemplateColumns: `repeat(${group[0]?.name.startsWith("오후미래혜윰") ? 1 : group.length}, 1fr)` }}>
                       {group.map((room) => (
                         <div key={room.id}>
                           {renderAttendanceGrid(room)}

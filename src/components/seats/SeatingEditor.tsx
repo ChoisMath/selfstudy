@@ -363,7 +363,7 @@ export default function SeatingEditor({
                         <h3 className="font-semibold text-gray-700 mb-2">
                           {group[0]?.name.split(" ")[0]}
                         </h3>
-                        <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(${group.length}, 1fr)` }}>
+                        <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(${group[0]?.name.startsWith("오후미래혜윰") ? 1 : group.length}, 1fr)` }}>
                           {group.map((room) => (
                             <RoomGrid
                               key={room.id}
