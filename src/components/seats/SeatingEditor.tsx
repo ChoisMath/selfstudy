@@ -17,12 +17,18 @@ import RoomGrid from "./RoomGrid";
 import UnassignedStudents from "./UnassignedStudents";
 import MiraeHallLayout, { GAP_CONFIG } from "./MiraeHallLayout";
 
+type ParticipationDay = {
+  sessionType: string;
+  isParticipating: boolean;
+};
+
 type Student = {
   id: number;
   name: string;
   grade: number;
   classNumber: number;
   studentNumber: number;
+  participationDays?: ParticipationDay[];
 };
 
 type SeatLayoutItem = {
@@ -92,8 +98,13 @@ export default function SeatingEditor({
   );
 
   const allStudents = useMemo(
-    () => (studentData?.students ?? []).filter((s: Student & { isActive?: boolean }) => (s as { isActive?: boolean }).isActive !== false),
-    [studentData]
+    () => (studentData?.students ?? []).filter((s: Student & { isActive?: boolean }) => {
+      if ((s as { isActive?: boolean }).isActive === false) return false;
+      // 해당 세션에 참가 설정된 학생만 포함 (participationDays 레코드 없으면 기본 참가)
+      const pd = s.participationDays?.find((p) => p.sessionType === sessionType);
+      return pd ? pd.isParticipating : true;
+    }),
+    [studentData, sessionType]
   );
 
   const sessions = layoutData?.sessions ?? [];

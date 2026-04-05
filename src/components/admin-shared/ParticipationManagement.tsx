@@ -28,6 +28,7 @@ const DAY_LABELS = ["월", "화", "수", "목", "금"] as const;
 export default function ParticipationManagement({ grade }: { grade: number }) {
   const [classFilter, setClassFilter] = useState<string>("");
   const [savingKey, setSavingKey] = useState<string | null>(null);
+  const [bulkSaving, setBulkSaving] = useState<string | null>(null);
 
   const apiUrl = `/api/grade-admin/${grade}/participation-days`;
   const { data, mutate, isLoading } = useSWR<{ students: StudentParticipation[] }>(apiUrl, fetcher);
@@ -64,6 +65,38 @@ export default function ParticipationManagement({ grade }: { grade: number }) {
     [students, apiUrl, mutate]
   );
 
+  const handleBulkToggle = useCallback(
+    async (sessionType: "afternoon" | "night", value: boolean) => {
+      const targets = filteredStudents;
+      if (targets.length === 0) return;
+      const label = sessionType === "afternoon" ? "오후자습" : "야간자습";
+      if (!confirm(`${classFilter ? classFilter + "반" : "전체"} 학생 ${targets.length}명의 ${label} 참가를 ${value ? "설정" : "해제"}하시겠습니까?`)) return;
+
+      setBulkSaving(sessionType);
+      // 낙관적 업데이트
+      const targetIds = new Set(targets.map((s) => s.id));
+      mutate({
+        students: students.map((s) =>
+          targetIds.has(s.id) ? { ...s, [sessionType]: { ...s[sessionType], isParticipating: value } } : s
+        ),
+      }, false);
+      try {
+        const res = await fetch(apiUrl, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ studentIds: targets.map((s) => s.id), sessionType, isParticipating: value }),
+        });
+        if (!res.ok) throw new Error("일괄 저장 실패");
+      } catch (err: unknown) {
+        alert(err instanceof Error ? err.message : "일괄 저장 실패");
+        mutate();
+      } finally {
+        setBulkSaving(null);
+      }
+    },
+    [filteredStudents, students, classFilter, apiUrl, mutate]
+  );
+
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
@@ -75,71 +108,106 @@ export default function ParticipationManagement({ grade }: { grade: number }) {
           <option value="">전체 반</option>
           {classNumbers.map((n) => (<option key={n} value={n}>{n}반</option>))}
         </select>
-        {savingKey && <span className="text-xs text-gray-400">저장 중...</span>}
+        {(savingKey || bulkSaving) && <span className="text-xs text-gray-400">저장 중...</span>}
       </div>
 
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full text-sm" style={{ tableLayout: "fixed" }}>
+            <colgroup>
+              <col style={{ width: "80px" }} />
+              <col style={{ width: "44px" }} />
+              <col style={{ width: "44px" }} />
+              {/* 오후: 전체 + 참가 + 5요일 */}
+              <col style={{ width: "36px" }} />
+              <col style={{ width: "36px" }} />
+              {[...Array(5)].map((_, i) => <col key={`a${i}`} style={{ width: "36px" }} />)}
+              {/* 야간: 전체 + 참가 + 5요일 */}
+              <col style={{ width: "36px" }} />
+              <col style={{ width: "36px" }} />
+              {[...Array(5)].map((_, i) => <col key={`n${i}`} style={{ width: "36px" }} />)}
+            </colgroup>
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                <th rowSpan={2} className="px-4 py-3 text-left font-medium text-gray-600 border-b border-gray-200">이름</th>
-                <th rowSpan={2} className="px-3 py-3 text-center font-medium text-gray-600 border-b border-gray-200">반</th>
-                <th rowSpan={2} className="px-3 py-3 text-center font-medium text-gray-600 border-b border-gray-200">번호</th>
-                <th colSpan={6} className="px-3 py-2 text-center font-medium text-gray-600 border-l border-gray-200">오후자습</th>
-                <th colSpan={6} className="px-3 py-2 text-center font-medium text-gray-600 border-l border-gray-200">야간자습</th>
+                <th rowSpan={2} className="px-2 py-3 text-left font-medium text-gray-600 border-b border-gray-200">이름</th>
+                <th rowSpan={2} className="py-3 text-center font-medium text-gray-600 border-b border-gray-200">반</th>
+                <th rowSpan={2} className="py-3 text-center font-medium text-gray-600 border-b border-gray-200">번호</th>
+                <th colSpan={7} className="py-2 text-center font-medium text-gray-600 border-l border-gray-200">오후자습</th>
+                <th colSpan={7} className="py-2 text-center font-medium text-gray-600 border-l border-gray-200">야간자습</th>
               </tr>
               <tr className="bg-gray-50">
-                <th className="px-2 py-2 text-center text-xs font-medium text-gray-500 border-l border-gray-200">참가</th>
-                {DAY_LABELS.map((l) => (<th key={`a-${l}`} className="px-1 py-2 text-center text-xs font-medium text-gray-500">{l}</th>))}
-                <th className="px-2 py-2 text-center text-xs font-medium text-gray-500 border-l border-gray-200">참가</th>
-                {DAY_LABELS.map((l) => (<th key={`n-${l}`} className="px-1 py-2 text-center text-xs font-medium text-gray-500">{l}</th>))}
+                {(["afternoon", "night"] as const).map((session) => (
+                  <th key={`bulk-${session}`} className="py-1 text-center border-l border-gray-200" colSpan={2}>
+                    <div className="flex items-center justify-center gap-0.5">
+                      <button
+                        onClick={() => handleBulkToggle(session, true)}
+                        disabled={!!bulkSaving}
+                        className="w-6 h-6 rounded text-[10px] font-bold bg-blue-100 text-blue-600 hover:bg-blue-200 disabled:opacity-50 transition-colors"
+                        title={`${session === "afternoon" ? "오후" : "야간"} 전체 참가`}
+                      >
+                        +
+                      </button>
+                      <button
+                        onClick={() => handleBulkToggle(session, false)}
+                        disabled={!!bulkSaving}
+                        className="w-6 h-6 rounded text-[10px] font-bold bg-red-100 text-red-600 hover:bg-red-200 disabled:opacity-50 transition-colors"
+                        title={`${session === "afternoon" ? "오후" : "야간"} 전체 해제`}
+                      >
+                        -
+                      </button>
+                    </div>
+                  </th>
+                ))}
+                {(["afternoon", "night"] as const).map((_, si) => (
+                  DAY_LABELS.map((l) => (
+                    <th key={`${si}-${l}`} className="py-2 text-center text-xs font-medium text-gray-500">{l}</th>
+                  ))
+                ))}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {isLoading ? (
-                <tr><td colSpan={15} className="px-4 py-8 text-center text-gray-400">불러오는 중...</td></tr>
+                <tr><td colSpan={17} className="px-4 py-8 text-center text-gray-400">불러오는 중...</td></tr>
               ) : filteredStudents.length === 0 ? (
-                <tr><td colSpan={15} className="px-4 py-8 text-center text-gray-400">학생이 없습니다.</td></tr>
+                <tr><td colSpan={17} className="px-4 py-8 text-center text-gray-400">학생이 없습니다.</td></tr>
               ) : (
                 filteredStudents.map((student) => (
                   <tr key={student.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-2.5 text-gray-900 font-medium whitespace-nowrap">{student.name}</td>
-                    <td className="px-3 py-2.5 text-center text-gray-600">{student.classNumber}</td>
-                    <td className="px-3 py-2.5 text-center text-gray-600">{student.studentNumber}</td>
+                    <td className="px-2 py-2 text-gray-900 font-medium whitespace-nowrap truncate">{student.name}</td>
+                    <td className="py-2 text-center text-gray-600">{student.classNumber}</td>
+                    <td className="py-2 text-center text-gray-600">{student.studentNumber}</td>
                     {(["afternoon", "night"] as const).map((session) => {
                       const settings = student[session];
-                      return (
-                        <td key={session} colSpan={6} className="p-0">
-                          <div className="flex items-center border-l border-gray-100">
-                            <div className="px-2 py-2.5 text-center">
-                              <input
-                                type="checkbox"
-                                checked={settings.isParticipating}
-                                onChange={(e) => handleUpdate(student.id, session, "isParticipating", e.target.checked)}
-                                className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                              />
-                            </div>
-                            {DAY_KEYS.map((day) => (
-                              <div key={day} className="px-1 py-2.5 text-center">
-                                <button
-                                  onClick={() => handleUpdate(student.id, session, day, !settings[day])}
-                                  disabled={!settings.isParticipating}
-                                  className={`w-7 h-7 rounded text-xs font-medium transition-colors ${
-                                    !settings.isParticipating
-                                      ? "bg-gray-100 text-gray-300 cursor-not-allowed"
-                                      : settings[day]
-                                        ? "bg-blue-100 text-blue-700 hover:bg-blue-200"
-                                        : "bg-gray-100 text-gray-400 hover:bg-gray-200"
-                                  }`}
-                                >
-                                  {DAY_LABELS[DAY_KEYS.indexOf(day)]}
-                                </button>
-                              </div>
-                            ))}
-                          </div>
-                        </td>
-                      );
+                      return [
+                        <td key={`${session}-bulk`} className="py-2 text-center border-l border-gray-100">
+                          {/* 빈 셀 — 전체 버튼 열과 정렬용 */}
+                        </td>,
+                        <td key={`${session}-chk`} className="py-2 text-center">
+                          <input
+                            type="checkbox"
+                            checked={settings.isParticipating}
+                            onChange={(e) => handleUpdate(student.id, session, "isParticipating", e.target.checked)}
+                            className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          />
+                        </td>,
+                        ...DAY_KEYS.map((day) => (
+                          <td key={`${session}-${day}`} className="py-2 text-center">
+                            <button
+                              onClick={() => handleUpdate(student.id, session, day, !settings[day])}
+                              disabled={!settings.isParticipating}
+                              className={`w-7 h-7 rounded text-xs font-medium transition-colors ${
+                                !settings.isParticipating
+                                  ? "bg-gray-100 text-gray-300 cursor-not-allowed"
+                                  : settings[day]
+                                    ? "bg-blue-100 text-blue-700 hover:bg-blue-200"
+                                    : "bg-gray-100 text-gray-400 hover:bg-gray-200"
+                              }`}
+                            >
+                              {DAY_LABELS[DAY_KEYS.indexOf(day)]}
+                            </button>
+                          </td>
+                        )),
+                      ];
                     })}
                   </tr>
                 ))

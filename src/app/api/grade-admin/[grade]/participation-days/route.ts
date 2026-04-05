@@ -120,6 +120,20 @@ export async function PUT(
       );
     }
 
+    // 일괄 업데이트: studentIds 배열이 있으면 bulk 처리
+    if (body.studentIds && Array.isArray(body.studentIds)) {
+      const studentIds: number[] = body.studentIds;
+      const updates = studentIds.map((sid) =>
+        prisma.participationDay.upsert({
+          where: { studentId_sessionType: { studentId: sid, sessionType } },
+          update: { isParticipating: isParticipating ?? true },
+          create: { studentId: sid, sessionType, isParticipating: isParticipating ?? true },
+        })
+      );
+      await prisma.$transaction(updates);
+      return NextResponse.json({ count: studentIds.length });
+    }
+
     const participationDay = await prisma.participationDay.upsert({
       where: {
         studentId_sessionType: {

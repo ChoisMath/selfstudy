@@ -29,6 +29,11 @@ export async function GET(
     const students = await prisma.student.findMany({
       where,
       orderBy: [{ classNumber: "asc" }, { studentNumber: "asc" }],
+      include: {
+        participationDays: {
+          select: { sessionType: true, isParticipating: true },
+        },
+      },
     });
 
     return NextResponse.json({ students });
