@@ -152,6 +152,22 @@ async function main() {
       });
     }
 
+    // 2학년: 오후 미래혜윰실 추가 (5열×2행 분단)
+    if (grade === 2) {
+      const afternoonMiraeRooms = [
+        { name: "오후미래혜윰1 분단1", cols: 5, rows: 2, sortOrder: 10 },
+        { name: "오후미래혜윰1 분단2", cols: 5, rows: 2, sortOrder: 11 },
+        { name: "오후미래혜윰2 분단1", cols: 5, rows: 2, sortOrder: 12 },
+        { name: "오후미래혜윰2 분단2", cols: 5, rows: 2, sortOrder: 13 },
+        { name: "오후미래혜윰2 분단3", cols: 5, rows: 2, sortOrder: 14 },
+      ];
+      for (const room of afternoonMiraeRooms) {
+        await prisma.room.create({
+          data: { sessionId: afternoonSession.id, ...room },
+        });
+      }
+    }
+
     // 야간 자습 세션 + 미래홀 방 5개 (실제 도면 기반)
     const nightSession = await prisma.studySession.create({
       data: {
