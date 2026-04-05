@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { withAuth } from "@/lib/api-auth";
 
 // POST /api/attendance/toggle - 좌석 탭 시 출석 상태 순환
-export const POST = withAuth(["supervisor", "admin"], async (req: Request, user) => {
+export const POST = withAuth(["teacher"], async (req: Request, user) => {
   const body = await req.json();
   const { studentId, sessionType, date, currentStatus } = body;
 

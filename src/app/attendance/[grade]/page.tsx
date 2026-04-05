@@ -95,6 +95,7 @@ export default function AttendanceGradePage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ studentId, sessionType: tab, date: today, currentStatus: current }),
     });
+    if (!res.ok) return;
     const result = await res.json();
 
     mutate(
@@ -124,7 +125,7 @@ export default function AttendanceGradePage() {
       setActivatedStudents(prev => new Set(prev).add(studentId));
       longPressTimerRef.current = null;
     }, 500);
-  }, [activatedStudents]);
+  }, [activatedStudents, attendances]);
 
   const handlePointerUp = useCallback(() => {
     if (longPressTimerRef.current) {
