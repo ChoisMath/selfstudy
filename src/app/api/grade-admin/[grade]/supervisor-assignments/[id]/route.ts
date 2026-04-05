@@ -27,12 +27,14 @@ export async function DELETE(
       );
     }
 
-    // 같은 날짜, 같은 학년의 오후+야간 모두 삭제
-    await prisma.supervisorAssignment.deleteMany({
-      where: {
-        grade,
-        date: assignment.date,
-      },
+    // 같은 날짜, 같은 학년의 오후+야간 모두 삭제 (교체이력 먼저 정리)
+    await prisma.$transaction(async (tx) => {
+      await tx.supervisorSwapHistory.deleteMany({
+        where: { assignment: { grade, date: assignment.date } },
+      });
+      await tx.supervisorAssignment.deleteMany({
+        where: { grade, date: assignment.date },
+      });
     });
 
     return NextResponse.json({ success: true });

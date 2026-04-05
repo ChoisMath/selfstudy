@@ -29,7 +29,12 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <Providers>{children}</Providers>
+        <Providers>
+          <div className="fixed top-3 left-3 z-50">
+            <img src="/posan.svg" alt="포산고등학교 교표" className="w-10 h-10" />
+          </div>
+          {children}
+        </Providers>
       </body>
     </html>
   );

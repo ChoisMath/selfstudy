@@ -6,7 +6,10 @@ import bcrypt from "bcryptjs";
 export const PUT = withAuth(["admin"], async (req: Request, user) => {
   try {
     const url = new URL(req.url);
-    const id = parseInt(url.pathname.split("/").pop()!);
+    const id = parseInt(url.pathname.split("/").pop()!, 10);
+    if (isNaN(id)) {
+      return NextResponse.json({ error: "잘못된 요청입니다." }, { status: 400 });
+    }
     const body = await req.json();
     const { name, loginId, roles, password, primaryGrade } = body;
 
@@ -41,9 +44,57 @@ export const PUT = withAuth(["admin"], async (req: Request, user) => {
 });
 
 export const DELETE = withAuth(["admin"], async (req: Request) => {
-  const url = new URL(req.url);
-  const id = parseInt(url.pathname.split("/").pop()!);
+  try {
+    const url = new URL(req.url);
+    const id = parseInt(url.pathname.split("/").pop()!, 10);
 
-  await prisma.teacher.delete({ where: { id } });
-  return NextResponse.json({ success: true });
+    if (isNaN(id)) {
+      return NextResponse.json({ error: "잘못된 요청입니다." }, { status: 400 });
+    }
+
+    const teacher = await prisma.teacher.findUnique({ where: { id } });
+    if (!teacher) {
+      return NextResponse.json({ error: "교사를 찾을 수 없습니다." }, { status: 404 });
+    }
+
+    await prisma.$transaction(async (tx) => {
+      // 1. 감독교체이력 삭제 (SupervisorAssignment, Teacher 삭제 전에 먼저)
+      await tx.supervisorSwapHistory.deleteMany({
+        where: {
+          OR: [
+            { originalTeacherId: id },
+            { replacementTeacherId: id },
+            { assignment: { teacherId: id } },
+          ],
+        },
+      });
+
+      // 2. 교사 소유 배정 데이터 삭제
+      await tx.teacherRole.deleteMany({ where: { teacherId: id } });
+      await tx.homeroomAssignment.deleteMany({ where: { teacherId: id } });
+      await tx.subAdminAssignment.deleteMany({ where: { teacherId: id } });
+      await tx.supervisorAssignment.deleteMany({ where: { teacherId: id } });
+
+      // 3. 학생 소유 데이터 처리
+      await tx.attendance.updateMany({
+        where: { checkedBy: id },
+        data: { checkedBy: null },
+      });
+      await tx.absenceReason.deleteMany({
+        where: { registeredBy: id },
+      });
+      await tx.absenceRequest.updateMany({
+        where: { reviewedBy: id },
+        data: { reviewedBy: null },
+      });
+
+      // 4. 교사 삭제
+      await tx.teacher.delete({ where: { id } });
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Teacher delete error:", error);
+    return NextResponse.json({ error: "교사 삭제에 실패했습니다." }, { status: 500 });
+  }
 });
