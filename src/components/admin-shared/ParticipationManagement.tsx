@@ -54,7 +54,6 @@ export default function ParticipationManagement({ grade }: { grade: number }) {
           body: JSON.stringify({ studentId, sessionType, ...updated }),
         });
         if (!res.ok) { const data = await res.json(); throw new Error(data.error || "저장 실패"); }
-        mutate(undefined, { revalidate: false });
       } catch (err: unknown) {
         alert(err instanceof Error ? err.message : "저장 실패");
         mutate();
