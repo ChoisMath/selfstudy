@@ -202,6 +202,29 @@ export default function ParticipationManagement({ grade }: { grade: number }) {
                 ))
               )}
             </tbody>
+            {!isLoading && filteredStudents.length > 0 && (
+              <tfoot className="bg-gray-50 border-t-2 border-gray-300">
+                <tr>
+                  <td colSpan={3} className="px-2 py-2.5 text-right font-semibold text-gray-600 text-xs">합계</td>
+                  {(["afternoon", "night"] as const).map((session) => {
+                    const participating = filteredStudents.filter((s) => s[session].isParticipating).length;
+                    return [
+                      <td key={`${session}-total`} className="py-2.5 text-center font-bold text-blue-700 text-xs border-l border-gray-200">
+                        {participating}
+                      </td>,
+                      ...DAY_KEYS.map((day) => {
+                        const count = filteredStudents.filter((s) => s[session].isParticipating && s[session][day]).length;
+                        return (
+                          <td key={`${session}-${day}-total`} className="py-2.5 text-center font-medium text-gray-600 text-xs">
+                            {count}
+                          </td>
+                        );
+                      }),
+                    ];
+                  })}
+                </tr>
+              </tfoot>
+            )}
           </table>
         </div>
         {!isLoading && filteredStudents.length > 0 && (
