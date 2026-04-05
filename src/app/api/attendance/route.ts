@@ -19,16 +19,6 @@ export const GET = withAuth(
     const gradeNum = parseInt(grade);
     const dateObj = new Date(date + "T00:00:00Z");
 
-    // 현재 활성 좌석 배치 기간 조회
-    const activePeriod = await prisma.seatingPeriod.findFirst({
-      where: {
-        grade: gradeNum,
-        isActive: true,
-        startDate: { lte: dateObj },
-        endDate: { gte: dateObj },
-      },
-    });
-
     // 해당 학년 + 세션의 교실(Room) 목록
     const studySession = await prisma.studySession.findUnique({
       where: { type_grade: { type: session, grade: gradeNum } },
@@ -41,25 +31,22 @@ export const GET = withAuth(
       return NextResponse.json({ rooms: [], attendances: {} });
     }
 
-    // 좌석 배치 조회 (별도 쿼리)
-    const seatLayouts = activePeriod
-      ? await prisma.seatLayout.findMany({
-          where: {
-            periodId: activePeriod.id,
-            roomId: { in: studySession.rooms.map((r) => r.id) },
-          },
+    // 좌석 배치 조회 (SeatingPeriod 없이 직접 조회)
+    const seatLayouts = await prisma.seatLayout.findMany({
+      where: {
+        roomId: { in: studySession.rooms.map((r) => r.id) },
+      },
+      include: {
+        student: {
           include: {
-            student: {
-              include: {
-                participationDays: {
-                  where: { sessionType: session },
-                },
-              },
+            participationDays: {
+              where: { sessionType: session },
             },
           },
-          orderBy: [{ rowIndex: "asc" }, { colIndex: "asc" }],
-        })
-      : [];
+        },
+      },
+      orderBy: [{ rowIndex: "asc" }, { colIndex: "asc" }],
+    });
 
     // 해당 날짜 출석 레코드 조회
     const attendances = await prisma.attendance.findMany({
