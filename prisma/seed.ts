@@ -8,6 +8,17 @@ const prisma = new PrismaClient({ adapter });
 async function main() {
   console.log("Seeding database...");
 
+  // ==================== 기존 데이터 삭제 ====================
+  console.log("Clearing existing data...");
+  await prisma.$executeRawUnsafe(`
+    TRUNCATE TABLE absence_reasons, attendance, absence_requests,
+      participation_days, seat_layouts, supervisor_swap_history,
+      supervisor_assignments, homeroom_assignments, sub_admin_assignments,
+      teacher_roles, rooms, study_sessions, students, teachers
+    CASCADE
+  `);
+  console.log("Existing data cleared.");
+
   // ==================== 교사 ====================
   const passwordHash = await bcrypt.hash("admin1234", 12);
 
