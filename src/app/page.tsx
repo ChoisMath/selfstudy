@@ -19,8 +19,11 @@ export default async function Home() {
     redirect("/admin");
   }
 
-  // 모든 교사는 /attendance로 (감독 배정 시 자동 학년 이동)
+  // 교사: 담당학년이 있으면 해당 학년으로, 없으면 학년 선택 페이지로
   if (user.userType === "teacher") {
+    if (user.primaryGrade) {
+      redirect(`/attendance/${user.primaryGrade}`);
+    }
     redirect("/attendance");
   }
 

@@ -4,6 +4,7 @@ declare module "next-auth" {
   interface User {
     userType: string;
     roles?: string[];
+    primaryGrade?: number | null;
     homeroomAssignments?: { grade: number; classNumber: number }[];
     subAdminGrades?: number[];
     grade?: number;
@@ -20,6 +21,7 @@ declare module "next-auth" {
       userType: string;
       userId: number;
       roles?: string[];
+      primaryGrade?: number | null;
       homeroomAssignments?: { grade: number; classNumber: number }[];
       subAdminGrades?: number[];
       grade?: number;
@@ -34,6 +36,7 @@ declare module "next-auth/jwt" {
     userType?: string;
     userId?: number;
     roles?: string[];
+    primaryGrade?: number | null;
     homeroomAssignments?: { grade: number; classNumber: number }[];
     subAdminGrades?: number[];
     grade?: number;

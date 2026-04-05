@@ -38,6 +38,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           name: teacher.name,
           userType: "teacher" as const,
           roles: teacher.roles.map((r) => r.role),
+          primaryGrade: teacher.primaryGrade,
           homeroomAssignments: teacher.homeroomAssignments.map((h) => ({
             grade: h.grade,
             classNumber: h.classNumber,
@@ -118,6 +119,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         if (u.userType === "teacher") {
           token.roles = u.roles as string[];
+          token.primaryGrade = u.primaryGrade as number | null;
           token.homeroomAssignments = u.homeroomAssignments as { grade: number; classNumber: number }[];
           token.subAdminGrades = u.subAdminGrades as number[];
         } else if (u.userType === "student") {
@@ -144,6 +146,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           token.userType = "teacher";
           token.userId = teacher.id;
           token.roles = teacher.roles.map((r) => r.role);
+          token.primaryGrade = teacher.primaryGrade;
           token.homeroomAssignments = teacher.homeroomAssignments.map((h) => ({
             grade: h.grade,
             classNumber: h.classNumber,
@@ -162,6 +165,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         if (token.userType === "teacher") {
           session.user.roles = token.roles as string[];
+          session.user.primaryGrade = token.primaryGrade as number | null;
           session.user.homeroomAssignments = token.homeroomAssignments as {
             grade: number;
             classNumber: number;
