@@ -341,21 +341,29 @@ export default function SeatingEditor({
                   )}
                 />
               ) : sessionType === "afternoon" ? (
-                /* 오후 자습: 반별 3분단씩 가로 그룹 */
+                /* 오후 자습: 이름 접두사 기반 그룹 */
                 <div className="space-y-6">
                   {(() => {
-                    // sortOrder 기준 3개씩 그룹화 (각 반)
-                    const groups: typeof rooms[] = [];
                     const sorted = [...rooms].sort((a, b) => a.sortOrder - b.sortOrder);
-                    for (let i = 0; i < sorted.length; i += 3) {
-                      groups.push(sorted.slice(i, i + 3));
+                    const groups: typeof rooms[] = [];
+                    let currentGroup: typeof rooms = [];
+                    let currentPrefix = "";
+                    for (const room of sorted) {
+                      const prefix = room.name.split(" ")[0];
+                      if (prefix !== currentPrefix && currentGroup.length > 0) {
+                        groups.push(currentGroup);
+                        currentGroup = [];
+                      }
+                      currentPrefix = prefix;
+                      currentGroup.push(room);
                     }
+                    if (currentGroup.length > 0) groups.push(currentGroup);
                     return groups.map((group, gi) => (
                       <div key={gi}>
                         <h3 className="font-semibold text-gray-700 mb-2">
                           {group[0]?.name.split(" ")[0]}
                         </h3>
-                        <div className="grid grid-cols-3 gap-3">
+                        <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(${group.length}, 1fr)` }}>
                           {group.map((room) => (
                             <RoomGrid
                               key={room.id}
