@@ -158,34 +158,18 @@ model Room {
   @@map("rooms")
 }
 
-model SeatingPeriod {
-  id        Int      @id @default(autoincrement())
-  name      String
-  startDate DateTime @map("start_date") @db.Date
-  endDate   DateTime @map("end_date") @db.Date
-  grade     Int
-  isActive  Boolean  @default(true) @map("is_active")
-  createdAt DateTime @default(now()) @map("created_at")
-
-  seatLayouts SeatLayout[]
-
-  @@map("seating_periods")
-}
-
 model SeatLayout {
   id        Int  @id @default(autoincrement())
-  periodId  Int  @map("period_id")
   roomId    Int  @map("room_id")
   rowIndex  Int  @map("row_index")
   colIndex  Int  @map("col_index")
   studentId Int? @map("student_id")
 
-  period  SeatingPeriod @relation(fields: [periodId], references: [id])
-  room    Room          @relation(fields: [roomId], references: [id])
-  student Student?      @relation(fields: [studentId], references: [id])
+  room    Room     @relation(fields: [roomId], references: [id])
+  student Student? @relation(fields: [studentId], references: [id])
 
-  @@unique([periodId, roomId, rowIndex, colIndex])
-  @@index([roomId, periodId])
+  @@unique([roomId, rowIndex, colIndex])
+  @@index([roomId])
   @@map("seat_layouts")
 }
 
