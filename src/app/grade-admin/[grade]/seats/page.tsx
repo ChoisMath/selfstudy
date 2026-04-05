@@ -1,16 +1,46 @@
 "use client";
 
+import { useState } from "react";
 import { useParams } from "next/navigation";
-import SeatingManagement from "@/components/seats/SeatingManagement";
+import SeatingEditor from "@/components/seats/SeatingEditor";
 
 export default function GradeAdminSeatsPage() {
   const params = useParams();
-  const grade = parseInt(params.grade as string);
+  const grade = Number(params.grade);
+  const [sessionType, setSessionType] = useState<"afternoon" | "night">("afternoon");
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">{grade}학년 좌석 배치</h1>
-      <SeatingManagement grade={grade} />
+      <h1 className="text-2xl font-bold text-gray-900 mb-6">좌석 배치</h1>
+
+      <div className="flex gap-1 mb-6 bg-gray-100 rounded-lg p-1 w-fit">
+        <button
+          onClick={() => setSessionType("afternoon")}
+          className={`px-4 py-2 text-sm rounded-md transition-colors ${
+            sessionType === "afternoon"
+              ? "bg-white text-blue-700 shadow-sm font-medium"
+              : "text-gray-600 hover:text-gray-900"
+          }`}
+        >
+          오후자습
+        </button>
+        <button
+          onClick={() => setSessionType("night")}
+          className={`px-4 py-2 text-sm rounded-md transition-colors ${
+            sessionType === "night"
+              ? "bg-white text-blue-700 shadow-sm font-medium"
+              : "text-gray-600 hover:text-gray-900"
+          }`}
+        >
+          야간자습
+        </button>
+      </div>
+
+      <SeatingEditor
+        key={`${grade}-${sessionType}`}
+        grade={grade}
+        sessionType={sessionType}
+      />
     </div>
   );
 }
