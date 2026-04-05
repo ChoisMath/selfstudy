@@ -112,7 +112,7 @@ export const GET = withAuth(
                 name: seat.student.name,
                 classNumber: seat.student.classNumber,
                 studentNumber: seat.student.studentNumber,
-                isParticipating: seat.student.participationDays[0]?.isParticipating ?? false,
+                isParticipating: seat.student.participationDays[0]?.isParticipating ?? true,
                 isApprovedAbsence: approvedStudentIds.has(seat.student.id),
               }
             : null,
