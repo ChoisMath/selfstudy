@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import useSWR from "swr";
 import MiraeHallLayout, { GAP_CONFIG } from "@/components/seats/MiraeHallLayout";
@@ -55,6 +55,8 @@ export default function AttendanceGradePage() {
   const [selectedSeat, setSelectedSeat] = useState<number | null>(null);
   const [weeklyData, setWeeklyData] = useState<WeeklyDay[]>([]);
   const [weeklyName, setWeeklyName] = useState("");
+  const [activatedStudents, setActivatedStudents] = useState<Set<number>>(new Set());
+  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const today = new Date().toISOString().split("T")[0];
   const todayFormatted = (() => {
@@ -110,10 +112,26 @@ export default function AttendanceGradePage() {
     );
   }
 
-  async function handleSeatClick(studentId: number) {
-    // 좌석 영역 탭 = 출석 상태 순환 토글
+  async function handleSeatClick(studentId: number, isParticipating: boolean) {
+    // 비참여 + 미활성화 → 무시 (길게 터치로만 활성화)
+    if (!isParticipating && !activatedStudents.has(studentId)) return;
     await handleToggle(studentId);
   }
+
+  const handlePointerDown = useCallback((studentId: number, isParticipating: boolean) => {
+    if (isParticipating || activatedStudents.has(studentId)) return;
+    longPressTimerRef.current = setTimeout(() => {
+      setActivatedStudents(prev => new Set(prev).add(studentId));
+      longPressTimerRef.current = null;
+    }, 500);
+  }, [activatedStudents]);
+
+  const handlePointerUp = useCallback(() => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  }, []);
 
   async function handleInfoClick(e: React.MouseEvent, studentId: number, name: string) {
     e.stopPropagation(); // 좌석 클릭(출석토글) 방지
@@ -163,8 +181,11 @@ export default function AttendanceGradePage() {
                   const status = attendances[student.id]?.status || "unchecked";
                   const isApproved = student.isApprovedAbsence;
                   const isSelected = selectedSeat === student.id;
+                  const isInactive = !student.isParticipating && !activatedStudents.has(student.id);
                   let seatClass = "";
-                  if (isSelected) {
+                  if (isInactive) {
+                    seatClass = "bg-[#e5e7eb] text-[#9ca3af] border-[#d1d5db] opacity-60";
+                  } else if (isSelected) {
                     seatClass = "bg-[#2563eb] text-white border-[#1d4ed8] shadow-[0_2px_8px_rgba(37,99,235,0.3)]";
                   } else if (isApproved) {
                     seatClass = "bg-[#fef9c3] border-[#facc15]";
@@ -178,8 +199,12 @@ export default function AttendanceGradePage() {
                   return (
                     <div
                       key={`${rowIndex}-${colIndex}`}
-                      className={`relative rounded-[clamp(3px,0.8vw,5px)] py-[clamp(4px,1vw,8px)] px-[clamp(1px,0.3vw,4px)] text-center cursor-pointer border-2 transition-all active:scale-95 min-w-0 ${seatClass}`}
-                      onClick={() => handleSeatClick(student.id)}
+                      className={`relative rounded-[clamp(3px,0.8vw,5px)] py-[clamp(4px,1vw,8px)] px-[clamp(1px,0.3vw,4px)] text-center cursor-pointer border-2 transition-all active:scale-95 min-w-0 select-none ${seatClass}`}
+                      onClick={() => handleSeatClick(student.id, student.isParticipating)}
+                      onPointerDown={() => handlePointerDown(student.id, student.isParticipating)}
+                      onPointerUp={handlePointerUp}
+                      onPointerLeave={handlePointerUp}
+                      onContextMenu={(e) => e.preventDefault()}
                     >
                       <button
                         onClick={(e) => handleInfoClick(e, student.id, student.name)}
@@ -370,7 +395,7 @@ export default function AttendanceGradePage() {
         {/* 오후/야간 탭 */}
         <div className="flex gap-1 mt-2">
           <button
-            onClick={() => { setTab("afternoon"); setSelectedSeat(null); }}
+            onClick={() => { setTab("afternoon"); setSelectedSeat(null); setActivatedStudents(new Set()); }}
             className={`flex-1 text-center py-2.5 rounded-t-[10px] text-[clamp(12px,3vw,14px)] font-semibold transition-all ${
               tab === "afternoon"
                 ? "bg-white text-[#2563eb] shadow-[0_-2px_8px_rgba(0,0,0,0.06)]"
@@ -380,7 +405,7 @@ export default function AttendanceGradePage() {
             오후자습
           </button>
           <button
-            onClick={() => { setTab("night"); setSelectedSeat(null); }}
+            onClick={() => { setTab("night"); setSelectedSeat(null); setActivatedStudents(new Set()); }}
             className={`flex-1 text-center py-2.5 rounded-t-[10px] text-[clamp(12px,3vw,14px)] font-semibold transition-all ${
               tab === "night"
                 ? "bg-white text-[#2563eb] shadow-[0_-2px_8px_rgba(0,0,0,0.06)]"
@@ -402,14 +427,23 @@ export default function AttendanceGradePage() {
               renderRoom={(room) => renderAttendanceRoom(room, { compact: true, hideTeacherDesk: true, gapAfterRows: GAP_CONFIG[room.name] })}
             />
           ) : tab === "afternoon" ? (
-            /* 오후 자습: 반별 3분단씩 가로 그룹 */
+            /* 오후 자습: 이름 접두사 기반 그룹 */
             <div className="flex flex-col gap-5">
               {(() => {
                 const sorted = [...rooms].sort((a, b) => a.sortOrder - b.sortOrder);
                 const groups: typeof rooms[] = [];
-                for (let i = 0; i < sorted.length; i += 3) {
-                  groups.push(sorted.slice(i, i + 3));
+                let currentGroup: typeof rooms = [];
+                let currentPrefix = "";
+                for (const room of sorted) {
+                  const prefix = room.name.split(" ")[0];
+                  if (prefix !== currentPrefix && currentGroup.length > 0) {
+                    groups.push(currentGroup);
+                    currentGroup = [];
+                  }
+                  currentPrefix = prefix;
+                  currentGroup.push(room);
                 }
+                if (currentGroup.length > 0) groups.push(currentGroup);
                 return groups.map((group, gi) => (
                   <div key={gi} className="border border-[#e2e8f0] rounded-[10px] overflow-hidden">
                     <div className="bg-[#f8fafc] px-3.5 py-2.5 border-b border-[#e2e8f0] flex justify-between items-center">
@@ -420,7 +454,7 @@ export default function AttendanceGradePage() {
                         {group.reduce((sum, r) => sum + r.seats.filter((s) => s.student).length, 0)}석
                       </span>
                     </div>
-                    <div className="grid grid-cols-3 gap-1 p-[clamp(6px,1.5vw,12px)]">
+                    <div className={`grid gap-1 p-[clamp(6px,1.5vw,12px)]`} style={{ gridTemplateColumns: `repeat(${group.length}, 1fr)` }}>
                       {group.map((room) => (
                         <div key={room.id}>
                           {renderAttendanceGrid(room)}
@@ -453,6 +487,7 @@ export default function AttendanceGradePage() {
                 { color: "#bbf7d0", label: "출석" },
                 { color: "#fecaca", label: "결석" },
                 { color: "#fef9c3", label: "불참승인" },
+                { color: "#e5e7eb", label: "비참여" },
                 { color: "#2563eb", label: "선택됨", textWhite: true },
               ].map((item) => (
                 <div key={item.label} className="flex items-center gap-1 text-[clamp(9px,2.2vw,11px)] whitespace-nowrap">
