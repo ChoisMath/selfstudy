@@ -130,11 +130,35 @@
 - `/api/admin/sub-admins` — 유지 (교사 탭에서 호출)
 - `/api/admin/homeroom-assignments` — 유지 (교사 탭에서 호출)
 
-### 6. 영향 받는 기존 코드
+### 6. 학년별 관리(grade-admin) 페이지 연동
 
-#### 서브관리자(grade-admin) 좌석 페이지
-- `src/app/grade-admin/[grade]/seats/page.tsx`도 동일하게 SeatingPeriod 제거 반영 필요
-- 서브관리자는 자기 학년의 오자/야자만 접근
+#### 좌석배치 탭 개편
+- **경로**: `/grade-admin/[grade]/seats`
+- 기존 SeatingPeriod 기반 → **[오후자습 | 야간자습]** 2개 탭으로 변경
+- 탭 클릭 → 해당 학년+세션의 좌석 편집 화면 즉시 표시
+- 관리자 `/admin/seats`와 **동일한 SeatingEditor 컴포넌트** 재사용
+- **동일 DB 데이터**: 관리자가 편집한 좌석 = 서브관리자가 보는 좌석 (같은 SeatLayout 테이블)
+
+#### 감독배정 탭 월간 달력 적용
+- **경로**: `/grade-admin/[grade]/supervisors`
+- 관리자 감독배정과 **동일한 월간 달력 그리드 컴포넌트** 재사용
+- 단, 해당 학년만 필터링하여 날짜 셀에 **2개 슬롯만 표시**:
+```
+┌─ 4/7 (월) ─────┐
+│ 오후자습: 김영수 │
+│ 야간자습: 박미선 │
+└────────────────┘
+```
+- **동일 DB 데이터**: 관리자의 감독배정과 같은 `SupervisorAssignment` 테이블 사용
+- 서브관리자도 자기 학년의 감독 배정/변경 가능
+
+#### 공유 컴포넌트 설계
+| 컴포넌트 | props | 관리자 사용 | 학년관리 사용 |
+|----------|-------|-----------|-------------|
+| `SeatingEditor` | `grade`, `sessionType` | 6개 탭에서 각각 호출 | 2개 탭에서 각각 호출 |
+| `MonthlyCalendar` (신규) | `grade?`, `showAllGrades` | `showAllGrades=true` (6슬롯) | `grade=N` (2슬롯) |
+
+### 7. 영향 받는 기존 코드
 
 #### seat-layouts API
 - `/api/grade-admin/[grade]/seat-layouts` — period 파라미터 제거, sessionType 파라미터로 변경
@@ -142,9 +166,13 @@
 #### 출석 조회 API
 - `/api/attendance` — SeatingPeriod 기반 좌석 조회 로직을 단순화 (기간 필터 제거)
 
+#### 감독배정 API
+- `/api/grade-admin/[grade]/supervisor-assignments` — 월간 조회로 확장 (`?year&month`)
+- 관리자 API `/api/admin/supervisor-assignments`도 동일하게 월간 조회 지원
+
 ## 유지되는 것
 
 - DB: Teacher, Student, HomeroomAssignment, SubAdminAssignment, TeacherRole 등 기존 정규화 구조
 - 인증/인가: 기존 NextAuth v5 + JWT 방식 그대로
-- 서브관리자/감독교사/담임교사/학생 라우트: 변경 없음 (관리자 페이지만 변경)
+- 담임교사/학생 라우트: 변경 없음
 - 출석 체크 기능: 변경 없음
