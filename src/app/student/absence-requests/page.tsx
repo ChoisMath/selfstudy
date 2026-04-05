@@ -55,7 +55,7 @@ export default function AbsenceRequestsPage() {
   const [error, setError] = useState("");
 
   // 오늘 날짜 (YYYY-MM-DD)
-  const today = new Date().toISOString().split("T")[0];
+  const today = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Seoul" })).toISOString().split("T")[0];
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

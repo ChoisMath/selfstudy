@@ -58,7 +58,7 @@ export default function AttendanceGradePage() {
   const [activatedStudents, setActivatedStudents] = useState<Set<number>>(new Set());
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const today = new Date().toISOString().split("T")[0];
+  const today = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Seoul" })).toISOString().split("T")[0];
   const todayFormatted = (() => {
     const d = new Date();
     const days = ["일", "월", "화", "수", "목", "금", "토"];
