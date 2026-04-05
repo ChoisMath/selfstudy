@@ -19,6 +19,11 @@ export const GET = withAuth(
     const gradeNum = parseInt(grade);
     const dateObj = new Date(date + "T00:00:00Z");
 
+    // 요일 계산 (date 파라미터는 KST 기준 YYYY-MM-DD)
+    const dayIndex = new Date(date + "T12:00:00+09:00").getDay(); // 0=일 ~ 6=토
+    const dayFields = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
+    const todayField = dayFields[dayIndex] as "mon" | "tue" | "wed" | "thu" | "fri" | undefined;
+
     // 해당 학년 + 세션의 교실(Room) 목록
     const studySession = await prisma.studySession.findUnique({
       where: { type_grade: { type: session, grade: gradeNum } },
@@ -112,7 +117,15 @@ export const GET = withAuth(
                 name: seat.student.name,
                 classNumber: seat.student.classNumber,
                 studentNumber: seat.student.studentNumber,
-                isParticipating: seat.student.participationDays[0]?.isParticipating ?? true,
+                isParticipating: (() => {
+                  const pd = seat.student.participationDays[0];
+                  if (!pd) return true; // 참여설정 없으면 기본 참여
+                  if (!pd.isParticipating) return false; // 전체 비참여
+                  // 전체 참여이더라도 오늘 요일이 비참여면 false
+                  const dayMap = { mon: pd.mon, tue: pd.tue, wed: pd.wed, thu: pd.thu, fri: pd.fri };
+                  if (todayField && todayField in dayMap) return dayMap[todayField];
+                  return true; // 주말 등은 기본 참여로 처리
+                })(),
                 isApprovedAbsence: approvedStudentIds.has(seat.student.id),
               }
             : null,

@@ -58,11 +58,11 @@ export default function AttendanceGradePage() {
   const [activatedStudents, setActivatedStudents] = useState<Set<number>>(new Set());
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const today = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Seoul" })).toISOString().split("T")[0];
+  const kstNow = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Seoul" }));
+  const today = kstNow.toISOString().split("T")[0];
   const todayFormatted = (() => {
-    const d = new Date();
     const days = ["일", "월", "화", "수", "목", "금", "토"];
-    return `${d.getFullYear()}.${d.getMonth() + 1}.${d.getDate()} (${days[d.getDay()]})`;
+    return `${kstNow.getFullYear()}.${kstNow.getMonth() + 1}.${kstNow.getDate()} (${days[kstNow.getDay()]})`;
   })();
 
   const { data, mutate } = useSWR(
@@ -113,13 +113,13 @@ export default function AttendanceGradePage() {
   }
 
   async function handleSeatClick(studentId: number, isParticipating: boolean) {
-    // 비참여 + 미활성화 → 무시 (길게 터치로만 활성화)
-    if (!isParticipating && !activatedStudents.has(studentId)) return;
+    // 비참여 + 미활성화 + 기존 출석기록 없음 → 무시 (길게 터치로만 활성화)
+    if (!isParticipating && !activatedStudents.has(studentId) && !attendances[studentId]) return;
     await handleToggle(studentId);
   }
 
   const handlePointerDown = useCallback((studentId: number, isParticipating: boolean) => {
-    if (isParticipating || activatedStudents.has(studentId)) return;
+    if (isParticipating || activatedStudents.has(studentId) || attendances[studentId]) return;
     longPressTimerRef.current = setTimeout(() => {
       setActivatedStudents(prev => new Set(prev).add(studentId));
       longPressTimerRef.current = null;
@@ -181,7 +181,7 @@ export default function AttendanceGradePage() {
                   const status = attendances[student.id]?.status || "unchecked";
                   const isApproved = student.isApprovedAbsence;
                   const isSelected = selectedSeat === student.id;
-                  const isInactive = !student.isParticipating && !activatedStudents.has(student.id);
+                  const isInactive = !student.isParticipating && !activatedStudents.has(student.id) && !attendances[student.id];
                   let seatClass = "";
                   if (isInactive) {
                     seatClass = "bg-[#e5e7eb] text-[#9ca3af] border-[#d1d5db] opacity-60";
