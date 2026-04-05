@@ -7,9 +7,9 @@ type Teacher = {
   id: number;
   loginId: string;
   name: string;
-  roles: { role: string }[];
+  roles: string[];
   homeroomAssignments: { id: number; grade: number; classNumber: number }[];
-  subAdminAssignments: { id: number; grade: number }[];
+  subAdminGrades: number[];
 };
 
 type TabConfig =
@@ -148,11 +148,11 @@ function TeacherTab() {
     const teacher = teachers.find((t) => t.id === teacherId);
     if (!teacher) return;
 
-    for (const sa of teacher.subAdminAssignments) {
+    for (const grade of teacher.subAdminGrades) {
       await fetch("/api/admin/sub-admins", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ teacherId, grade: sa.grade }),
+        body: JSON.stringify({ teacherId, grade }),
       });
     }
 
@@ -219,8 +219,8 @@ function TeacherTab() {
                     ? `${t.homeroomAssignments[0].grade}-${t.homeroomAssignments[0].classNumber}`
                     : "";
                 const subAdminValue =
-                  t.subAdminAssignments.length > 0
-                    ? String(t.subAdminAssignments[0].grade)
+                  t.subAdminGrades.length > 0
+                    ? String(t.subAdminGrades[0])
                     : "";
 
                 return (
@@ -229,18 +229,18 @@ function TeacherTab() {
                     <td className="px-4 py-3 text-sm text-gray-600">{t.loginId}</td>
                     <td className="px-4 py-3">
                       <div className="flex gap-1 flex-wrap">
-                        {t.roles.map((r) => (
+                        {t.roles.map((role) => (
                           <span
-                            key={r.role}
+                            key={role}
                             className={`px-2 py-0.5 text-xs rounded-full ${
-                              r.role === "admin"
+                              role === "admin"
                                 ? "bg-red-100 text-red-700"
-                                : r.role === "homeroom"
+                                : role === "homeroom"
                                   ? "bg-green-100 text-green-700"
                                   : "bg-blue-100 text-blue-700"
                             }`}
                           >
-                            {r.role === "admin" ? "관리자" : r.role === "homeroom" ? "담임" : "감독"}
+                            {role === "admin" ? "관리자" : role === "homeroom" ? "담임" : "감독"}
                           </span>
                         ))}
                       </div>
