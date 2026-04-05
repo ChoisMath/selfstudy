@@ -49,15 +49,6 @@ type StudySession = {
   rooms: Room[];
 };
 
-type SeatingPeriod = {
-  id: number;
-  name: string;
-  startDate: string;
-  endDate: string;
-  grade: number;
-  isActive: boolean;
-};
-
 // 좌석 셀 상태를 위한 타입
 type CellState = {
   studentId: number | null;
@@ -72,12 +63,11 @@ const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export default function SeatingEditor({
   grade,
-  period,
+  sessionType,
 }: {
   grade: number;
-  period: SeatingPeriod;
+  sessionType: "afternoon" | "night";
 }) {
-  const [activeTab, setActiveTab] = useState<"afternoon" | "night">("afternoon");
   const [seats, setSeats] = useState<AllSeats>(new Map());
   const [dirty, setDirty] = useState<Set<number>>(new Set()); // 변경된 roomId 세트
   const [saving, setSaving] = useState(false);
@@ -89,7 +79,7 @@ export default function SeatingEditor({
     isLoading: layoutLoading,
     mutate: layoutMutate,
   } = useSWR<{ sessions: StudySession[] }>(
-    `/api/grade-admin/${grade}/seat-layouts?periodId=${period.id}&sessionType=${activeTab}`,
+    `/api/grade-admin/${grade}/seat-layouts?sessionType=${sessionType}`,
     fetcher
   );
 
@@ -268,11 +258,7 @@ export default function SeatingEditor({
         return fetch(`/api/grade-admin/${grade}/seat-layouts`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            periodId: period.id,
-            roomId,
-            layouts,
-          }),
+          body: JSON.stringify({ roomId, layouts }),
         });
       });
 
@@ -314,37 +300,13 @@ export default function SeatingEditor({
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-bold text-gray-900">{period.name} - 좌석 편집</h2>
+        <h2 className="text-xl font-bold text-gray-900">좌석 편집</h2>
         <button
           onClick={handleSave}
           disabled={saving || dirty.size === 0}
           className="px-4 py-2 text-sm text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {saving ? "저장 중..." : dirty.size > 0 ? `저장 (${dirty.size}개 교실 변경)` : "저장"}
-        </button>
-      </div>
-
-      {/* 오후/야간 탭 */}
-      <div className="flex gap-1 mb-6 bg-gray-100 rounded-lg p-1 w-fit">
-        <button
-          onClick={() => setActiveTab("afternoon")}
-          className={`px-4 py-2 text-sm rounded-md transition-colors ${
-            activeTab === "afternoon"
-              ? "bg-white text-blue-700 shadow-sm font-medium"
-              : "text-gray-600 hover:text-gray-900"
-          }`}
-        >
-          오후 자습
-        </button>
-        <button
-          onClick={() => setActiveTab("night")}
-          className={`px-4 py-2 text-sm rounded-md transition-colors ${
-            activeTab === "night"
-              ? "bg-white text-blue-700 shadow-sm font-medium"
-              : "text-gray-600 hover:text-gray-900"
-          }`}
-        >
-          야간 자습
         </button>
       </div>
 
