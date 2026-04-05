@@ -1,0 +1,337 @@
+"use client";
+
+import { useState, useEffect, useCallback } from "react";
+import StudentManagement from "@/components/students/StudentManagement";
+
+type Teacher = {
+  id: number;
+  loginId: string;
+  name: string;
+  roles: { role: string }[];
+  homeroomAssignments: { id: number; grade: number; classNumber: number }[];
+  subAdminAssignments: { id: number; grade: number }[];
+};
+
+type TabConfig =
+  | { type: "teachers"; label: string }
+  | { type: "students"; label: string; grade: number };
+
+const TABS: TabConfig[] = [
+  { type: "teachers", label: "교사" },
+  { type: "students", label: "1학년", grade: 1 },
+  { type: "students", label: "2학년", grade: 2 },
+  { type: "students", label: "3학년", grade: 3 },
+];
+
+const CLASS_OPTIONS = [1, 2, 3].flatMap((g) =>
+  Array.from({ length: 10 }, (_, i) => ({
+    label: `${g}-${i + 1}`,
+    grade: g,
+    classNumber: i + 1,
+  }))
+);
+
+export default function AdminUsersPage() {
+  const [activeIdx, setActiveIdx] = useState(0);
+  const activeTab = TABS[activeIdx];
+
+  return (
+    <div>
+      <h1 className="text-2xl font-bold text-gray-900 mb-6">사용자 관리</h1>
+
+      <div className="flex gap-1 mb-6 bg-gray-100 rounded-lg p-1 w-fit">
+        {TABS.map((tab, idx) => (
+          <button
+            key={idx}
+            onClick={() => setActiveIdx(idx)}
+            className={`px-4 py-2 text-sm rounded-md transition-colors ${
+              activeIdx === idx
+                ? "bg-white text-blue-700 shadow-sm font-medium"
+                : "text-gray-600 hover:text-gray-900"
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {activeTab.type === "teachers" ? (
+        <TeacherTab />
+      ) : (
+        <StudentManagement key={activeTab.grade} grade={activeTab.grade} />
+      )}
+    </div>
+  );
+}
+
+function TeacherTab() {
+  const [teachers, setTeachers] = useState<Teacher[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [editTarget, setEditTarget] = useState<Teacher | null>(null);
+  const [form, setForm] = useState({ loginId: "", name: "", password: "" });
+
+  const fetchTeachers = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/admin/teachers");
+      if (res.ok) {
+        const data = await res.json();
+        setTeachers(data.teachers);
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchTeachers();
+  }, [fetchTeachers]);
+
+  const handleSubmit = async () => {
+    const url = editTarget
+      ? `/api/admin/teachers/${editTarget.id}`
+      : "/api/admin/teachers";
+    const method = editTarget ? "PUT" : "POST";
+    const body: Record<string, string> = { loginId: form.loginId, name: form.name };
+    if (form.password) body.password = form.password;
+
+    const res = await fetch(url, {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+
+    if (res.ok) {
+      setShowModal(false);
+      setEditTarget(null);
+      setForm({ loginId: "", name: "", password: "" });
+      fetchTeachers();
+    } else {
+      const data = await res.json();
+      alert(data.error || "오류가 발생했습니다.");
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!confirm("정말 삭제하시겠습니까?")) return;
+    const res = await fetch(`/api/admin/teachers/${id}`, { method: "DELETE" });
+    if (res.ok) fetchTeachers();
+    else alert("삭제에 실패했습니다.");
+  };
+
+  const handleHomeroomChange = async (teacherId: number, value: string) => {
+    const teacher = teachers.find((t) => t.id === teacherId);
+    if (!teacher) return;
+
+    for (const ha of teacher.homeroomAssignments) {
+      await fetch("/api/admin/homeroom-assignments", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ grade: ha.grade, classNumber: ha.classNumber }),
+      });
+    }
+
+    if (value !== "") {
+      const [g, c] = value.split("-").map(Number);
+      await fetch("/api/admin/homeroom-assignments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ teacherId, grade: g, classNumber: c }),
+      });
+    }
+
+    fetchTeachers();
+  };
+
+  const handleSubAdminChange = async (teacherId: number, value: string) => {
+    const teacher = teachers.find((t) => t.id === teacherId);
+    if (!teacher) return;
+
+    for (const sa of teacher.subAdminAssignments) {
+      await fetch("/api/admin/sub-admins", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ teacherId, grade: sa.grade }),
+      });
+    }
+
+    if (value !== "") {
+      const grade = parseInt(value, 10);
+      await fetch("/api/admin/sub-admins", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ teacherId, grade }),
+      });
+    }
+
+    fetchTeachers();
+  };
+
+  const openCreate = () => {
+    setEditTarget(null);
+    setForm({ loginId: "", name: "", password: "" });
+    setShowModal(true);
+  };
+
+  const openEdit = (t: Teacher) => {
+    setEditTarget(t);
+    setForm({ loginId: t.loginId, name: t.name, password: "" });
+    setShowModal(true);
+  };
+
+  return (
+    <div>
+      <div className="flex justify-end mb-4">
+        <button
+          onClick={openCreate}
+          className="px-4 py-2 text-sm text-white bg-blue-600 rounded-md hover:bg-blue-700"
+        >
+          교사 추가
+        </button>
+      </div>
+
+      <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+        <table className="w-full">
+          <thead>
+            <tr className="bg-gray-50 border-b border-gray-200">
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">이름</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">아이디</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">역할</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">담임</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">서브관리자</th>
+              <th className="px-4 py-3 text-center text-xs font-medium text-gray-500">작업</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              <tr>
+                <td colSpan={6} className="text-center py-8 text-gray-400">로딩 중...</td>
+              </tr>
+            ) : teachers.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="text-center py-8 text-gray-400">등록된 교사가 없습니다.</td>
+              </tr>
+            ) : (
+              teachers.map((t) => {
+                const homeroomValue =
+                  t.homeroomAssignments.length > 0
+                    ? `${t.homeroomAssignments[0].grade}-${t.homeroomAssignments[0].classNumber}`
+                    : "";
+                const subAdminValue =
+                  t.subAdminAssignments.length > 0
+                    ? String(t.subAdminAssignments[0].grade)
+                    : "";
+
+                return (
+                  <tr key={t.id} className="border-b border-gray-100 hover:bg-gray-50">
+                    <td className="px-4 py-3 text-sm font-medium text-gray-900">{t.name}</td>
+                    <td className="px-4 py-3 text-sm text-gray-600">{t.loginId}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex gap-1 flex-wrap">
+                        {t.roles.map((r) => (
+                          <span
+                            key={r.role}
+                            className={`px-2 py-0.5 text-xs rounded-full ${
+                              r.role === "admin"
+                                ? "bg-red-100 text-red-700"
+                                : r.role === "homeroom"
+                                  ? "bg-green-100 text-green-700"
+                                  : "bg-blue-100 text-blue-700"
+                            }`}
+                          >
+                            {r.role === "admin" ? "관리자" : r.role === "homeroom" ? "담임" : "감독"}
+                          </span>
+                        ))}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <select
+                        value={homeroomValue}
+                        onChange={(e) => handleHomeroomChange(t.id, e.target.value)}
+                        className="text-sm border border-gray-300 rounded-md px-2 py-1 w-24"
+                      >
+                        <option value="">미배정</option>
+                        {CLASS_OPTIONS.map((opt) => (
+                          <option key={opt.label} value={opt.label}>{opt.label}반</option>
+                        ))}
+                      </select>
+                    </td>
+                    <td className="px-4 py-3">
+                      <select
+                        value={subAdminValue}
+                        onChange={(e) => handleSubAdminChange(t.id, e.target.value)}
+                        className="text-sm border border-gray-300 rounded-md px-2 py-1 w-24"
+                      >
+                        <option value="">없음</option>
+                        <option value="1">1학년</option>
+                        <option value="2">2학년</option>
+                        <option value="3">3학년</option>
+                      </select>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <button onClick={() => openEdit(t)} className="text-sm text-blue-600 hover:text-blue-800 mr-2">수정</button>
+                      <button onClick={() => handleDelete(t.id)} className="text-sm text-red-600 hover:text-red-800">삭제</button>
+                    </td>
+                  </tr>
+                );
+              })
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {showModal && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h3 className="text-lg font-bold mb-4">{editTarget ? "교사 수정" : "교사 추가"}</h3>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm text-gray-600 mb-1">이름</label>
+                <input
+                  value={form.name}
+                  onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-600 mb-1">아이디</label>
+                <input
+                  value={form.loginId}
+                  onChange={(e) => setForm((f) => ({ ...f, loginId: e.target.value }))}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                  disabled={!!editTarget}
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-600 mb-1">
+                  비밀번호{editTarget && " (변경 시에만 입력)"}
+                </label>
+                <input
+                  type="password"
+                  value={form.password}
+                  onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 mt-6">
+              <button
+                onClick={() => setShowModal(false)}
+                className="px-4 py-2 text-sm text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
+              >
+                취소
+              </button>
+              <button
+                onClick={handleSubmit}
+                className="px-4 py-2 text-sm text-white bg-blue-600 rounded-md hover:bg-blue-700"
+              >
+                {editTarget ? "수정" : "추가"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
