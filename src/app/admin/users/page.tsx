@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import StudentManagement from "@/components/students/StudentManagement";
+import ExcelUploadModal from "@/components/admin-shared/ExcelUploadModal";
 
 type Teacher = {
   id: number;
@@ -68,6 +69,7 @@ function TeacherTab() {
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [showExcelModal, setShowExcelModal] = useState(false);
   const [editTarget, setEditTarget] = useState<Teacher | null>(null);
   const [form, setForm] = useState({ loginId: "", name: "", password: "" });
 
@@ -182,7 +184,13 @@ function TeacherTab() {
 
   return (
     <div>
-      <div className="flex justify-end mb-4">
+      <div className="flex justify-end mb-4 gap-2">
+        <button
+          onClick={() => setShowExcelModal(true)}
+          className="px-4 py-2 text-sm text-green-700 bg-green-50 border border-green-200 rounded-md hover:bg-green-100"
+        >
+          Excel
+        </button>
         <button
           onClick={openCreate}
           className="px-4 py-2 text-sm text-white bg-blue-600 rounded-md hover:bg-blue-700"
@@ -332,6 +340,16 @@ function TeacherTab() {
           </div>
         </div>
       )}
+
+      <ExcelUploadModal
+        isOpen={showExcelModal}
+        onClose={() => setShowExcelModal(false)}
+        templateUrl="/api/admin/teachers/template"
+        templateFilename="teacher_template.xlsx"
+        uploadUrl="/api/admin/teachers/bulk-upload"
+        onUploaded={() => fetchTeachers()}
+        title="교사 Excel 일괄 업로드"
+      />
     </div>
   );
 }

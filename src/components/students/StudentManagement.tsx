@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import useSWR from "swr";
-import BulkUpload from "./BulkUpload";
+import ExcelUploadModal from "@/components/admin-shared/ExcelUploadModal";
 
 type Student = {
   id: number;
@@ -166,6 +166,7 @@ function StudentModal({
 // --- 메인 컴포넌트 ---
 export default function StudentManagement({ grade }: { grade: number }) {
   const [classFilter, setClassFilter] = useState<string>("");
+  const [showExcelModal, setShowExcelModal] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -314,6 +315,12 @@ export default function StudentManagement({ grade }: { grade: number }) {
             ))}
           </select>
           <button
+            onClick={() => setShowExcelModal(true)}
+            className="px-4 py-2 text-sm text-green-700 bg-green-50 border border-green-200 rounded-md hover:bg-green-100 transition-colors"
+          >
+            Excel
+          </button>
+          <button
             onClick={handleAdd}
             className="px-4 py-2 text-sm text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors"
           >
@@ -322,8 +329,15 @@ export default function StudentManagement({ grade }: { grade: number }) {
         </div>
       </div>
 
-      {/* 일괄 업로드 */}
-      <BulkUpload grade={grade} onUploaded={() => mutate()} />
+      <ExcelUploadModal
+        isOpen={showExcelModal}
+        onClose={() => setShowExcelModal(false)}
+        templateUrl="/api/admin/students/template"
+        templateFilename="student_template.xlsx"
+        uploadUrl={`/api/grade-admin/${grade}/students/bulk-upload`}
+        onUploaded={() => mutate()}
+        title={`${grade}학년 학생 Excel 일괄 업로드`}
+      />
 
       {/* 에러 메시지 */}
       {error && (

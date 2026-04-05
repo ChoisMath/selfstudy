@@ -86,7 +86,7 @@ src/
 │   ├── api-auth.ts     # withAuth, withGradeAuth, withHomeroomAuth 래퍼
 │   └── prisma.ts       # PrismaClient 싱글톤 (PrismaPg 어댑터)
 │
-├── middleware.ts       # 라우트 보호 (getToken 기반, Edge Runtime 호환)
+├── middleware.ts       # 라우트 보호 (getToken + 명시적 cookieName/salt, Edge Runtime 호환)
 ├── types/next-auth.d.ts # Session/JWT 타입 확장
 └── generated/prisma/   # Prisma 자동 생성 (gitignore)
 ```
@@ -196,10 +196,10 @@ Teacher ──< TeacherRole (admin/supervisor/homeroom)
 ## 인증/인가 흐름
 
 ```
-[로그인] → Server Action (actions.ts) → signIn() → JWT 발급
-    ↓
-[미들웨어] ← getToken() (Edge Runtime 호환)
-    ↓ 경로별 역할 검사
+[로그인] → Server Action (actions.ts) → signIn() → JWT 발급 (JWE, A256CBC-HS512)
+    ↓                                        쿠키: __Secure-authjs.session-token (HTTPS)
+[미들웨어] ← getToken(cookieName, salt 명시) (Edge Runtime 호환)
+    ↓ 경로별 역할 검사                  ⚠ auth() 래퍼는 Prisma 의존으로 Edge 불가
 [API] ← withAuth / withGradeAuth / withHomeroomAuth
 ```
 
@@ -207,12 +207,22 @@ Teacher ──< TeacherRole (admin/supervisor/homeroom)
 - `trustHost: true` (Railway 프록시 대응)
 - `AUTH_URL`, `AUTH_TRUST_HOST` 환경변수 설정
 
+## 수정 이력 (주요 버그픽스)
+
+### 2026-04-05: 미들웨어 세션 인식 실패 수정
+- **증상**: 로그인 성공 후 모든 보호 경로에서 307 → `/login` 리다이렉트 (앱 사용 불가)
+- **원인**: Auth.js v5가 쿠키 접두사를 `next-auth` → `authjs`로 변경. `getToken()`이 기본 cookieName/salt로 쿠키를 찾지 못함
+- **수정**: `middleware.ts`에서 `getToken()` 호출 시 HTTPS는 `__Secure-authjs.session-token`, HTTP는 `authjs.session-token`으로 `cookieName`과 `salt`를 명시
+- **추가 발견**: Railway 배포 브랜치가 `main`인데 코드가 `master`에 push되고 있었음 → `master:main` force push로 해결
+- **교훈**: Auth.js v5 (next-auth@5.x)에서 `getToken()` 사용 시 반드시 `cookieName`과 `salt` 명시 필요. Railway 환경에서는 `AUTH_SECRET`이 아닌 `NEXTAUTH_SECRET`만 설정됨
+
 ## 배포 정보
 
 - **Railway 프로젝트**: courageous-motivation
 - **서비스**: selfstudy + Postgres
 - **빌드**: `prisma generate && next build`
 - **시작**: `prisma migrate deploy && next start`
+- **배포 브랜치**: `main` (로컬 `master` → `git push origin master:main`)
 - **PORT**: 8080
 - **환경변수**: DATABASE_URL (reference: ${{Postgres.DATABASE_URL}}), NEXTAUTH_SECRET, NEXTAUTH_URL, AUTH_URL, AUTH_TRUST_HOST, NODE_ENV
 
