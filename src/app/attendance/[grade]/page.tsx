@@ -59,7 +59,7 @@ export default function AttendanceGradePage() {
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const kstNow = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Seoul" }));
-  const today = kstNow.toISOString().split("T")[0];
+  const today = `${kstNow.getFullYear()}-${String(kstNow.getMonth() + 1).padStart(2, "0")}-${String(kstNow.getDate()).padStart(2, "0")}`;
   const todayFormatted = (() => {
     const days = ["일", "월", "화", "수", "목", "금", "토"];
     return `${kstNow.getFullYear()}.${kstNow.getMonth() + 1}.${kstNow.getDate()} (${days[kstNow.getDay()]})`;
