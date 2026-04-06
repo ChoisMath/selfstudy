@@ -5,7 +5,13 @@ import bcrypt from "bcryptjs";
 
 export const GET = withAuth(["admin"], async () => {
   const teachers = await prisma.teacher.findMany({
-    include: {
+    select: {
+      id: true,
+      loginId: true,
+      name: true,
+      primaryGrade: true,
+      googleId: true,
+      createdAt: true,
       roles: { select: { role: true } },
       homeroomAssignments: { select: { id: true, grade: true, classNumber: true } },
       subAdminAssignments: { select: { grade: true } },

@@ -54,7 +54,7 @@ export const GET = withAuth(["homeroom", "admin"], async (req: Request, user) =>
         where: {
           date: { gte: startDate, lte: endDate },
         },
-        include: { absenceReason: true },
+        include: { absenceReason: { select: { reasonType: true } } },
       },
       participationDays: true,
     },

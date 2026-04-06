@@ -20,8 +20,19 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const password = credentials?.password as string;
         if (!loginId || !password) return null;
 
-        const teacher = await prisma.teacher.findUnique({
+        // 1단계: 비밀번호 검증 (최소 필드만 조회)
+        const basic = await prisma.teacher.findUnique({
           where: { loginId },
+          select: { id: true, passwordHash: true },
+        });
+        if (!basic) return null;
+
+        const valid = await bcrypt.compare(password, basic.passwordHash);
+        if (!valid) return null;
+
+        // 2단계: 성공 시에만 전체 정보 로드
+        const teacher = await prisma.teacher.findUnique({
+          where: { id: basic.id },
           include: {
             roles: true,
             homeroomAssignments: true,
@@ -29,9 +40,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           },
         });
         if (!teacher) return null;
-
-        const valid = await bcrypt.compare(password, teacher.passwordHash);
-        if (!valid) return null;
 
         return {
           id: String(teacher.id),

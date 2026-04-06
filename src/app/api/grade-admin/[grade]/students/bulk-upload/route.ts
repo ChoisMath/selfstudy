@@ -172,36 +172,40 @@ export async function POST(
         ])
       );
 
-      // 기존 학생 비활성화 + 새 학생 생성
+      // 기존 학생 비활성화 + 새 학생 생성 (배치 처리)
       let successCount = 0;
       if (deduplicatedRows.length > 0) {
+        // 비활성화 대상 기존 학생 ID 수집
+        const toDeactivate: { id: number }[] = [];
+        for (const r of deduplicatedRows) {
+          const key = `${r.grade}-${r.classNumber}-${r.studentNumber}`;
+          const existing = existingMap.get(key);
+          if (existing) toDeactivate.push({ id: existing.id });
+        }
+
         await prisma.$transaction(async (tx) => {
-          for (const r of deduplicatedRows) {
-            const key = `${r.grade}-${r.classNumber}-${r.studentNumber}`;
-            const existing = existingMap.get(key);
-
-            if (existing) {
-              // 기존 학생 비활성화 + 학번 변경 (unique 제약 해제)
-              await tx.student.update({
-                where: { id: existing.id },
-                data: {
-                  isActive: false,
-                  studentNumber: -(existing.id), // unique 충돌 방지
-                },
-              });
-            }
-
-            // 새 학생 생성
-            await tx.student.create({
-              data: {
-                grade: r.grade,
-                classNumber: r.classNumber,
-                studentNumber: r.studentNumber,
-                name: r.name,
-              },
-            });
-            successCount++;
+          // 1단계: 기존 학생 개별 비활성화 (studentNumber를 -(id)로 변경하여 unique 충돌 방지)
+          if (toDeactivate.length > 0) {
+            await Promise.all(
+              toDeactivate.map((s) =>
+                tx.student.update({
+                  where: { id: s.id },
+                  data: { isActive: false, studentNumber: -(s.id) },
+                })
+              )
+            );
           }
+
+          // 2단계: 새 학생 일괄 생성
+          await tx.student.createMany({
+            data: deduplicatedRows.map((r) => ({
+              grade: r.grade,
+              classNumber: r.classNumber,
+              studentNumber: r.studentNumber,
+              name: r.name,
+            })),
+          });
+          successCount = deduplicatedRows.length;
         });
       }
 

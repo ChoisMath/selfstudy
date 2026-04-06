@@ -29,7 +29,7 @@ export const GET = withAuth(["admin"], async (req: Request) => {
         studentId: { in: students.map((s) => s.id) },
         date: { gte: fromDate, lte: toDate },
       },
-      include: { absenceReason: true },
+      include: { absenceReason: { select: { reasonType: true } } },
     });
 
     // 날짜 범위 (평일만)

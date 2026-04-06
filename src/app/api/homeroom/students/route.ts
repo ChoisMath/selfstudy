@@ -52,7 +52,7 @@ export const GET = withAuth(["homeroom", "admin"], async (req: Request, user) =>
             lte: friday,
           },
         },
-        include: { absenceReason: true },
+        include: { absenceReason: { select: { reasonType: true } } },
       },
       participationDays: {
         select: {

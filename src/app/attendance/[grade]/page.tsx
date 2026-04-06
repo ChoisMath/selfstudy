@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, memo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import useSWR from "swr";
 import MiraeHallLayout, { GAP_CONFIG } from "@/components/seats/MiraeHallLayout";
@@ -51,6 +51,82 @@ interface WeeklyDay {
 
 type Tab = "afternoon" | "night";
 
+interface SeatCellProps {
+  student: NonNullable<Seat["student"]>;
+  status: string;
+  isSelected: boolean;
+  isInactive: boolean;
+  grade: number;
+  attendanceStatus?: AttendanceRecord;
+  onSeatClick: (studentId: number, isParticipating: boolean) => void;
+  onPointerDown: (studentId: number, isParticipating: boolean) => void;
+  onPointerUp: () => void;
+  onInfoClick: (e: React.MouseEvent, studentId: number, name: string) => void;
+}
+
+const SeatCell = memo(function SeatCell({
+  student, status, isSelected, isInactive, grade,
+  attendanceStatus, onSeatClick, onPointerDown, onPointerUp, onInfoClick,
+}: SeatCellProps) {
+  let seatClass = "";
+  if (isInactive) {
+    seatClass = "bg-[#e5e7eb] text-[#9ca3af] border-[#d1d5db] opacity-60";
+  } else if (isSelected) {
+    seatClass = "bg-[#2563eb] text-white border-[#1d4ed8] shadow-[0_2px_8px_rgba(37,99,235,0.3)]";
+  } else if (student.isAfterSchool) {
+    const aStatus = attendanceStatus?.status || "unchecked";
+    if (aStatus === "present") seatClass = "bg-[#fef9c3] border-[#22c55e]";
+    else if (aStatus === "absent") seatClass = "bg-[#fef9c3] border-[#ef4444]";
+    else seatClass = "bg-[#fef9c3] border-[#facc15]";
+  } else if (student.isApprovedAbsence) {
+    seatClass = "bg-[#fef9c3] border-[#facc15]";
+  } else if (status === "present") {
+    seatClass = "bg-[#bbf7d0] border-transparent";
+  } else if (status === "absent") {
+    seatClass = "bg-[#fecaca] border-transparent";
+  } else {
+    seatClass = "bg-[#dbeafe] border-transparent";
+  }
+
+  return (
+    <div
+      className={`relative rounded-[clamp(3px,0.8vw,5px)] py-[clamp(4px,1vw,8px)] px-[clamp(1px,0.3vw,4px)] text-center cursor-pointer border-2 transition-all active:scale-95 min-w-0 select-none ${seatClass}`}
+      onClick={() => onSeatClick(student.id, student.isParticipating)}
+      onPointerDown={() => onPointerDown(student.id, student.isParticipating)}
+      onPointerUp={onPointerUp}
+      onPointerLeave={onPointerUp}
+      onContextMenu={(e) => e.preventDefault()}
+    >
+      <button
+        onClick={(e) => onInfoClick(e, student.id, student.name)}
+        className={`absolute top-0.5 right-0.5 w-[clamp(12px,3vw,16px)] h-[clamp(12px,3vw,16px)] rounded-full text-[clamp(7px,1.8vw,10px)] font-bold leading-none flex items-center justify-center transition-colors ${
+          isSelected
+            ? "bg-white/30 text-white hover:bg-white/50"
+            : "bg-black/5 text-[#6b7280] hover:bg-black/10 hover:text-[#1e293b]"
+        }`}
+        title="주간 출석현황"
+      >
+        i
+      </button>
+      <div className="font-bold text-[clamp(9px,2.2vw,12px)] whitespace-nowrap overflow-hidden text-ellipsis">
+        {student.name}
+      </div>
+      <div className={`text-[clamp(7px,1.8vw,9px)] mt-0.5 ${isSelected ? "text-[#bfdbfe]" : "text-[#6b7280]"}`}>
+        {grade}-{student.classNumber}
+      </div>
+      {student.isApprovedAbsence && !isSelected && (
+        <div className="text-[7px] text-[#ca8a04] mt-0.5">불참승인</div>
+      )}
+      {student.isAfterSchool && !isSelected && (() => {
+        const aStatus = attendanceStatus?.status || "unchecked";
+        if (aStatus === "present") return <div className="text-[7px] text-[#166534] mt-0.5">출석</div>;
+        if (aStatus === "absent") return <div className="text-[7px] text-[#991b1b] mt-0.5">결석</div>;
+        return <div className="text-[7px] text-[#ca8a04] mt-0.5">방과후</div>;
+      })()}
+    </div>
+  );
+});
+
 export default function AttendanceGradePage() {
   const params = useParams();
   const router = useRouter();
@@ -63,6 +139,9 @@ export default function AttendanceGradePage() {
   const [activatedStudents, setActivatedStudents] = useState<Set<number>>(new Set());
   const [noteValues, setNoteValues] = useState<Record<string, string>>({});
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const activatedStudentsRef = useRef(activatedStudents);
+  activatedStudentsRef.current = activatedStudents;
+  const attendancesRef = useRef<Record<number, AttendanceRecord>>({});
 
   const kstNow = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Seoul" }));
   const today = `${kstNow.getFullYear()}-${String(kstNow.getMonth() + 1).padStart(2, "0")}-${String(kstNow.getDate()).padStart(2, "0")}`;
@@ -74,11 +153,12 @@ export default function AttendanceGradePage() {
   const { data, mutate } = useSWR(
     `/api/attendance?date=${today}&session=${tab}&grade=${grade}`,
     fetcher,
-    { refreshInterval: 30000 }
+    { revalidateOnFocus: true }
   );
 
   const rooms: Room[] = data?.rooms || [];
   const attendances: Record<number, AttendanceRecord> = data?.attendances || {};
+  attendancesRef.current = attendances;
   const supervisor = data?.supervisor;
 
   // 출석 카운트
@@ -130,12 +210,12 @@ export default function AttendanceGradePage() {
   }
 
   const handlePointerDown = useCallback((studentId: number, isParticipating: boolean) => {
-    if (isParticipating || activatedStudents.has(studentId) || attendances[studentId]) return;
+    if (isParticipating || activatedStudentsRef.current.has(studentId) || attendancesRef.current[studentId]) return;
     longPressTimerRef.current = setTimeout(() => {
       setActivatedStudents(prev => new Set(prev).add(studentId));
       longPressTimerRef.current = null;
     }, 500);
-  }, [activatedStudents, attendances]);
+  }, []);
 
   const handlePointerUp = useCallback(() => {
     if (longPressTimerRef.current) {
@@ -206,69 +286,22 @@ export default function AttendanceGradePage() {
                     );
                   }
                   const status = attendances[student.id]?.status || "unchecked";
-                  const isApproved = student.isApprovedAbsence;
                   const isSelected = selectedSeat === student.id;
                   const isInactive = !student.isParticipating && !activatedStudents.has(student.id) && !attendances[student.id];
-                  let seatClass = "";
-                  if (isInactive) {
-                    seatClass = "bg-[#e5e7eb] text-[#9ca3af] border-[#d1d5db] opacity-60";
-                  } else if (isSelected) {
-                    seatClass = "bg-[#2563eb] text-white border-[#1d4ed8] shadow-[0_2px_8px_rgba(37,99,235,0.3)]";
-                  } else if (student.isAfterSchool) {
-                    const aStatus = attendances[student.id]?.status || "unchecked";
-                    if (aStatus === "present") {
-                      seatClass = "bg-[#fef9c3] border-[#22c55e]";
-                    } else if (aStatus === "absent") {
-                      seatClass = "bg-[#fef9c3] border-[#ef4444]";
-                    } else {
-                      seatClass = "bg-[#fef9c3] border-[#facc15]";
-                    }
-                  } else if (isApproved) {
-                    seatClass = "bg-[#fef9c3] border-[#facc15]";
-                  } else if (status === "present") {
-                    seatClass = "bg-[#bbf7d0] border-transparent";
-                  } else if (status === "absent") {
-                    seatClass = "bg-[#fecaca] border-transparent";
-                  } else {
-                    seatClass = "bg-[#dbeafe] border-transparent";
-                  }
                   return (
-                    <div
+                    <SeatCell
                       key={`${rowIndex}-${colIndex}`}
-                      className={`relative rounded-[clamp(3px,0.8vw,5px)] py-[clamp(4px,1vw,8px)] px-[clamp(1px,0.3vw,4px)] text-center cursor-pointer border-2 transition-all active:scale-95 min-w-0 select-none ${seatClass}`}
-                      onClick={() => handleSeatClick(student.id, student.isParticipating)}
-                      onPointerDown={() => handlePointerDown(student.id, student.isParticipating)}
+                      student={student}
+                      status={status}
+                      isSelected={isSelected}
+                      isInactive={isInactive}
+                      grade={grade}
+                      attendanceStatus={attendances[student.id]}
+                      onSeatClick={handleSeatClick}
+                      onPointerDown={handlePointerDown}
                       onPointerUp={handlePointerUp}
-                      onPointerLeave={handlePointerUp}
-                      onContextMenu={(e) => e.preventDefault()}
-                    >
-                      <button
-                        onClick={(e) => handleInfoClick(e, student.id, student.name)}
-                        className={`absolute top-0.5 right-0.5 w-[clamp(12px,3vw,16px)] h-[clamp(12px,3vw,16px)] rounded-full text-[clamp(7px,1.8vw,10px)] font-bold leading-none flex items-center justify-center transition-colors ${
-                          isSelected
-                            ? "bg-white/30 text-white hover:bg-white/50"
-                            : "bg-black/5 text-[#6b7280] hover:bg-black/10 hover:text-[#1e293b]"
-                        }`}
-                        title="주간 출석현황"
-                      >
-                        i
-                      </button>
-                      <div className="font-bold text-[clamp(9px,2.2vw,12px)] whitespace-nowrap overflow-hidden text-ellipsis">
-                        {student.name}
-                      </div>
-                      <div className={`text-[clamp(7px,1.8vw,9px)] mt-0.5 ${isSelected ? "text-[#bfdbfe]" : "text-[#6b7280]"}`}>
-                        {grade}-{student.classNumber}
-                      </div>
-                      {isApproved && !isSelected && (
-                        <div className="text-[7px] text-[#ca8a04] mt-0.5">불참승인</div>
-                      )}
-                      {student.isAfterSchool && !isSelected && (() => {
-                        const aStatus = attendances[student.id]?.status || "unchecked";
-                        if (aStatus === "present") return <div className="text-[7px] text-[#166534] mt-0.5">출석</div>;
-                        if (aStatus === "absent") return <div className="text-[7px] text-[#991b1b] mt-0.5">결석</div>;
-                        return <div className="text-[7px] text-[#ca8a04] mt-0.5">방과후</div>;
-                      })()}
-                    </div>
+                      onInfoClick={handleInfoClick}
+                    />
                   );
                 })}
               </div>

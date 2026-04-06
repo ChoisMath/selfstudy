@@ -140,17 +140,15 @@ export async function POST(req: Request) {
         );
 
         await prisma.$transaction(async (tx) => {
-          for (const r of withHashes) {
-            await tx.teacher.create({
-              data: {
-                loginId: r.loginId,
-                name: r.name,
-                passwordHash: r.passwordHash,
-                primaryGrade: r.primaryGrade,
-              },
-            });
-            successCount++;
-          }
+          await tx.teacher.createMany({
+            data: withHashes.map((r) => ({
+              loginId: r.loginId,
+              name: r.name,
+              passwordHash: r.passwordHash,
+              primaryGrade: r.primaryGrade,
+            })),
+          });
+          successCount = withHashes.length;
         });
       }
 

@@ -49,7 +49,7 @@ export const GET = withAuth(["homeroom", "admin"], async (req: Request, user) =>
     include: {
       attendances: {
         where: { date: { gte: startDate, lte: endDate } },
-        include: { absenceReason: true },
+        include: { absenceReason: { select: { reasonType: true } } },
       },
     },
   });
@@ -58,7 +58,15 @@ export const GET = withAuth(["homeroom", "admin"], async (req: Request, user) =>
     const workbook = new ExcelJS.Workbook();
     const displayMonth = `${year}년 ${monthIdx + 1}월`;
 
-    // 학급별로 그룹화
+    // 학급별로 사전 그룹화 (O(N) Map)
+    const studentsByClass = new Map<string, typeof students>();
+    for (const s of students) {
+      const key = `${s.grade}-${s.classNumber}`;
+      const arr = studentsByClass.get(key) || [];
+      arr.push(s);
+      studentsByClass.set(key, arr);
+    }
+
     const classesSorted = [...assignments].sort(
       (a, b) => a.grade - b.grade || a.classNumber - b.classNumber
     );
@@ -67,9 +75,7 @@ export const GET = withAuth(["homeroom", "admin"], async (req: Request, user) =>
       const sheetName = `${cls.grade}-${cls.classNumber}반`;
       const sheet = workbook.addWorksheet(sheetName);
 
-      const classStudents = students.filter(
-        (s) => s.grade === cls.grade && s.classNumber === cls.classNumber
-      );
+      const classStudents = studentsByClass.get(`${cls.grade}-${cls.classNumber}`) || [];
 
       // 헤더 행 1: 이름, 번호, 날짜별(2칸씩)
       const headerRow1 = ["이름", "번호"];

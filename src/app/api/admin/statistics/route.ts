@@ -31,7 +31,7 @@ export const GET = withAuth(["admin"], async (req: Request) => {
       studentId: { in: students.map((s) => s.id) },
       date: { gte: fromDate, lte: toDate },
     },
-    include: { absenceReason: true },
+    include: { absenceReason: { select: { reasonType: true } } },
     orderBy: { date: "asc" },
   });
 

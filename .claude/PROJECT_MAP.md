@@ -225,6 +225,16 @@ Teacher (+ primaryGrade: nullable int) ──< TeacherRole (admin/supervisor/hom
 
 ## 수정 이력 (주요 변경)
 
+### 2026-04-06: 2차 전체 성능 최적화
+- **DB 인덱스 6개 추가**: Attendance(`checkedBy`), AbsenceReason(`registeredBy`), AbsenceRequest(`reviewedBy`), SupervisorSwapHistory(`originalTeacherId`, `replacementTeacherId`), TeacherRole(`role`). AttendanceNote 중복 인덱스 제거
+- **배치 처리**: 교사/학생 일괄업로드 루프 create → `createMany` 전환 (N→1 DB round trip). 학생 업로드는 `Promise.all` update + `createMany` 분리
+- **Over-fetching 제거**: 7개 API에서 `absenceReason` select 추가 (reasonType만 조회). 교사 목록 API `include`→`select` 전환 (passwordHash DB 레벨 제외)
+- **커넥션 풀**: PrismaPg 어댑터에 명시적 풀 설정 (max:10, idleTimeout:30s, connectionTimeout:5s)
+- **프론트엔드**: 출석 페이지 `refreshInterval` 30초 폴링 제거→`revalidateOnFocus`, `SeatCell` React.memo 컴포넌트 추출 (100+셀 리렌더링 방지), `handlePointerDown` useRef 최적화, SWR `shouldRetryOnError` 4xx 재시도 방지 추가
+- **인증 최적화**: 교사 로그인 2단계 분리 (비밀번호 검증용 최소 쿼리 → 성공 시에만 전체 정보 로드)
+- **VarChar 제약**: Student.name, Teacher.name, Room.name, StudySession.name/timeStart/timeEnd, AbsenceReason.detail, AbsenceRequest.detail, SupervisorSwapHistory.reason에 길이 제한 추가
+- **기타**: export-attendance 학급 그룹핑 `.filter()`→Map 전환 (O(N*C)→O(N))
+
 ### 2026-04-06: 방과후참가 토글 + 요일별 비고 입력
 - **ParticipationDay 확장**: `afterSchoolMon~afterSchoolFri` 5개 Boolean 필드 추가 (기본 false)
   - 세션별(오후/야간) 독립 설정, 참여+해당요일 켜진 상태에서만 활성화

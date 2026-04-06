@@ -14,7 +14,7 @@ model Student {
   grade         Int
   classNumber   Int      @map("class_number")
   studentNumber Int      @map("student_number")
-  name          String
+  name          String   @db.VarChar(50)
   isActive      Boolean  @default(true) @map("is_active")
   createdAt     DateTime @default(now()) @map("created_at")
 
@@ -34,7 +34,7 @@ model Teacher {
   id           Int      @id @default(autoincrement())
   loginId      String   @unique @map("login_id")
   passwordHash String   @map("password_hash")
-  name         String
+  name         String   @db.VarChar(50)
   primaryGrade Int?     @map("primary_grade")
   googleId     String?  @unique @map("google_id")
   createdAt    DateTime @default(now()) @map("created_at")
@@ -61,6 +61,7 @@ model TeacherRole {
   teacher Teacher @relation(fields: [teacherId], references: [id])
 
   @@unique([teacherId, role])
+  @@index([role])
   @@map("teacher_roles")
 }
 
@@ -116,7 +117,7 @@ model SupervisorSwapHistory {
   assignmentId         Int      @map("assignment_id")
   originalTeacherId    Int      @map("original_teacher_id")
   replacementTeacherId Int      @map("replacement_teacher_id")
-  reason               String?
+  reason               String?  @db.VarChar(500)
   isCrossGrade         Boolean  @default(false) @map("is_cross_grade")
   swappedAt            DateTime @default(now()) @map("swapped_at")
 
@@ -124,6 +125,8 @@ model SupervisorSwapHistory {
   originalTeacher    Teacher              @relation("original", fields: [originalTeacherId], references: [id])
   replacementTeacher Teacher              @relation("replacement", fields: [replacementTeacherId], references: [id])
 
+  @@index([originalTeacherId])
+  @@index([replacementTeacherId])
   @@map("supervisor_swap_history")
 }
 
@@ -138,9 +141,9 @@ model StudySession {
   id        Int         @id @default(autoincrement())
   type      SessionType
   grade     Int
-  name      String
-  timeStart String      @map("time_start")
-  timeEnd   String      @map("time_end")
+  name      String      @db.VarChar(50)
+  timeStart String      @db.VarChar(10) @map("time_start")
+  timeEnd   String      @db.VarChar(10) @map("time_end")
 
   rooms Room[]
 
@@ -151,7 +154,7 @@ model StudySession {
 model Room {
   id        Int    @id @default(autoincrement())
   sessionId Int    @map("session_id")
-  name      String
+  name      String @db.VarChar(50)
   cols      Int
   rows      Int
   sortOrder Int    @default(0) @map("sort_order")
@@ -198,6 +201,7 @@ model Attendance {
   @@unique([studentId, sessionType, date])
   @@index([date, sessionType])
   @@index([studentId, date])
+  @@index([checkedBy])
   @@map("attendance")
 }
 
@@ -211,13 +215,14 @@ model AbsenceReason {
   id           Int        @id @default(autoincrement())
   attendanceId Int        @unique @map("attendance_id")
   reasonType   ReasonType @map("reason_type")
-  detail       String?
+  detail       String?    @db.VarChar(500)
   registeredBy Int        @map("registered_by")
   createdAt    DateTime   @default(now()) @map("created_at")
 
   attendance Attendance @relation(fields: [attendanceId], references: [id])
   registrar  Teacher    @relation("registrar", fields: [registeredBy], references: [id])
 
+  @@index([registeredBy])
   @@map("absence_reasons")
 }
 
@@ -268,7 +273,6 @@ model AttendanceNote {
   creator Teacher @relation("noteCreator", fields: [createdBy], references: [id])
 
   @@unique([studentId, sessionType, date])
-  @@index([studentId, date])
   @@map("attendance_notes")
 }
 
@@ -280,7 +284,7 @@ model AbsenceRequest {
   sessionType SessionType   @map("session_type")
   date        DateTime      @db.Date
   reasonType  ReasonType    @map("reason_type")
-  detail      String?
+  detail      String?       @db.VarChar(500)
   status      RequestStatus @default(pending)
   reviewedBy  Int?          @map("reviewed_by")
   reviewedAt  DateTime?     @map("reviewed_at")
@@ -291,6 +295,7 @@ model AbsenceRequest {
 
   @@unique([studentId, sessionType, date])
   @@index([status, studentId])
+  @@index([reviewedBy])
   @@map("absence_requests")
 }
 
