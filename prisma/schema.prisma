@@ -22,6 +22,7 @@ model Student {
   attendances       Attendance[]
   participationDays ParticipationDay[]
   absenceRequests   AbsenceRequest[]
+  attendanceNotes   AttendanceNote[]
 
   @@unique([grade, classNumber, studentNumber])
   @@index([name])
@@ -47,6 +48,7 @@ model Teacher {
   reviewedRequests      AbsenceRequest[]        @relation("reviewer")
   swapsAsOriginal       SupervisorSwapHistory[] @relation("original")
   swapsAsReplacement    SupervisorSwapHistory[] @relation("replacement")
+  createdNotes          AttendanceNote[]        @relation("noteCreator")
 
   @@map("teachers")
 }
@@ -238,11 +240,36 @@ model ParticipationDay {
   wed             Boolean     @default(true)
   thu             Boolean     @default(true)
   fri             Boolean     @default(true)
+  afterSchoolMon  Boolean     @default(false) @map("after_school_mon")
+  afterSchoolTue  Boolean     @default(false) @map("after_school_tue")
+  afterSchoolWed  Boolean     @default(false) @map("after_school_wed")
+  afterSchoolThu  Boolean     @default(false) @map("after_school_thu")
+  afterSchoolFri  Boolean     @default(false) @map("after_school_fri")
 
   student Student @relation(fields: [studentId], references: [id])
 
   @@unique([studentId, sessionType])
   @@map("participation_days")
+}
+
+// ==================== 출석 비고 ====================
+
+model AttendanceNote {
+  id          Int         @id @default(autoincrement())
+  studentId   Int         @map("student_id")
+  sessionType SessionType @map("session_type")
+  date        DateTime    @db.Date
+  note        String      @db.VarChar(100)
+  createdBy   Int         @map("created_by")
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+
+  student Student @relation(fields: [studentId], references: [id])
+  creator Teacher @relation("noteCreator", fields: [createdBy], references: [id])
+
+  @@unique([studentId, sessionType, date])
+  @@index([studentId, date])
+  @@map("attendance_notes")
 }
 
 // ==================== 불참 신청 ====================
