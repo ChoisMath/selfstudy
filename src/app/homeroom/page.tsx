@@ -7,16 +7,21 @@ type AttendanceData = {
   date: string;
   sessionType: "afternoon" | "night";
   status: "unchecked" | "present" | "absent";
+  reasonType: string | null;
 };
 
 type ParticipationData = {
   sessionType: "afternoon" | "night";
   isParticipating: boolean;
-  mon: boolean;
-  tue: boolean;
-  wed: boolean;
-  thu: boolean;
-  fri: boolean;
+  mon: boolean; tue: boolean; wed: boolean; thu: boolean; fri: boolean;
+  afterSchoolMon: boolean; afterSchoolTue: boolean; afterSchoolWed: boolean;
+  afterSchoolThu: boolean; afterSchoolFri: boolean;
+};
+
+type NoteData = {
+  date: string;
+  sessionType: "afternoon" | "night";
+  note: string;
 };
 
 type StudentData = {
@@ -27,6 +32,7 @@ type StudentData = {
   studentNumber: number;
   attendances: AttendanceData[];
   participationDays: ParticipationData[];
+  attendanceNotes: NoteData[];
 };
 
 type ResponseData = {
@@ -56,18 +62,43 @@ function getWeekDates(weekStart: string): string[] {
   });
 }
 
-function getStatusBadge(status: string | undefined, isParticipating: boolean) {
+function getStatusBadge(status: string | undefined, isParticipating: boolean, isAfterSchool: boolean, reasonType?: string | null, note?: string | null) {
   if (!isParticipating) {
     return <span className="text-xs text-gray-300">-</span>;
   }
+  if (isAfterSchool && (!status || status === "unchecked")) {
+    return (
+      <span title={note || undefined} className="inline-flex items-center">
+        <span className="w-2 h-2 rounded-full bg-yellow-400 inline-block" />
+        {note && <span className="ml-0.5 text-[8px] text-orange-500">*</span>}
+      </span>
+    );
+  }
   if (!status || status === "unchecked") {
-    return <span className="w-2 h-2 rounded-full bg-gray-300 inline-block" />;
+    return (
+      <span title={note || undefined} className="inline-flex items-center">
+        <span className="w-2 h-2 rounded-full bg-gray-300 inline-block" />
+        {note && <span className="ml-0.5 text-[8px] text-orange-500">*</span>}
+      </span>
+    );
   }
   if (status === "present") {
-    return <span className="w-2 h-2 rounded-full bg-green-500 inline-block" />;
+    return (
+      <span title={note || undefined} className="inline-flex items-center">
+        <span className="w-2 h-2 rounded-full bg-green-500 inline-block" />
+        {note && <span className="ml-0.5 text-[8px] text-orange-500">*</span>}
+      </span>
+    );
   }
   if (status === "absent") {
-    return <span className="w-2 h-2 rounded-full bg-red-500 inline-block" />;
+    const reasonLabel = reasonType === "academy" ? "학" : reasonType === "afterschool" ? "방" : reasonType === "illness" ? "질" : reasonType === "custom" ? "기" : "";
+    return (
+      <span title={`${reasonLabel ? reasonLabel + " " : ""}${note || ""}`} className="inline-flex items-center">
+        <span className="w-2 h-2 rounded-full bg-red-500 inline-block" />
+        {reasonLabel && <span className="ml-0.5 text-[8px] text-red-400">{reasonLabel}</span>}
+        {note && <span className="ml-0.5 text-[8px] text-orange-500">*</span>}
+      </span>
+    );
   }
   return null;
 }
@@ -105,6 +136,12 @@ export default function HomeroomPage() {
         </span>
         <span className="flex items-center gap-1">
           <span className="text-gray-300">-</span> 미참가
+        </span>
+        <span className="flex items-center gap-1">
+          <span className="w-2 h-2 rounded-full bg-yellow-400 inline-block" /> 방과후
+        </span>
+        <span className="flex items-center gap-1">
+          <span className="text-[8px] text-orange-500">*</span> 비고
         </span>
       </div>
 
@@ -187,6 +224,7 @@ export default function HomeroomPage() {
                   );
 
                   const dayKeys = ["mon", "tue", "wed", "thu", "fri"] as const;
+                  const afterSchoolKeys = ["afterSchoolMon", "afterSchoolTue", "afterSchoolWed", "afterSchoolThu", "afterSchoolFri"] as const;
 
                   return (
                     <tr key={student.id} className="hover:bg-gray-50">
@@ -217,17 +255,31 @@ export default function HomeroomPage() {
                             ? nightPart.isParticipating && nightPart[dayKey]
                             : true;
 
+                        const isAfternoonAfterSchool = afternoonPart
+                          ? afternoonPart.isParticipating && afternoonPart[dayKey] && afternoonPart[afterSchoolKeys[idx]]
+                          : false;
+                        const isNightAfterSchool = nightPart
+                          ? nightPart.isParticipating && nightPart[dayKey] && nightPart[afterSchoolKeys[idx]]
+                          : false;
+
+                        const afternoonNote = student.attendanceNotes.find(
+                          (n) => n.date === date && n.sessionType === "afternoon"
+                        );
+                        const nightNote = student.attendanceNotes.find(
+                          (n) => n.date === date && n.sessionType === "night"
+                        );
+
                         return (
                           <Fragment key={`${student.id}-${date}`}>
                             <td
                               className="px-1 py-2 text-center border-l border-gray-100"
                             >
-                              {getStatusBadge(afternoonAtt?.status, isAfternoonParticipating)}
+                              {getStatusBadge(afternoonAtt?.status, isAfternoonParticipating, isAfternoonAfterSchool, afternoonAtt?.reasonType, afternoonNote?.note)}
                             </td>
                             <td
                               className="px-1 py-2 text-center"
                             >
-                              {getStatusBadge(nightAtt?.status, isNightParticipating)}
+                              {getStatusBadge(nightAtt?.status, isNightParticipating, isNightAfterSchool, nightAtt?.reasonType, nightNote?.note)}
                             </td>
                           </Fragment>
                         );

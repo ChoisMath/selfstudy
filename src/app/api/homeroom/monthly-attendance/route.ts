@@ -95,11 +95,10 @@ export const GET = withAuth(["homeroom", "admin"], async (req: Request, user) =>
       participationDays: student.participationDays.map((p) => ({
         sessionType: p.sessionType,
         isParticipating: p.isParticipating,
-        mon: p.mon,
-        tue: p.tue,
-        wed: p.wed,
-        thu: p.thu,
-        fri: p.fri,
+        mon: p.mon, tue: p.tue, wed: p.wed, thu: p.thu, fri: p.fri,
+        afterSchoolMon: p.afterSchoolMon, afterSchoolTue: p.afterSchoolTue,
+        afterSchoolWed: p.afterSchoolWed, afterSchoolThu: p.afterSchoolThu,
+        afterSchoolFri: p.afterSchoolFri,
       })),
     };
   });

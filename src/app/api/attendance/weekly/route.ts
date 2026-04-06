@@ -57,6 +57,14 @@ export const GET = withAuth(
       };
     }
 
+    const afterSchoolMap: Record<string, Record<string, boolean>> = {};
+    for (const pd of participationDays) {
+      afterSchoolMap[pd.sessionType] = {
+        mon: pd.afterSchoolMon, tue: pd.afterSchoolTue, wed: pd.afterSchoolWed,
+        thu: pd.afterSchoolThu, fri: pd.afterSchoolFri,
+      };
+    }
+
     const noteMap = new Map<string, string>();
     for (const n of attendanceNotes) {
       noteMap.set(`${n.date.toISOString().split("T")[0]}-${n.sessionType}`, n.note);
@@ -110,6 +118,14 @@ export const GET = withAuth(
         nightParticipating,
         afternoonNote: noteMap.get(`${dateStr}-afternoon`) || null,
         nightNote: noteMap.get(`${dateStr}-night`) || null,
+        afternoonAfterSchool: (() => {
+          const as = afterSchoolMap["afternoon"];
+          return as ? (participationMap["afternoon"]?.isParticipating && (dayKey ? as[dayKey] : false)) : false;
+        })(),
+        nightAfterSchool: (() => {
+          const as = afterSchoolMap["night"];
+          return as ? (participationMap["night"]?.isParticipating && (dayKey ? as[dayKey] : false)) : false;
+        })(),
       };
     });
 

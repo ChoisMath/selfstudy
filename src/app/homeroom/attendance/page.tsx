@@ -6,11 +6,9 @@ import useSWR from "swr";
 type ParticipationData = {
   sessionType: "afternoon" | "night";
   isParticipating: boolean;
-  mon: boolean;
-  tue: boolean;
-  wed: boolean;
-  thu: boolean;
-  fri: boolean;
+  mon: boolean; tue: boolean; wed: boolean; thu: boolean; fri: boolean;
+  afterSchoolMon: boolean; afterSchoolTue: boolean; afterSchoolWed: boolean;
+  afterSchoolThu: boolean; afterSchoolFri: boolean;
 };
 
 type StudentData = {
@@ -44,6 +42,12 @@ const STATUS_COLOR: Record<string, string> = {
 };
 
 const DAY_KEYS = ["mon", "tue", "wed", "thu", "fri"] as const;
+
+const REASON_LABELS: Record<string, string> = {
+  academy: "학", afterschool: "방", illness: "질", custom: "기",
+};
+
+const AFTER_SCHOOL_KEYS = ["afterSchoolMon", "afterSchoolTue", "afterSchoolWed", "afterSchoolThu", "afterSchoolFri"] as const;
 
 function getDayKey(dateStr: string): typeof DAY_KEYS[number] {
   const day = new Date(dateStr + "T00:00:00").getDay(); // 1=Mon ... 5=Fri
@@ -122,7 +126,9 @@ export default function MonthlyAttendancePage() {
       <div className="flex items-center gap-4 mb-3 text-xs text-gray-500">
         <span className="text-green-600 font-bold">O</span><span>출석</span>
         <span className="text-red-600 font-bold">X</span><span>결석</span>
+        <span className="text-yellow-600 font-bold">방</span><span>방과후</span>
         <span className="text-gray-400 font-bold">-</span><span>미확인/미참가</span>
+        <span className="text-[10px] text-gray-400">(학:학원 방:방과후 질:질병 기:기타)</span>
       </div>
 
       {isLoading ? (
@@ -198,6 +204,7 @@ export default function MonthlyAttendancePage() {
                             {dates.map((date) => {
                               const att = student.dates[date] || {};
                               const dayKey = getDayKey(date);
+                              const dayIdx = DAY_KEYS.indexOf(dayKey);
 
                               const isAfternoonParticipating = afternoonPart
                                 ? afternoonPart.isParticipating && afternoonPart[dayKey]
@@ -206,24 +213,40 @@ export default function MonthlyAttendancePage() {
                                 ? nightPart.isParticipating && nightPart[dayKey]
                                 : true;
 
-                              const afternoonStatus = isAfternoonParticipating
-                                ? (att.afternoon || "unchecked")
-                                : null;
-                              const nightStatus = isNightParticipating
-                                ? (att.night || "unchecked")
-                                : null;
+                              const isAfternoonAfterSchool = afternoonPart
+                                ? afternoonPart.isParticipating && afternoonPart[dayKey] && afternoonPart[AFTER_SCHOOL_KEYS[dayIdx]]
+                                : false;
+                              const isNightAfterSchool = nightPart
+                                ? nightPart.isParticipating && nightPart[dayKey] && nightPart[AFTER_SCHOOL_KEYS[dayIdx]]
+                                : false;
 
                               return (
                                 <React.Fragment key={date}>
                                   <td className={`px-1 py-1.5 text-center font-bold border-l border-gray-100 ${
-                                    afternoonStatus ? STATUS_COLOR[afternoonStatus] : "text-gray-300"
+                                    !isAfternoonParticipating ? "text-gray-300"
+                                      : isAfternoonAfterSchool && (!att.afternoon || att.afternoon === "unchecked") ? "text-yellow-600 bg-yellow-50"
+                                      : att.afternoon === "present" ? "text-green-600"
+                                      : att.afternoon === "absent" ? "text-red-600"
+                                      : "text-gray-400"
                                   }`}>
-                                    {afternoonStatus ? STATUS_SYMBOL[afternoonStatus] : "-"}
+                                    {!isAfternoonParticipating ? "-"
+                                      : isAfternoonAfterSchool && (!att.afternoon || att.afternoon === "unchecked") ? "방"
+                                      : att.afternoon === "present" ? "O"
+                                      : att.afternoon === "absent" ? (att.afternoonReason ? REASON_LABELS[att.afternoonReason] || "X" : "X")
+                                      : "-"}
                                   </td>
                                   <td className={`px-1 py-1.5 text-center font-bold ${
-                                    nightStatus ? STATUS_COLOR[nightStatus] : "text-gray-300"
+                                    !isNightParticipating ? "text-gray-300"
+                                      : isNightAfterSchool && (!att.night || att.night === "unchecked") ? "text-yellow-600 bg-yellow-50"
+                                      : att.night === "present" ? "text-green-600"
+                                      : att.night === "absent" ? "text-red-600"
+                                      : "text-gray-400"
                                   }`}>
-                                    {nightStatus ? STATUS_SYMBOL[nightStatus] : "-"}
+                                    {!isNightParticipating ? "-"
+                                      : isNightAfterSchool && (!att.night || att.night === "unchecked") ? "방"
+                                      : att.night === "present" ? "O"
+                                      : att.night === "absent" ? (att.nightReason ? REASON_LABELS[att.nightReason] || "X" : "X")
+                                      : "-"}
                                   </td>
                                 </React.Fragment>
                               );

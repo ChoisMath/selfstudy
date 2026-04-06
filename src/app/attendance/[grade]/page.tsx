@@ -45,6 +45,8 @@ interface WeeklyDay {
   nightParticipating: boolean;
   afternoonNote: string | null;
   nightNote: string | null;
+  afternoonAfterSchool: boolean;
+  nightAfterSchool: boolean;
 }
 
 type Tab = "afternoon" | "night";
@@ -83,13 +85,17 @@ export default function AttendanceGradePage() {
   const allStudents = rooms.flatMap((r) =>
     r.seats.filter((s) => s.student && s.student.isParticipating)
   );
+  const afterSchoolStudents = allStudents.filter((s) => s.student!.isAfterSchool);
+  const afterSchoolDefaultCount = afterSchoolStudents.filter(
+    (s) => !attendances[s.student!.id] || attendances[s.student!.id]?.status === "unchecked"
+  ).length;
   const presentCount = allStudents.filter(
     (s) => attendances[s.student!.id]?.status === "present"
   ).length;
   const absentCount = allStudents.filter(
     (s) => attendances[s.student!.id]?.status === "absent"
   ).length;
-  const uncheckedCount = allStudents.length - presentCount - absentCount;
+  const uncheckedCount = allStudents.length - presentCount - absentCount - afterSchoolDefaultCount;
   const totalSeats = rooms.reduce((sum, r) => sum + r.seats.filter((s) => s.student).length, 0);
 
   async function handleToggle(studentId: number) {
@@ -209,7 +215,14 @@ export default function AttendanceGradePage() {
                   } else if (isSelected) {
                     seatClass = "bg-[#2563eb] text-white border-[#1d4ed8] shadow-[0_2px_8px_rgba(37,99,235,0.3)]";
                   } else if (student.isAfterSchool) {
-                    seatClass = "bg-[#fef9c3] border-[#facc15]";
+                    const aStatus = attendances[student.id]?.status || "unchecked";
+                    if (aStatus === "present") {
+                      seatClass = "bg-[#fef9c3] border-[#22c55e]";
+                    } else if (aStatus === "absent") {
+                      seatClass = "bg-[#fef9c3] border-[#ef4444]";
+                    } else {
+                      seatClass = "bg-[#fef9c3] border-[#facc15]";
+                    }
                   } else if (isApproved) {
                     seatClass = "bg-[#fef9c3] border-[#facc15]";
                   } else if (status === "present") {
@@ -249,9 +262,12 @@ export default function AttendanceGradePage() {
                       {isApproved && !isSelected && (
                         <div className="text-[7px] text-[#ca8a04] mt-0.5">불참승인</div>
                       )}
-                      {student.isAfterSchool && !isApproved && !isSelected && (
-                        <div className="text-[7px] text-[#ca8a04] mt-0.5">방과후</div>
-                      )}
+                      {student.isAfterSchool && !isSelected && (() => {
+                        const aStatus = attendances[student.id]?.status || "unchecked";
+                        if (aStatus === "present") return <div className="text-[7px] text-[#166534] mt-0.5">출석</div>;
+                        if (aStatus === "absent") return <div className="text-[7px] text-[#991b1b] mt-0.5">결석</div>;
+                        return <div className="text-[7px] text-[#ca8a04] mt-0.5">방과후</div>;
+                      })()}
                     </div>
                   );
                 })}
@@ -327,15 +343,19 @@ export default function AttendanceGradePage() {
           {weeklyData.map((d) => {
             const isToday = d.date === today;
             const participating = tab === "afternoon" ? d.afternoonParticipating : d.nightParticipating;
+            const isAfterSchoolDay = tab === "afternoon" ? d.afternoonAfterSchool : d.nightAfterSchool;
             const record = tab === "afternoon" ? d.afternoon : d.night;
             const status = record?.status;
             if (!participating) {
               return (
-                <div
-                  key={`cell-${d.date}`}
-                  className="rounded-[4px] py-[clamp(6px,1.5vw,10px)] px-1 text-[clamp(9px,2.2vw,11px)] font-medium bg-[#e5e7eb] text-[#9ca3af]"
-                >
-                  -
+                <div key={`cell-${d.date}`} className="rounded-[4px] py-[clamp(6px,1.5vw,10px)] px-1 text-[clamp(9px,2.2vw,11px)] font-medium bg-[#e5e7eb] text-[#9ca3af]">-</div>
+              );
+            }
+            // afterSchool default state
+            if (isAfterSchoolDay && (!status || status === "unchecked")) {
+              return (
+                <div key={`cell-${d.date}`} className={`rounded-[4px] py-[clamp(6px,1.5vw,10px)] px-1 text-[clamp(9px,2.2vw,11px)] font-medium bg-[#fef9c3] text-[#ca8a04] ${isToday ? "border-2 border-[#2563eb] font-bold text-[clamp(10px,2.5vw,12px)]" : ""}`}>
+                  방과후
                 </div>
               );
             }
@@ -344,12 +364,7 @@ export default function AttendanceGradePage() {
             if (status === "present") { cellClass = "bg-[#bbf7d0] text-[#166534]"; label = "출석"; }
             else if (status === "absent") { cellClass = "bg-[#fecaca] text-[#991b1b]"; label = "결석"; }
             return (
-              <div
-                key={`cell-${d.date}`}
-                className={`rounded-[4px] py-[clamp(6px,1.5vw,10px)] px-1 text-[clamp(9px,2.2vw,11px)] font-medium ${cellClass} ${
-                  isToday ? "border-2 border-[#2563eb] font-bold text-[clamp(10px,2.5vw,12px)]" : ""
-                }`}
-              >
+              <div key={`cell-${d.date}`} className={`rounded-[4px] py-[clamp(6px,1.5vw,10px)] px-1 text-[clamp(9px,2.2vw,11px)] font-medium ${cellClass} ${isToday ? "border-2 border-[#2563eb] font-bold text-[clamp(10px,2.5vw,12px)]" : ""}`}>
                 {label}
               </div>
             );
@@ -430,6 +445,9 @@ export default function AttendanceGradePage() {
             </span>
             <span className="opacity-85">
               미체크 <b className="opacity-100 font-bold">{uncheckedCount}</b>
+            </span>
+            <span className="opacity-85">
+              방과후 <b className="opacity-100 font-bold" style={{ color: "#fde047" }}>{afterSchoolDefaultCount}</b>
             </span>
           </div>
           <button
@@ -534,14 +552,15 @@ export default function AttendanceGradePage() {
                 { color: "#dbeafe", label: "미체크" },
                 { color: "#bbf7d0", label: "출석" },
                 { color: "#fecaca", label: "결석" },
-                { color: "#fef9c3", label: "불참승인/방과후" },
+                { color: "#fef9c3", label: "불참승인" },
+                { color: "#fef9c3", label: "방과후", border: "#facc15" },
                 { color: "#e5e7eb", label: "비참여" },
                 { color: "#2563eb", label: "선택됨", textWhite: true },
               ].map((item) => (
                 <div key={item.label} className="flex items-center gap-1 text-[clamp(9px,2.2vw,11px)] whitespace-nowrap">
                   <div
                     className="w-[clamp(10px,2.5vw,14px)] h-[clamp(10px,2.5vw,14px)] rounded-[3px] shrink-0"
-                    style={{ background: item.color }}
+                    style={{ background: item.color, ...(item.border ? { border: `2px solid ${item.border}` } : {}) }}
                   />
                   {item.label}
                 </div>

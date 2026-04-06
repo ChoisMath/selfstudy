@@ -44,10 +44,21 @@ export const GET = withAuth(["homeroom", "admin"], async (req: Request, user) =>
             lte: friday,
           },
         },
-        select: { date: true, sessionType: true, status: true },
+        include: { absenceReason: true },
       },
       participationDays: {
-        select: { sessionType: true, isParticipating: true, mon: true, tue: true, wed: true, thu: true, fri: true },
+        select: {
+          sessionType: true, isParticipating: true,
+          mon: true, tue: true, wed: true, thu: true, fri: true,
+          afterSchoolMon: true, afterSchoolTue: true, afterSchoolWed: true,
+          afterSchoolThu: true, afterSchoolFri: true,
+        },
+      },
+      attendanceNotes: {
+        where: {
+          date: { gte: monday, lte: friday },
+        },
+        select: { date: true, sessionType: true, note: true },
       },
     },
   });
@@ -62,15 +73,20 @@ export const GET = withAuth(["homeroom", "admin"], async (req: Request, user) =>
       date: a.date.toISOString().split("T")[0],
       sessionType: a.sessionType,
       status: a.status,
+      reasonType: a.absenceReason?.reasonType || null,
     })),
     participationDays: student.participationDays.map((p) => ({
       sessionType: p.sessionType,
       isParticipating: p.isParticipating,
-      mon: p.mon,
-      tue: p.tue,
-      wed: p.wed,
-      thu: p.thu,
-      fri: p.fri,
+      mon: p.mon, tue: p.tue, wed: p.wed, thu: p.thu, fri: p.fri,
+      afterSchoolMon: p.afterSchoolMon, afterSchoolTue: p.afterSchoolTue,
+      afterSchoolWed: p.afterSchoolWed, afterSchoolThu: p.afterSchoolThu,
+      afterSchoolFri: p.afterSchoolFri,
+    })),
+    attendanceNotes: student.attendanceNotes.map((n) => ({
+      date: n.date.toISOString().split("T")[0],
+      sessionType: n.sessionType,
+      note: n.note,
     })),
   }));
 
