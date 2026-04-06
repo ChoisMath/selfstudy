@@ -39,36 +39,36 @@ export async function GET(
         afternoon: afternoon
           ? {
               isParticipating: afternoon.isParticipating,
-              mon: afternoon.mon,
-              tue: afternoon.tue,
-              wed: afternoon.wed,
-              thu: afternoon.thu,
-              fri: afternoon.fri,
+              mon: afternoon.mon, tue: afternoon.tue, wed: afternoon.wed,
+              thu: afternoon.thu, fri: afternoon.fri,
+              afterSchoolMon: afternoon.afterSchoolMon,
+              afterSchoolTue: afternoon.afterSchoolTue,
+              afterSchoolWed: afternoon.afterSchoolWed,
+              afterSchoolThu: afternoon.afterSchoolThu,
+              afterSchoolFri: afternoon.afterSchoolFri,
             }
           : {
               isParticipating: true,
-              mon: true,
-              tue: true,
-              wed: true,
-              thu: true,
-              fri: true,
+              mon: true, tue: true, wed: true, thu: true, fri: true,
+              afterSchoolMon: false, afterSchoolTue: false, afterSchoolWed: false,
+              afterSchoolThu: false, afterSchoolFri: false,
             },
         night: night
           ? {
               isParticipating: night.isParticipating,
-              mon: night.mon,
-              tue: night.tue,
-              wed: night.wed,
-              thu: night.thu,
-              fri: night.fri,
+              mon: night.mon, tue: night.tue, wed: night.wed,
+              thu: night.thu, fri: night.fri,
+              afterSchoolMon: night.afterSchoolMon,
+              afterSchoolTue: night.afterSchoolTue,
+              afterSchoolWed: night.afterSchoolWed,
+              afterSchoolThu: night.afterSchoolThu,
+              afterSchoolFri: night.afterSchoolFri,
             }
           : {
               isParticipating: true,
-              mon: true,
-              tue: true,
-              wed: true,
-              thu: true,
-              fri: true,
+              mon: true, tue: true, wed: true, thu: true, fri: true,
+              afterSchoolMon: false, afterSchoolTue: false, afterSchoolWed: false,
+              afterSchoolThu: false, afterSchoolFri: false,
             },
       };
     });
@@ -114,7 +114,8 @@ export async function PUT(
       return NextResponse.json({ count: studentIds.length });
     }
 
-    const { studentId, mon, tue, wed, thu, fri } = body;
+    const { studentId, mon, tue, wed, thu, fri,
+            afterSchoolMon, afterSchoolTue, afterSchoolWed, afterSchoolThu, afterSchoolFri } = body;
 
     if (!studentId) {
       return NextResponse.json(
@@ -149,6 +150,11 @@ export async function PUT(
         wed: wed ?? true,
         thu: thu ?? true,
         fri: fri ?? true,
+        afterSchoolMon: afterSchoolMon ?? false,
+        afterSchoolTue: afterSchoolTue ?? false,
+        afterSchoolWed: afterSchoolWed ?? false,
+        afterSchoolThu: afterSchoolThu ?? false,
+        afterSchoolFri: afterSchoolFri ?? false,
       },
       create: {
         studentId,
@@ -159,6 +165,11 @@ export async function PUT(
         wed: wed ?? true,
         thu: thu ?? true,
         fri: fri ?? true,
+        afterSchoolMon: afterSchoolMon ?? false,
+        afterSchoolTue: afterSchoolTue ?? false,
+        afterSchoolWed: afterSchoolWed ?? false,
+        afterSchoolThu: afterSchoolThu ?? false,
+        afterSchoolFri: afterSchoolFri ?? false,
       },
     });
 
