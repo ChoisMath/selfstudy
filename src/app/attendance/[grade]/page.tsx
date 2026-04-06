@@ -17,6 +17,7 @@ interface Seat {
     studentNumber: number;
     isParticipating: boolean;
     isApprovedAbsence: boolean;
+    isAfterSchool: boolean;
   } | null;
 }
 
@@ -42,6 +43,8 @@ interface WeeklyDay {
   night: { status: string; reason?: { type: string; detail: string | null } } | null;
   afternoonParticipating: boolean;
   nightParticipating: boolean;
+  afternoonNote: string | null;
+  nightNote: string | null;
 }
 
 type Tab = "afternoon" | "night";
@@ -56,6 +59,7 @@ export default function AttendanceGradePage() {
   const [weeklyData, setWeeklyData] = useState<WeeklyDay[]>([]);
   const [weeklyName, setWeeklyName] = useState("");
   const [activatedStudents, setActivatedStudents] = useState<Set<number>>(new Set());
+  const [noteValues, setNoteValues] = useState<Record<string, string>>({});
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const kstNow = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Seoul" }));
@@ -146,6 +150,22 @@ export default function AttendanceGradePage() {
     const res = await fetch(`/api/attendance/weekly?studentId=${studentId}&date=${today}`);
     const result = await res.json();
     setWeeklyData(result.weekly || []);
+    const notes: Record<string, string> = {};
+    for (const d of (result.weekly || []) as WeeklyDay[]) {
+      const noteVal = tab === "afternoon" ? d.afternoonNote : d.nightNote;
+      if (noteVal) notes[d.date] = noteVal;
+    }
+    setNoteValues(notes);
+  }
+
+  async function handleNoteSave(studentId: number, date: string, note: string) {
+    try {
+      await fetch("/api/attendance/notes", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ studentId, sessionType: tab, date, note: note.trim() }),
+      });
+    } catch { /* silent */ }
   }
 
   // 좌석 그리드만 렌더링 (제목/교탁 없이)
@@ -188,6 +208,8 @@ export default function AttendanceGradePage() {
                     seatClass = "bg-[#e5e7eb] text-[#9ca3af] border-[#d1d5db] opacity-60";
                   } else if (isSelected) {
                     seatClass = "bg-[#2563eb] text-white border-[#1d4ed8] shadow-[0_2px_8px_rgba(37,99,235,0.3)]";
+                  } else if (student.isAfterSchool) {
+                    seatClass = "bg-[#fef9c3] border-[#facc15]";
                   } else if (isApproved) {
                     seatClass = "bg-[#fef9c3] border-[#facc15]";
                   } else if (status === "present") {
@@ -226,6 +248,9 @@ export default function AttendanceGradePage() {
                       </div>
                       {isApproved && !isSelected && (
                         <div className="text-[7px] text-[#ca8a04] mt-0.5">불참승인</div>
+                      )}
+                      {student.isAfterSchool && !isApproved && !isSelected && (
+                        <div className="text-[7px] text-[#ca8a04] mt-0.5">방과후</div>
                       )}
                     </div>
                   );
@@ -326,6 +351,28 @@ export default function AttendanceGradePage() {
                 }`}
               >
                 {label}
+              </div>
+            );
+          })}
+          {weeklyData.map((d) => {
+            const participating = tab === "afternoon" ? d.afternoonParticipating : d.nightParticipating;
+            const noteKey = d.date;
+            return (
+              <div key={`note-${d.date}`} style={{ paddingTop: "2px" }}>
+                <input
+                  type="text"
+                  maxLength={100}
+                  placeholder="비고"
+                  disabled={!participating}
+                  value={noteValues[noteKey] ?? ""}
+                  onChange={(e) => setNoteValues(prev => ({ ...prev, [noteKey]: e.target.value }))}
+                  onBlur={() => handleNoteSave(selectedSeat!, d.date, noteValues[noteKey] ?? "")}
+                  className={`w-full py-[clamp(2px,0.6vw,4px)] px-1 border rounded text-[clamp(8px,2vw,10px)] text-center ${
+                    noteValues[noteKey]
+                      ? "border-[#ea580c] bg-[#fff7ed] text-[#ea580c] font-medium"
+                      : "border-[#cbd5e1] bg-white text-[#374151]"
+                  } disabled:bg-gray-50 disabled:text-gray-300 disabled:border-gray-200`}
+                />
               </div>
             );
           })}
@@ -487,7 +534,7 @@ export default function AttendanceGradePage() {
                 { color: "#dbeafe", label: "미체크" },
                 { color: "#bbf7d0", label: "출석" },
                 { color: "#fecaca", label: "결석" },
-                { color: "#fef9c3", label: "불참승인" },
+                { color: "#fef9c3", label: "불참승인/방과후" },
                 { color: "#e5e7eb", label: "비참여" },
                 { color: "#2563eb", label: "선택됨", textWhite: true },
               ].map((item) => (

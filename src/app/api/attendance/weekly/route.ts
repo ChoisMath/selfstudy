@@ -30,7 +30,7 @@ export const GET = withAuth(
     const startDate = weekDates[0];
     const endDate = weekDates[4];
 
-    const [attendances, participationDays] = await Promise.all([
+    const [attendances, participationDays, attendanceNotes] = await Promise.all([
       prisma.attendance.findMany({
         where: {
           studentId,
@@ -42,6 +42,9 @@ export const GET = withAuth(
       prisma.participationDay.findMany({
         where: { studentId },
       }),
+      prisma.attendanceNote.findMany({
+        where: { studentId, date: { gte: startDate, lte: endDate } },
+      }),
     ]);
 
     // 참여설정을 세션별로 매핑
@@ -52,6 +55,11 @@ export const GET = withAuth(
         isParticipating: pd.isParticipating,
         mon: pd.mon, tue: pd.tue, wed: pd.wed, thu: pd.thu, fri: pd.fri,
       };
+    }
+
+    const noteMap = new Map<string, string>();
+    for (const n of attendanceNotes) {
+      noteMap.set(`${n.date.toISOString().split("T")[0]}-${n.sessionType}`, n.note);
     }
 
     // O(1) 룩업을 위한 Map 변환
@@ -100,6 +108,8 @@ export const GET = withAuth(
           : null,
         afternoonParticipating,
         nightParticipating,
+        afternoonNote: noteMap.get(`${dateStr}-afternoon`) || null,
+        nightNote: noteMap.get(`${dateStr}-night`) || null,
       };
     });
 

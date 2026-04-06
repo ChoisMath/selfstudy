@@ -127,6 +127,16 @@ export const GET = withAuth(
                   return true; // 주말 등은 기본 참여로 처리
                 })(),
                 isApprovedAbsence: approvedStudentIds.has(seat.student.id),
+                isAfterSchool: (() => {
+                  const pd = seat.student.participationDays[0];
+                  if (!pd || !pd.isParticipating) return false;
+                  const afterSchoolMap: Record<string, boolean> = {
+                    mon: pd.afterSchoolMon, tue: pd.afterSchoolTue, wed: pd.afterSchoolWed,
+                    thu: pd.afterSchoolThu, fri: pd.afterSchoolFri,
+                  };
+                  if (todayField && todayField in afterSchoolMap) return afterSchoolMap[todayField];
+                  return false;
+                })(),
               }
             : null,
         })),
