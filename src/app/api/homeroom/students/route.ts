@@ -10,12 +10,20 @@ export const GET = withAuth(["homeroom", "admin"], async (req: Request, user) =>
     return NextResponse.json({ error: "담임 배정이 없습니다." }, { status: 403 });
   }
 
-  // 이번 주 월요일~금요일 계산
-  const now = new Date();
-  const dayOfWeek = now.getDay(); // 0=Sun, 1=Mon, ...
-  const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
-  const monday = new Date(now);
-  monday.setDate(now.getDate() + mondayOffset);
+  // 주간 계산 (week 파라미터: YYYY-MM-DD 형식의 월요일 날짜, 없으면 이번 주)
+  const url = new URL(req.url);
+  const weekParam = url.searchParams.get("week");
+
+  let monday: Date;
+  if (weekParam) {
+    monday = new Date(weekParam + "T00:00:00");
+  } else {
+    const now = new Date();
+    const dayOfWeek = now.getDay(); // 0=Sun, 1=Mon, ...
+    const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+    monday = new Date(now);
+    monday.setDate(now.getDate() + mondayOffset);
+  }
   monday.setHours(0, 0, 0, 0);
 
   const friday = new Date(monday);

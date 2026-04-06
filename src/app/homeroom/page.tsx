@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment } from "react";
+import { Fragment, useState } from "react";
 import useSWR from "swr";
 
 type AttendanceData = {
@@ -103,9 +103,20 @@ function getStatusBadge(status: string | undefined, isParticipating: boolean, is
   return null;
 }
 
+function getMonday(offset: number): string {
+  const now = new Date();
+  const dayOfWeek = now.getDay();
+  const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+  const monday = new Date(now);
+  monday.setDate(now.getDate() + mondayOffset + offset * 7);
+  return monday.toISOString().split("T")[0];
+}
+
 export default function HomeroomPage() {
+  const [weekOffset, setWeekOffset] = useState(0);
+  const weekParam = weekOffset === 0 ? "" : `?week=${getMonday(weekOffset)}`;
   const { data, error, isLoading } = useSWR<ResponseData>(
-    "/api/homeroom/students",
+    `/api/homeroom/students${weekParam}`,
     fetcher
   );
 
@@ -116,11 +127,33 @@ export default function HomeroomPage() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-gray-900">학생관리 / 주간출석</h1>
-        {data?.weekStart && data?.weekEnd && (
-          <span className="text-sm text-gray-500">
-            {data.weekStart} ~ {data.weekEnd}
-          </span>
-        )}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setWeekOffset(weekOffset - 1)}
+            className="px-3 py-1.5 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+          >
+            &larr; 이전주
+          </button>
+          {weekOffset !== 0 && (
+            <button
+              onClick={() => setWeekOffset(0)}
+              className="px-3 py-1.5 text-xs bg-blue-50 text-blue-600 border border-blue-200 rounded-md hover:bg-blue-100"
+            >
+              이번주
+            </button>
+          )}
+          <button
+            onClick={() => setWeekOffset(weekOffset + 1)}
+            className="px-3 py-1.5 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+          >
+            다음주 &rarr;
+          </button>
+          {data?.weekStart && data?.weekEnd && (
+            <span className="text-sm text-gray-500 ml-2">
+              {data.weekStart} ~ {data.weekEnd}
+            </span>
+          )}
+        </div>
       </div>
 
       {/* 범례 */}
