@@ -1,6 +1,6 @@
 # 자율학습 출석부 시스템 - 프로젝트 지도
 
-> 마지막 업데이트: 2026-04-05
+> 마지막 업데이트: 2026-04-06
 > 이 파일은 새 세션에서 코드베이스를 빠르게 파악하기 위한 참조 문서입니다.
 
 ## 개요
@@ -26,7 +26,7 @@
 src/
 ├── app/
 │   ├── layout.tsx              # 루트 (Providers 래핑)
-│   ├── page.tsx                # / → 역할별 리다이렉트
+│   ├── page.tsx                # / → admin→/admin, 기타 교사→/attendance
 │   ├── providers.tsx           # SessionProvider
 │   ├── login/
 │   │   ├── page.tsx            # 로그인 UI (교사/학생 탭)
@@ -49,7 +49,7 @@ src/
 │   ├── attendance/             # 감독교사
 │   │   ├── layout.tsx          # 모든 교사에게 이동 버튼 (담임교사/감독일정/학년관리)
 │   │   ├── page.tsx            # 자동 학년 라우팅 / 학년 선택
-│   │   └── [grade]/page.tsx    # ★ 핵심: 좌석 출석 그리드 (seat-responsive 디자인)
+│   │   └── [grade]/page.tsx    # ★ 핵심: 좌석 출석 그리드 (seat-responsive, 비참여 회색+길게터치 활성화)
 │   ├── homeroom/               # 담임교사
 │   │   ├── layout.tsx          # 담임 5탭 + 공통 2탭 네비게이션 (세션 로딩 처리)
 │   │   ├── page.tsx            # 자기반 학생 + 주간출석
@@ -81,10 +81,10 @@ src/
 │
 ├── lib/
 │   ├── auth.ts         # NextAuth 설정 (Credentials×2 + Google, JWT 콜백)
-│   ├── api-auth.ts     # withAuth, withGradeAuth, withHomeroomAuth 래퍼
+│   ├── api-auth.ts     # withAuth (+ "teacher" 의사역할: 모든 교사 허용), withGradeAuth, withHomeroomAuth 래퍼
 │   └── prisma.ts       # PrismaClient 싱글톤 (PrismaPg 어댑터)
 │
-├── middleware.ts       # 라우트 보호 (getToken + 명시적 cookieName/salt, /homeroom 모든 교사 허용)
+├── middleware.ts       # 라우트 보호 (getToken + 명시적 cookieName/salt, /homeroom·/attendance 모든 교사 허용)
 ├── types/next-auth.d.ts # Session/JWT 타입 확장
 └── generated/prisma/   # Prisma 자동 생성 (gitignore)
 ```
@@ -96,13 +96,14 @@ src/
 |--------|------|------|
 | GET | `/api/attendance?date&session&grade` | 좌석+출석 현황 조회 |
 | POST | `/api/attendance/toggle` | 출석 상태 순환 토글 |
-| GET | `/api/attendance/weekly?studentId&date` | 주간 출석 + 참여설정 |
+| GET | `/api/attendance/weekly?studentId&date` | 주간 출석 + 참여설정 + 비고 |
+| GET/PUT | `/api/attendance/notes?studentId&date` | 요일별 비고 조회/수정 (upsert/삭제) |
 
 ### 담임 (`/api/homeroom/`)
 | 메서드 | 경로 | 설명 |
 |--------|------|------|
 | GET | `students` | 자기반 학생+주간출석 |
-| GET/PUT | `participation-days` | 참여설정 조회/수정 |
+| GET/PUT | `participation-days` | 참여설정 조회/수정 (afterSchool 포함) |
 | POST | `absence-reasons` | 불참사유 등록 (트랜잭션) |
 | GET | `absence-requests` | 반 학생 불참신청 목록 |
 | PUT | `absence-requests/[id]` | 승인/반려 (트랜잭션) |
@@ -116,7 +117,7 @@ src/
 | GET/POST | `students` | 학생 목록/등록 |
 | PUT/DELETE | `students/[id]` | 학생 수정/삭제 |
 | POST | `students/bulk-upload` | Excel 일괄업로드 (기존 비활성화 + 새 생성) |
-| GET/PUT | `participation-days` | 참여설정 |
+| GET/PUT | `participation-days` | 참여설정 (afterSchool 포함) |
 | GET/POST | `seat-layouts` | 좌석 배치 조회/저장(트랜잭션, roomId 기반) |
 | GET/POST | `supervisor-assignments` | 감독 배정 (POST: 오후+야간 동시 생성) |
 | DELETE | `supervisor-assignments/[id]` | 배정 해제 (오후+야간 동시 삭제) |
@@ -136,7 +137,7 @@ src/
 | GET | `teachers/template` | 교사 Excel 템플릿 (담당학년 컬럼 포함) |
 | POST | `teachers/bulk-upload` | 교사 Excel 일괄업로드 (담당학년 처리) |
 | GET/POST/DELETE | `sub-admins` | 서브관리자 지정 |
-| GET/POST/DELETE | `homeroom-assignments` | 담임배정 |
+| GET/POST/DELETE | `homeroom-assignments` | 담임배정 (배정 시 TeacherRole "homeroom" 자동 부여/해제) |
 | GET | `supervisor-swap-history` | 감독교체이력 |
 | GET | `statistics?from&to&grade&class` | 출결통계 |
 | GET | `export-excel?from&to&grade` | Excel 다운로드 |
@@ -151,14 +152,15 @@ src/
 | GET | `/api/teachers` | 교사 목록 (primaryGrade 포함) |
 | POST | `/api/auth/change-password` | 비밀번호 변경 |
 
-## 데이터 모델 (13개 모델, 6개 enum)
+## 데이터 모델 (14개 모델, 6개 enum)
 
 ```
 Student ──< Attendance >── Teacher (checker)
   │              │
   │              └── AbsenceReason >── Teacher (registrar)
   │
-  ├──< ParticipationDay (afternoon/night × 월~금)
+  ├──< ParticipationDay (afternoon/night × 월~금 + afterSchool월~금)
+  ├──< AttendanceNote >── Teacher (creator)
   ├──< AbsenceRequest >── Teacher (reviewer)
   └──< SeatLayout >── Room >── StudySession
          (unique: roomId + rowIndex + colIndex)
@@ -167,7 +169,8 @@ Teacher (+ primaryGrade: nullable int) ──< TeacherRole (admin/supervisor/hom
   ├──< HomeroomAssignment (grade, classNumber)
   ├──< SubAdminAssignment (grade)
   ├──< SupervisorAssignment (date, grade, sessionType)
-  └──< SupervisorSwapHistory (original/replacement)
+  ├──< SupervisorSwapHistory (original/replacement)
+  └──< AttendanceNote (creator)
 ```
 
 **삭제된 모델**: SeatingPeriod (기간 개념 제거, SeatLayout이 Room을 통해 직접 grade+sessionType 결정)
@@ -193,7 +196,14 @@ Teacher (+ primaryGrade: nullable int) ──< TeacherRole (admin/supervisor/hom
 - 트랜잭션: 기존 SeatLayout 삭제 → 새로 일괄 생성
 - periodId 불필요, roomId 기반으로 직접 조회/저장
 
-### 4. 학번 파싱
+### 4. 출석 그리드 — 비참여 좌석 처리 (`/attendance/[grade]`)
+- API에서 `ParticipationDay`의 `isParticipating` + 요일 필드(`mon`~`fri`)로 `isParticipating` 결정
+- 비참여 좌석: 회색(`#e5e7eb`, opacity-60), 탭 클릭 무시
+- 길게 터치(500ms): `activatedStudents` Set에 추가 → 하늘색(활성화) → 탭으로 출석 토글 가능
+- 이미 출석 기록이 있는 비참여 학생은 활성 상태로 표시
+- ⚠ KST 날짜는 `getFullYear()/getMonth()/getDate()`로 생성 (`toISOString()` 사용 금지)
+
+### 5. 학번 파싱
 - 5자리: A(학년) + BC(반) + DE(번호), 예: 20102 = 2학년 1반 2번
 
 ## 인증/인가 흐름
@@ -209,8 +219,43 @@ Teacher (+ primaryGrade: nullable int) ──< TeacherRole (admin/supervisor/hom
 - 교사 JWT: 8시간, 학생 JWT: 2시간
 - `trustHost: true` (Railway 프록시 대응)
 - `AUTH_URL`, `AUTH_TRUST_HOST` 환경변수 설정
+- **"teacher" 의사역할**: `withAuth(["teacher"])`는 모든 교사(역할 무관) 허용
+- **리다이렉트**: admin→`/admin`, 기타 교사→`/attendance`, 학생→`/student`
+- **담임배정 자동 동기화**: homeroom-assignments POST/DELETE 시 TeacherRole("homeroom") 자동 부여/삭제
 
 ## 수정 이력 (주요 변경)
+
+### 2026-04-06: 방과후참가 토글 + 요일별 비고 입력
+- **ParticipationDay 확장**: `afterSchoolMon~afterSchoolFri` 5개 Boolean 필드 추가 (기본 false)
+  - 세션별(오후/야간) 독립 설정, 참여+해당요일 켜진 상태에서만 활성화
+- **AttendanceNote 신규 모델**: studentId + sessionType + date (unique), note VARCHAR(100), createdBy
+  - 출석 기록과 독립적으로 비고 저장 가능
+- **참여설정 UI**: 각 요일 셀에 참여 버튼(위) + 방과후 체크박스(아래) 구조
+  - 영향 파일: `ParticipationManagement.tsx`, `homeroom/participation/page.tsx`
+- **출석 그리드**: 방과후 학생 노란색(`#fef9c3`) 표시 + "방과후" 라벨 (불참승인과 동일 색상)
+  - 출석 API에서 `isAfterSchool` 플래그 계산, 출석 토글은 차단하지 않음
+- **주간 팝업 비고**: "i" 클릭 시 주간 출석 팝업 아래 요일별 비고 input 행 추가
+  - blur 시 자동 저장, 빈 값이면 삭제, 기존 비고는 주황색 테두리 표시
+- **API 추가**: `GET/PUT /api/attendance/notes` (주간 비고 조회/upsert/삭제)
+- **API 수정**: `weekly` API에 `afternoonNote`/`nightNote` 포함, participation-days API에 afterSchool 필드 포함
+
+### 2026-04-06: KST 날짜 버그 수정 + 비참여 좌석 표시
+- **KST 날짜 계산 버그**: `toISOString()`이 UTC 변환하여 KST 새벽 시간대에 전날 날짜 반환 → `getFullYear()/getMonth()/getDate()`로 직접 문자열 생성
+  - 영향 파일: `attendance/[grade]/page.tsx`, `student/absence-requests/page.tsx`
+  - **교훈**: `toISOString().split("T")[0]`은 UTC 날짜를 반환하므로 KST 날짜가 필요한 곳에서 절대 사용하지 말 것
+- **비참여 좌석 회색 표시**: `isParticipating: false`인 학생 좌석을 회색 음영(`#e5e7eb`, opacity-60)으로 표시
+- **길게 터치 활성화**: 비참여 좌석 500ms 길게 터치 → 활성화(하늘색) → 탭으로 출석 토글 가능
+- **요일별 참여 체크**: 출석 API에서 `ParticipationDay`의 요일 필드(`mon`~`fri`)를 확인하여 해당 요일 비참여 학생 식별
+- **출석 토글 403 수정**: `attendance/toggle` API를 `withAuth(["supervisor", "admin"])` → `withAuth(["teacher"])`로 변경, 모든 교사 출석 토글 허용
+- **에러 처리**: `handleToggle`에 `res.ok` 체크 추가, API 에러 시 무시
+
+### 2026-04-06: 교사 역할 접근 단순화
+- **withAuth "teacher" 의사역할**: api-auth.ts에 "teacher" 역할 추가 — 모든 교사(role 무관) 허용
+- **미들웨어**: /attendance/* 접근을 모든 교사에게 개방
+- **루트 리다이렉트 단순화**: page.tsx에서 admin→/admin, 나머지 교사→/attendance
+- **담임배정 자동 역할**: homeroom-assignments API에서 담임 배정 시 TeacherRole("homeroom") 자동 부여, 해제 시 자동 삭제
+- **API 역할 변경**: attendance, weekly, my-today, toggle API → ["teacher"]
+- **attendance layout**: 관리자 네비 버튼 추가
 
 ### 2026-04-05: 전체 성능 최적화
 - **API 알고리즘**: 6개 API `.find()` in loop → Map O(1) 룩업 변환 (export-excel, statistics, monthly-attendance, export-attendance, weekly, participation-days)
