@@ -5,11 +5,9 @@ import useSWR from "swr";
 
 type DaySettings = {
   isParticipating: boolean;
-  mon: boolean;
-  tue: boolean;
-  wed: boolean;
-  thu: boolean;
-  fri: boolean;
+  mon: boolean; tue: boolean; wed: boolean; thu: boolean; fri: boolean;
+  afterSchoolMon: boolean; afterSchoolTue: boolean; afterSchoolWed: boolean;
+  afterSchoolThu: boolean; afterSchoolFri: boolean;
 };
 
 type StudentParticipation = {
@@ -26,6 +24,7 @@ const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 const DAY_KEYS = ["mon", "tue", "wed", "thu", "fri"] as const;
 const DAY_LABELS = ["월", "화", "수", "목", "금"] as const;
+const AFTER_SCHOOL_KEYS = ["afterSchoolMon", "afterSchoolTue", "afterSchoolWed", "afterSchoolThu", "afterSchoolFri"] as const;
 
 export default function HomeroomParticipationPage() {
   const [savingKey, setSavingKey] = useState<string | null>(null);
@@ -103,13 +102,13 @@ export default function HomeroomParticipationPage() {
           <table className="w-full text-sm">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                <th rowSpan={2} className="px-4 py-3 text-left font-medium text-gray-600 border-b border-gray-200">
+                <th rowSpan={3} className="px-4 py-3 text-left font-medium text-gray-600 border-b border-gray-200">
                   이름
                 </th>
-                <th rowSpan={2} className="px-3 py-3 text-center font-medium text-gray-600 border-b border-gray-200">
+                <th rowSpan={3} className="px-3 py-3 text-center font-medium text-gray-600 border-b border-gray-200">
                   반
                 </th>
-                <th rowSpan={2} className="px-3 py-3 text-center font-medium text-gray-600 border-b border-gray-200">
+                <th rowSpan={3} className="px-3 py-3 text-center font-medium text-gray-600 border-b border-gray-200">
                   번호
                 </th>
                 <th colSpan={6} className="px-3 py-2 text-center font-medium text-gray-600 border-l border-gray-200">
@@ -132,6 +131,16 @@ export default function HomeroomParticipationPage() {
                     {label}
                   </th>
                 ))}
+              </tr>
+              <tr className="bg-orange-50">
+                {(["afternoon", "night"] as const).map((session) => [
+                  <th key={`${session}-as-empty`} className="py-1 border-l border-gray-200" />,
+                  ...DAY_LABELS.map((l, i) => (
+                    <th key={`${session}-as-${l}`} className="py-1 text-center text-[10px] font-medium text-orange-600">
+                      방과후
+                    </th>
+                  )),
+                ])}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -171,7 +180,7 @@ export default function HomeroomParticipationPage() {
                         className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                       />
                     </td>
-                    {DAY_KEYS.map((day) => (
+                    {DAY_KEYS.map((day, dayIdx) => (
                       <td key={`${student.id}-afternoon-${day}`} className="px-1 py-2.5 text-center">
                         <button
                           onClick={() =>
@@ -186,8 +195,18 @@ export default function HomeroomParticipationPage() {
                                 : "bg-gray-100 text-gray-400 hover:bg-gray-200"
                           }`}
                         >
-                          {DAY_LABELS[DAY_KEYS.indexOf(day)]}
+                          {DAY_LABELS[dayIdx]}
                         </button>
+                        <div className="mt-1">
+                          <input
+                            type="checkbox"
+                            checked={student.afternoon[AFTER_SCHOOL_KEYS[dayIdx]]}
+                            onChange={(e) => handleUpdate(student.id, "afternoon", AFTER_SCHOOL_KEYS[dayIdx], e.target.checked)}
+                            disabled={!student.afternoon.isParticipating || !student.afternoon[day]}
+                            className="w-3.5 h-3.5 rounded border-gray-300 disabled:opacity-30"
+                            style={{ accentColor: '#ea580c' }}
+                          />
+                        </div>
                       </td>
                     ))}
 
@@ -202,7 +221,7 @@ export default function HomeroomParticipationPage() {
                         className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                       />
                     </td>
-                    {DAY_KEYS.map((day) => (
+                    {DAY_KEYS.map((day, dayIdx) => (
                       <td key={`${student.id}-night-${day}`} className="px-1 py-2.5 text-center">
                         <button
                           onClick={() =>
@@ -217,8 +236,18 @@ export default function HomeroomParticipationPage() {
                                 : "bg-gray-100 text-gray-400 hover:bg-gray-200"
                           }`}
                         >
-                          {DAY_LABELS[DAY_KEYS.indexOf(day)]}
+                          {DAY_LABELS[dayIdx]}
                         </button>
+                        <div className="mt-1">
+                          <input
+                            type="checkbox"
+                            checked={student.night[AFTER_SCHOOL_KEYS[dayIdx]]}
+                            onChange={(e) => handleUpdate(student.id, "night", AFTER_SCHOOL_KEYS[dayIdx], e.target.checked)}
+                            disabled={!student.night.isParticipating || !student.night[day]}
+                            className="w-3.5 h-3.5 rounded border-gray-300 disabled:opacity-30"
+                            style={{ accentColor: '#ea580c' }}
+                          />
+                        </div>
                       </td>
                     ))}
                   </tr>

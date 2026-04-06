@@ -5,11 +5,9 @@ import useSWR from "swr";
 
 type DaySettings = {
   isParticipating: boolean;
-  mon: boolean;
-  tue: boolean;
-  wed: boolean;
-  thu: boolean;
-  fri: boolean;
+  mon: boolean; tue: boolean; wed: boolean; thu: boolean; fri: boolean;
+  afterSchoolMon: boolean; afterSchoolTue: boolean; afterSchoolWed: boolean;
+  afterSchoolThu: boolean; afterSchoolFri: boolean;
 };
 
 type StudentParticipation = {
@@ -24,6 +22,7 @@ type StudentParticipation = {
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 const DAY_KEYS = ["mon", "tue", "wed", "thu", "fri"] as const;
 const DAY_LABELS = ["월", "화", "수", "목", "금"] as const;
+const AFTER_SCHOOL_KEYS = ["afterSchoolMon", "afterSchoolTue", "afterSchoolWed", "afterSchoolThu", "afterSchoolFri"] as const;
 
 export default function ParticipationManagement({ grade }: { grade: number }) {
   const [classFilter, setClassFilter] = useState<string>("");
@@ -133,9 +132,9 @@ export default function ParticipationManagement({ grade }: { grade: number }) {
             </colgroup>
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                <th rowSpan={2} className="px-2 py-3 text-left font-medium text-gray-600 border-b border-gray-200">이름</th>
-                <th rowSpan={2} className="py-3 text-center font-medium text-gray-600 border-b border-gray-200">반</th>
-                <th rowSpan={2} className="py-3 text-center font-medium text-gray-600 border-b border-gray-200">번호</th>
+                <th rowSpan={3} className="px-2 py-3 text-left font-medium text-gray-600 border-b border-gray-200">이름</th>
+                <th rowSpan={3} className="py-3 text-center font-medium text-gray-600 border-b border-gray-200">반</th>
+                <th rowSpan={3} className="py-3 text-center font-medium text-gray-600 border-b border-gray-200">번호</th>
                 <th colSpan={6} className="py-2 text-center font-medium text-gray-600 border-l border-gray-200">오후자습</th>
                 <th colSpan={6} className="py-2 text-center font-medium text-gray-600 border-l border-gray-200">야간자습</th>
               </tr>
@@ -153,6 +152,16 @@ export default function ParticipationManagement({ grade }: { grade: number }) {
                   </th>,
                   ...DAY_LABELS.map((l) => (
                     <th key={`${session}-${l}`} className="py-2 text-center text-xs font-medium text-gray-500">{l}</th>
+                  )),
+                ])}
+              </tr>
+              <tr className="bg-orange-50">
+                {(["afternoon", "night"] as const).map((session) => [
+                  <th key={`${session}-as-empty`} className="py-1 border-l border-gray-200" />,
+                  ...DAY_LABELS.map((l, i) => (
+                    <th key={`${session}-as-${l}`} className="py-1 text-center text-[10px] font-medium text-orange-600">
+                      방과후
+                    </th>
                   )),
                 ])}
               </tr>
@@ -179,7 +188,7 @@ export default function ParticipationManagement({ grade }: { grade: number }) {
                             className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                           />
                         </td>,
-                        ...DAY_KEYS.map((day) => (
+                        ...DAY_KEYS.map((day, dayIdx) => (
                           <td key={`${session}-${day}`} className="py-2 text-center">
                             <button
                               onClick={() => handleUpdate(student.id, session, day, !settings[day])}
@@ -192,8 +201,18 @@ export default function ParticipationManagement({ grade }: { grade: number }) {
                                     : "bg-gray-100 text-gray-400 hover:bg-gray-200"
                               }`}
                             >
-                              {DAY_LABELS[DAY_KEYS.indexOf(day)]}
+                              {DAY_LABELS[dayIdx]}
                             </button>
+                            <div className="mt-1">
+                              <input
+                                type="checkbox"
+                                checked={settings[AFTER_SCHOOL_KEYS[dayIdx]]}
+                                onChange={(e) => handleUpdate(student.id, session, AFTER_SCHOOL_KEYS[dayIdx], e.target.checked)}
+                                disabled={!settings.isParticipating || !settings[day]}
+                                className="w-3.5 h-3.5 rounded border-gray-300 disabled:opacity-30"
+                                style={{ accentColor: '#ea580c' }}
+                              />
+                            </div>
                           </td>
                         )),
                       ];
