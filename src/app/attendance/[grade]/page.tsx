@@ -180,27 +180,54 @@ export default function AttendanceGradePage() {
 
   async function handleToggle(studentId: number) {
     const current = attendances[studentId]?.status || "unchecked";
-    const res = await fetch("/api/attendance/toggle", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ studentId, sessionType: tab, date: today, currentStatus: current }),
-    });
-    if (!res.ok) return;
-    const result = await res.json();
+    const nextStatus = current === "unchecked" ? "present" : current === "present" ? "absent" : "unchecked";
 
+    // 낙관적 업데이트: UI 즉시 반영
     mutate(
       (prev: typeof data) => {
         if (!prev) return prev;
         const newAttendances = { ...prev.attendances };
-        if (result.status === "unchecked") {
+        if (nextStatus === "unchecked") {
           delete newAttendances[studentId];
         } else {
-          newAttendances[studentId] = { id: result.id, status: result.status };
+          newAttendances[studentId] = { id: attendances[studentId]?.id ?? 0, status: nextStatus };
         }
         return { ...prev, attendances: newAttendances };
       },
       { revalidate: false }
     );
+
+    // 백그라운드 API 요청
+    try {
+      const res = await fetch("/api/attendance/toggle", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ studentId, sessionType: tab, date: today, currentStatus: current }),
+      });
+      if (!res.ok) {
+        // 실패 시 롤백
+        mutate();
+        return;
+      }
+      const result = await res.json();
+      // 서버 응답의 실제 id로 갱신
+      mutate(
+        (prev: typeof data) => {
+          if (!prev) return prev;
+          const newAttendances = { ...prev.attendances };
+          if (result.status === "unchecked") {
+            delete newAttendances[studentId];
+          } else {
+            newAttendances[studentId] = { id: result.id, status: result.status };
+          }
+          return { ...prev, attendances: newAttendances };
+        },
+        { revalidate: false }
+      );
+    } catch {
+      // 네트워크 오류 시 롤백
+      mutate();
+    }
   }
 
   async function handleSeatClick(studentId: number, isParticipating: boolean) {
