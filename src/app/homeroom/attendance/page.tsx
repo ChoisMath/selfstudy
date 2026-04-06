@@ -124,10 +124,11 @@ export default function MonthlyAttendancePage() {
 
       {/* 범례 */}
       <div className="flex items-center gap-4 mb-3 text-xs text-gray-500">
-        <span className="text-green-600 font-bold">O</span><span>출석</span>
-        <span className="text-red-600 font-bold">X</span><span>결석</span>
-        <span className="text-yellow-600 font-bold">방</span><span>방과후</span>
-        <span className="text-gray-400 font-bold">-</span><span>미확인/미참가</span>
+        <span className="text-green-700 font-extrabold text-sm">O</span><span>출석</span>
+        <span className="text-red-700 font-extrabold text-sm">X</span><span>결석</span>
+        <span className="text-yellow-600 font-extrabold text-sm">방</span><span>방과후</span>
+        <span className="text-gray-400 font-bold">-</span><span>미확인</span>
+        <span className="inline-block w-4 h-3 bg-gray-100 border border-gray-300 rounded-sm" /><span>미참가</span>
         <span className="text-[10px] text-gray-400">(학:학원 방:방과후 질:질병 기:기타)</span>
       </div>
 
@@ -184,7 +185,7 @@ export default function MonthlyAttendancePage() {
                         ))}
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-100">
+                    <tbody>
                       {classStudents.map((student) => {
                         const afternoonPart = student.participationDays.find(
                           (p) => p.sessionType === "afternoon"
@@ -193,12 +194,18 @@ export default function MonthlyAttendancePage() {
                           (p) => p.sessionType === "night"
                         );
 
+                        const isAfternoonAllOff = afternoonPart ? !afternoonPart.isParticipating : false;
+                        const isNightAllOff = nightPart ? !nightPart.isParticipating : false;
+                        const isEntireRowGray = isAfternoonAllOff && isNightAllOff;
+                        const rowBg = isEntireRowGray ? "bg-gray-100" : "hover:bg-gray-50";
+                        const stickyBg = isEntireRowGray ? "bg-gray-100" : "bg-white";
+
                         return (
-                          <tr key={student.id} className="hover:bg-gray-50">
-                            <td className="px-3 py-1.5 font-medium text-gray-900 sticky left-0 bg-white z-10 whitespace-nowrap">
+                          <tr key={student.id} className={`border-b border-gray-100 ${rowBg}`}>
+                            <td className={`px-3 py-1.5 font-medium sticky left-0 z-10 whitespace-nowrap ${stickyBg} ${isEntireRowGray ? "text-gray-400" : "text-gray-900"}`}>
                               {student.name}
                             </td>
-                            <td className="px-2 py-1.5 text-center text-gray-600 sticky left-[60px] bg-white z-10">
+                            <td className={`px-2 py-1.5 text-center sticky left-[60px] z-10 ${stickyBg} ${isEntireRowGray ? "text-gray-400" : "text-gray-600"}`}>
                               {student.studentNumber}
                             </td>
                             {dates.map((date) => {
@@ -220,29 +227,40 @@ export default function MonthlyAttendancePage() {
                                 ? nightPart.isParticipating && nightPart[dayKey] && nightPart[AFTER_SCHOOL_KEYS[dayIdx]]
                                 : false;
 
+                              const afternoonGray = !isAfternoonParticipating;
+                              const nightGray = !isNightParticipating;
+
+                              // 비참여이더라도 출결 기록이 있으면 회색 배경 + 출결 표시
+                              const afternoonHasData = att.afternoon && att.afternoon !== "unchecked";
+                              const nightHasData = att.night && att.night !== "unchecked";
+
                               return (
                                 <React.Fragment key={date}>
-                                  <td className={`px-1 py-1.5 text-center font-bold border-l border-gray-100 ${
-                                    !isAfternoonParticipating ? "text-gray-300"
+                                  <td className={`px-1 py-1.5 text-center text-sm font-extrabold border-l border-gray-100 ${
+                                    afternoonGray ? "bg-gray-100" : ""
+                                  } ${
+                                    afternoonGray && !afternoonHasData ? "text-gray-300"
                                       : isAfternoonAfterSchool && (!att.afternoon || att.afternoon === "unchecked") ? "text-yellow-600 bg-yellow-50"
-                                      : att.afternoon === "present" ? "text-green-600"
-                                      : att.afternoon === "absent" ? "text-red-600"
+                                      : att.afternoon === "present" ? "text-green-700"
+                                      : att.afternoon === "absent" ? "text-red-700"
                                       : "text-gray-400"
                                   }`}>
-                                    {!isAfternoonParticipating ? "-"
+                                    {afternoonGray && !afternoonHasData ? "-"
                                       : isAfternoonAfterSchool && (!att.afternoon || att.afternoon === "unchecked") ? "방"
                                       : att.afternoon === "present" ? "O"
                                       : att.afternoon === "absent" ? (att.afternoonReason ? REASON_LABELS[att.afternoonReason] || "X" : "X")
                                       : "-"}
                                   </td>
-                                  <td className={`px-1 py-1.5 text-center font-bold ${
-                                    !isNightParticipating ? "text-gray-300"
+                                  <td className={`px-1 py-1.5 text-center text-sm font-extrabold ${
+                                    nightGray ? "bg-gray-100" : ""
+                                  } ${
+                                    nightGray && !nightHasData ? "text-gray-300"
                                       : isNightAfterSchool && (!att.night || att.night === "unchecked") ? "text-yellow-600 bg-yellow-50"
-                                      : att.night === "present" ? "text-green-600"
-                                      : att.night === "absent" ? "text-red-600"
+                                      : att.night === "present" ? "text-green-700"
+                                      : att.night === "absent" ? "text-red-700"
                                       : "text-gray-400"
                                   }`}>
-                                    {!isNightParticipating ? "-"
+                                    {nightGray && !nightHasData ? "-"
                                       : isNightAfterSchool && (!att.night || att.night === "unchecked") ? "방"
                                       : att.night === "present" ? "O"
                                       : att.night === "absent" ? (att.nightReason ? REASON_LABELS[att.nightReason] || "X" : "X")
