@@ -149,11 +149,11 @@ export default function MonthlyAttendancePage() {
                 {cls.grade}학년 {cls.classNumber}반
               </h2>
 
-              <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+              <div className="bg-white rounded-lg border border-gray-300 overflow-hidden">
                 <div className="overflow-x-auto">
                   <table className="text-xs">
                     <thead>
-                      <tr className="bg-gray-50 border-b border-gray-200">
+                      <tr className="bg-gray-50 border-b border-gray-300">
                         <th className="px-3 py-2 text-left font-medium text-gray-600 sticky left-0 bg-gray-50 z-10 min-w-[60px]">
                           이름
                         </th>
@@ -167,19 +167,19 @@ export default function MonthlyAttendancePage() {
                             <th
                               key={date}
                               colSpan={2}
-                              className="px-1 py-2 text-center font-medium text-gray-600 border-l border-gray-200 whitespace-nowrap"
+                              className="px-1 py-2 text-center font-medium text-gray-600 border-l border-gray-300 whitespace-nowrap"
                             >
                               {date.slice(8)}/{dayName}
                             </th>
                           );
                         })}
                       </tr>
-                      <tr className="bg-gray-50 border-b border-gray-200">
+                      <tr className="bg-gray-50 border-b border-gray-300">
                         <th className="sticky left-0 bg-gray-50 z-10" />
                         <th className="sticky left-[60px] bg-gray-50 z-10" />
                         {dates.map((date) => (
                           <React.Fragment key={date}>
-                            <th className="px-1 py-1 text-center text-gray-400 border-l border-gray-200">오</th>
+                            <th className="px-1 py-1 text-center text-gray-400 border-l border-gray-300">오</th>
                             <th className="px-1 py-1 text-center text-gray-400">야</th>
                           </React.Fragment>
                         ))}
@@ -201,7 +201,7 @@ export default function MonthlyAttendancePage() {
                         const stickyBg = isEntireRowGray ? "bg-gray-100" : "bg-white";
 
                         return (
-                          <tr key={student.id} className={`border-b border-gray-100 ${rowBg}`}>
+                          <tr key={student.id} className={`border-b border-gray-300 ${rowBg}`}>
                             <td className={`px-3 py-1.5 font-medium sticky left-0 z-10 whitespace-nowrap ${stickyBg} ${isEntireRowGray ? "text-gray-400" : "text-gray-900"}`}>
                               {student.name}
                             </td>
@@ -236,7 +236,7 @@ export default function MonthlyAttendancePage() {
 
                               return (
                                 <React.Fragment key={date}>
-                                  <td className={`px-1 py-1.5 text-center text-sm font-extrabold border-l border-gray-100 ${
+                                  <td className={`px-1 py-1.5 text-center text-sm font-extrabold border-l border-gray-300 ${
                                     afternoonGray ? "bg-gray-100" : ""
                                   } ${
                                     afternoonGray && !afternoonHasData ? "text-gray-300"
@@ -275,7 +275,7 @@ export default function MonthlyAttendancePage() {
                     </tbody>
                   </table>
                 </div>
-                <div className="px-4 py-2 bg-gray-50 border-t border-gray-200 text-xs text-gray-500">
+                <div className="px-4 py-2 bg-gray-50 border-t border-gray-300 text-xs text-gray-500">
                   총 {classStudents.length}명
                 </div>
               </div>

@@ -172,26 +172,26 @@ export default function HomeroomPage() {
         </span>
       </div>
 
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+      <div className="bg-white rounded-lg border border-gray-300 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-gray-50 border-b border-gray-300">
               <tr>
                 <th
                   rowSpan={2}
-                  className="px-3 py-3 text-left font-medium text-gray-600 border-b border-gray-200"
+                  className="px-3 py-3 text-left font-medium text-gray-600 border-b border-gray-300"
                 >
                   이름
                 </th>
                 <th
                   rowSpan={2}
-                  className="px-2 py-3 text-center font-medium text-gray-600 border-b border-gray-200"
+                  className="px-2 py-3 text-center font-medium text-gray-600 border-b border-gray-300"
                 >
                   반
                 </th>
                 <th
                   rowSpan={2}
-                  className="px-2 py-3 text-center font-medium text-gray-600 border-b border-gray-200"
+                  className="px-2 py-3 text-center font-medium text-gray-600 border-b border-gray-300"
                 >
                   번호
                 </th>
@@ -199,7 +199,7 @@ export default function HomeroomPage() {
                   <th
                     key={label}
                     colSpan={2}
-                    className="px-1 py-2 text-center font-medium text-gray-600 border-l border-gray-200"
+                    className="px-1 py-2 text-center font-medium text-gray-600 border-l border-gray-300"
                   >
                     {label}
                   </th>
@@ -209,7 +209,7 @@ export default function HomeroomPage() {
                 {DAY_LABELS.map((label) => (
                   <Fragment key={label}>
                     <th
-                      className="px-1 py-1 text-center text-xs font-medium text-gray-400 border-l border-gray-200"
+                      className="px-1 py-1 text-center text-xs font-medium text-gray-400 border-l border-gray-300"
                     >
                       오후
                     </th>
@@ -264,7 +264,7 @@ export default function HomeroomPage() {
 
                   return (
                     <Fragment key={student.id}>
-                      <tr className={`border-b border-gray-100 ${isEntireRowGray ? "bg-gray-100" : "hover:bg-gray-50"}`}>
+                      <tr className={`border-b border-gray-300 ${isEntireRowGray ? "bg-gray-100" : "hover:bg-gray-50"}`}>
                         <td className={`px-3 py-2 font-medium whitespace-nowrap ${isEntireRowGray ? "text-gray-400" : "text-gray-900"}`}>
                           {student.name}
                         </td>
@@ -304,7 +304,7 @@ export default function HomeroomPage() {
 
                           return (
                             <Fragment key={`${student.id}-${date}`}>
-                              <td className={`px-1 py-2 text-center border-l border-gray-100 ${afternoonGray ? "bg-gray-100" : ""}`}>
+                              <td className={`px-1 py-2 text-center border-l border-gray-300 ${afternoonGray ? "bg-gray-100" : ""}`}>
                                 {afternoonAtt?.status && afternoonAtt.status !== "unchecked"
                                   ? getStatusBadge(afternoonAtt.status, isAfternoonAfterSchool, afternoonAtt.reasonType)
                                   : afternoonGray
@@ -346,7 +346,7 @@ export default function HomeroomPage() {
           </table>
         </div>
         {!isLoading && students.length > 0 && (
-          <div className="px-4 py-3 bg-gray-50 border-t border-gray-200 text-sm text-gray-500">
+          <div className="px-4 py-3 bg-gray-50 border-t border-gray-300 text-sm text-gray-500">
             총 {students.length}명
           </div>
         )}
