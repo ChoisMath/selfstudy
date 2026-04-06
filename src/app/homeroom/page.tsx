@@ -343,11 +343,64 @@ export default function HomeroomPage() {
                 })
               )}
             </tbody>
+            {!isLoading && students.length > 0 && (
+              <tfoot className="bg-gray-50 border-t-2 border-gray-300">
+                <tr>
+                  <td colSpan={3} className="px-2 py-2.5 text-right font-semibold text-gray-600 text-xs">합계</td>
+                  {weekDates.map((date, idx) => {
+                    const dayKeys = ["mon", "tue", "wed", "thu", "fri"] as const;
+                    const dayKey = dayKeys[idx];
+                    const afternoonPresent = students.filter((s) => {
+                      const att = s.attendances.find((a) => a.date === date && a.sessionType === "afternoon");
+                      return att?.status === "present";
+                    }).length;
+                    const afternoonAbsent = students.filter((s) => {
+                      const att = s.attendances.find((a) => a.date === date && a.sessionType === "afternoon");
+                      return att?.status === "absent";
+                    }).length;
+                    const afternoonParticipating = students.filter((s) => {
+                      const part = s.participationDays.find((p) => p.sessionType === "afternoon");
+                      return part ? part.isParticipating && part[dayKey] : true;
+                    }).length;
+                    const nightPresent = students.filter((s) => {
+                      const att = s.attendances.find((a) => a.date === date && a.sessionType === "night");
+                      return att?.status === "present";
+                    }).length;
+                    const nightAbsent = students.filter((s) => {
+                      const att = s.attendances.find((a) => a.date === date && a.sessionType === "night");
+                      return att?.status === "absent";
+                    }).length;
+                    const nightParticipating = students.filter((s) => {
+                      const part = s.participationDays.find((p) => p.sessionType === "night");
+                      return part ? part.isParticipating && part[dayKey] : true;
+                    }).length;
+                    return (
+                      <Fragment key={`total-${date}`}>
+                        <td className="px-1 py-2.5 text-center text-[10px] border-l border-gray-300">
+                          <span className="text-green-700 font-bold">{afternoonPresent}</span>
+                          <span className="text-gray-400">/</span>
+                          <span className="text-red-700 font-bold">{afternoonAbsent}</span>
+                          <span className="text-gray-400">/</span>
+                          <span className="text-gray-500">{afternoonParticipating}</span>
+                        </td>
+                        <td className="px-1 py-2.5 text-center text-[10px]">
+                          <span className="text-green-700 font-bold">{nightPresent}</span>
+                          <span className="text-gray-400">/</span>
+                          <span className="text-red-700 font-bold">{nightAbsent}</span>
+                          <span className="text-gray-400">/</span>
+                          <span className="text-gray-500">{nightParticipating}</span>
+                        </td>
+                      </Fragment>
+                    );
+                  })}
+                </tr>
+              </tfoot>
+            )}
           </table>
         </div>
         {!isLoading && students.length > 0 && (
           <div className="px-4 py-3 bg-gray-50 border-t border-gray-300 text-sm text-gray-500">
-            총 {students.length}명
+            총 {students.length}명 <span className="ml-2 text-xs text-gray-400">(합계: 출석/결석/참여)</span>
           </div>
         )}
       </div>

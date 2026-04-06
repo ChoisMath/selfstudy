@@ -273,10 +273,49 @@ export default function MonthlyAttendancePage() {
                         );
                       })}
                     </tbody>
+                    <tfoot className="bg-gray-50 border-t-2 border-gray-300">
+                      <tr>
+                        <td className="px-3 py-2 text-right font-semibold text-gray-600 text-[10px] sticky left-0 bg-gray-50 z-10">합계</td>
+                        <td className="px-2 py-2 sticky left-[60px] bg-gray-50 z-10" />
+                        {dates.map((date) => {
+                          const dayKey = getDayKey(date);
+                          const aPresent = classStudents.filter((s) => s.dates[date]?.afternoon === "present").length;
+                          const aAbsent = classStudents.filter((s) => s.dates[date]?.afternoon === "absent").length;
+                          const aParticipating = classStudents.filter((s) => {
+                            const p = s.participationDays.find((pd) => pd.sessionType === "afternoon");
+                            return p ? p.isParticipating && p[dayKey] : true;
+                          }).length;
+                          const nPresent = classStudents.filter((s) => s.dates[date]?.night === "present").length;
+                          const nAbsent = classStudents.filter((s) => s.dates[date]?.night === "absent").length;
+                          const nParticipating = classStudents.filter((s) => {
+                            const p = s.participationDays.find((pd) => pd.sessionType === "night");
+                            return p ? p.isParticipating && p[dayKey] : true;
+                          }).length;
+                          return (
+                            <React.Fragment key={`total-${date}`}>
+                              <td className="px-0.5 py-2 text-center text-[9px] border-l border-gray-300">
+                                <span className="text-green-700 font-bold">{aPresent}</span>
+                                <span className="text-gray-400">/</span>
+                                <span className="text-red-700 font-bold">{aAbsent}</span>
+                                <span className="text-gray-400">/</span>
+                                <span className="text-gray-500">{aParticipating}</span>
+                              </td>
+                              <td className="px-0.5 py-2 text-center text-[9px]">
+                                <span className="text-green-700 font-bold">{nPresent}</span>
+                                <span className="text-gray-400">/</span>
+                                <span className="text-red-700 font-bold">{nAbsent}</span>
+                                <span className="text-gray-400">/</span>
+                                <span className="text-gray-500">{nParticipating}</span>
+                              </td>
+                            </React.Fragment>
+                          );
+                        })}
+                      </tr>
+                    </tfoot>
                   </table>
                 </div>
                 <div className="px-4 py-2 bg-gray-50 border-t border-gray-300 text-xs text-gray-500">
-                  총 {classStudents.length}명
+                  총 {classStudents.length}명 <span className="ml-2 text-[10px] text-gray-400">(합계: 출석/결석/참여)</span>
                 </div>
               </div>
             </div>
