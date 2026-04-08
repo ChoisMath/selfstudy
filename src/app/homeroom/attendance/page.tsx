@@ -119,7 +119,7 @@ export default function MonthlyAttendancePage() {
           disabled={students.length === 0}
           className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 disabled:opacity-50"
         >
-          Excel 다운로드
+          Excel
         </button>
       </div>
 
