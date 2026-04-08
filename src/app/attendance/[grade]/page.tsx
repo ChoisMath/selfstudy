@@ -18,6 +18,7 @@ interface Seat {
     isParticipating: boolean;
     isApprovedAbsence: boolean;
     isAfterSchool: boolean;
+    hasPendingAbsenceRequest: boolean;
   } | null;
 }
 
@@ -49,7 +50,7 @@ interface WeeklyDay {
   nightAfterSchool: boolean;
 }
 
-type Tab = "afternoon" | "night";
+type Tab = "afternoon" | "night" | "absence";
 
 interface SeatCellProps {
   student: NonNullable<Seat["student"]>;
@@ -109,6 +110,9 @@ const SeatCell = memo(function SeatCell({
         i
       </button>
       <div className="font-bold text-[clamp(9px,2.2vw,12px)] whitespace-nowrap overflow-hidden text-ellipsis">
+        {student.hasPendingAbsenceRequest && (
+          <span className="text-[#ef4444] font-black">*</span>
+        )}
         {student.name}
       </div>
       <div className={`text-[clamp(7px,1.8vw,9px)] mt-0.5 ${isSelected ? "text-[#bfdbfe]" : "text-[#6b7280]"}`}>
@@ -151,10 +155,26 @@ export default function AttendanceGradePage() {
   })();
 
   const { data, mutate } = useSWR(
-    `/api/attendance?date=${today}&session=${tab}&grade=${grade}`,
+    tab !== "absence" ? `/api/attendance?date=${today}&session=${tab}&grade=${grade}` : null,
     fetcher,
     { revalidateOnFocus: true }
   );
+
+  const [absenceFilter, setAbsenceFilter] = useState<string>("pending");
+
+  const { data: absenceData, mutate: mutateAbsence } = useSWR(
+    tab === "absence" ? `/api/attendance/absence-requests?grade=${grade}${absenceFilter !== "all" ? `&status=${absenceFilter}` : ""}` : null,
+    fetcher,
+    { revalidateOnFocus: true }
+  );
+
+  // pending 건수 (탭 배지용) — 탭과 무관하게 항상 조회
+  const { data: pendingCountData, mutate: mutatePendingCount } = useSWR(
+    `/api/attendance/absence-requests?grade=${grade}&status=pending`,
+    fetcher,
+    { revalidateOnFocus: true }
+  );
+  const pendingCount = pendingCountData?.requests?.length ?? 0;
 
   const rooms: Room[] = data?.rooms || [];
   const attendances: Record<number, AttendanceRecord> = data?.attendances || {};
@@ -470,6 +490,150 @@ export default function AttendanceGradePage() {
     );
   }
 
+  const reasonLabels: Record<string, string> = {
+    academy: "학원",
+    afterschool: "방과후",
+    illness: "질병",
+    custom: "기타",
+  };
+
+  const reasonColors: Record<string, string> = {
+    academy: "text-[#f59e0b]",
+    afterschool: "text-[#8b5cf6]",
+    illness: "text-[#ef4444]",
+    custom: "text-[#6b7280]",
+  };
+
+  const statusLabels: Record<string, string> = {
+    pending: "대기중",
+    approved: "승인",
+    rejected: "반려",
+  };
+
+  async function handleAbsenceAction(requestId: number, action: "approved" | "rejected") {
+    const label = action === "approved" ? "승인" : "반려";
+    if (!confirm(`이 불참신청을 ${label}하시겠습니까?`)) return;
+
+    try {
+      const res = await fetch(`/api/homeroom/absence-requests/${requestId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        alert(err.error || "처리에 실패했습니다.");
+        return;
+      }
+
+      mutateAbsence();
+      mutatePendingCount();
+    } catch {
+      alert("네트워크 오류가 발생했습니다.");
+    }
+  }
+
+  function renderAbsenceRequests() {
+    const requests = absenceData?.requests || [];
+
+    return (
+      <div>
+        {/* 필터 버튼 */}
+        <div className="flex gap-2 mb-4">
+          {[
+            { key: "pending", label: `대기중${pendingCount > 0 ? ` (${pendingCount})` : ""}` },
+            { key: "approved", label: "승인" },
+            { key: "rejected", label: "반려" },
+          ].map((f) => (
+            <button
+              key={f.key}
+              onClick={() => setAbsenceFilter(f.key)}
+              className={`px-3 py-1.5 rounded-full text-[clamp(11px,2.8vw,13px)] font-semibold transition-all ${
+                absenceFilter === f.key
+                  ? "bg-[#3b82f6] text-white"
+                  : "bg-[#f1f5f9] text-[#64748b] hover:bg-[#e2e8f0]"
+              }`}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+
+        {/* 요청 목록 */}
+        {requests.length === 0 ? (
+          <div className="text-center text-[#94a3b8] py-12 text-sm">
+            {absenceFilter === "pending" ? "대기 중인 불참신청이 없습니다." : "불참신청이 없습니다."}
+          </div>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {requests.map((r: {
+              id: number;
+              student: { id: number; name: string; grade: number; classNumber: number; studentNumber: number };
+              sessionType: string;
+              date: string;
+              reasonType: string;
+              detail: string | null;
+              status: string;
+              reviewer: { id: number; name: string } | null;
+              reviewedAt: string | null;
+              createdAt: string;
+            }) => {
+              const dateObj = new Date(r.date + "T12:00:00+09:00");
+              const days = ["일", "월", "화", "수", "목", "금", "토"];
+              const dateLabel = `${dateObj.getMonth() + 1}/${dateObj.getDate()}(${days[dateObj.getDay()]})`;
+
+              return (
+                <div key={r.id} className="bg-white border border-[#e2e8f0] rounded-lg p-3">
+                  <div className="flex justify-between items-start gap-2">
+                    <div className="min-w-0">
+                      <div className="font-bold text-sm">
+                        {r.student.name}{" "}
+                        <span className="text-[#94a3b8] font-normal text-xs">
+                          {r.student.grade}학년 {r.student.classNumber}반 {r.student.studentNumber}번
+                        </span>
+                      </div>
+                      <div className="text-xs text-[#64748b] mt-1">
+                        {dateLabel} · {r.sessionType === "afternoon" ? "오후자습" : "야간자습"} ·{" "}
+                        <span className={reasonColors[r.reasonType] || "text-[#6b7280]"}>
+                          {reasonLabels[r.reasonType] || r.reasonType}
+                        </span>
+                      </div>
+                      {r.detail && (
+                        <div className="text-[11px] text-[#94a3b8] mt-0.5">{r.detail}</div>
+                      )}
+                      {r.reviewer && (
+                        <div className="text-[11px] text-[#94a3b8] mt-1">
+                          처리: {r.reviewer.name} ({statusLabels[r.status]})
+                        </div>
+                      )}
+                    </div>
+                    {r.status === "pending" && (
+                      <div className="flex gap-1.5 shrink-0">
+                        <button
+                          onClick={() => handleAbsenceAction(r.id, "approved")}
+                          className="bg-[#3b82f6] text-white px-3 py-1.5 rounded-md text-xs font-semibold hover:bg-[#2563eb] transition-colors"
+                        >
+                          승인
+                        </button>
+                        <button
+                          onClick={() => handleAbsenceAction(r.id, "rejected")}
+                          className="bg-[#f1f5f9] text-[#64748b] px-3 py-1.5 rounded-md text-xs hover:bg-[#e2e8f0] transition-colors"
+                        >
+                          반려
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="bg-[#f1f5f9] min-h-screen">
       {/* 고정 상단 바 - seat-responsive-v2 디자인 */}
@@ -496,20 +660,22 @@ export default function AttendanceGradePage() {
           <span className="text-[clamp(11px,2.6vw,13px)] font-bold whitespace-nowrap shrink-0">
             {grade}학년
           </span>
-          <div className="flex gap-2 ml-auto shrink-0 whitespace-nowrap text-[clamp(10px,2.4vw,12px)]">
-            <span className="opacity-85">
-              출석 <b className="opacity-100 font-bold" style={{ color: "#86efac" }}>{presentCount}</b>
-            </span>
-            <span className="opacity-85">
-              결석 <b className="opacity-100 font-bold" style={{ color: "#fca5a5" }}>{absentCount}</b>
-            </span>
-            <span className="opacity-85">
-              미체크 <b className="opacity-100 font-bold">{uncheckedCount}</b>
-            </span>
-            <span className="opacity-85">
-              방과후 <b className="opacity-100 font-bold" style={{ color: "#fde047" }}>{afterSchoolDefaultCount}</b>
-            </span>
-          </div>
+          {tab !== "absence" && (
+            <div className="flex gap-2 ml-auto shrink-0 whitespace-nowrap text-[clamp(10px,2.4vw,12px)]">
+              <span className="opacity-85">
+                출석 <b className="opacity-100 font-bold" style={{ color: "#86efac" }}>{presentCount}</b>
+              </span>
+              <span className="opacity-85">
+                결석 <b className="opacity-100 font-bold" style={{ color: "#fca5a5" }}>{absentCount}</b>
+              </span>
+              <span className="opacity-85">
+                미체크 <b className="opacity-100 font-bold">{uncheckedCount}</b>
+              </span>
+              <span className="opacity-85">
+                방과후 <b className="opacity-100 font-bold" style={{ color: "#fde047" }}>{afterSchoolDefaultCount}</b>
+              </span>
+            </div>
+          )}
           <button
             onClick={() => setShowGradeModal(true)}
             className="ml-2 shrink-0 bg-white/20 hover:bg-white/30 text-white text-[clamp(10px,2.4vw,12px)] px-2.5 py-1 rounded-md transition-colors"
@@ -518,7 +684,7 @@ export default function AttendanceGradePage() {
           </button>
         </div>
 
-        {/* 오후/야간 탭 */}
+        {/* 오후/야간/불참신청 탭 */}
         <div className="flex gap-1 mt-2">
           <button
             onClick={() => { setTab("afternoon"); setSelectedSeat(null); setActivatedStudents(new Set()); }}
@@ -540,13 +706,30 @@ export default function AttendanceGradePage() {
           >
             야간자습
           </button>
+          <button
+            onClick={() => { setTab("absence"); setSelectedSeat(null); }}
+            className={`flex-1 text-center py-2.5 rounded-t-[10px] text-[clamp(12px,3vw,14px)] font-semibold transition-all relative ${
+              tab === "absence"
+                ? "bg-white text-[#2563eb] shadow-[0_-2px_8px_rgba(0,0,0,0.06)]"
+                : "bg-[#e2e8f0] text-[#94a3b8]"
+            }`}
+          >
+            불참신청
+            {pendingCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-[#ef4444] text-white rounded-full w-[18px] h-[18px] flex items-center justify-center text-[10px] font-bold">
+                {pendingCount}
+              </span>
+            )}
+          </button>
         </div>
       </div>
 
       {/* 교실 콘텐츠 */}
       <div className="max-w-[960px] mx-auto px-3 pb-3">
         <div className="bg-white rounded-b-xl p-3 flex flex-col gap-5 shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
-          {grade === 2 && tab === "night" ? (
+          {tab === "absence" ? (
+            renderAbsenceRequests()
+          ) : grade === 2 && tab === "night" ? (
             /* 2학년 야간: 미래홀 공간 배치 */
             <MiraeHallLayout
               rooms={rooms}
