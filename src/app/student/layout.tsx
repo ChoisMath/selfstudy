@@ -34,7 +34,7 @@ export default function StudentLayout({
   return (
     <div className="min-h-screen bg-gray-50">
       {/* 헤더 */}
-      <header className="bg-white border-b border-gray-200">
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
         <div className="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <img src="/posan.svg" alt="포산고등학교" className="w-8 h-8" />
@@ -55,7 +55,7 @@ export default function StudentLayout({
 
         {/* 탭 네비게이션 */}
         <div className="max-w-2xl mx-auto px-4">
-          <nav className="flex gap-1">
+          <nav className="flex gap-1 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
             {tabs.map((tab) => {
               const isActive =
                 tab.href === "/student"
@@ -65,7 +65,7 @@ export default function StudentLayout({
                 <Link
                   key={tab.href}
                   href={tab.href}
-                  className={`px-4 py-2.5 text-sm font-medium rounded-t-lg transition-colors ${
+                  className={`px-4 py-2.5 text-sm font-medium rounded-t-lg transition-colors whitespace-nowrap shrink-0 ${
                     isActive
                       ? "bg-gray-50 text-blue-600 border-b-2 border-blue-600"
                       : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"

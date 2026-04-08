@@ -223,9 +223,9 @@ export default function BatchAbsencePage() {
 
       {/* Table */}
       <div className="bg-white rounded-lg border border-gray-200 overflow-x-auto">
-        <table className="w-full text-sm">
+        <table className="w-full text-sm whitespace-nowrap">
           <thead>
-            <tr className="border-b border-gray-200 bg-gray-50">
+            <tr className="border-b border-gray-200 bg-gray-50 sticky top-0 z-10">
               <th className="px-3 py-2.5 text-center w-10">
                 <input
                   type="checkbox"
@@ -316,26 +316,24 @@ export default function BatchAbsencePage() {
 
                   {/* Reason */}
                   <td className="px-3 py-2.5">
-                    <div className="flex flex-col gap-1.5">
-                      <div className="flex gap-1 justify-center">
-                        {REASON_OPTIONS.map((opt) => (
-                          <button
-                            key={opt.value}
-                            type="button"
-                            disabled={!isChecked}
-                            onClick={() =>
-                              updateRow(s.id, { reasonType: opt.value })
-                            }
-                            className={`px-2 py-1 text-xs rounded border transition-colors ${
-                              row.reasonType === opt.value
-                                ? "border-blue-500 bg-blue-50 text-blue-700 font-medium"
-                                : "border-gray-200 bg-white text-gray-500 hover:bg-gray-50"
-                            } disabled:opacity-40 disabled:cursor-not-allowed`}
-                          >
-                            {opt.label}
-                          </button>
-                        ))}
-                      </div>
+                    <div className="flex items-center gap-1.5">
+                      {REASON_OPTIONS.map((opt) => (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          disabled={!isChecked}
+                          onClick={() =>
+                            updateRow(s.id, { reasonType: opt.value })
+                          }
+                          className={`px-2 py-1 text-xs rounded border transition-colors whitespace-nowrap ${
+                            row.reasonType === opt.value
+                              ? "border-blue-500 bg-blue-50 text-blue-700 font-medium"
+                              : "border-gray-200 bg-white text-gray-500 hover:bg-gray-50"
+                          } disabled:opacity-40 disabled:cursor-not-allowed`}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
                       <input
                         type="text"
                         value={row.detail}
@@ -344,7 +342,7 @@ export default function BatchAbsencePage() {
                           updateRow(s.id, { detail: e.target.value })
                         }
                         placeholder="상세사유"
-                        className="w-full px-2 py-1 text-xs border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-40 disabled:cursor-not-allowed"
+                        className="w-20 px-2 py-1 text-xs border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-40 disabled:cursor-not-allowed"
                       />
                     </div>
                   </td>
