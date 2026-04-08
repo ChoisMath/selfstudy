@@ -37,12 +37,23 @@ function formatDate(d: Date) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
-function getMonthDays(year: number, month: number) {
+function getMonthDays(year: number, month: number, weekdayOnly: boolean) {
   const firstDay = new Date(year, month, 1);
   const lastDay = new Date(year, month + 1, 0);
   const days: (Date | null)[] = [];
-  for (let i = 0; i < firstDay.getDay(); i++) days.push(null);
-  for (let d = 1; d <= lastDay.getDate(); d++) days.push(new Date(year, month, d));
+  if (weekdayOnly) {
+    // 월=0, 화=1, ... 금=4 기준 패딩
+    const firstWeekday = firstDay.getDay(); // 0=일~6=토
+    const paddingCount = firstWeekday === 0 ? 0 : firstWeekday - 1; // 월요일 기준
+    for (let i = 0; i < paddingCount; i++) days.push(null);
+    for (let d = 1; d <= lastDay.getDate(); d++) {
+      const date = new Date(year, month, d);
+      if (date.getDay() >= 1 && date.getDay() <= 5) days.push(date);
+    }
+  } else {
+    for (let i = 0; i < firstDay.getDay(); i++) days.push(null);
+    for (let d = 1; d <= lastDay.getDate(); d++) days.push(new Date(year, month, d));
+  }
   return days;
 }
 
@@ -50,6 +61,7 @@ export default function SchedulePage() {
   const today = new Date();
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth());
+  const [showWeekend, setShowWeekend] = useState(false);
 
   const monthStr = `${year}-${String(month + 1).padStart(2, "0")}`;
   const { data, mutate, isLoading } = useSWR<ScheduleResponse>(
@@ -61,7 +73,7 @@ export default function SchedulePage() {
   const assignments = data?.assignments ?? [];
   const teachers = data?.teachers ?? [];
 
-  const monthDays = useMemo(() => getMonthDays(year, month), [year, month]);
+  const monthDays = useMemo(() => getMonthDays(year, month, !showWeekend), [year, month, showWeekend]);
 
   // 교체 모달 상태
   const [swapTarget, setSwapTarget] = useState<AssignmentData | null>(null);
@@ -131,29 +143,43 @@ export default function SchedulePage() {
   return (
     <div>
       {/* 월 네비게이션 */}
-      <div className="flex items-center justify-between mb-4">
-        <button onClick={prevMonth} className="px-3 py-2 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50">
-          &larr; 이전달
+      <div className="flex items-center justify-between mb-4 gap-2">
+        <button onClick={prevMonth} className="px-3 py-2 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50 shrink-0">
+          &larr;
         </button>
-        <div className="flex items-center gap-3">
-          <span className="text-lg font-semibold text-gray-800">
-            {year}년 {month + 1}월 감독배정표
+        <div className="flex items-center justify-center gap-2 flex-1">
+          <span className="text-lg font-semibold text-gray-800 whitespace-nowrap">
+            {year}.{String(month + 1).padStart(2, "0")}
           </span>
-          <button onClick={goToday} className="px-3 py-1.5 text-xs bg-blue-50 text-blue-600 border border-blue-200 rounded-md hover:bg-blue-100">
-            이번달
-          </button>
+          {(year !== today.getFullYear() || month !== today.getMonth()) && (
+            <button onClick={goToday} className="px-3 py-1.5 text-xs bg-blue-50 text-blue-600 border border-blue-200 rounded-md hover:bg-blue-100 whitespace-nowrap">
+              Now
+            </button>
+          )}
         </div>
-        <button onClick={nextMonth} className="px-3 py-2 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50">
-          다음달 &rarr;
+        <button onClick={nextMonth} className="px-3 py-2 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50 shrink-0">
+          &rarr;
         </button>
       </div>
 
-      {/* 범례 */}
-      <div className="flex items-center gap-3 mb-3 text-xs text-gray-500">
-        <span className="flex items-center gap-1">
-          <span className="w-3 h-3 rounded bg-yellow-100 border border-yellow-300 inline-block" /> 내 배정
-        </span>
-        <span>학년별 1명이 오후 + 야간 모두 담당</span>
+      {/* 범례 + 주말 토글 */}
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-3 text-xs text-gray-500">
+          <span className="flex items-center gap-1">
+            <span className="w-3 h-3 rounded bg-yellow-100 border border-yellow-300 inline-block" /> 내 배정
+          </span>
+          <span className="whitespace-nowrap">학년별 1명 오후+야간</span>
+        </div>
+        <button
+          onClick={() => setShowWeekend(!showWeekend)}
+          className={`px-2.5 py-1 text-xs rounded-md border transition-colors whitespace-nowrap ${
+            showWeekend
+              ? "bg-blue-50 text-blue-600 border-blue-200"
+              : "bg-gray-50 text-gray-500 border-gray-200"
+          }`}
+        >
+          {showWeekend ? "토일 ON" : "토일 OFF"}
+        </button>
       </div>
 
       {isLoading && (
@@ -163,12 +189,12 @@ export default function SchedulePage() {
       {/* 달력 그리드 */}
       <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
         {/* 요일 헤더 */}
-        <div className="grid grid-cols-7 bg-gray-50 border-b border-gray-200">
-          {DAY_LABELS.map((label, i) => (
+        <div className={`grid ${showWeekend ? "grid-cols-7" : "grid-cols-5"} bg-gray-50 border-b border-gray-200`}>
+          {DAY_LABELS.filter((_, i) => showWeekend || (i >= 1 && i <= 5)).map((label, i) => (
             <div
-              key={i}
+              key={label}
               className={`px-2 py-2 sm:py-3 text-center text-xs sm:text-sm font-medium ${
-                i === 0 ? "text-red-400" : i === 6 ? "text-blue-400" : "text-gray-500"
+                label === "일" ? "text-red-400" : label === "토" ? "text-blue-400" : "text-gray-500"
               }`}
             >
               {label}
@@ -177,7 +203,7 @@ export default function SchedulePage() {
         </div>
 
         {/* 날짜 셀 */}
-        <div className="grid grid-cols-7">
+        <div className={`grid ${showWeekend ? "grid-cols-7" : "grid-cols-5"}`}>
           {monthDays.map((date, idx) => (
             <div
               key={idx}
