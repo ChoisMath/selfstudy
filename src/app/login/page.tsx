@@ -33,7 +33,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-[#f9fafb] px-4 text-[#1e293b]">
       <div className="w-full max-w-sm">
         <div className="flex flex-col items-center mb-8">
           <img src="/posan.svg" alt="포산고등학교" className="w-16 h-16 mb-3" />
@@ -43,7 +43,7 @@ export default function LoginPage() {
         </div>
 
         {/* 탭 */}
-        <div className="flex mb-6 bg-gray-200 rounded-lg p-1">
+        <div className="flex mb-6 bg-[#e5e7eb] rounded-lg p-1">
           <button
             type="button"
             onClick={() => { setTab("teacher"); setError(""); }}
@@ -86,7 +86,7 @@ export default function LoginPage() {
                 name="loginId"
                 type="text"
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-[#1e293b]"
                 placeholder="아이디 입력"
               />
             </div>
@@ -99,7 +99,7 @@ export default function LoginPage() {
                 name="password"
                 type="password"
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-[#1e293b]"
                 placeholder="비밀번호 입력"
               />
             </div>
@@ -125,7 +125,7 @@ export default function LoginPage() {
                 name="name"
                 type="text"
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-[#1e293b]"
                 placeholder="이름 입력"
               />
             </div>
@@ -140,7 +140,7 @@ export default function LoginPage() {
                 inputMode="numeric"
                 maxLength={5}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-[#1e293b]"
                 placeholder="학번 5자리 (예: 20102)"
               />
               <p className="mt-1 text-xs text-gray-500">
