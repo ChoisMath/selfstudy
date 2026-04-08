@@ -53,8 +53,8 @@ export const GET = withAuth(
       orderBy: [{ rowIndex: "asc" }, { colIndex: "asc" }],
     });
 
-    // 독립 쿼리 3개 병렬 실행
-    const [attendances, supervisorAssignment, approvedAbsences] = await Promise.all([
+    // 독립 쿼리 4개 병렬 실행
+    const [attendances, supervisorAssignment, approvedAbsences, pendingAbsences] = await Promise.all([
       prisma.attendance.findMany({
         where: {
           date: dateObj,
@@ -78,6 +78,15 @@ export const GET = withAuth(
         },
         select: { studentId: true },
       }),
+      prisma.absenceRequest.findMany({
+        where: {
+          date: dateObj,
+          sessionType: session,
+          status: "pending",
+          student: { grade: gradeNum },
+        },
+        select: { studentId: true },
+      }),
     ]);
 
     const attendanceMap: Record<number, { id: number; status: string; absenceReason?: { reasonType: string; detail: string | null } }> = {};
@@ -92,6 +101,7 @@ export const GET = withAuth(
     }
 
     const approvedStudentIds = new Set(approvedAbsences.map((a) => a.studentId));
+    const pendingStudentIds = new Set(pendingAbsences.map((a) => a.studentId));
 
     // Room별 좌석 그룹핑
     const seatsByRoom = new Map<number, typeof seatLayouts>();
@@ -137,6 +147,7 @@ export const GET = withAuth(
                   if (todayField && todayField in afterSchoolMap) return afterSchoolMap[todayField];
                   return false;
                 })(),
+                hasPendingAbsenceRequest: pendingStudentIds.has(seat.student.id),
               }
             : null,
         })),
