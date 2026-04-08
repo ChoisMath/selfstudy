@@ -43,7 +43,7 @@ export default function GradeAdminPage() {
   return (
     <div>
       {/* 탭 */}
-      <div className="flex border-b border-gray-200 mb-6 overflow-x-auto">
+      <div className="flex border-b border-gray-200 mb-3 overflow-x-auto">
         {TABS.map((tab) => (
           <button
             key={tab.key}

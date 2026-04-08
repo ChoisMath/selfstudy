@@ -328,10 +328,7 @@ export default function StudentManagement({ grade }: { grade: number }) {
   return (
     <div>
       {/* 헤더 */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">
-          {grade}학년 학생 관리
-        </h1>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
         <div className="flex items-center gap-3">
           <select
             value={classFilter}
