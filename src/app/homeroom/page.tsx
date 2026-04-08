@@ -122,35 +122,34 @@ export default function HomeroomPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">학생관리 / 주간출석</h1>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setWeekOffset(weekOffset - 1)}
-            className="px-3 py-1.5 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50"
-          >
-            &larr; 이전주
-          </button>
+      <div className="flex items-center justify-between mb-6 gap-2">
+        <button
+          onClick={() => setWeekOffset(weekOffset - 1)}
+          className="px-3 py-1.5 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50 flex-shrink-0"
+        >
+          &larr;
+        </button>
+        <div className="flex flex-col items-center gap-1 flex-1 text-center">
+          {data?.weekStart && data?.weekEnd && (
+            <span className="text-sm text-gray-500">
+              {data.weekStart.slice(5).replace("-", ".")} ~ {data.weekEnd.slice(5).replace("-", ".")}
+            </span>
+          )}
           {weekOffset !== 0 && (
             <button
               onClick={() => setWeekOffset(0)}
-              className="px-3 py-1.5 text-xs bg-blue-50 text-blue-600 border border-blue-200 rounded-md hover:bg-blue-100"
+              className="px-3 py-1 text-xs bg-blue-50 text-blue-600 border border-blue-200 rounded-md hover:bg-blue-100 whitespace-nowrap"
             >
               이번주
             </button>
           )}
-          <button
-            onClick={() => setWeekOffset(weekOffset + 1)}
-            className="px-3 py-1.5 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50"
-          >
-            다음주 &rarr;
-          </button>
-          {data?.weekStart && data?.weekEnd && (
-            <span className="text-sm text-gray-500 ml-2">
-              {data.weekStart} ~ {data.weekEnd}
-            </span>
-          )}
         </div>
+        <button
+          onClick={() => setWeekOffset(weekOffset + 1)}
+          className="px-3 py-1.5 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50 flex-shrink-0"
+        >
+          &rarr;
+        </button>
       </div>
 
       {/* 범례 */}
@@ -174,8 +173,8 @@ export default function HomeroomPage() {
 
       <div className="bg-white rounded-lg border border-gray-300 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b border-gray-300">
+          <table className="w-full text-sm whitespace-nowrap">
+            <thead className="bg-gray-50 border-b border-gray-300 sticky top-0 z-10">
               <tr>
                 <th
                   rowSpan={2}

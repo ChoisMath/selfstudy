@@ -92,51 +92,52 @@ export default function HomeroomParticipationPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">참여설정</h1>
-        {savingKey && <span className="text-xs text-gray-400">저장 중...</span>}
-      </div>
+      {savingKey && (
+        <div className="mb-4">
+          <span className="text-xs text-gray-400">저장 중...</span>
+        </div>
+      )}
 
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
               <tr>
-                <th rowSpan={3} className="px-4 py-3 text-left font-medium text-gray-600 border-b border-gray-200">
+                <th rowSpan={3} className="px-4 py-3 text-left font-medium text-gray-600 border-b border-gray-200 whitespace-nowrap">
                   이름
                 </th>
-                <th rowSpan={3} className="px-3 py-3 text-center font-medium text-gray-600 border-b border-gray-200">
+                <th rowSpan={3} className="px-3 py-3 text-center font-medium text-gray-600 border-b border-gray-200 whitespace-nowrap">
                   반
                 </th>
-                <th rowSpan={3} className="px-3 py-3 text-center font-medium text-gray-600 border-b border-gray-200">
+                <th rowSpan={3} className="px-3 py-3 text-center font-medium text-gray-600 border-b border-gray-200 whitespace-nowrap">
                   번호
                 </th>
-                <th colSpan={6} className="px-3 py-2 text-center font-medium text-gray-600 border-l border-gray-200">
+                <th colSpan={6} className="px-3 py-2 text-center font-medium text-gray-600 border-l border-gray-200 whitespace-nowrap">
                   오후자습
                 </th>
-                <th colSpan={6} className="px-3 py-2 text-center font-medium text-gray-600 border-l border-gray-200">
+                <th colSpan={6} className="px-3 py-2 text-center font-medium text-gray-600 border-l border-gray-200 whitespace-nowrap">
                   야간자습
                 </th>
               </tr>
               <tr className="bg-gray-50">
-                <th className="px-2 py-2 text-center text-xs font-medium text-gray-500 border-l border-gray-200">참가</th>
+                <th className="px-2 py-2 text-center text-xs font-medium text-gray-500 border-l border-gray-200 whitespace-nowrap">참가</th>
                 {DAY_LABELS.map((label) => (
-                  <th key={`afternoon-${label}`} className="px-1 py-2 text-center text-xs font-medium text-gray-500">
+                  <th key={`afternoon-${label}`} className="px-1 py-2 text-center text-xs font-medium text-gray-500 whitespace-nowrap">
                     {label}
                   </th>
                 ))}
-                <th className="px-2 py-2 text-center text-xs font-medium text-gray-500 border-l border-gray-200">참가</th>
+                <th className="px-2 py-2 text-center text-xs font-medium text-gray-500 border-l border-gray-200 whitespace-nowrap">참가</th>
                 {DAY_LABELS.map((label) => (
-                  <th key={`night-${label}`} className="px-1 py-2 text-center text-xs font-medium text-gray-500">
+                  <th key={`night-${label}`} className="px-1 py-2 text-center text-xs font-medium text-gray-500 whitespace-nowrap">
                     {label}
                   </th>
                 ))}
               </tr>
               <tr className="bg-orange-50">
                 {(["afternoon", "night"] as const).map((session) => [
-                  <th key={`${session}-as-empty`} className="py-1 border-l border-gray-200" />,
+                  <th key={`${session}-as-empty`} className="py-1 border-l border-gray-200 whitespace-nowrap" />,
                   ...DAY_LABELS.map((l, i) => (
-                    <th key={`${session}-as-${l}`} className="py-1 text-center text-[10px] font-medium text-orange-600">
+                    <th key={`${session}-as-${l}`} className="py-1 text-center text-[10px] font-medium text-orange-600 whitespace-nowrap">
                       방과후
                     </th>
                   )),

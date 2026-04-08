@@ -58,6 +58,7 @@ export default function MonthlyAttendancePage() {
   const today = new Date();
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth());
+  const [legendOpen, setLegendOpen] = useState(false);
 
   const monthStr = `${year}-${String(month + 1).padStart(2, "0")}`;
   const { data, isLoading } = useSWR<ResponseData>(
@@ -101,16 +102,16 @@ export default function MonthlyAttendancePage() {
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
           <button onClick={prevMonth} className="px-3 py-2 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50">
-            &larr; 이전
+            &larr;
           </button>
           <span className="text-lg font-semibold text-gray-800">
-            {year}년 {month + 1}월 출결
+            {year}.{String(month + 1).padStart(2, "0")}
           </span>
           <button onClick={goToday} className="px-3 py-1.5 text-xs bg-blue-50 text-blue-600 border border-blue-200 rounded-md hover:bg-blue-100">
-            이번달
+            Now
           </button>
           <button onClick={nextMonth} className="px-3 py-2 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50">
-            다음 &rarr;
+            &rarr;
           </button>
         </div>
         <button
@@ -122,14 +123,28 @@ export default function MonthlyAttendancePage() {
         </button>
       </div>
 
-      {/* 범례 */}
-      <div className="flex items-center gap-4 mb-3 text-xs text-gray-500">
-        <span className="text-green-700 font-extrabold text-sm">O</span><span>출석</span>
-        <span className="text-red-700 font-extrabold text-sm">X</span><span>결석</span>
-        <span className="text-yellow-600 font-extrabold text-sm">방</span><span>방과후</span>
-        <span className="text-gray-400 font-bold">-</span><span>미확인</span>
-        <span className="inline-block w-4 h-3 bg-gray-100 border border-gray-300 rounded-sm" /><span>미참가</span>
-        <span className="text-[10px] text-gray-400">(학:학원 방:방과후 질:질병 기:기타)</span>
+      {/* 범례 토글 */}
+      <div className="mb-3">
+        <button
+          onClick={() => setLegendOpen((v) => !v)}
+          className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 w-full"
+        >
+          <span className="flex-1 border-t border-gray-200" />
+          <span className="text-[10px] select-none">{legendOpen ? "▲" : "▼"}</span>
+          <span className="flex-1 border-t border-gray-200" />
+        </button>
+        {legendOpen && (
+          <div className="mt-2 text-xs text-gray-500 flex flex-col gap-1">
+            <div className="flex flex-wrap gap-3">
+              <span className="whitespace-nowrap"><span className="text-green-700 font-extrabold text-sm">O</span> 출석</span>
+              <span className="whitespace-nowrap"><span className="text-red-700 font-extrabold text-sm">X</span> 결석</span>
+              <span className="whitespace-nowrap"><span className="text-yellow-600 font-extrabold text-sm">방</span> 방과후</span>
+              <span className="whitespace-nowrap"><span className="text-gray-400 font-bold">-</span> 미확인</span>
+              <span className="whitespace-nowrap"><span className="inline-block w-4 h-3 bg-gray-100 border border-gray-300 rounded-sm align-middle" /> 미참가</span>
+            </div>
+            <div className="text-[10px] text-gray-400 whitespace-nowrap">학:학원 &nbsp;방:방과후 &nbsp;질:질병 &nbsp;기:기타</div>
+          </div>
+        )}
       </div>
 
       {isLoading ? (
@@ -151,8 +166,8 @@ export default function MonthlyAttendancePage() {
 
               <div className="bg-white rounded-lg border border-gray-300 overflow-hidden">
                 <div className="overflow-x-auto">
-                  <table className="text-xs">
-                    <thead>
+                  <table className="text-xs whitespace-nowrap">
+                    <thead className="sticky top-0 z-10">
                       <tr className="bg-gray-50 border-b border-gray-300">
                         <th className="px-3 py-2 text-left font-medium text-gray-600 sticky left-0 bg-gray-50 z-10 min-w-[60px]">
                           이름

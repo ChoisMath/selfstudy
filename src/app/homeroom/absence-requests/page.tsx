@@ -123,15 +123,15 @@ export default function AbsenceRequestsPage() {
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
               <tr>
-                <th className="px-4 py-3 text-left font-medium text-gray-600">학생</th>
-                <th className="px-3 py-3 text-center font-medium text-gray-600">날짜</th>
-                <th className="px-3 py-3 text-center font-medium text-gray-600">시간</th>
-                <th className="px-3 py-3 text-center font-medium text-gray-600">사유</th>
-                <th className="px-3 py-3 text-left font-medium text-gray-600">상세</th>
-                <th className="px-3 py-3 text-center font-medium text-gray-600">상태</th>
-                <th className="px-3 py-3 text-center font-medium text-gray-600">처리</th>
+                <th className="px-4 py-3 text-left font-medium text-gray-600 whitespace-nowrap">학생</th>
+                <th className="px-3 py-3 text-center font-medium text-gray-600 whitespace-nowrap">날짜</th>
+                <th className="px-3 py-3 text-center font-medium text-gray-600 whitespace-nowrap">시간</th>
+                <th className="px-3 py-3 text-center font-medium text-gray-600 whitespace-nowrap">사유</th>
+                <th className="px-3 py-3 text-left font-medium text-gray-600 whitespace-nowrap">상세</th>
+                <th className="px-3 py-3 text-center font-medium text-gray-600 whitespace-nowrap">상태</th>
+                <th className="px-3 py-3 text-center font-medium text-gray-600 whitespace-nowrap">처리</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -165,16 +165,16 @@ export default function AbsenceRequestsPage() {
                     <td className="px-3 py-3 text-center text-gray-600 whitespace-nowrap">
                       {req.date}
                     </td>
-                    <td className="px-3 py-3 text-center text-gray-600">
+                    <td className="px-3 py-3 text-center text-gray-600 whitespace-nowrap">
                       {SESSION_LABELS[req.sessionType]}
                     </td>
-                    <td className="px-3 py-3 text-center text-gray-600">
+                    <td className="px-3 py-3 text-center text-gray-600 whitespace-nowrap">
                       {REASON_LABELS[req.reasonType] ?? req.reasonType}
                     </td>
-                    <td className="px-3 py-3 text-gray-600 max-w-[200px] truncate">
+                    <td className="px-3 py-3 text-gray-600 whitespace-nowrap max-w-[200px] truncate">
                       {req.detail || "-"}
                     </td>
-                    <td className="px-3 py-3 text-center">
+                    <td className="px-3 py-3 text-center whitespace-nowrap">
                       <span
                         className={`inline-block px-2 py-0.5 text-xs font-medium rounded-full ${
                           STATUS_COLORS[req.status]
