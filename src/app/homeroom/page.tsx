@@ -129,9 +129,9 @@ export default function HomeroomPage() {
         >
           &larr;
         </button>
-        <div className="flex flex-col items-center gap-1 flex-1 text-center">
+        <div className="flex items-center justify-center gap-2 flex-1">
           {data?.weekStart && data?.weekEnd && (
-            <span className="text-sm text-gray-500">
+            <span className="text-sm text-gray-500 whitespace-nowrap">
               {data.weekStart.slice(5).replace("-", ".")} ~ {data.weekEnd.slice(5).replace("-", ".")}
             </span>
           )}
@@ -140,7 +140,7 @@ export default function HomeroomPage() {
               onClick={() => setWeekOffset(0)}
               className="px-3 py-1 text-xs bg-blue-50 text-blue-600 border border-blue-200 rounded-md hover:bg-blue-100 whitespace-nowrap"
             >
-              이번주
+              Now
             </button>
           )}
         </div>
