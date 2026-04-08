@@ -71,7 +71,7 @@ const SeatCell = memo(function SeatCell({
 }: SeatCellProps) {
   let seatClass = "";
   if (isInactive) {
-    seatClass = "bg-[#e5e7eb] text-[#9ca3af] border-[#d1d5db] opacity-60";
+    seatClass = "bg-[#e5e7eb] text-[#9ca3af] border-[#d1d5db] opacity-70";
   } else if (isSelected) {
     seatClass = "bg-[#2563eb] text-white border-[#1d4ed8] shadow-[0_2px_8px_rgba(37,99,235,0.3)]";
   } else if (student.isAfterSchool) {
@@ -662,16 +662,16 @@ export default function AttendanceGradePage() {
           </span>
           {tab !== "absence" && (
             <div className="flex gap-2 ml-auto shrink-0 whitespace-nowrap text-[clamp(10px,2.4vw,12px)]">
-              <span className="opacity-85">
+              <span className="opacity-90">
                 출석 <b className="opacity-100 font-bold" style={{ color: "#86efac" }}>{presentCount}</b>
               </span>
-              <span className="opacity-85">
+              <span className="opacity-90">
                 결석 <b className="opacity-100 font-bold" style={{ color: "#fca5a5" }}>{absentCount}</b>
               </span>
-              <span className="opacity-85">
+              <span className="opacity-90">
                 미체크 <b className="opacity-100 font-bold">{uncheckedCount}</b>
               </span>
-              <span className="opacity-85">
+              <span className="opacity-90">
                 방과후 <b className="opacity-100 font-bold" style={{ color: "#fde047" }}>{afterSchoolDefaultCount}</b>
               </span>
             </div>
