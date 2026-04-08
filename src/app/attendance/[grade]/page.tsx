@@ -76,17 +76,17 @@ const SeatCell = memo(function SeatCell({
     seatClass = "bg-[#2563eb] text-white border-[#1d4ed8] shadow-[0_2px_8px_rgba(37,99,235,0.3)]";
   } else if (student.isAfterSchool) {
     const aStatus = attendanceStatus?.status || "unchecked";
-    if (aStatus === "present") seatClass = "bg-[#fef9c3] border-[#22c55e]";
-    else if (aStatus === "absent") seatClass = "bg-[#fef9c3] border-[#ef4444]";
-    else seatClass = "bg-[#fef9c3] border-[#facc15]";
+    if (aStatus === "present") seatClass = "bg-[#fef9c3] text-[#1e293b] border-[#22c55e]";
+    else if (aStatus === "absent") seatClass = "bg-[#fef9c3] text-[#1e293b] border-[#ef4444]";
+    else seatClass = "bg-[#fef9c3] text-[#1e293b] border-[#facc15]";
   } else if (student.isApprovedAbsence) {
-    seatClass = "bg-[#fef9c3] border-[#facc15]";
+    seatClass = "bg-[#fef9c3] text-[#1e293b] border-[#facc15]";
   } else if (status === "present") {
-    seatClass = "bg-[#bbf7d0] border-transparent";
+    seatClass = "bg-[#bbf7d0] text-[#1e293b] border-transparent";
   } else if (status === "absent") {
-    seatClass = "bg-[#fecaca] border-transparent";
+    seatClass = "bg-[#fecaca] text-[#1e293b] border-transparent";
   } else {
-    seatClass = "bg-[#dbeafe] border-transparent";
+    seatClass = "bg-[#dbeafe] text-[#1e293b] border-transparent";
   }
 
   return (
