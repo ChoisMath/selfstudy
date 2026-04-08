@@ -10,6 +10,7 @@ type SessionUser = {
   grade?: number;
   classNumber?: number;
   studentNumber?: number;
+  isHelper?: boolean;
 };
 
 /**

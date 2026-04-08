@@ -11,6 +11,7 @@ type Student = {
   studentNumber: number;
   name: string;
   isActive: boolean;
+  isHelper: boolean;
   createdAt: string;
 };
 
@@ -246,6 +247,30 @@ export default function StudentManagement({ grade }: { grade: number }) {
     [grade, mutate]
   );
 
+  const handleToggleHelper = useCallback(
+    async (student: Student) => {
+      try {
+        const res = await fetch(
+          `/api/grade-admin/${grade}/students/${student.id}`,
+          {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ isHelper: !student.isHelper }),
+          }
+        );
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error || "도우미 설정에 실패했습니다.");
+        }
+        mutate();
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : "도우미 설정에 실패했습니다.";
+        alert(message);
+      }
+    },
+    [grade, mutate]
+  );
+
   const handleSubmit = useCallback(
     async (formData: StudentFormData) => {
       setIsSubmitting(true);
@@ -376,6 +401,9 @@ export default function StudentManagement({ grade }: { grade: number }) {
                 <th className="px-4 py-3 text-left font-medium text-gray-600">
                   상태
                 </th>
+                <th className="px-4 py-3 text-center font-medium text-gray-600">
+                  도우미
+                </th>
                 <th className="px-4 py-3 text-right font-medium text-gray-600">
                   관리
                 </th>
@@ -384,13 +412,13 @@ export default function StudentManagement({ grade }: { grade: number }) {
             <tbody className="divide-y divide-gray-100">
               {isLoading ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-8 text-center text-gray-400">
+                  <td colSpan={8} className="px-4 py-8 text-center text-gray-400">
                     불러오는 중...
                   </td>
                 </tr>
               ) : students.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-8 text-center text-gray-400">
+                  <td colSpan={8} className="px-4 py-8 text-center text-gray-400">
                     등록된 학생이 없습니다.
                   </td>
                 </tr>
@@ -427,6 +455,19 @@ export default function StudentManagement({ grade }: { grade: number }) {
                           비활성
                         </span>
                       )}
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <button
+                        onClick={() => handleToggleHelper(student)}
+                        disabled={!student.isActive}
+                        className={`px-2 py-0.5 rounded text-xs font-medium transition-colors ${
+                          student.isHelper
+                            ? "bg-purple-100 text-purple-700 hover:bg-purple-200"
+                            : "bg-gray-100 text-gray-400 hover:bg-gray-200"
+                        } disabled:opacity-40 disabled:cursor-not-allowed`}
+                      >
+                        {student.isHelper ? "도우미" : "-"}
+                      </button>
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-1">

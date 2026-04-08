@@ -17,7 +17,7 @@ export async function PUT(
 
   return withGradeAuth(grade, async (req, user) => {
     const body = await req.json();
-    const { name, classNumber, studentNumber, isActive } = body;
+    const { name, classNumber, studentNumber, isActive, isHelper } = body;
 
     // 학생 존재 확인
     const student = await prisma.student.findFirst({
@@ -36,12 +36,14 @@ export async function PUT(
       classNumber?: number;
       studentNumber?: number;
       isActive?: boolean;
+      isHelper?: boolean;
     } = {};
 
     if (name !== undefined) updateData.name = name.trim();
     if (classNumber !== undefined) updateData.classNumber = parseInt(classNumber, 10);
     if (studentNumber !== undefined) updateData.studentNumber = parseInt(studentNumber, 10);
     if (isActive !== undefined) updateData.isActive = isActive;
+    if (isHelper !== undefined) updateData.isHelper = isHelper;
 
     // 반/번호 변경 시 중복 체크
     const newCn = updateData.classNumber ?? student.classNumber;

@@ -10,6 +10,7 @@ declare module "next-auth" {
     grade?: number;
     classNumber?: number;
     studentNumber?: number;
+    isHelper?: boolean;
   }
 
   interface Session {
@@ -27,6 +28,7 @@ declare module "next-auth" {
       grade?: number;
       classNumber?: number;
       studentNumber?: number;
+      isHelper?: boolean;
     };
   }
 }
@@ -42,6 +44,7 @@ declare module "next-auth/jwt" {
     grade?: number;
     classNumber?: number;
     studentNumber?: number;
+    isHelper?: boolean;
     maxAge?: number;
   }
 }

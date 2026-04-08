@@ -1,6 +1,6 @@
 # 자율학습 출석부 시스템 - 프로젝트 지도
 
-> 마지막 업데이트: 2026-04-06
+> 마지막 업데이트: 2026-04-08
 > 이 파일은 새 세션에서 코드베이스를 빠르게 파악하기 위한 참조 문서입니다.
 
 ## 개요
@@ -49,7 +49,7 @@ src/
 │   ├── attendance/             # 감독교사
 │   │   ├── layout.tsx          # 모든 교사에게 이동 버튼 (담임교사/감독일정/학년관리)
 │   │   ├── page.tsx            # 자동 학년 라우팅 / 학년 선택
-│   │   └── [grade]/page.tsx    # ★ 핵심: 좌석 출석 그리드 (seat-responsive, 비참여 회색+길게터치 활성화)
+│   │   └── [grade]/page.tsx    # ★ 핵심: 좌석 출석 그리드 (3탭: 오후자습/야간자습/불참신청) + 불참신청 관리 UI
 │   ├── homeroom/               # 담임교사
 │   │   ├── layout.tsx          # 담임 5탭 + 공통 2탭 네비게이션 (세션 로딩 처리)
 │   │   ├── page.tsx            # 자기반 학생 + 주간출석
@@ -94,9 +94,10 @@ src/
 ### 출석 (`/api/attendance/`)
 | 메서드 | 경로 | 설명 |
 |--------|------|------|
-| GET | `/api/attendance?date&session&grade` | 좌석+출석 현황 조회 |
+| GET | `/api/attendance?date&session&grade` | 좌석+출석 현황 조회 (학생별 `hasPendingAbsenceRequest` 포함) |
 | POST | `/api/attendance/toggle` | 출석 상태 순환 토글 |
 | GET | `/api/attendance/weekly?studentId&date` | 주간 출석 + 참여설정 + 비고 |
+| GET | `/api/attendance/absence-requests?grade&status` | 학년별 불참신청 목록 조회 (감독교사용) |
 | GET/PUT | `/api/attendance/notes?studentId&date` | 요일별 비고 조회/수정 (upsert/삭제) |
 
 ### 담임 (`/api/homeroom/`)
@@ -106,7 +107,7 @@ src/
 | GET/PUT | `participation-days` | 참여설정 조회/수정 (afterSchool 포함) |
 | POST | `absence-reasons` | 불참사유 등록 (트랜잭션) |
 | GET | `absence-requests` | 반 학생 불참신청 목록 |
-| PUT | `absence-requests/[id]` | 승인/반려 (트랜잭션) |
+| PUT | `absence-requests/[id]` | 승인/반려 (트랜잭션, 모든 교사 허용) |
 | GET | `schedule` | 전체 학년 감독배정 (본인 포함) |
 | GET | `monthly-attendance` | 담임 월간 출결 데이터 |
 | GET | `export-attendance` | 담임 출결 Excel 다운로드 |
@@ -203,7 +204,13 @@ Teacher (+ primaryGrade: nullable int) ──< TeacherRole (admin/supervisor/hom
 - 이미 출석 기록이 있는 비참여 학생은 활성 상태로 표시
 - ⚠ KST 날짜는 `getFullYear()/getMonth()/getDate()`로 생성 (`toISOString()` 사용 금지)
 
-### 5. 학번 파싱
+### 5. 출석 그리드 — 불참신청 탭 (`/attendance/[grade]`)
+- 3번째 탭 "불참신청": 감독교사가 해당 학년의 불참신청 목록을 조회/승인/반려
+- `/api/attendance/absence-requests?grade&status`로 학년별 신청 조회
+- `/api/homeroom/absence-requests/[id]` PUT으로 승인/반려 처리 (모든 교사 허용)
+- 좌석 그리드의 빨간 "*"로 대기 중인 불참신청 학생 시각적 식별
+
+### 6. 학번 파싱
 - 5자리: A(학년) + BC(반) + DE(번호), 예: 20102 = 2학년 1반 2번
 
 ## 인증/인가 흐름
@@ -224,6 +231,13 @@ Teacher (+ primaryGrade: nullable int) ──< TeacherRole (admin/supervisor/hom
 - **담임배정 자동 동기화**: homeroom-assignments POST/DELETE 시 TeacherRole("homeroom") 자동 부여/삭제
 
 ## 수정 이력 (주요 변경)
+
+### 2026-04-08: 감독교사 불참신청 관리 기능
+- **신규 API**: `GET /api/attendance/absence-requests?grade&status` — 학년별 불참신청 목록 조회 (모든 교사 허용)
+- **API 권한 변경**: `PUT /api/homeroom/absence-requests/[id]` — 인가를 `["homeroom", "admin"]`에서 `["teacher"]`로 변경, 감독교사도 승인/반려 가능
+- **출석 API 확장**: `GET /api/attendance` 응답에 학생별 `hasPendingAbsenceRequest` boolean 필드 추가
+- **출석 그리드 UI**: `attendance/[grade]/page.tsx`에 3번째 "불참신청" 탭 추가 — 해당 학년 불참신청 목록 조회+승인/반려 UI
+- **좌석 인디케이터**: 대기 중인 불참신청이 있는 학생 좌석에 빨간 "*" 표시
 
 ### 2026-04-06: 2차 전체 성능 최적화
 - **DB 인덱스 6개 추가**: Attendance(`checkedBy`), AbsenceReason(`registeredBy`), AbsenceRequest(`reviewedBy`), SupervisorSwapHistory(`originalTeacherId`, `replacementTeacherId`), TeacherRole(`role`). AttendanceNote 중복 인덱스 제거

@@ -46,17 +46,17 @@ export default function AbsenceRequestsPage() {
     fetcher
   );
 
+  // 오늘 날짜 (YYYY-MM-DD, KST)
+  const _kst = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Seoul" }));
+  const today = `${_kst.getFullYear()}-${String(_kst.getMonth() + 1).padStart(2, "0")}-${String(_kst.getDate()).padStart(2, "0")}`;
+
   const [showForm, setShowForm] = useState(false);
-  const [date, setDate] = useState("");
+  const [date, setDate] = useState(today);
   const [sessionType, setSessionType] = useState("afternoon");
   const [reasonType, setReasonType] = useState("academy");
   const [detail, setDetail] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
-
-  // 오늘 날짜 (YYYY-MM-DD)
-  const _kst = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Seoul" }));
-  const today = `${_kst.getFullYear()}-${String(_kst.getMonth() + 1).padStart(2, "0")}-${String(_kst.getDate()).padStart(2, "0")}`;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -86,7 +86,7 @@ export default function AbsenceRequestsPage() {
       }
 
       // 성공: 폼 초기화 및 목록 갱신
-      setDate("");
+      setDate(today);
       setSessionType("afternoon");
       setReasonType("academy");
       setDetail("");

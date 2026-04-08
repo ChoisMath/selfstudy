@@ -16,6 +16,7 @@ model Student {
   studentNumber Int      @map("student_number")
   name          String   @db.VarChar(50)
   isActive      Boolean  @default(true) @map("is_active")
+  isHelper      Boolean  @default(false) @map("is_helper")
   createdAt     DateTime @default(now()) @map("created_at")
 
   seatLayouts       SeatLayout[]

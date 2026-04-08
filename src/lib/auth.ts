@@ -97,6 +97,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           grade: student.grade,
           classNumber: student.classNumber,
           studentNumber: student.studentNumber,
+          isHelper: student.isHelper,
         };
       },
     }),
@@ -134,6 +135,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           token.grade = u.grade as number;
           token.classNumber = u.classNumber as number;
           token.studentNumber = u.studentNumber as number;
+          token.isHelper = u.isHelper as boolean;
           // 학생은 2시간 세션
           token.maxAge = 2 * 60 * 60;
         }
@@ -183,6 +185,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           session.user.grade = token.grade as number;
           session.user.classNumber = token.classNumber as number;
           session.user.studentNumber = token.studentNumber as number;
+          session.user.isHelper = token.isHelper as boolean;
         }
       }
       return session;

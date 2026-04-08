@@ -4,12 +4,6 @@ import { useSession, signOut } from "next-auth/react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 
-const TABS = [
-  { href: "/student", label: "참여일정" },
-  { href: "/student/attendance", label: "출결기록" },
-  { href: "/student/absence-requests", label: "불참신청" },
-] as const;
-
 export default function StudentLayout({
   children,
 }: {
@@ -29,6 +23,13 @@ export default function StudentLayout({
   const user = session?.user;
   if (!user) return null;
   const displayCode = `${user.grade}-${user.classNumber}-${String(user.studentNumber).padStart(2, "0")}`;
+
+  const tabs = [
+    { href: "/student", label: "참여일정" },
+    { href: "/student/attendance", label: "출결기록" },
+    { href: "/student/absence-requests", label: "불참신청" },
+    ...(user.isHelper ? [{ href: "/student/batch-absence", label: "일괄신청" }] : []),
+  ];
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -55,7 +56,7 @@ export default function StudentLayout({
         {/* 탭 네비게이션 */}
         <div className="max-w-2xl mx-auto px-4">
           <nav className="flex gap-1">
-            {TABS.map((tab) => {
+            {tabs.map((tab) => {
               const isActive =
                 tab.href === "/student"
                   ? pathname === "/student"
