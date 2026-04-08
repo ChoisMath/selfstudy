@@ -14,13 +14,7 @@ export async function PUT(
     return NextResponse.json({ error: "잘못된 ID입니다." }, { status: 400 });
   }
 
-  return withAuth(["homeroom", "admin"], async (req: Request, user) => {
-    const isAdmin = user.roles?.includes("admin");
-    const assignments = user.homeroomAssignments;
-    if (!isAdmin && (!assignments || assignments.length === 0)) {
-      return NextResponse.json({ error: "담임 배정이 없습니다." }, { status: 403 });
-    }
-
+  return withAuth(["teacher"], async (req: Request, user) => {
     const body = await req.json();
     const { action } = body; // "approved" | "rejected"
 
@@ -43,20 +37,6 @@ export async function PUT(
 
     if (!request) {
       return NextResponse.json({ error: "신청을 찾을 수 없습니다." }, { status: 404 });
-    }
-
-    // 자기 반 학생인지 확인 (admin은 전체 접근 가능)
-    const isMyStudent = isAdmin || assignments?.some(
-      (a) =>
-        a.grade === request.student.grade &&
-        a.classNumber === request.student.classNumber
-    );
-
-    if (!isMyStudent) {
-      return NextResponse.json(
-        { error: "자기 반 학생의 신청만 처리할 수 있습니다." },
-        { status: 403 }
-      );
     }
 
     if (request.status !== "pending") {
