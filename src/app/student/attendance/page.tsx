@@ -74,7 +74,7 @@ function StatusBadge({ status, isParticipating }: { status: string | undefined; 
 export default function StudentAttendancePage() {
   const [viewTab, setViewTab] = useState<ViewTab>("weekly");
   const today = new Date();
-  const todayStr = today.toISOString().split("T")[0];
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
   const currentMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}`;
 
   const [weekDate, setWeekDate] = useState(todayStr);

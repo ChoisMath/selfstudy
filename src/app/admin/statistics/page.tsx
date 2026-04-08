@@ -20,9 +20,12 @@ export default function StatisticsPage() {
   const [fromDate, setFromDate] = useState(() => {
     const d = new Date();
     d.setDate(d.getDate() - (d.getDay() === 0 ? 6 : d.getDay() - 1));
-    return d.toISOString().split("T")[0];
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
   });
-  const [toDate, setToDate] = useState(() => new Date().toISOString().split("T")[0]);
+  const [toDate, setToDate] = useState(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  });
   const [students, setStudents] = useState<StudentStat[]>([]);
   const [dates, setDates] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);

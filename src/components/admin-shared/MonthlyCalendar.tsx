@@ -21,7 +21,7 @@ type SlotConfig = {
 const DAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"];
 
 function formatDate(d: Date) {
-  return d.toISOString().split("T")[0];
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
 function getMonthDays(year: number, month: number) {

@@ -36,7 +36,7 @@ export default function AbsenceReasonsPage() {
   const [selectedStudent, setSelectedStudent] = useState<number | "">("");
   const [date, setDate] = useState(() => {
     const today = new Date();
-    return today.toISOString().split("T")[0];
+    return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
   });
   const [sessionType, setSessionType] = useState<"afternoon" | "night">("afternoon");
   const [reasonType, setReasonType] = useState<string>("academy");
