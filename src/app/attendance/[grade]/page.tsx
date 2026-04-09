@@ -529,6 +529,7 @@ export default function AttendanceGradePage() {
 
       mutateAbsence();
       mutatePendingCount();
+      mutate();
     } catch {
       alert("네트워크 오류가 발생했습니다.");
     }
