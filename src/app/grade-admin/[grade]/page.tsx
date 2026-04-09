@@ -20,12 +20,22 @@ const MonthlyCalendar = dynamic(() => import("@/components/admin-shared/MonthlyC
   ssr: false,
   loading: () => <div className="text-center py-12 text-gray-400">불러오는 중...</div>,
 });
+const TodayAttendanceDashboard = dynamic(
+  () => import("@/components/grade-admin/TodayAttendanceDashboard"),
+  { ssr: false, loading: () => <div className="text-center py-12 text-gray-400">불러오는 중...</div> }
+);
+const GradeMonthlyAttendance = dynamic(
+  () => import("@/components/grade-admin/GradeMonthlyAttendance"),
+  { ssr: false, loading: () => <div className="text-center py-12 text-gray-400">불러오는 중...</div> }
+);
 
 const TABS = [
+  { key: "today", label: "오늘출결" },
   { key: "students", label: "학생 관리" },
   { key: "participation", label: "참여 설정" },
   { key: "seats", label: "좌석 배치" },
   { key: "supervisors", label: "감독 배정" },
+  { key: "monthly", label: "월간출결" },
 ] as const;
 
 type TabKey = (typeof TABS)[number]["key"];
@@ -33,7 +43,7 @@ type TabKey = (typeof TABS)[number]["key"];
 export default function GradeAdminPage() {
   const params = useParams();
   const grade = parseInt(params.grade as string);
-  const [activeTab, setActiveTab] = useState<TabKey>("students");
+  const [activeTab, setActiveTab] = useState<TabKey>("today");
   const [sessionType, setSessionType] = useState<"afternoon" | "night">("afternoon");
 
   if (isNaN(grade) || grade < 1 || grade > 3) {
@@ -60,6 +70,7 @@ export default function GradeAdminPage() {
       </div>
 
       {/* 탭 콘텐츠 */}
+      {activeTab === "today" && <TodayAttendanceDashboard grade={grade} />}
       {activeTab === "students" && <StudentManagement grade={grade} />}
       {activeTab === "participation" && <ParticipationManagement grade={grade} />}
       {activeTab === "seats" && (
@@ -95,6 +106,7 @@ export default function GradeAdminPage() {
           apiBasePath={`/api/grade-admin/${grade}/supervisor-assignments`}
         />
       )}
+      {activeTab === "monthly" && <GradeMonthlyAttendance grade={grade} />}
     </div>
   );
 }
