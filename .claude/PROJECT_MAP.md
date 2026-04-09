@@ -1,6 +1,6 @@
 # 자율학습 출석부 시스템 - 프로젝트 지도
 
-> 마지막 업데이트: 2026-04-08
+> 마지막 업데이트: 2026-04-09
 > 이 파일은 새 세션에서 코드베이스를 빠르게 파악하기 위한 참조 문서입니다.
 
 ## 개요
@@ -33,7 +33,7 @@ src/
 │   │   └── actions.ts          # Server Action (signIn 호출)
 │   ├── admin/                  # 메인관리자 전용
 │   │   ├── layout.tsx          # AdminNav 포함
-│   │   ├── page.tsx            # → /admin/users 리다이렉트
+│   │   ├── page.tsx            # 전학년 오늘출결 대시보드 (SWR + /api/admin/today-attendance)
 │   │   ├── users/page.tsx      # 통합 사용자관리 (교사/1~3학년 탭, 담당학년 드롭다운, 학생 초기화)
 │   │   ├── seats/page.tsx      # 6탭 좌석배치 (1~3학년 × 오자/야자) + SeatingEditor
 │   │   ├── supervisors/page.tsx # 감독배정 MonthlyCalendar (전학년 6슬롯 모드)
@@ -41,7 +41,7 @@ src/
 │   │   └── swap-history/page.tsx
 │   ├── grade-admin/[grade]/    # 서브관리자 (학년별)
 │   │   ├── layout.tsx          # AdminNav 포함
-│   │   ├── page.tsx            # 허브 (SeatingEditor + MonthlyCalendar)
+│   │   ├── page.tsx            # 6탭 허브 (오늘출결, 학생관리, 참여설정, 좌석배치, 감독배정, 월간출결)
 │   │   ├── students/page.tsx
 │   │   ├── participation/page.tsx
 │   │   ├── seats/page.tsx      # 2탭 (오후자습/야간자습) + SeatingEditor
@@ -68,10 +68,13 @@ src/
 │
 ├── components/
 │   ├── admin-shared/
-│   │   ├── AdminNav.tsx        # 관리자 네비 (세션 로딩 처리, 서브관리자용 교사 링크)
+│   │   ├── AdminNav.tsx        # 관리자 네비 (오늘 출결 메뉴 포함, exact match, 서브관리자용 교사 링크)
 │   │   ├── ParticipationManagement.tsx  # 참여설정 테이블 (grade prop)
 │   │   ├── MonthlyCalendar.tsx  # 월간 감독배정 캘린더 (학년당 1슬롯, 텍스트 검색 교사 선택, 담당학년 우선 그룹)
 │   │   └── ExcelUploadModal.tsx # 공용 Excel 업로드 모달 (드래그앤드롭, 교사/학생 공용)
+│   ├── grade-admin/
+│   │   ├── TodayAttendanceDashboard.tsx  # 오늘출결 대시보드 (grade prop, 세션별 출석현황)
+│   │   └── GradeMonthlyAttendance.tsx    # 월간출결 테이블 (grade prop, 짝수반 배경 구분)
 │   ├── seats/
 │   │   ├── SeatingEditor.tsx       # DndContext + 저장 (props: grade, sessionType)
 │   │   ├── RoomGrid.tsx            # 교실 격자 (droppable/draggable 셀)
@@ -122,6 +125,9 @@ src/
 | GET/POST | `seat-layouts` | 좌석 배치 조회/저장(트랜잭션, roomId 기반) |
 | GET/POST | `supervisor-assignments` | 감독 배정 (POST: 오후+야간 동시 생성) |
 | DELETE | `supervisor-assignments/[id]` | 배정 해제 (오후+야간 동시 삭제) |
+| GET | `today-attendance` | 학년별 오늘 출결 현황 (세션별 출석/결석/사유결석/방과후 집계) |
+| GET | `monthly-attendance?month=YYYY-MM` | 학년 전체 월간 출결 데이터 |
+| GET | `export-attendance?month=YYYY-MM` | 학년 전체 월간 출결 Excel 다운로드 |
 
 ### 학생 (`/api/student/`)
 | 메서드 | 경로 | 설명 |
@@ -144,6 +150,7 @@ src/
 | GET | `export-excel?from&to&grade` | Excel 다운로드 |
 | GET | `students/template` | 업로드 템플릿 |
 | POST | `students/reset` | 학생 전체 초기화 |
+| GET | `today-attendance` | 전학년 오늘 출결 현황 (1~3학년 세션별 집계) |
 
 ### 기타
 | 메서드 | 경로 | 설명 |
@@ -231,6 +238,13 @@ Teacher (+ primaryGrade: nullable int) ──< TeacherRole (admin/supervisor/hom
 - **담임배정 자동 동기화**: homeroom-assignments POST/DELETE 시 TeacherRole("homeroom") 자동 부여/삭제
 
 ## 수정 이력 (주요 변경)
+
+### 2026-04-09: 학년별/전학년 오늘출결 대시보드 + 월간출결
+- **신규 API 4개**: grade-admin today-attendance, monthly-attendance, export-attendance + admin today-attendance
+- **신규 컴포넌트 2개**: `TodayAttendanceDashboard` (오늘출결 대시보드), `GradeMonthlyAttendance` (월간출결 테이블, 짝수반 배경 구분)
+- **admin/page.tsx**: 리다이렉트 → 전학년 오늘출결 대시보드로 변경
+- **grade-admin 탭 확장**: 4탭 → 6탭 (오늘출결, 학생관리, 참여설정, 좌석배치, 감독배정, 월간출결)
+- **AdminNav**: "오늘 출결" 메뉴 추가 (`/admin` exact match)
 
 ### 2026-04-08: 감독교사 불참신청 관리 기능
 - **신규 API**: `GET /api/attendance/absence-requests?grade&status` — 학년별 불참신청 목록 조회 (모든 교사 허용)
