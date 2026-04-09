@@ -52,7 +52,7 @@ export const GET = withAuth(["homeroom", "admin"], async (req: Request, user) =>
             lte: friday,
           },
         },
-        include: { absenceReason: { select: { reasonType: true } } },
+        include: { absenceReason: { select: { reasonType: true, detail: true } } },
       },
       participationDays: {
         select: {
@@ -82,6 +82,7 @@ export const GET = withAuth(["homeroom", "admin"], async (req: Request, user) =>
       sessionType: a.sessionType,
       status: a.status,
       reasonType: a.absenceReason?.reasonType || null,
+      reasonDetail: a.absenceReason?.detail || null,
     })),
     participationDays: student.participationDays.map((p) => ({
       sessionType: p.sessionType,

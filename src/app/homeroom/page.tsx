@@ -8,6 +8,7 @@ type AttendanceData = {
   sessionType: "afternoon" | "night";
   status: "unchecked" | "present" | "absent";
   reasonType: string | null;
+  reasonDetail: string | null;
 };
 
 type ParticipationData = {
@@ -66,38 +67,68 @@ function getWeekDates(weekStart: string): string[] {
   });
 }
 
-function getStatusBadge(status: string | undefined, isAfterSchool: boolean, reasonType?: string | null) {
+const REASON_KO: Record<string, string> = {
+  academy: "학원", afterschool: "방과후", illness: "질병", custom: "기타",
+};
+
+function StatusCell({ status, isAfterSchool, reasonType, reasonDetail }: {
+  status?: string; isAfterSchool: boolean; reasonType?: string | null; reasonDetail?: string | null;
+}) {
+  const [showTooltip, setShowTooltip] = useState(false);
+
   if (isAfterSchool && (!status || status === "unchecked")) {
-    return (
-      <span className="inline-flex items-center">
-        <span className="w-3 h-3 rounded-full bg-yellow-500 inline-block" />
-      </span>
-    );
+    return <span className="text-sm font-extrabold text-yellow-600">방</span>;
   }
   if (!status || status === "unchecked") {
-    return (
-      <span className="inline-flex items-center">
-        <span className="w-3 h-3 rounded-full bg-gray-400 inline-block" />
-      </span>
-    );
+    return <span className="text-sm font-extrabold text-gray-400">-</span>;
   }
   if (status === "present") {
-    return (
-      <span className="inline-flex items-center">
-        <span className="w-3 h-3 rounded-full bg-green-600 inline-block" />
-      </span>
-    );
+    return <span className="text-sm font-extrabold text-green-700">O</span>;
   }
   if (status === "absent") {
-    const reasonLabel = reasonType === "academy" ? "학" : reasonType === "afterschool" ? "방" : reasonType === "illness" ? "질" : reasonType === "custom" ? "기" : "";
+    const hasReason = !!reasonType;
+    const tooltipText = hasReason
+      ? `${REASON_KO[reasonType!] || reasonType}${reasonDetail ? `: ${reasonDetail}` : ""}`
+      : null;
+
     return (
-      <span className="inline-flex items-center">
-        <span className="w-3 h-3 rounded-full bg-red-600 inline-block" />
-        {reasonLabel && <span className="ml-0.5 text-[8px] text-red-500 font-bold">{reasonLabel}</span>}
+      <span
+        className="relative cursor-default"
+        onMouseEnter={() => hasReason && setShowTooltip(true)}
+        onMouseLeave={() => setShowTooltip(false)}
+        onClick={() => hasReason && setShowTooltip((v) => !v)}
+      >
+        <span className={`text-sm font-extrabold ${hasReason ? "text-orange-500" : "text-red-700"}`}>
+          {hasReason ? "△" : "X"}
+        </span>
+        {showTooltip && tooltipText && (
+          <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 text-[10px] text-white bg-gray-800 rounded whitespace-nowrap z-50 pointer-events-none">
+            {tooltipText}
+          </span>
+        )}
       </span>
     );
   }
   return null;
+}
+
+function NoteIndicator({ note }: { note: string }) {
+  const [showTooltip, setShowTooltip] = useState(false);
+  return (
+    <span
+      className="relative cursor-default"
+      onMouseEnter={() => setShowTooltip(true)}
+      onMouseLeave={() => setShowTooltip(false)}
+      onClick={() => setShowTooltip((v) => !v)}
+    >
+      <span className="text-[8px] text-orange-500 font-bold align-top">*</span>
+      {showTooltip && (
+        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 text-[10px] text-white bg-gray-800 rounded whitespace-nowrap z-50 pointer-events-none">
+          {note}
+        </span>
+      )}
+    </span>
+  );
 }
 
 function getMonday(offset: number): string {
@@ -153,18 +184,21 @@ export default function HomeroomPage() {
       </div>
 
       {/* 범례 */}
-      <div className="flex items-center gap-4 mb-4 text-xs text-gray-500">
+      <div className="flex items-center gap-3 mb-4 text-xs text-gray-500 flex-wrap">
         <span className="flex items-center gap-1">
-          <span className="w-3 h-3 rounded-full bg-gray-400 inline-block" /> 미확인
+          <span className="text-green-700 font-extrabold text-sm">O</span> 출석
         </span>
         <span className="flex items-center gap-1">
-          <span className="w-3 h-3 rounded-full bg-green-600 inline-block" /> 출석
+          <span className="text-red-700 font-extrabold text-sm">X</span> 무단결석
         </span>
         <span className="flex items-center gap-1">
-          <span className="w-3 h-3 rounded-full bg-red-600 inline-block" /> 결석
+          <span className="text-orange-500 font-extrabold text-sm">△</span> 사유결석
         </span>
         <span className="flex items-center gap-1">
-          <span className="w-3 h-3 rounded-full bg-yellow-500 inline-block" /> 방과후
+          <span className="text-yellow-600 font-extrabold text-sm">방</span> 방과후
+        </span>
+        <span className="flex items-center gap-1">
+          <span className="text-gray-400 font-bold">-</span> 미확인
         </span>
         <span className="flex items-center gap-1">
           <span className="inline-block w-4 h-3 bg-gray-100 border border-gray-300 rounded-sm" /> 미참가
@@ -300,43 +334,30 @@ export default function HomeroomPage() {
 
                           const afternoonGray = !isAfternoonParticipating;
                           const nightGray = !isNightParticipating;
+                          const afternoonHasData = afternoonAtt?.status && afternoonAtt.status !== "unchecked";
+                          const nightHasData = nightAtt?.status && nightAtt.status !== "unchecked";
+
+                          const afternoonNote = weekNotes.find((n) => n.date === date && n.sessionType === "afternoon");
+                          const nightNote = weekNotes.find((n) => n.date === date && n.sessionType === "night");
 
                           return (
                             <Fragment key={`${student.id}-${date}`}>
-                              <td className={`px-1 py-2 text-center border-l border-gray-300 ${afternoonGray ? "bg-gray-100" : ""}`}>
-                                {afternoonAtt?.status && afternoonAtt.status !== "unchecked"
-                                  ? getStatusBadge(afternoonAtt.status, isAfternoonAfterSchool, afternoonAtt.reasonType)
-                                  : afternoonGray
-                                    ? <span className="text-xs text-gray-300">-</span>
-                                    : getStatusBadge(afternoonAtt?.status, isAfternoonAfterSchool, afternoonAtt?.reasonType)}
+                              <td className={`px-1 py-2 text-center border-l border-gray-300 ${afternoonGray && !afternoonHasData ? "bg-gray-100" : ""}`}>
+                                {afternoonGray && !afternoonHasData
+                                  ? <span className="text-xs text-gray-300">-</span>
+                                  : <StatusCell status={afternoonAtt?.status} isAfterSchool={isAfternoonAfterSchool} reasonType={afternoonAtt?.reasonType} reasonDetail={afternoonAtt?.reasonDetail} />}
+                                {afternoonNote && <NoteIndicator note={afternoonNote.note} />}
                               </td>
-                              <td className={`px-1 py-2 text-center ${nightGray ? "bg-gray-100" : ""}`}>
-                                {nightAtt?.status && nightAtt.status !== "unchecked"
-                                  ? getStatusBadge(nightAtt.status, isNightAfterSchool, nightAtt.reasonType)
-                                  : nightGray
-                                    ? <span className="text-xs text-gray-300">-</span>
-                                    : getStatusBadge(nightAtt?.status, isNightAfterSchool, nightAtt?.reasonType)}
+                              <td className={`px-1 py-2 text-center ${nightGray && !nightHasData ? "bg-gray-100" : ""}`}>
+                                {nightGray && !nightHasData
+                                  ? <span className="text-xs text-gray-300">-</span>
+                                  : <StatusCell status={nightAtt?.status} isAfterSchool={isNightAfterSchool} reasonType={nightAtt?.reasonType} reasonDetail={nightAtt?.reasonDetail} />}
+                                {nightNote && <NoteIndicator note={nightNote.note} />}
                               </td>
                             </Fragment>
                           );
                         })}
                       </tr>
-                      {weekNotes.length > 0 && (
-                        <tr className={isEntireRowGray ? "bg-gray-100" : ""}>
-                          <td colSpan={13} className="px-3 py-1 text-xs text-orange-600 bg-orange-50/50">
-                            {weekNotes.map((n, i) => {
-                              const dayIdx = weekDates.indexOf(n.date);
-                              const dayLabel = dayIdx >= 0 ? DAY_LABELS[dayIdx] : "";
-                              const sessionLabel = n.sessionType === "afternoon" ? "오후" : "야간";
-                              return (
-                                <span key={i} className="mr-3">
-                                  <span className="font-medium">[{dayLabel} {sessionLabel}]</span> {n.note}
-                                </span>
-                              );
-                            })}
-                          </td>
-                        </tr>
-                      )}
                     </Fragment>
                   );
                 })
