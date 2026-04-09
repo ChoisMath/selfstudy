@@ -85,6 +85,11 @@ export const GET = withAuth(["homeroom", "admin"], async (req: Request, user) =>
       };
     }
 
+    const totalMinutes = student.attendances
+      .filter((a) => a.status === "present")
+      .reduce((sum, a) => sum + (a.durationMinutes ?? 100), 0);
+    const studyHours = Math.round((totalMinutes / 60) * 10) / 10;
+
     return {
       id: student.id,
       name: student.name,
@@ -100,6 +105,7 @@ export const GET = withAuth(["homeroom", "admin"], async (req: Request, user) =>
         afterSchoolWed: p.afterSchoolWed, afterSchoolThu: p.afterSchoolThu,
         afterSchoolFri: p.afterSchoolFri,
       })),
+      studyHours,
     };
   });
 

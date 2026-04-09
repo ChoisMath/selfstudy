@@ -192,8 +192,10 @@ model Attendance {
   date        DateTime         @db.Date
   status      AttendanceStatus @default(unchecked)
   checkedBy   Int?             @map("checked_by")
-  createdAt   DateTime         @default(now()) @map("created_at")
-  updatedAt   DateTime         @updatedAt @map("updated_at")
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+  durationMinutes Int?             @map("duration_minutes")
+  durationNote    String?          @db.VarChar(200) @map("duration_note")
 
   student       Student        @relation(fields: [studentId], references: [id])
   checker       Teacher?       @relation("checker", fields: [checkedBy], references: [id])

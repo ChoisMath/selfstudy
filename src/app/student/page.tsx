@@ -18,6 +18,8 @@ type DaySettings = {
 
 type ParticipationData = {
   participationDays: Record<string, DaySettings>;
+  monthlyStudyHours: number;
+  yearlyStudyHours: number;
 };
 
 export default function StudentParticipationPage() {
@@ -86,6 +88,28 @@ export default function StudentParticipationPage() {
         {renderSession("오후자습", afternoon)}
         {renderSession("야간자습", night)}
       </div>
+
+      {data && (
+        <div className="mt-6 bg-white rounded-lg border border-gray-200 p-4">
+          <h3 className="text-sm font-medium text-gray-600 mb-3">자율학습 참여시간</h3>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-blue-50 rounded-lg p-3 text-center">
+              <p className="text-xs text-blue-500 mb-1">이번 달</p>
+              <p className="text-2xl font-bold text-blue-700">
+                {data.monthlyStudyHours.toFixed(1)}
+              </p>
+              <p className="text-xs text-blue-400 mt-0.5">시간</p>
+            </div>
+            <div className="bg-indigo-50 rounded-lg p-3 text-center">
+              <p className="text-xs text-indigo-500 mb-1">올해 누적</p>
+              <p className="text-2xl font-bold text-indigo-700">
+                {data.yearlyStudyHours.toFixed(1)}
+              </p>
+              <p className="text-xs text-indigo-400 mt-0.5">시간</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {!afternoon && !night && (
         <p className="mt-4 text-sm text-gray-400">

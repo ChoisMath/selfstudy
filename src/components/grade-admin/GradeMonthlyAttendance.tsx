@@ -24,6 +24,7 @@ type StudentData = {
     nightReason?: string;
   }>;
   participationDays: ParticipationData[];
+  studyHours: number;
 };
 
 type ResponseData = {
@@ -132,6 +133,7 @@ export default function GradeMonthlyAttendance({ grade }: { grade: number }) {
                       </th>
                     );
                   })}
+                  <th className="px-2 py-2 text-center font-medium text-gray-600 border-l border-gray-300 min-w-[48px]">시간</th>
                 </tr>
                 <tr className="bg-gray-50 border-b border-gray-300">
                   <th className="sticky left-0 bg-gray-50 z-10" />
@@ -143,6 +145,7 @@ export default function GradeMonthlyAttendance({ grade }: { grade: number }) {
                       <th className="px-1 py-1 text-center text-gray-400">야</th>
                     </React.Fragment>
                   ))}
+                  <th className="border-l border-gray-300" />
                 </tr>
               </thead>
               <tbody>
@@ -230,6 +233,9 @@ export default function GradeMonthlyAttendance({ grade }: { grade: number }) {
                             </React.Fragment>
                           );
                         })}
+                        <td className="px-2 py-1.5 text-center text-sm font-bold text-blue-600 border-l border-gray-300">
+                          {student.studyHours > 0 ? student.studyHours.toFixed(1) : "-"}
+                        </td>
                       </tr>
                     );
                   });
