@@ -30,6 +30,8 @@ export default function HomeroomLayout({ children }: { children: React.ReactNode
   const assignmentText = user?.homeroomAssignments
     ?.map((a) => `${a.grade}-${a.classNumber}`)
     .join(", ");
+  const attendanceGrade = user?.homeroomAssignments?.[0]?.grade ?? user?.primaryGrade;
+  const attendanceHref = attendanceGrade ? `/attendance/${attendanceGrade}` : "/attendance";
 
   if (status === "loading") {
     return (
@@ -54,7 +56,7 @@ export default function HomeroomLayout({ children }: { children: React.ReactNode
           <div className="flex items-center justify-between h-14">
             <div className="flex items-center gap-1 overflow-x-auto">
               <Link
-                href="/attendance"
+                href={attendanceHref}
                 className="flex items-center gap-2 shrink-0 mr-4"
               >
                 <img src="/posan.svg" alt="포산고등학교" className="w-8 h-8" />
