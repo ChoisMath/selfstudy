@@ -4,7 +4,7 @@ import { withAuth } from "@/lib/api-auth";
 
 // PUT /api/supervisor-assignments/:id/swap
 // 실제로는 /api/supervisor-assignments/[id] 에서 swap body를 처리
-export const PUT = withAuth(["supervisor", "homeroom", "sub_admin"], async (req: Request, user) => {
+export const PUT = withAuth(["teacher"], async (req: Request, user) => {
   const url = new URL(req.url);
   const id = parseInt(url.pathname.split("/").slice(-1)[0]);
   const body = await req.json();

@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { withAuth } from "@/lib/api-auth";
 
 // GET /api/homeroom/schedule - 전체 감독 배정표 조회
-export const GET = withAuth(["homeroom", "supervisor", "admin"], async (req: Request, user) => {
+export const GET = withAuth(["teacher"], async (req: Request, user) => {
   const url = new URL(req.url);
   const monthStr = url.searchParams.get("month"); // YYYY-MM 형식
 
