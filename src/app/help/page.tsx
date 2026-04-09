@@ -172,12 +172,12 @@ export default function HelpPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-[#f9fafb]">
       {/* Fixed Header */}
       <header className="fixed top-0 left-0 right-0 z-50 h-14 bg-[#1e40af] flex items-center justify-between px-4">
         <div className="flex items-center gap-2">
           <Image src="/posan.svg" alt="logo" width={28} height={28} />
-          <span className="text-white font-bold text-base">이용 안내</span>
+          <span className="text-white font-bold text-sm">포산고 자율학습 안내</span>
         </div>
         <button
           onClick={() => setSidebarOpen((prev) => !prev)}
