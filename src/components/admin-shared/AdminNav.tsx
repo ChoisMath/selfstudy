@@ -18,6 +18,7 @@ export function AdminNav() {
 
   const adminItems: NavItem[] = isAdmin
     ? [
+        { label: "오늘 출결", href: "/admin" },
         { label: "사용자 관리", href: "/admin/users" },
         { label: "좌석 배치", href: "/admin/seats" },
         { label: "감독 배정", href: "/admin/supervisors" },
@@ -65,19 +66,24 @@ export function AdminNav() {
               <span className="text-lg font-bold text-gray-900">출석부</span>
             </Link>
 
-            {adminItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`px-3 py-2 text-sm font-medium rounded-md whitespace-nowrap transition-colors ${
-                  pathname.startsWith(item.href)
-                    ? "bg-blue-50 text-blue-700"
-                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-                }`}
-              >
-                {item.label}
-              </Link>
-            ))}
+            {adminItems.map((item) => {
+              const isActive = item.href === "/admin"
+                ? pathname === "/admin"
+                : pathname.startsWith(item.href);
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`px-3 py-2 text-sm font-medium rounded-md whitespace-nowrap transition-colors ${
+                    isActive
+                      ? "bg-blue-50 text-blue-700"
+                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                  }`}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
 
             {allGradeItems.length > 0 && adminItems.length > 0 && (
               <div className="w-px h-6 bg-gray-300 mx-1" />
