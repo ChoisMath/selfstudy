@@ -37,7 +37,7 @@ export default function LoginPage() {
       <div className="w-full max-w-sm">
         <div className="flex flex-col items-center mb-8">
           <img src="/posan.svg" alt="포산고등학교" className="w-16 h-16 mb-3" />
-          <h1 className="text-2xl font-bold text-gray-900">
+          <h1 className="text-2xl font-bold text-[#111827]">
             포산고 자습 출석부
           </h1>
         </div>
@@ -49,8 +49,8 @@ export default function LoginPage() {
             onClick={() => { setTab("teacher"); setError(""); }}
             className={`flex-1 py-2 text-sm font-medium rounded-md transition-colors ${
               tab === "teacher"
-                ? "bg-white text-gray-900 shadow-sm"
-                : "text-gray-500 hover:text-gray-700"
+                ? "bg-white text-[#111827] shadow-sm"
+                : "text-[#6b7280] hover:text-[#374151]"
             }`}
           >
             교사 로그인
@@ -60,8 +60,8 @@ export default function LoginPage() {
             onClick={() => { setTab("student"); setError(""); }}
             className={`flex-1 py-2 text-sm font-medium rounded-md transition-colors ${
               tab === "student"
-                ? "bg-white text-gray-900 shadow-sm"
-                : "text-gray-500 hover:text-gray-700"
+                ? "bg-white text-[#111827] shadow-sm"
+                : "text-[#6b7280] hover:text-[#374151]"
             }`}
           >
             학생 로그인
@@ -78,7 +78,7 @@ export default function LoginPage() {
         {tab === "teacher" && (
           <form onSubmit={handleTeacherSubmit} className="space-y-4">
             <div>
-              <label htmlFor="loginId" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="loginId" className="block text-sm font-medium text-[#374151] mb-1">
                 ID
               </label>
               <input
@@ -91,7 +91,7 @@ export default function LoginPage() {
               />
             </div>
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="password" className="block text-sm font-medium text-[#374151] mb-1">
                 비밀번호
               </label>
               <input
@@ -117,7 +117,7 @@ export default function LoginPage() {
         {tab === "student" && (
           <form onSubmit={handleStudentSubmit} className="space-y-4">
             <div>
-              <label htmlFor="studentName" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="studentName" className="block text-sm font-medium text-[#374151] mb-1">
                 이름
               </label>
               <input
@@ -130,7 +130,7 @@ export default function LoginPage() {
               />
             </div>
             <div>
-              <label htmlFor="studentCode" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="studentCode" className="block text-sm font-medium text-[#374151] mb-1">
                 학번
               </label>
               <input
@@ -143,7 +143,7 @@ export default function LoginPage() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-[#1e293b]"
                 placeholder="학번 5자리 (예: 20102)"
               />
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-xs text-[#6b7280]">
                 학년(1자리) + 반(2자리) + 번호(2자리) 예: 2학년 1반 2번 → 20102
               </p>
             </div>
