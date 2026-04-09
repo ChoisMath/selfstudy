@@ -156,6 +156,15 @@ export default function LoginPage() {
             </button>
           </form>
         )}
+
+        <div className="mt-6 text-center">
+          <a
+            href="/help"
+            className="text-sm text-[#6b7280] hover:text-blue-600 transition-colors"
+          >
+            사용 안내 보기 →
+          </a>
+        </div>
       </div>
     </div>
   );
