@@ -3,6 +3,10 @@ import { prisma } from "@/lib/prisma";
 import { withAuth } from "@/lib/api-auth";
 import ExcelJS from "exceljs";
 
+const REASON_KO: Record<string, string> = {
+  academy: "학원", afterschool: "방과후", illness: "질병", custom: "기타",
+};
+
 // GET /api/homeroom/export-attendance?month=2026-04
 export const GET = withAuth(["homeroom", "admin"], async (req: Request, user) => {
   const assignments = user.homeroomAssignments;
@@ -49,7 +53,7 @@ export const GET = withAuth(["homeroom", "admin"], async (req: Request, user) =>
     include: {
       attendances: {
         where: { date: { gte: startDate, lte: endDate } },
-        include: { absenceReason: { select: { reasonType: true } } },
+        include: { absenceReason: { select: { reasonType: true, detail: true } } },
       },
     },
   });
@@ -124,8 +128,11 @@ export const GET = withAuth(["homeroom", "admin"], async (req: Request, user) =>
             if (!a) return "-";
             if (a.status === "present") return "O";
             if (a.status === "absent") {
-              const reason = a.absenceReason?.reasonType;
-              if (reason) return `X(${reason})`;
+              const reason = a.absenceReason;
+              if (reason) {
+                const label = REASON_KO[reason.reasonType] || reason.reasonType;
+                return reason.detail ? `△(${label}: ${reason.detail})` : `△(${label})`;
+              }
               return "X";
             }
             return "-";
@@ -141,8 +148,8 @@ export const GET = withAuth(["homeroom", "admin"], async (req: Request, user) =>
       sheet.getColumn(1).width = 10;
       sheet.getColumn(2).width = 6;
       for (let i = 0; i < dates.length; i++) {
-        sheet.getColumn(3 + i * 2).width = 8;
-        sheet.getColumn(4 + i * 2).width = 8;
+        sheet.getColumn(3 + i * 2).width = 14;
+        sheet.getColumn(4 + i * 2).width = 14;
       }
     }
 

@@ -34,18 +34,7 @@ type ResponseData = {
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
-const STATUS_SYMBOL: Record<string, string> = { present: "O", absent: "X", unchecked: "-" };
-const STATUS_COLOR: Record<string, string> = {
-  present: "text-green-600",
-  absent: "text-red-600",
-  unchecked: "text-gray-400",
-};
-
 const DAY_KEYS = ["mon", "tue", "wed", "thu", "fri"] as const;
-
-const REASON_LABELS: Record<string, string> = {
-  academy: "학", afterschool: "방", illness: "질", custom: "기",
-};
 
 const AFTER_SCHOOL_KEYS = ["afterSchoolMon", "afterSchoolTue", "afterSchoolWed", "afterSchoolThu", "afterSchoolFri"] as const;
 
@@ -137,12 +126,12 @@ export default function MonthlyAttendancePage() {
           <div className="mt-2 text-xs text-gray-500 flex flex-col gap-1">
             <div className="flex flex-wrap gap-3">
               <span className="whitespace-nowrap"><span className="text-green-700 font-extrabold text-sm">O</span> 출석</span>
-              <span className="whitespace-nowrap"><span className="text-red-700 font-extrabold text-sm">X</span> 결석</span>
+              <span className="whitespace-nowrap"><span className="text-red-700 font-extrabold text-sm">X</span> 무단결석</span>
+              <span className="whitespace-nowrap"><span className="text-orange-500 font-extrabold text-sm">△</span> 사유결석</span>
               <span className="whitespace-nowrap"><span className="text-yellow-600 font-extrabold text-sm">방</span> 방과후</span>
               <span className="whitespace-nowrap"><span className="text-gray-400 font-bold">-</span> 미확인</span>
               <span className="whitespace-nowrap"><span className="inline-block w-4 h-3 bg-gray-100 border border-gray-300 rounded-sm align-middle" /> 미참가</span>
             </div>
-            <div className="text-[10px] text-gray-400 whitespace-nowrap">학:학원 &nbsp;방:방과후 &nbsp;질:질병 &nbsp;기:기타</div>
           </div>
         )}
       </div>
@@ -257,13 +246,14 @@ export default function MonthlyAttendancePage() {
                                     afternoonGray && !afternoonHasData ? "text-gray-300"
                                       : isAfternoonAfterSchool && (!att.afternoon || att.afternoon === "unchecked") ? "text-yellow-600 bg-yellow-50"
                                       : att.afternoon === "present" ? "text-green-700"
+                                      : att.afternoon === "absent" && att.afternoonReason ? "text-orange-500"
                                       : att.afternoon === "absent" ? "text-red-700"
                                       : "text-gray-400"
                                   }`}>
                                     {afternoonGray && !afternoonHasData ? "-"
                                       : isAfternoonAfterSchool && (!att.afternoon || att.afternoon === "unchecked") ? "방"
                                       : att.afternoon === "present" ? "O"
-                                      : att.afternoon === "absent" ? (att.afternoonReason ? REASON_LABELS[att.afternoonReason] || "X" : "X")
+                                      : att.afternoon === "absent" ? (att.afternoonReason ? "△" : "X")
                                       : "-"}
                                   </td>
                                   <td className={`px-1 py-1.5 text-center text-sm font-extrabold ${
@@ -272,13 +262,14 @@ export default function MonthlyAttendancePage() {
                                     nightGray && !nightHasData ? "text-gray-300"
                                       : isNightAfterSchool && (!att.night || att.night === "unchecked") ? "text-yellow-600 bg-yellow-50"
                                       : att.night === "present" ? "text-green-700"
+                                      : att.night === "absent" && att.nightReason ? "text-orange-500"
                                       : att.night === "absent" ? "text-red-700"
                                       : "text-gray-400"
                                   }`}>
                                     {nightGray && !nightHasData ? "-"
                                       : isNightAfterSchool && (!att.night || att.night === "unchecked") ? "방"
                                       : att.night === "present" ? "O"
-                                      : att.night === "absent" ? (att.nightReason ? REASON_LABELS[att.nightReason] || "X" : "X")
+                                      : att.night === "absent" ? (att.nightReason ? "△" : "X")
                                       : "-"}
                                   </td>
                                 </React.Fragment>
