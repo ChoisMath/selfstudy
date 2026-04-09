@@ -8,7 +8,7 @@
 학교 자율학습(오후/야간) 출석 관리 반응형 웹앱.
 - **기술 스택**: Next.js 16 (App Router) + Prisma 7 + NextAuth v5 + Tailwind CSS 4 + SWR + @dnd-kit
 - **DB**: PostgreSQL (Railway)
-- **배포**: https://selfstudy-production.up.railway.app
+- **배포**: https://posan.up.railway.app
 
 ## 사용자 역할 (5종)
 
@@ -53,7 +53,7 @@ src/
 │   ├── homeroom/               # 담임교사
 │   │   ├── layout.tsx          # 담임 5탭 + 공통 2탭 네비게이션 (세션 로딩 처리)
 │   │   ├── page.tsx            # 자기반 학생 + 주간출석
-│   │   ├── attendance/page.tsx # 담임 월간출결 테이블 + Excel 다운로드
+│   │   ├── attendance/page.tsx # 담임 월간출결 테이블 + "시간" 컬럼 + Excel 다운로드
 │   │   ├── participation/page.tsx
 │   │   ├── absence-reasons/page.tsx
 │   │   ├── absence-requests/page.tsx
@@ -61,7 +61,7 @@ src/
 │   │   └── password/page.tsx
 │   ├── student/                # 학생
 │   │   ├── layout.tsx          # 3개 탭
-│   │   ├── page.tsx            # 참여일정
+│   │   ├── page.tsx            # 참여일정 + 참여시간 카드 (월간/연간)
 │   │   ├── attendance/page.tsx # 주간/월간 출결
 │   │   └── absence-requests/page.tsx
 │   └── api/                    # API 라우트 (아래 별도 섹션)
@@ -74,7 +74,7 @@ src/
 │   │   └── ExcelUploadModal.tsx # 공용 Excel 업로드 모달 (드래그앤드롭, 교사/학생 공용)
 │   ├── grade-admin/
 │   │   ├── TodayAttendanceDashboard.tsx  # 오늘출결 대시보드 (grade prop, 세션별 출석현황)
-│   │   └── GradeMonthlyAttendance.tsx    # 월간출결 테이블 (grade prop, 짝수반 배경 구분)
+│   │   └── GradeMonthlyAttendance.tsx    # 월간출결 테이블 (grade prop, 짝수반 배경 구분, "시간" 컬럼)
 │   ├── seats/
 │   │   ├── SeatingEditor.tsx       # DndContext + 저장 (props: grade, sessionType)
 │   │   ├── RoomGrid.tsx            # 교실 격자 (droppable/draggable 셀)
@@ -163,7 +163,7 @@ src/
 ## 데이터 모델 (14개 모델, 6개 enum)
 
 ```
-Student ──< Attendance >── Teacher (checker)
+Student ──< Attendance (+ durationMinutes?, durationNote?) >── Teacher (checker)
   │              │
   │              └── AbsenceReason >── Teacher (registrar)
   │
@@ -238,6 +238,12 @@ Teacher (+ primaryGrade: nullable int) ──< TeacherRole (admin/supervisor/hom
 - **담임배정 자동 동기화**: homeroom-assignments POST/DELETE 시 TeacherRole("homeroom") 자동 부여/삭제
 
 ## 수정 이력 (주요 변경)
+
+### 2026-04-09: 월간 자율학습 참여시간 표시 기능
+- **스키마 변경**: Attendance 모델에 `durationMinutes`(Int?), `durationNote`(String?) 필드 추가 — 부분참여 오버라이드 대비
+- **API 확장 3개**: grade-admin monthly-attendance(`studyHours`), homeroom monthly-attendance(`studyHours`), student participation-days(`monthlyStudyHours`, `yearlyStudyHours`)
+- **프론트엔드 3곳**: GradeMonthlyAttendance 테이블 "시간" 컬럼, 담임 월간출결 "시간" 컬럼 + 학급 평균, 학생 참여일정 참여시간 카드(월간/연간)
+- **계산 로직**: present 출석 × COALESCE(durationMinutes, 100분) → 시간 단위 소수점 1자리
 
 ### 2026-04-09: 학년별/전학년 오늘출결 대시보드 + 월간출결
 - **신규 API 4개**: grade-admin today-attendance, monthly-attendance, export-attendance + admin today-attendance
