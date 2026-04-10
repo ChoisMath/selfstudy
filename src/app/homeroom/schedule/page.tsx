@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useMemo, useRef, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import useSWR from "swr";
 import SupervisorSummaryModal from "@/components/homeroom/SupervisorSummaryModal";
 
@@ -59,6 +60,8 @@ function getMonthDays(year: number, month: number, weekdayOnly: boolean) {
 }
 
 export default function SchedulePage() {
+  const { data: session } = useSession();
+  const myPrimaryGrade = session?.user?.primaryGrade ?? undefined;
   const today = new Date();
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth());
@@ -280,7 +283,7 @@ export default function SchedulePage() {
 
       {/* 누계 모달 */}
       {showSummary && (
-        <SupervisorSummaryModal onClose={() => setShowSummary(false)} />
+        <SupervisorSummaryModal onClose={() => setShowSummary(false)} filterGrade={myPrimaryGrade} />
       )}
 
       {/* 교체 모달 */}

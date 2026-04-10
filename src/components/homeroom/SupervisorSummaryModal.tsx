@@ -26,13 +26,15 @@ function formatMonthLabel(monthKey: string) {
 
 export default function SupervisorSummaryModal({
   onClose,
+  filterGrade,
 }: {
   onClose: () => void;
+  filterGrade?: number;
 }) {
-  const { data, isLoading } = useSWR<SummaryResponse>(
-    "/api/homeroom/schedule/summary",
-    fetcher
-  );
+  const apiUrl = filterGrade
+    ? `/api/homeroom/schedule/summary?grade=${filterGrade}`
+    : "/api/homeroom/schedule/summary";
+  const { data, isLoading } = useSWR<SummaryResponse>(apiUrl, fetcher);
 
   // ESC 키로 닫기
   useEffect(() => {

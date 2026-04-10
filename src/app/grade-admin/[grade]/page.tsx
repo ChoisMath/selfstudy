@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useParams } from "next/navigation";
+import SupervisorSummaryModal from "@/components/homeroom/SupervisorSummaryModal";
 import dynamic from "next/dynamic";
 
 const StudentManagement = dynamic(() => import("@/components/students/StudentManagement"), {
@@ -45,6 +46,7 @@ export default function GradeAdminPage() {
   const grade = parseInt(params.grade as string);
   const [activeTab, setActiveTab] = useState<TabKey>("today");
   const [sessionType, setSessionType] = useState<"afternoon" | "night">("afternoon");
+  const [showSummary, setShowSummary] = useState(false);
 
   if (isNaN(grade) || grade < 1 || grade > 3) {
     return <div className="text-center py-12 text-gray-500">잘못된 학년입니다.</div>;
@@ -101,10 +103,23 @@ export default function GradeAdminPage() {
         </div>
       )}
       {activeTab === "supervisors" && (
-        <MonthlyCalendar
-          grade={grade}
-          apiBasePath={`/api/grade-admin/${grade}/supervisor-assignments`}
-        />
+        <div>
+          <div className="flex justify-end mb-3">
+            <button
+              onClick={() => setShowSummary(true)}
+              className="px-2.5 py-1 text-xs rounded-md border border-gray-200 bg-gray-50 text-gray-500 hover:bg-gray-100 transition-colors whitespace-nowrap"
+            >
+              누계
+            </button>
+          </div>
+          <MonthlyCalendar
+            grade={grade}
+            apiBasePath={`/api/grade-admin/${grade}/supervisor-assignments`}
+          />
+          {showSummary && (
+            <SupervisorSummaryModal onClose={() => setShowSummary(false)} filterGrade={grade} />
+          )}
+        </div>
       )}
       {activeTab === "monthly" && <GradeMonthlyAttendance grade={grade} />}
     </div>

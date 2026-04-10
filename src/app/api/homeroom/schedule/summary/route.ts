@@ -3,7 +3,10 @@ import { prisma } from "@/lib/prisma";
 import { withAuth } from "@/lib/api-auth";
 
 // GET /api/homeroom/schedule/summary - 학년도 기준 교사별 월별 감독횟수 집계
-export const GET = withAuth(["teacher"], async (_req: Request, user) => {
+export const GET = withAuth(["teacher"], async (req: Request, user) => {
+  const url = new URL(req.url);
+  const gradeParam = url.searchParams.get("grade");
+  const filterGrade = gradeParam ? Number(gradeParam) : null;
   const now = new Date();
   const currentYear = now.getFullYear();
   const currentMonth = now.getMonth() + 1; // 1-based
@@ -31,8 +34,9 @@ export const GET = withAuth(["teacher"], async (_req: Request, user) => {
     orderBy: { date: "asc" },
   });
 
-  // 교사 목록 (담당학년 포함)
+  // 교사 목록 (담당학년 포함, filterGrade가 있으면 해당 학년만)
   const teachers = await prisma.teacher.findMany({
+    where: filterGrade ? { primaryGrade: filterGrade } : undefined,
     select: {
       id: true,
       name: true,
