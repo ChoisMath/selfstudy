@@ -59,7 +59,7 @@ export const GET = withAuth(["teacher"], async (req: Request, user) => {
 
   for (const a of assignments) {
     const d = new Date(a.date);
-    const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    const monthKey = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
     monthSet.add(monthKey);
 
     let entry = teacherMap.get(a.teacherId);
