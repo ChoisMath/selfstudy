@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import useSWR from "swr";
+import SupervisorSummaryModal from "@/components/homeroom/SupervisorSummaryModal";
 
 type AssignmentData = {
   id: number;
@@ -62,6 +63,7 @@ export default function SchedulePage() {
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth());
   const [showWeekend, setShowWeekend] = useState(false);
+  const [showSummary, setShowSummary] = useState(false);
 
   const monthStr = `${year}-${String(month + 1).padStart(2, "0")}`;
   const { data, mutate, isLoading } = useSWR<ScheduleResponse>(
@@ -170,16 +172,24 @@ export default function SchedulePage() {
           </span>
           <span className="whitespace-nowrap">학년별 1명 오후+야간</span>
         </div>
-        <button
-          onClick={() => setShowWeekend(!showWeekend)}
-          className={`px-2.5 py-1 text-xs rounded-md border transition-colors whitespace-nowrap ${
-            showWeekend
-              ? "bg-blue-50 text-blue-600 border-blue-200"
-              : "bg-gray-50 text-gray-500 border-gray-200"
-          }`}
-        >
-          {showWeekend ? "토일 ON" : "토일 OFF"}
-        </button>
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={() => setShowWeekend(!showWeekend)}
+            className={`px-2.5 py-1 text-xs rounded-md border transition-colors whitespace-nowrap ${
+              showWeekend
+                ? "bg-blue-50 text-blue-600 border-blue-200"
+                : "bg-gray-50 text-gray-500 border-gray-200"
+            }`}
+          >
+            {showWeekend ? "토일 ON" : "토일 OFF"}
+          </button>
+          <button
+            onClick={() => setShowSummary(true)}
+            className="px-2.5 py-1 text-xs rounded-md border border-gray-200 bg-gray-50 text-gray-500 hover:bg-gray-100 transition-colors whitespace-nowrap"
+          >
+            누계
+          </button>
+        </div>
       </div>
 
       {isLoading && (
@@ -267,6 +277,11 @@ export default function SchedulePage() {
           ))}
         </div>
       </div>
+
+      {/* 누계 모달 */}
+      {showSummary && (
+        <SupervisorSummaryModal onClose={() => setShowSummary(false)} />
+      )}
 
       {/* 교체 모달 */}
       {swapTarget && (
