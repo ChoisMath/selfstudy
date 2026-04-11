@@ -50,6 +50,19 @@ interface WeeklyDay {
   nightAfterSchool: boolean;
 }
 
+interface WeeklyTotals {
+  monthlyMinutes: number;
+  monthlyHours: number;
+  academicYearMinutes: number;
+  academicYearHours: number;
+}
+
+interface WeeklyRanking {
+  rank: number;
+  totalRanked: number;
+  topPercent: number;
+}
+
 type Tab = "afternoon" | "night" | "absence";
 
 interface SeatCellProps {
@@ -139,6 +152,8 @@ export default function AttendanceGradePage() {
   const [showGradeModal, setShowGradeModal] = useState(false);
   const [selectedSeat, setSelectedSeat] = useState<number | null>(null);
   const [weeklyData, setWeeklyData] = useState<WeeklyDay[]>([]);
+  const [weeklyTotals, setWeeklyTotals] = useState<WeeklyTotals | null>(null);
+  const [weeklyRanking, setWeeklyRanking] = useState<WeeklyRanking | null>(null);
   const [weeklyName, setWeeklyName] = useState("");
   const [activatedStudents, setActivatedStudents] = useState<Set<number>>(new Set());
   const [noteValues, setNoteValues] = useState<Record<string, string>>({});
@@ -272,10 +287,11 @@ export default function AttendanceGradePage() {
   }, []);
 
   async function handleInfoClick(e: React.MouseEvent, studentId: number, name: string) {
-    e.stopPropagation(); // 좌석 클릭(출석토글) 방지
+    e.stopPropagation();
     if (selectedSeat === studentId) {
-      // 이미 열려있으면 닫기
       setSelectedSeat(null);
+      setWeeklyTotals(null);
+      setWeeklyRanking(null);
       return;
     }
     setSelectedSeat(studentId);
@@ -283,6 +299,8 @@ export default function AttendanceGradePage() {
     const res = await fetch(`/api/attendance/weekly?studentId=${studentId}&date=${today}`);
     const result = await res.json();
     setWeeklyData(result.weekly || []);
+    setWeeklyTotals(result.totals || null);
+    setWeeklyRanking(result.ranking || null);
     const notes: Record<string, string> = {};
     for (const d of (result.weekly || []) as WeeklyDay[]) {
       const noteVal = tab === "afternoon" ? d.afternoonNote : d.nightNote;
@@ -380,19 +398,10 @@ export default function AttendanceGradePage() {
     );
   }
 
-  // 주간 출석 팝업
-  function renderWeeklyPopup(room: Room, selectedInThisRow: Seat) {
+  // 주간 팝업/모달 공통 콘텐츠 (래퍼 없음)
+  function renderWeeklyContent(selectedInThisRow: Seat) {
     return (
-      <div
-        className="relative bg-[#eff6ff] border-2 border-[#2563eb] rounded-lg p-[clamp(8px,2vw,14px)]"
-        style={{ marginBottom: "clamp(3px, 0.8vw, 6px)" }}
-      >
-        <div
-          className="absolute -top-[8px] w-[14px] h-[14px] bg-[#eff6ff] border-l-2 border-t-2 border-[#2563eb] rotate-45"
-          style={{
-            left: `calc(${(selectedInThisRow.colIndex + 0.5) / room.cols * 100}% - 7px)`,
-          }}
-        />
+      <>
         <div className="flex justify-between items-center mb-2 flex-wrap gap-1">
           <span className="font-bold text-[clamp(11px,2.8vw,13px)] text-[#1e40af] whitespace-nowrap">
             {weeklyName} ({grade}-{selectedInThisRow.student?.classNumber})
@@ -431,7 +440,6 @@ export default function AttendanceGradePage() {
                 <div key={`cell-${d.date}`} className="rounded-[4px] py-[clamp(6px,1.5vw,10px)] px-1 text-[clamp(9px,2.2vw,11px)] font-medium bg-[#e5e7eb] text-[#9ca3af]">-</div>
               );
             }
-            // afterSchool default state
             if (isAfterSchoolDay && (!status || status === "unchecked")) {
               return (
                 <div key={`cell-${d.date}`} className={`rounded-[4px] py-[clamp(6px,1.5vw,10px)] px-1 text-[clamp(9px,2.2vw,11px)] font-medium bg-[#fef9c3] text-[#ca8a04] ${isToday ? "border-2 border-[#2563eb] font-bold text-[clamp(10px,2.5vw,12px)]" : ""}`}>
@@ -486,6 +494,48 @@ export default function AttendanceGradePage() {
               .join(", ")}
           </div>
         )}
+        {/* 누계·랭킹 블록 */}
+        {weeklyTotals && (
+          <div className="mt-3 pt-3 border-t border-[#bfdbfe] grid grid-cols-3 gap-2 text-center">
+            <div>
+              <p className="text-[10px] text-gray-500">이번 달</p>
+              <p className="text-sm font-bold text-blue-700">{weeklyTotals.monthlyHours.toFixed(1)}h</p>
+            </div>
+            <div>
+              <p className="text-[10px] text-gray-500">학년도</p>
+              <p className="text-sm font-bold text-indigo-700">{weeklyTotals.academicYearHours.toFixed(1)}h</p>
+            </div>
+            <div>
+              <p className="text-[10px] text-gray-500">학년 내 순위</p>
+              {weeklyRanking ? (
+                <p className="text-sm font-bold text-amber-600">
+                  {weeklyRanking.rank}위{" "}
+                  <span className="text-[10px] text-gray-500">(상위 {weeklyRanking.topPercent}%)</span>
+                </p>
+              ) : (
+                <p className="text-xs text-gray-400">-</p>
+              )}
+            </div>
+          </div>
+        )}
+      </>
+    );
+  }
+
+  // 데스크톱 인라인 말풍선 래퍼 (>= lg)
+  function renderWeeklyPopup(room: Room, selectedInThisRow: Seat) {
+    return (
+      <div
+        className="hidden lg:block relative bg-[#eff6ff] border-2 border-[#2563eb] rounded-lg p-[clamp(8px,2vw,14px)]"
+        style={{ marginBottom: "clamp(3px, 0.8vw, 6px)" }}
+      >
+        <div
+          className="absolute -top-[8px] w-[14px] h-[14px] bg-[#eff6ff] border-l-2 border-t-2 border-[#2563eb] rotate-45"
+          style={{
+            left: `calc(${(selectedInThisRow.colIndex + 0.5) / room.cols * 100}% - 7px)`,
+          }}
+        />
+        {renderWeeklyContent(selectedInThisRow)}
       </div>
     );
   }
