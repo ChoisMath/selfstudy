@@ -15,10 +15,11 @@ export async function middleware(req: NextRequest) {
   }
 
   // Auth.js v5: 쿠키 접두사가 authjs로 변경됨 → salt/cookieName 명시 필요
-  const isSecure = req.url.startsWith("https://");
-  const cookieName = isSecure
-    ? "__Secure-authjs.session-token"
-    : "authjs.session-token";
+  // auth.ts와 동일 기준(NODE_ENV)으로 쿠키 이름 고정 — Railway 프록시 뒤 HTTP 라우팅 대응
+  const cookieName =
+    process.env.NODE_ENV === "production"
+      ? "__Secure-authjs.session-token"
+      : "authjs.session-token";
 
   const token = await getToken({
     req,

@@ -4,8 +4,25 @@ import Google from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
 import { prisma } from "./prisma";
 
+const SESSION_MAX_AGE = 365 * 24 * 60 * 60; // 1년
+
 export const { handlers, signIn, signOut, auth } = NextAuth({
   trustHost: true,
+  cookies: {
+    sessionToken: {
+      name:
+        process.env.NODE_ENV === "production"
+          ? "__Secure-authjs.session-token"
+          : "authjs.session-token",
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+        maxAge: SESSION_MAX_AGE,
+      },
+    },
+  },
   providers: [
     // 교사 ID/PW 로그인
     Credentials({
@@ -111,7 +128,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
   session: {
     strategy: "jwt",
-    maxAge: 8 * 60 * 60, // 기본 8시간 (교사)
+    maxAge: SESSION_MAX_AGE,
+    updateAge: 24 * 60 * 60, // 24시간마다 슬라이딩 갱신
   },
 
   pages: {
@@ -136,8 +154,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           token.classNumber = u.classNumber as number;
           token.studentNumber = u.studentNumber as number;
           token.isHelper = u.isHelper as boolean;
-          // 학생은 2시간 세션
-          token.maxAge = 2 * 60 * 60;
         }
       }
 
