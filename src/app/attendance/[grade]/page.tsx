@@ -314,18 +314,14 @@ export default function AttendanceGradePage() {
     if (selectedSeat === null) return;
 
     const prevOverflow = document.body.style.overflow;
-    const mql = typeof window !== "undefined" ? window.matchMedia("(max-width: 1023.98px)") : null;
+    const mql = window.matchMedia("(max-width: 1023.98px)");
 
     const lockScroll = () => {
-      if (mql?.matches) {
-        document.body.style.overflow = "hidden";
-      } else {
-        document.body.style.overflow = prevOverflow;
-      }
+      if (mql.matches) document.body.style.overflow = "hidden";
     };
 
     lockScroll();
-    mql?.addEventListener?.("change", lockScroll);
+    mql.addEventListener("change", lockScroll);
 
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
@@ -339,7 +335,7 @@ export default function AttendanceGradePage() {
     return () => {
       document.body.style.overflow = prevOverflow;
       window.removeEventListener("keydown", onKey);
-      mql?.removeEventListener?.("change", lockScroll);
+      mql.removeEventListener("change", lockScroll);
     };
   }, [selectedSeat]);
 
@@ -902,8 +898,7 @@ export default function AttendanceGradePage() {
       {selectedSeat !== null && weeklyData.length > 0 && (() => {
         // 모든 방을 순회하여 선택된 좌석 찾기
         let foundSeat: Seat | null = null;
-        const allRooms = (data?.rooms || []) as Room[];
-        for (const room of allRooms) {
+        for (const room of rooms) {
           for (const s of room.seats) {
             if (s.student?.id === selectedSeat) {
               foundSeat = s;
