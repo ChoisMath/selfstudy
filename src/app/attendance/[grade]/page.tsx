@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback, memo } from "react";
+import { useState, useRef, useCallback, useEffect, memo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import useSWR from "swr";
 import MiraeHallLayout, { GAP_CONFIG } from "@/components/seats/MiraeHallLayout";
@@ -308,6 +308,40 @@ export default function AttendanceGradePage() {
     }
     setNoteValues(notes);
   }
+
+  // 모달(<lg) 표시 중 ESC로 닫기 + body scroll lock
+  useEffect(() => {
+    if (selectedSeat === null) return;
+
+    const prevOverflow = document.body.style.overflow;
+    const mql = typeof window !== "undefined" ? window.matchMedia("(max-width: 1023.98px)") : null;
+
+    const lockScroll = () => {
+      if (mql?.matches) {
+        document.body.style.overflow = "hidden";
+      } else {
+        document.body.style.overflow = prevOverflow;
+      }
+    };
+
+    lockScroll();
+    mql?.addEventListener?.("change", lockScroll);
+
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setSelectedSeat(null);
+        setWeeklyTotals(null);
+        setWeeklyRanking(null);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener("keydown", onKey);
+      mql?.removeEventListener?.("change", lockScroll);
+    };
+  }, [selectedSeat]);
 
   async function handleNoteSave(studentId: number, date: string, note: string) {
     try {
@@ -863,6 +897,57 @@ export default function AttendanceGradePage() {
           )}
         </div>
       </div>
+
+      {/* 모바일/태블릿 오버레이 모달 (<1024px) */}
+      {selectedSeat !== null && weeklyData.length > 0 && (() => {
+        // 모든 방을 순회하여 선택된 좌석 찾기
+        let foundSeat: Seat | null = null;
+        const allRooms = (data?.rooms || []) as Room[];
+        for (const room of allRooms) {
+          for (const s of room.seats) {
+            if (s.student?.id === selectedSeat) {
+              foundSeat = s;
+              break;
+            }
+          }
+          if (foundSeat) break;
+        }
+        if (!foundSeat) return null;
+        return (
+          <div
+            className="lg:hidden fixed inset-0 z-50 flex items-center justify-center p-4"
+            onClick={() => {
+              setSelectedSeat(null);
+              setWeeklyTotals(null);
+              setWeeklyRanking(null);
+            }}
+          >
+            <div className="absolute inset-0 bg-black/50" aria-hidden="true" />
+            <div
+              role="dialog"
+              aria-modal="true"
+              className="relative bg-[#eff6ff] border-2 border-[#2563eb] rounded-xl max-w-md w-full max-h-[90vh] overflow-y-auto p-4 shadow-xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                type="button"
+                aria-label="닫기"
+                className="absolute top-2 right-2 w-8 h-8 flex items-center justify-center text-gray-600 hover:text-gray-900 text-lg font-bold"
+                onClick={() => {
+                  setSelectedSeat(null);
+                  setWeeklyTotals(null);
+                  setWeeklyRanking(null);
+                }}
+              >
+                ✕
+              </button>
+              <div className="pr-6">
+                {renderWeeklyContent(foundSeat)}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* 학년 선택 모달 */}
       {showGradeModal && (
