@@ -16,10 +16,17 @@ type DaySettings = {
   fri: boolean;
 };
 
+type Ranking = {
+  rank: number;
+  totalRanked: number;
+  topPercent: number;
+};
+
 type ParticipationData = {
   participationDays: Record<string, DaySettings>;
   monthlyStudyHours: number;
   yearlyStudyHours: number;
+  ranking: Ranking | null;
 };
 
 export default function StudentParticipationPage() {
@@ -101,11 +108,16 @@ export default function StudentParticipationPage() {
               <p className="text-xs text-blue-400 mt-0.5">시간</p>
             </div>
             <div className="bg-indigo-50 rounded-lg p-3 text-center">
-              <p className="text-xs text-indigo-500 mb-1">올해 누적</p>
+              <p className="text-xs text-indigo-500 mb-1">학년도 누계</p>
               <p className="text-2xl font-bold text-indigo-700">
                 {data.yearlyStudyHours.toFixed(1)}
               </p>
               <p className="text-xs text-indigo-400 mt-0.5">시간</p>
+              {data.ranking && (
+                <p className="text-[11px] text-amber-600 mt-1 font-semibold">
+                  {data.ranking.rank}위 (상위 {data.ranking.topPercent}%)
+                </p>
+              )}
             </div>
           </div>
         </div>
