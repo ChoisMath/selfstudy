@@ -4,9 +4,10 @@ export function getAcademicYearRange(now: Date = new Date()): {
   start: Date;
   end: Date;
 } {
-  const y = now.getMonth() >= 2 ? now.getFullYear() : now.getFullYear() - 1;
-  const start = new Date(y, 2, 1, 0, 0, 0, 0);
-  const end = new Date(y + 1, 2, 1, 0, 0, 0, 0);
+  // 프로젝트는 날짜를 UTC로 저장하므로 학년도 경계도 UTC 기준으로 계산
+  const y = now.getUTCMonth() >= 2 ? now.getUTCFullYear() : now.getUTCFullYear() - 1;
+  const start = new Date(Date.UTC(y, 2, 1));
+  const end = new Date(Date.UTC(y + 1, 2, 1));
   return { start, end };
 }
 
@@ -49,7 +50,8 @@ export async function computeGradeStudyRanking(
   }));
   normalized.sort((a, b) => b.minutes - a.minutes);
 
-  // 표준 경쟁 순위
+  // 표준 경쟁 순위 (1224): 같은 minutes = 같은 rank, 다음 순위는 N+k로 점프.
+  // 대상 학생을 찾는 즉시 break — 이후 레코드는 대상 순위에 영향 없음.
   let rank = 0;
   let prevMinutes = -1;
   let targetRank: number | null = null;
