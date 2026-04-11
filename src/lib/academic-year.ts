@@ -27,19 +27,20 @@ export async function computeGradeStudyRanking(
 ): Promise<RankingResult | null> {
   const { start, end } = getAcademicYearRange(now);
 
+  // 테이블/컬럼은 prisma @@map/@map 에 의해 snake_case (attendance, students, student_id, ...)
   const rows = await prisma.$queryRaw<GroupRow[]>`
     SELECT
-      a."studentId" AS "studentId",
-      SUM(COALESCE(a."durationMinutes", 100))::int AS minutes
-    FROM "Attendance" a
-    INNER JOIN "Student" s ON s.id = a."studentId"
+      a.student_id AS "studentId",
+      SUM(COALESCE(a.duration_minutes, 100))::int AS minutes
+    FROM attendance a
+    INNER JOIN students s ON s.id = a.student_id
     WHERE s.grade = ${grade}
-      AND s."isActive" = true
-      AND a.status = 'present'::"AttendanceStatus"
+      AND s.is_active = true
+      AND a.status::text = 'present'
       AND a.date >= ${start}
       AND a.date < ${end}
-    GROUP BY a."studentId"
-    HAVING SUM(COALESCE(a."durationMinutes", 100)) > 0
+    GROUP BY a.student_id
+    HAVING SUM(COALESCE(a.duration_minutes, 100)) > 0
   `;
 
   if (rows.length === 0) return null;
