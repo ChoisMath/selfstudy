@@ -161,6 +161,10 @@ export default function AttendanceGradePage() {
   const activatedStudentsRef = useRef(activatedStudents);
   activatedStudentsRef.current = activatedStudents;
   const attendancesRef = useRef<Record<number, AttendanceRecord>>({});
+  // 세션 캐시: 동일 학생 "i" 재클릭 시 네트워크 요청 생략
+  const weeklyCacheRef = useRef<
+    Map<number, { weekly: WeeklyDay[]; totals: WeeklyTotals | null; ranking: WeeklyRanking | null; name: string }>
+  >(new Map());
 
   const kstNow = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Seoul" }));
   const today = `${kstNow.getFullYear()}-${String(kstNow.getMonth() + 1).padStart(2, "0")}-${String(kstNow.getDate()).padStart(2, "0")}`;
@@ -172,7 +176,7 @@ export default function AttendanceGradePage() {
   const { data, mutate } = useSWR(
     tab !== "absence" ? `/api/attendance?date=${today}&session=${tab}&grade=${grade}` : null,
     fetcher,
-    { revalidateOnFocus: true }
+    { revalidateOnFocus: false }
   );
 
   const [absenceFilter, setAbsenceFilter] = useState<string>("pending");
@@ -180,14 +184,14 @@ export default function AttendanceGradePage() {
   const { data: absenceData, mutate: mutateAbsence } = useSWR(
     tab === "absence" ? `/api/attendance/absence-requests?grade=${grade}${absenceFilter !== "all" ? `&status=${absenceFilter}` : ""}` : null,
     fetcher,
-    { revalidateOnFocus: true }
+    { revalidateOnFocus: false }
   );
 
   // pending 건수 (탭 배지용) — 탭과 무관하게 항상 조회
   const { data: pendingCountData, mutate: mutatePendingCount } = useSWR(
     `/api/attendance/absence-requests?grade=${grade}&status=pending`,
     fetcher,
-    { revalidateOnFocus: true }
+    { revalidateOnFocus: false }
   );
   const pendingCount = pendingCountData?.requests?.length ?? 0;
 
@@ -216,6 +220,9 @@ export default function AttendanceGradePage() {
   async function handleToggle(studentId: number) {
     const current = attendances[studentId]?.status || "unchecked";
     const nextStatus = current === "unchecked" ? "present" : current === "present" ? "absent" : "unchecked";
+
+    // 출석 상태가 바뀌면 주간 팝업 데이터도 stale — 해당 학생 세션 캐시 무효화
+    weeklyCacheRef.current.delete(studentId);
 
     // 낙관적 업데이트: UI 즉시 반영
     mutate(
@@ -286,6 +293,26 @@ export default function AttendanceGradePage() {
     }
   }, []);
 
+  function applyWeeklyResult(
+    studentId: number,
+    name: string,
+    weekly: WeeklyDay[],
+    totals: WeeklyTotals | null,
+    ranking: WeeklyRanking | null,
+  ) {
+    setSelectedSeat(studentId);
+    setWeeklyName(name);
+    setWeeklyData(weekly);
+    setWeeklyTotals(totals);
+    setWeeklyRanking(ranking);
+    const notes: Record<string, string> = {};
+    for (const d of weekly) {
+      const noteVal = tab === "afternoon" ? d.afternoonNote : d.nightNote;
+      if (noteVal) notes[d.date] = noteVal;
+    }
+    setNoteValues(notes);
+  }
+
   async function handleInfoClick(e: React.MouseEvent, studentId: number, name: string) {
     e.stopPropagation();
     if (selectedSeat === studentId) {
@@ -294,19 +321,21 @@ export default function AttendanceGradePage() {
       setWeeklyRanking(null);
       return;
     }
-    setSelectedSeat(studentId);
-    setWeeklyName(name);
-    const res = await fetch(`/api/attendance/weekly?studentId=${studentId}&date=${today}`);
-    const result = await res.json();
-    setWeeklyData(result.weekly || []);
-    setWeeklyTotals(result.totals || null);
-    setWeeklyRanking(result.ranking || null);
-    const notes: Record<string, string> = {};
-    for (const d of (result.weekly || []) as WeeklyDay[]) {
-      const noteVal = tab === "afternoon" ? d.afternoonNote : d.nightNote;
-      if (noteVal) notes[d.date] = noteVal;
+
+    const cached = weeklyCacheRef.current.get(studentId);
+    if (cached) {
+      applyWeeklyResult(studentId, cached.name, cached.weekly, cached.totals, cached.ranking);
+      return;
     }
-    setNoteValues(notes);
+
+    const res = await fetch(`/api/attendance/weekly?studentId=${studentId}&date=${today}`);
+    if (!res.ok) return;
+    const result = await res.json();
+    const weekly = (result.weekly || []) as WeeklyDay[];
+    const totals = (result.totals || null) as WeeklyTotals | null;
+    const ranking = (result.ranking || null) as WeeklyRanking | null;
+    weeklyCacheRef.current.set(studentId, { weekly, totals, ranking, name });
+    applyWeeklyResult(studentId, name, weekly, totals, ranking);
   }
 
   // 모달(<lg) 표시 중 ESC로 닫기 + body scroll lock

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { withAuth } from "@/lib/api-auth";
-import { getAcademicYearRange, computeGradeStudyRanking } from "@/lib/academic-year";
+import { computeGradeStudyRanking } from "@/lib/academic-year";
 
 // GET /api/attendance/weekly?studentId=1&date=2026-04-05
 export const GET = withAuth(
@@ -34,9 +34,8 @@ export const GET = withAuth(
     const now = new Date();
     const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1, 0, 0, 0, 0));
     const monthEnd = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 0, 23, 59, 59, 999));
-    const { start: yearStart, end: yearEnd } = getAcademicYearRange(now);
 
-    const [attendances, participationDays, attendanceNotes, student, monthlyAttendances, yearlyAttendances] = await Promise.all([
+    const [attendances, participationDays, attendanceNotes, student, monthlyAttendances] = await Promise.all([
       prisma.attendance.findMany({
         where: {
           studentId,
@@ -60,14 +59,6 @@ export const GET = withAuth(
           studentId,
           status: "present",
           date: { gte: monthStart, lte: monthEnd },
-        },
-        select: { durationMinutes: true },
-      }),
-      prisma.attendance.findMany({
-        where: {
-          studentId,
-          status: "present",
-          date: { gte: yearStart, lt: yearEnd },
         },
         select: { durationMinutes: true },
       }),
@@ -163,10 +154,8 @@ export const GET = withAuth(
       (sum, a) => sum + (a.durationMinutes ?? 100),
       0,
     );
-    const yearlyMinutes = yearlyAttendances.reduce(
-      (sum, a) => sum + (a.durationMinutes ?? 100),
-      0,
-    );
+    // 학년도 누계는 랭킹 계산 시 이미 집계됨 — 중복 쿼리 제거
+    const yearlyMinutes = ranking?.minutes ?? 0;
     const monthlyHours = Math.round((monthlyMinutes / 60) * 10) / 10;
     const academicYearHours = Math.round((yearlyMinutes / 60) * 10) / 10;
 

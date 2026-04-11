@@ -205,6 +205,7 @@ model Attendance {
   @@index([date, sessionType])
   @@index([studentId, date])
   @@index([checkedBy])
+  @@index([date, status])
   @@map("attendance")
 }
 
