@@ -279,7 +279,19 @@ export default function AttendanceGradePage() {
   }
 
   const handlePointerDown = useCallback((studentId: number, isParticipating: boolean) => {
-    if (isParticipating || activatedStudentsRef.current.has(studentId) || attendancesRef.current[studentId]) return;
+    if (isParticipating) return;
+    const alreadyActivated = activatedStudentsRef.current.has(studentId);
+    // 이미 활성화된 학생: 출석기록 없으면 비활성화, 있으면 무시
+    if (alreadyActivated) {
+      if (attendancesRef.current[studentId]) return;
+      longPressTimerRef.current = setTimeout(() => {
+        setActivatedStudents(prev => { const next = new Set(prev); next.delete(studentId); return next; });
+        longPressTimerRef.current = null;
+      }, 500);
+      return;
+    }
+    // 미활성화 학생: 기존 출석기록 있으면 무시, 없으면 활성화
+    if (attendancesRef.current[studentId]) return;
     longPressTimerRef.current = setTimeout(() => {
       setActivatedStudents(prev => new Set(prev).add(studentId));
       longPressTimerRef.current = null;
