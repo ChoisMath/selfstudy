@@ -115,6 +115,7 @@ export default function GradeAdminPage() {
           <MonthlyCalendar
             grade={grade}
             apiBasePath={`/api/grade-admin/${grade}/supervisor-assignments`}
+            excelHref={`/api/grade-admin/${grade}/supervisor-assignments/export`}
           />
           {showSummary && (
             <SupervisorSummaryModal onClose={() => setShowSummary(false)} filterGrade={grade} />
