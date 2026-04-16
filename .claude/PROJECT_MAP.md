@@ -128,6 +128,7 @@ src/
 | GET | `today-attendance` | 학년별 오늘 출결 현황 (세션별 출석/결석/사유결석/방과후 집계) |
 | GET | `monthly-attendance?month=YYYY-MM` | 학년 전체 월간 출결 데이터 |
 | GET | `export-attendance?month=YYYY-MM` | 학년 전체 월간 출결 Excel 다운로드 |
+| GET | `supervisor-assignments/export?month=YYYY-MM` | 학년 감독배정 Excel (Month+누계 시트) |
 
 ### 학생 (`/api/student/`)
 | 메서드 | 경로 | 설명 |
@@ -151,6 +152,7 @@ src/
 | GET | `students/template` | 업로드 템플릿 |
 | POST | `students/reset` | 학생 전체 초기화 |
 | GET | `today-attendance` | 전학년 오늘 출결 현황 (1~3학년 세션별 집계) |
+| GET | `supervisors/export?month=YYYY-MM` | 전학년 감독배정 Excel (Month+누계 시트) |
 
 ### 기타
 | 메서드 | 경로 | 설명 |
@@ -238,6 +240,13 @@ Teacher (+ primaryGrade: nullable int) ──< TeacherRole (admin/supervisor/hom
 - **담임배정 자동 동기화**: homeroom-assignments POST/DELETE 시 TeacherRole("homeroom") 자동 부여/삭제
 
 ## 수정 이력 (주요 변경)
+
+### 2026-04-16: 감독배정 Excel 다운로드 기능
+- **신규 API 2개**: `/api/admin/supervisors/export`, `/api/grade-admin/[grade]/supervisor-assignments/export`
+- **공통 헬퍼**: `src/lib/excel/supervisor-export.ts` (Month 달력 시트 + 누계 시트 빌더)
+- **UI**: MonthlyCalendar에 `excelHref` prop 추가 → 월 네비게이션 옆 Excel 버튼
+- **Month 시트**: 7열 달력, 단일 셀 + 줄바꿈(wrapText)으로 학년별 교사명 표시
+- **누계 시트**: 학년도(3~2월) 중 실제 배정 있는 월만 컬럼, 관리자 버전에는 담당학년 컬럼 추가
 
 ### 2026-04-09: 월간 자율학습 참여시간 표시 기능
 - **스키마 변경**: Attendance 모델에 `durationMinutes`(Int?), `durationNote`(String?) 필드 추가 — 부분참여 오버라이드 대비
