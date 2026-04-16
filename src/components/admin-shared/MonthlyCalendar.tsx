@@ -42,10 +42,12 @@ export default function MonthlyCalendar({
   grade,
   showAllGrades = false,
   apiBasePath,
+  excelHref,
 }: {
   grade?: number;
   showAllGrades?: boolean;
   apiBasePath: string;
+  excelHref?: string;
 }) {
   const today = new Date();
   const [year, setYear] = useState(today.getFullYear());
@@ -223,6 +225,14 @@ export default function MonthlyCalendar({
           >
             이번달
           </button>
+          {excelHref && (
+            <a
+              href={`${excelHref}?month=${year}-${String(month + 1).padStart(2, "0")}`}
+              className="px-3 py-1.5 text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-md hover:bg-emerald-100"
+            >
+              Excel
+            </a>
+          )}
         </div>
         <button
           onClick={nextMonth}

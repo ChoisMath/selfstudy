@@ -22,7 +22,11 @@ export default function AdminSupervisorsPage() {
           누계
         </button>
       </div>
-      <MonthlyCalendar showAllGrades apiBasePath="" />
+      <MonthlyCalendar
+        showAllGrades
+        apiBasePath=""
+        excelHref="/api/admin/supervisors/export"
+      />
       {showSummary && (
         <SupervisorSummaryModal onClose={() => setShowSummary(false)} />
       )}
