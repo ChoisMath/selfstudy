@@ -123,11 +123,8 @@ function buildMonthSheet(wb: ExcelJS.Workbook, opts: BuildOptions): void {
     }
   }
 
-  const monthLabel =
-    mode === "all"
-      ? `${year}년 ${monthIdx + 1}월 감독배정`
-      : `${year}년 ${monthIdx + 1}월 ${grade}학년 감독배정`;
-  const sheet = wb.addWorksheet(monthLabel);
+  const sheetName = `${year}-${String(monthIdx + 1).padStart(2, "0")}`;
+  const sheet = wb.addWorksheet(sheetName);
 
   // Header row: 일 월 화 수 목 금 토
   const headerRow = sheet.addRow(DAY_HEADERS);
@@ -186,12 +183,12 @@ function buildMonthSheet(wb: ExcelJS.Workbook, opts: BuildOptions): void {
           const gradeMap = dayTeachers.get(dk);
           if (mode === "grade" && grade !== undefined) {
             const name = gradeMap?.get(grade);
-            if (name) cellText = `${dayNum}\n${name}`;
+            cellText = `${dayNum}\n${name ?? "-"}`;
           } else if (mode === "all") {
             const lines: string[] = [];
             for (let g = 1; g <= 3; g++) {
               const name = gradeMap?.get(g);
-              lines.push(`${g}: ${name ?? ""}`);
+              lines.push(`${g}: ${name ?? "-"}`);
             }
             cellText = `${dayNum}\n${lines.join("\n")}`;
           }
