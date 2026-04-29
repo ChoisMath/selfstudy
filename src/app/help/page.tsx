@@ -269,7 +269,7 @@ export default function HelpPage() {
           갤럭시 등 안드로이드 기종은 Chrome 브라우저를 사용합니다.
         </p>
         <StepItem num={1}>Chrome 열기</StepItem>
-        <StepItem num={2}>주소창에 posan.up.railway.app 입력</StepItem>
+        <StepItem num={2}>주소창에 self.posan.kr 입력</StepItem>
         <StepItem num={3}>우측 상단 점 3개(⋮) 클릭</StepItem>
         <StepItem num={4}>홈 화면에 추가 → 설치</StepItem>
         <StepItem num={5}>1~2분 후 홈 화면에 앱 아이콘이 생성됩니다.</StepItem>
@@ -283,7 +283,7 @@ export default function HelpPage() {
           아이폰, 아이패드는 Safari 브라우저를 사용합니다.
         </p>
         <StepItem num={1}>Safari 열기</StepItem>
-        <StepItem num={2}>주소창에 posan.up.railway.app 입력</StepItem>
+        <StepItem num={2}>주소창에 self.posan.kr 입력</StepItem>
         <StepItem num={3}>하단 공유 아이콘(⎋) 클릭</StepItem>
         <StepItem num={4}>홈 화면에 추가 → 추가</StepItem>
         <StepItem num={5}>1~2분 후 홈 화면에 앱 아이콘이 생성됩니다.</StepItem>

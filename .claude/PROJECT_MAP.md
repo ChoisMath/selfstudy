@@ -8,7 +8,7 @@
 학교 자율학습(오후/야간) 출석 관리 반응형 웹앱.
 - **기술 스택**: Next.js 16 (App Router) + Prisma 7 + NextAuth v5 + Tailwind CSS 4 + SWR + @dnd-kit
 - **DB**: PostgreSQL (Railway)
-- **배포**: https://posan.up.railway.app
+- **배포**: https://self.posan.kr (Railway custom domain, 구주소 https://posan.up.railway.app 도 당분간 병행)
 
 ## 사용자 역할 (5종)
 
