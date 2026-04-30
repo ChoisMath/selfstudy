@@ -1,6 +1,6 @@
 # 자율학습 출석부 시스템 - 프로젝트 지도
 
-> 마지막 업데이트: 2026-04-09
+> 마지막 업데이트: 2026-04-30
 > 이 파일은 새 세션에서 코드베이스를 빠르게 파악하기 위한 참조 문서입니다.
 
 ## 개요
@@ -101,6 +101,7 @@ src/
 | POST | `/api/attendance/toggle` | 출석 상태 순환 토글 |
 | GET | `/api/attendance/weekly?studentId&date` | 주간 출석 + 참여설정 + 비고 |
 | GET | `/api/attendance/absence-requests?grade&status` | 학년별 불참신청 목록 조회 (감독교사용) |
+| POST | `/api/attendance/absence-requests/bulk-approve` | 감독교사 배정 검증 후 해당 날짜/학년/세션의 pending 불참신청 일괄승인 |
 | GET/PUT | `/api/attendance/notes?studentId&date` | 요일별 비고 조회/수정 (upsert/삭제) |
 
 ### 담임 (`/api/homeroom/`)
@@ -201,6 +202,7 @@ Teacher (+ primaryGrade: nullable int) ──< TeacherRole (admin/supervisor/hom
 ### 2. 불참승인 트랜잭션 (`/api/homeroom/absence-requests/[id]`)
 - 승인 시: AbsenceRequest.status→approved + Attendance upsert(absent) + AbsenceReason create
 - 반려 시: AbsenceRequest.status→rejected만
+- 일괄승인(`POST /api/attendance/absence-requests/bulk-approve`)은 감독교사 배정(`teacherId + date + grade + sessionType`)을 서버에서 검증한 뒤 pending만 트랜잭션으로 승인
 
 ### 3. 좌석 배치 저장 (`/api/grade-admin/[grade]/seat-layouts`)
 - 트랜잭션: 기존 SeatLayout 삭제 → 새로 일괄 생성
@@ -217,6 +219,8 @@ Teacher (+ primaryGrade: nullable int) ──< TeacherRole (admin/supervisor/hom
 - 3번째 탭 "불참신청": 감독교사가 해당 학년의 불참신청 목록을 조회/승인/반려
 - `/api/attendance/absence-requests?grade&status`로 학년별 신청 조회
 - `/api/homeroom/absence-requests/[id]` PUT으로 승인/반려 처리 (모든 교사 허용)
+- `일괄승인` 버튼: 오늘 해당 학년 감독으로 배정된 세션의 pending 불참신청만 후보로 표시, 확인 모달에서 학생/날짜/시간/사유/상세 테이블을 가로 스크롤 방식으로 보여준 뒤 승인
+- 일괄승인 성공 시 불참신청 목록, pending 배지, 좌석 데이터 SWR을 갱신
 - 좌석 그리드의 빨간 "*"로 대기 중인 불참신청 학생 시각적 식별
 
 ### 6. 학번 파싱
@@ -240,6 +244,14 @@ Teacher (+ primaryGrade: nullable int) ──< TeacherRole (admin/supervisor/hom
 - **담임배정 자동 동기화**: homeroom-assignments POST/DELETE 시 TeacherRole("homeroom") 자동 부여/삭제
 
 ## 수정 이력 (주요 변경)
+
+### 2026-04-30: 감독교사 불참신청 일괄승인
+- **신규 API**: `POST /api/attendance/absence-requests/bulk-approve` — `teacherId + date + grade + sessionType` 감독배정 검증 후 pending 불참신청만 일괄승인
+- **신규 헬퍼**: `src/lib/absence-request-bulk-approval.ts` — 승인 대상 조회, 트랜잭션 처리, Attendance upsert(absent), AbsenceReason upsert를 담당
+- **감독 UI**: `/attendance/[grade]` 불참신청 탭에 `일괄승인` 버튼과 확인 모달 추가
+- **확인 모달 테이블**: 학생/날짜/시간/사유/상세 컬럼, `whitespace-nowrap` + `overflow-x-auto`로 모바일에서도 줄바꿈 없이 가로 스크롤
+- **테스트**: `tests/supervisor-bulk-absence-approval.test.ts` — 배정된 감독교사만 승인 가능, rejected/approved/다른 날짜·학년·세션은 미변경 검증
+- **커밋**: `48cffc0` 스펙, `45ede3a` 계획, `1011833` 구현
 
 ### 2026-04-16: 감독배정 Excel 다운로드 기능
 - **신규 API 2개**: `/api/admin/supervisors/export`, `/api/grade-admin/[grade]/supervisor-assignments/export`
