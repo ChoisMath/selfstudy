@@ -65,6 +65,31 @@ interface WeeklyRanking {
 
 type Tab = "afternoon" | "night" | "absence";
 
+type AbsenceRequestItem = {
+  id: number;
+  student: {
+    id: number;
+    name: string;
+    grade: number;
+    classNumber: number;
+    studentNumber: number;
+  };
+  sessionType: "afternoon" | "night";
+  date: string;
+  reasonType: string;
+  detail: string | null;
+  status: string;
+  reviewer: { id: number; name: string } | null;
+  reviewedAt: string | null;
+  createdAt: string;
+};
+
+type TodaySupervisorAssignment = {
+  id: number;
+  grade: number;
+  sessionType: "afternoon" | "night";
+};
+
 interface SeatCellProps {
   student: NonNullable<Seat["student"]>;
   status: string;
@@ -157,6 +182,8 @@ export default function AttendanceGradePage() {
   const [weeklyName, setWeeklyName] = useState("");
   const [activatedStudents, setActivatedStudents] = useState<Set<number>>(new Set());
   const [noteValues, setNoteValues] = useState<Record<string, string>>({});
+  const [showBulkApproveModal, setShowBulkApproveModal] = useState(false);
+  const [isBulkApproving, setIsBulkApproving] = useState(false);
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const activatedStudentsRef = useRef(activatedStudents);
   activatedStudentsRef.current = activatedStudents;
@@ -187,6 +214,12 @@ export default function AttendanceGradePage() {
     { revalidateOnFocus: false }
   );
 
+  const { data: todayAssignmentsData } = useSWR(
+    "/api/supervisor-assignments/my-today",
+    fetcher,
+    { revalidateOnFocus: false }
+  );
+
   // pending 건수 (탭 배지용) — 탭과 무관하게 항상 조회
   const { data: pendingCountData, mutate: mutatePendingCount } = useSWR(
     `/api/attendance/absence-requests?grade=${grade}&status=pending`,
@@ -194,6 +227,18 @@ export default function AttendanceGradePage() {
     { revalidateOnFocus: false }
   );
   const pendingCount = pendingCountData?.requests?.length ?? 0;
+  const pendingAbsenceRequests = (pendingCountData?.requests ?? []) as AbsenceRequestItem[];
+  const assignedSessionTypes = new Set(
+    ((todayAssignmentsData?.assignments ?? []) as TodaySupervisorAssignment[])
+      .filter((assignment) => assignment.grade === grade)
+      .map((assignment) => assignment.sessionType)
+  );
+  const bulkCandidates = pendingAbsenceRequests.filter(
+    (request) =>
+      request.status === "pending" &&
+      request.date === today &&
+      assignedSessionTypes.has(request.sessionType)
+  );
 
   const rooms: Room[] = data?.rooms || [];
   const attendances: Record<number, AttendanceRecord> = data?.attendances || {};
@@ -656,13 +701,46 @@ export default function AttendanceGradePage() {
     }
   }
 
+  async function handleBulkApprove(candidates: AbsenceRequestItem[]) {
+    const sessionTypes = Array.from(new Set(candidates.map((candidate) => candidate.sessionType)));
+    setIsBulkApproving(true);
+
+    try {
+      let totalApproved = 0;
+      for (const sessionType of sessionTypes) {
+        const res = await fetch("/api/attendance/absence-requests/bulk-approve", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ grade, date: today, sessionType }),
+        });
+
+        const result = await res.json();
+        if (!res.ok) {
+          throw new Error(result.error || "일괄승인에 실패했습니다.");
+        }
+
+        totalApproved += result.approvedCount || 0;
+      }
+
+      setShowBulkApproveModal(false);
+      mutateAbsence();
+      mutatePendingCount();
+      mutate();
+      alert(`${totalApproved}건을 승인했습니다.`);
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "일괄승인에 실패했습니다.");
+    } finally {
+      setIsBulkApproving(false);
+    }
+  }
+
   function renderAbsenceRequests() {
-    const requests = absenceData?.requests || [];
+    const requests = (absenceData?.requests || []) as AbsenceRequestItem[];
 
     return (
       <div>
         {/* 필터 버튼 */}
-        <div className="flex gap-2 mb-4">
+        <div className="flex items-center gap-2 mb-4 overflow-x-auto">
           {[
             { key: "pending", label: `대기중${pendingCount > 0 ? ` (${pendingCount})` : ""}` },
             { key: "approved", label: "승인" },
@@ -680,6 +758,14 @@ export default function AttendanceGradePage() {
               {f.label}
             </button>
           ))}
+          <button
+            type="button"
+            onClick={() => setShowBulkApproveModal(true)}
+            disabled={bulkCandidates.length === 0 || isBulkApproving}
+            className="ml-auto shrink-0 bg-[#2563eb] text-white px-3 py-1.5 rounded-md text-[clamp(11px,2.8vw,13px)] font-semibold hover:bg-[#1d4ed8] disabled:bg-[#cbd5e1] disabled:text-[#64748b] disabled:cursor-not-allowed transition-colors whitespace-nowrap"
+          >
+            일괄승인{bulkCandidates.length > 0 ? ` (${bulkCandidates.length})` : ""}
+          </button>
         </div>
 
         {/* 요청 목록 */}
@@ -689,18 +775,7 @@ export default function AttendanceGradePage() {
           </div>
         ) : (
           <div className="flex flex-col gap-2">
-            {requests.map((r: {
-              id: number;
-              student: { id: number; name: string; grade: number; classNumber: number; studentNumber: number };
-              sessionType: string;
-              date: string;
-              reasonType: string;
-              detail: string | null;
-              status: string;
-              reviewer: { id: number; name: string } | null;
-              reviewedAt: string | null;
-              createdAt: string;
-            }) => {
+            {requests.map((r) => {
               const dateObj = new Date(r.date + "T12:00:00+09:00");
               const days = ["일", "월", "화", "수", "목", "금", "토"];
               const dateLabel = `${dateObj.getMonth() + 1}/${dateObj.getDate()}(${days[dateObj.getDay()]})`;
@@ -936,6 +1011,96 @@ export default function AttendanceGradePage() {
       </div>
 
       {/* 모바일/태블릿 오버레이 모달 (<1024px) */}
+      {showBulkApproveModal && (
+        <div
+          className="fixed inset-0 z-[200] flex items-center justify-center p-4"
+          onClick={() => {
+            if (!isBulkApproving) setShowBulkApproveModal(false);
+          }}
+        >
+          <div className="absolute inset-0 bg-black/50" aria-hidden="true" />
+          <div
+            role="dialog"
+            aria-modal="true"
+            className="relative bg-white rounded-xl shadow-xl w-full max-w-3xl max-h-[85vh] overflow-hidden"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="px-4 py-3 border-b border-[#e2e8f0] flex items-center justify-between gap-3">
+              <div>
+                <h2 className="text-base font-bold text-[#0f172a]">불참신청 일괄승인</h2>
+                <p className="text-xs text-[#64748b] mt-0.5">{bulkCandidates.length}건을 승인합니다.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowBulkApproveModal(false)}
+                disabled={isBulkApproving}
+                className="w-8 h-8 flex items-center justify-center rounded-md text-[#64748b] hover:bg-[#f1f5f9] disabled:opacity-50"
+                aria-label="닫기"
+              >
+                ×
+              </button>
+            </div>
+            <div className="p-4 overflow-y-auto max-h-[60vh]">
+              <div className="overflow-x-auto border border-[#e2e8f0] rounded-lg">
+                <table className="w-full text-sm">
+                  <thead className="bg-[#f8fafc] border-b border-[#e2e8f0]">
+                    <tr>
+                      <th className="px-3 py-2 text-left font-semibold text-[#475569] whitespace-nowrap">학생</th>
+                      <th className="px-3 py-2 text-center font-semibold text-[#475569] whitespace-nowrap">날짜</th>
+                      <th className="px-3 py-2 text-center font-semibold text-[#475569] whitespace-nowrap">시간</th>
+                      <th className="px-3 py-2 text-center font-semibold text-[#475569] whitespace-nowrap">사유</th>
+                      <th className="px-3 py-2 text-left font-semibold text-[#475569] whitespace-nowrap">상세</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#f1f5f9]">
+                    {bulkCandidates.map((request) => (
+                      <tr key={request.id}>
+                        <td className="px-3 py-2 whitespace-nowrap">
+                          <span className="font-semibold text-[#0f172a]">{request.student.name}</span>
+                          <span className="text-xs text-[#94a3b8] ml-1">
+                            {request.student.grade}학년 {request.student.classNumber}반 {request.student.studentNumber}번
+                          </span>
+                        </td>
+                        <td className="px-3 py-2 text-center text-[#475569] whitespace-nowrap">{request.date}</td>
+                        <td className="px-3 py-2 text-center text-[#475569] whitespace-nowrap">
+                          {request.sessionType === "afternoon" ? "오후자습" : "야간자습"}
+                        </td>
+                        <td className="px-3 py-2 text-center whitespace-nowrap">
+                          <span className={reasonColors[request.reasonType] || "text-[#6b7280]"}>
+                            {reasonLabels[request.reasonType] || request.reasonType}
+                          </span>
+                        </td>
+                        <td className="px-3 py-2 text-[#64748b] whitespace-nowrap max-w-[260px] truncate">
+                          {request.detail || "-"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div className="px-4 py-3 border-t border-[#e2e8f0] flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setShowBulkApproveModal(false)}
+                disabled={isBulkApproving}
+                className="px-4 py-2 rounded-md text-sm font-semibold bg-[#f1f5f9] text-[#475569] hover:bg-[#e2e8f0] disabled:opacity-50"
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                onClick={() => handleBulkApprove(bulkCandidates)}
+                disabled={isBulkApproving || bulkCandidates.length === 0}
+                className="px-4 py-2 rounded-md text-sm font-semibold bg-[#2563eb] text-white hover:bg-[#1d4ed8] disabled:bg-[#cbd5e1] disabled:text-[#64748b] disabled:cursor-not-allowed"
+              >
+                {isBulkApproving ? "승인 중..." : "일괄승인"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {selectedSeat !== null && weeklyData.length > 0 && (() => {
         // 모든 방을 순회하여 선택된 좌석 찾기
         let foundSeat: Seat | null = null;
