@@ -1,6 +1,6 @@
 # 자율학습 출석부 시스템 - 프로젝트 지도
 
-> 마지막 업데이트: 2026-04-30
+> 마지막 업데이트: 2026-05-01
 > 이 파일은 새 세션에서 코드베이스를 빠르게 파악하기 위한 참조 문서입니다.
 
 ## 개요
@@ -244,6 +244,35 @@ Teacher (+ primaryGrade: nullable int) ──< TeacherRole (admin/supervisor/hom
 - **담임배정 자동 동기화**: homeroom-assignments POST/DELETE 시 TeacherRole("homeroom") 자동 부여/삭제
 
 ## 수정 이력 (주요 변경)
+
+### 2026-05-01: `/help` MDX 사용설명서 전환
+- **커밋**: `6cca687 Convert help page to MDX manual` (`main` -> `origin/main`)
+- **목표**: 공개 `/help` 페이지를 단일 대형 client page에서 `page.tsx` 서버 shell + `content.mdx` 문서 본문 구조로 전환
+- **MDX 설정**:
+  - 패키지 추가: `@next/mdx`, `@mdx-js/loader`, `@mdx-js/react`, `@types/mdx`
+  - `next.config.ts`: `createMDX` 적용, `pageExtensions: ["js", "jsx", "md", "mdx", "ts", "tsx"]`
+  - `mdx-components.tsx`: App Router MDX 필수 file convention 추가, 문서용 기본 HTML 스타일 매핑
+- **라우트 구조**:
+  - `src/app/help/page.tsx`: `"use client"` 제거, 공개 도움말 헤더와 본문 컨테이너만 담당하는 server component
+  - `src/app/help/content.mdx`: 설치/로그인, 학생, 감독교사, 담임교사, 학년관리, 관리자, 문제 해결 문서 본문
+- **도움말 데모 계층**:
+  - `src/components/help/HelpDemos.tsx` 추가
+  - 실제 인증/session/router/API 호출 없이 mock data만 사용하는 public demo island
+  - 포함 데모: `TodayAttendanceDemo`, `SeatLayoutDemo`, `UnassignedStudentsDemo`, `ExcelUploadDemo`
+  - 좌석 데모는 기존 `MiraeHallLayout`, `RoomGrid`, `UnassignedStudents`를 `DndContext` 안에서 mock data로 렌더링
+  - Excel 데모는 실제 `ExcelUploadModal` 대신 API 호출 없는 presentational modal mock으로 구성
+- **회귀 테스트**:
+  - `tests/help-mdx.test.ts` 추가
+  - `/help/page.tsx`가 server component인지, MDX를 import/render하는지, `content.mdx`가 데모를 포함하는지 검증
+  - `HelpDemos.tsx`에 `/api/`, `useSession`, `useRouter` 문자열이 없는지 검증
+- **검증 결과**:
+  - `npx.cmd tsx tests/help-mdx.test.ts` 통과
+  - `npm.cmd run build` 통과, `/help`는 static route로 생성
+  - 로컬 dev 확인에서 `/help`가 로그인 없이 HTTP 200 반환 및 MDX/데모 텍스트 렌더링
+  - `npm.cmd run lint`는 기존 unrelated lint error 때문에 실패 상태 유지
+- **주의사항**:
+  - 검증 중 dev server가 만든 stale `.next/dev/types/routes.d.ts`가 깨져 build typecheck를 막은 적이 있음. dev server 중지 후 `.next/dev/types` 삭제로 해결.
+  - 기존 unrelated dirty files(`.claude/settings.local.json`, `.superpowers/`, 오래된 docs, `scripts/`)는 이 커밋에 포함하지 않음.
 
 ### 2026-04-30: 감독교사 불참신청 일괄승인
 - **신규 API**: `POST /api/attendance/absence-requests/bulk-approve` — `teacherId + date + grade + sessionType` 감독배정 검증 후 pending 불참신청만 일괄승인
