@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { buildMonthCells, parseDateValue, shiftMonth } from "@/lib/calendar";
 
 const WEEKDAY_HEADERS = ["일", "월", "화", "수", "목", "금", "토"];
@@ -14,6 +14,12 @@ interface AttendanceDatePickerProps {
 export default function AttendanceDatePicker({ value, today, onChange }: AttendanceDatePickerProps) {
   const initial = parseDateValue(value);
   const [view, setView] = useState({ year: initial.year, month: initial.month });
+
+  useEffect(() => {
+    const next = parseDateValue(value);
+    setView({ year: next.year, month: next.month });
+  }, [value]);
+
   const cells = buildMonthCells(view.year, view.month);
 
   return (
