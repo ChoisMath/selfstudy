@@ -3,6 +3,9 @@
 import { useState, useRef, useCallback, useEffect, memo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import useSWR from "swr";
+import { useSession } from "next-auth/react";
+import AttendanceDatePicker from "@/components/attendance/AttendanceDatePicker";
+import { getKstTodayString, formatDateLabel } from "@/lib/calendar";
 import MiraeHallLayout, { GAP_CONFIG } from "@/components/seats/MiraeHallLayout";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
@@ -193,15 +196,27 @@ export default function AttendanceGradePage() {
     Map<number, { weekly: WeeklyDay[]; totals: WeeklyTotals | null; ranking: WeeklyRanking | null; name: string }>
   >(new Map());
 
-  const kstNow = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Seoul" }));
-  const today = `${kstNow.getFullYear()}-${String(kstNow.getMonth() + 1).padStart(2, "0")}-${String(kstNow.getDate()).padStart(2, "0")}`;
-  const todayFormatted = (() => {
-    const days = ["일", "월", "화", "수", "목", "금", "토"];
-    return `${kstNow.getFullYear()}.${kstNow.getMonth() + 1}.${kstNow.getDate()} (${days[kstNow.getDay()]})`;
-  })();
+  const today = getKstTodayString();
+  const [selectedDate, setSelectedDate] = useState(today);
+  const selectedDateFormatted = formatDateLabel(selectedDate);
+
+  const { data: session } = useSession();
+  const canChangeDate =
+    session?.user?.roles?.includes("admin") || (session?.user?.subAdminGrades?.length ?? 0) > 0;
+  const [showDatePicker, setShowDatePicker] = useState(false);
+
+  function handleDateChange(date: string) {
+    setSelectedDate(date);
+    setSelectedSeat(null);
+    setActivatedStudents(new Set());
+    setWeeklyTotals(null);
+    setWeeklyRanking(null);
+    weeklyCacheRef.current.clear();
+    setShowDatePicker(false);
+  }
 
   const { data, mutate } = useSWR(
-    tab !== "absence" ? `/api/attendance?date=${today}&session=${tab}&grade=${grade}` : null,
+    tab !== "absence" ? `/api/attendance?date=${selectedDate}&session=${tab}&grade=${grade}` : null,
     fetcher,
     { revalidateOnFocus: false }
   );
@@ -289,7 +304,7 @@ export default function AttendanceGradePage() {
       const res = await fetch("/api/attendance/toggle", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ studentId, sessionType: tab, date: today, currentStatus: current }),
+        body: JSON.stringify({ studentId, sessionType: tab, date: selectedDate, currentStatus: current }),
       });
       if (!res.ok) {
         // 실패 시 롤백
@@ -385,7 +400,7 @@ export default function AttendanceGradePage() {
       return;
     }
 
-    const res = await fetch(`/api/attendance/weekly?studentId=${studentId}&date=${today}`);
+    const res = await fetch(`/api/attendance/weekly?studentId=${studentId}&date=${selectedDate}`);
     if (!res.ok) return;
     const result = await res.json();
     const weekly = (result.weekly || []) as WeeklyDay[];
@@ -424,6 +439,15 @@ export default function AttendanceGradePage() {
       mql.removeEventListener("change", lockScroll);
     };
   }, [selectedSeat]);
+
+  useEffect(() => {
+    if (!showDatePicker) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setShowDatePicker(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [showDatePicker]);
 
   async function handleNoteSave(studentId: number, date: string, note: string) {
     try {
@@ -531,7 +555,7 @@ export default function AttendanceGradePage() {
         </div>
         <div className="grid grid-cols-5 gap-[clamp(2px,0.6vw,4px)] text-center">
           {weeklyData.map((d) => {
-            const isToday = d.date === today;
+            const isToday = d.date === selectedDate;
             return (
               <div
                 key={`h-${d.date}`}
@@ -546,7 +570,7 @@ export default function AttendanceGradePage() {
             );
           })}
           {weeklyData.map((d) => {
-            const isToday = d.date === today;
+            const isToday = d.date === selectedDate;
             const participating = tab === "afternoon" ? d.afternoonParticipating : d.nightParticipating;
             const isAfterSchoolDay = tab === "afternoon" ? d.afternoonAfterSchool : d.nightAfterSchool;
             const record = tab === "afternoon" ? d.afternoon : d.night;
@@ -834,7 +858,7 @@ export default function AttendanceGradePage() {
   return (
     <div className="bg-[#f1f5f9] min-h-screen">
       {/* 고정 상단 바 - seat-responsive-v2 디자인 */}
-      <div className="sticky top-0 z-[100] bg-[#f1f5f9] px-3 pt-2 max-w-[960px] mx-auto">
+      <div className="sticky top-0 z-[100] bg-[#f1f5f9] px-3 pt-2 max-w-[960px] mx-auto relative">
         {/* 날짜 바 */}
         <div
           className="rounded-[10px] px-3.5 py-2.5 flex items-center gap-2 overflow-x-auto text-white"
@@ -843,9 +867,25 @@ export default function AttendanceGradePage() {
             scrollbarWidth: "none",
           }}
         >
-          <span className="text-[clamp(13px,3.5vw,16px)] font-bold whitespace-nowrap shrink-0">
-            {todayFormatted}
-          </span>
+          {canChangeDate ? (
+            <button
+              type="button"
+              onClick={() => setShowDatePicker((v) => !v)}
+              className="text-[clamp(13px,3.5vw,16px)] font-bold whitespace-nowrap shrink-0 flex items-center gap-1 hover:opacity-90"
+            >
+              {selectedDateFormatted}
+              <span className="text-[11px] leading-none">▾</span>
+            </button>
+          ) : (
+            <span className="text-[clamp(13px,3.5vw,16px)] font-bold whitespace-nowrap shrink-0">
+              {selectedDateFormatted}
+            </span>
+          )}
+          {selectedDate !== today && (
+            <span className="shrink-0 text-[10px] bg-white/20 px-1.5 py-0.5 rounded whitespace-nowrap">
+              오늘 아님
+            </span>
+          )}
           <div className="w-px h-4 bg-white/30 shrink-0" />
           <span className="text-[clamp(11px,2.6vw,13px)] whitespace-nowrap shrink-0 opacity-90">
             감독{" "}
@@ -919,6 +959,18 @@ export default function AttendanceGradePage() {
             )}
           </button>
         </div>
+        {canChangeDate && showDatePicker && (
+          <>
+            <div
+              className="fixed inset-0 z-[110]"
+              aria-hidden="true"
+              onClick={() => setShowDatePicker(false)}
+            />
+            <div className="absolute z-[120] left-3 top-[3.25rem]">
+              <AttendanceDatePicker value={selectedDate} today={today} onChange={handleDateChange} />
+            </div>
+          </>
+        )}
       </div>
 
       {/* 교실 콘텐츠 */}
