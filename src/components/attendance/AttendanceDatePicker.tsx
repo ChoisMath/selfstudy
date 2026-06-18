@@ -28,7 +28,7 @@ export default function AttendanceDatePicker({ value, today, onChange }: Attenda
         <button
           type="button"
           onClick={() => setView((v) => shiftMonth(v.year, v.month, -1))}
-          className="w-9 h-9 flex items-center justify-center rounded-md text-[#475569] hover:bg-[#f1f5f9]"
+          className="w-11 h-11 flex items-center justify-center rounded-md text-[#475569] hover:bg-[#f1f5f9]"
           aria-label="이전 달"
         >
           ‹
@@ -39,7 +39,7 @@ export default function AttendanceDatePicker({ value, today, onChange }: Attenda
         <button
           type="button"
           onClick={() => setView((v) => shiftMonth(v.year, v.month, 1))}
-          className="w-9 h-9 flex items-center justify-center rounded-md text-[#475569] hover:bg-[#f1f5f9]"
+          className="w-11 h-11 flex items-center justify-center rounded-md text-[#475569] hover:bg-[#f1f5f9]"
           aria-label="다음 달"
         >
           ›
@@ -88,7 +88,7 @@ export default function AttendanceDatePicker({ value, today, onChange }: Attenda
         <button
           type="button"
           onClick={() => onChange(today)}
-          className="px-4 py-1.5 rounded-md text-xs font-semibold text-[#2563eb] bg-[#eff6ff] hover:bg-[#dbeafe] whitespace-nowrap min-h-9"
+          className="px-4 py-1.5 rounded-md text-xs font-semibold text-[#2563eb] bg-[#eff6ff] hover:bg-[#dbeafe] whitespace-nowrap min-h-11"
         >
           오늘로
         </button>

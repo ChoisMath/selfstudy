@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback, useEffect, memo } from "react";
+import { useState, useRef, useCallback, useEffect, useMemo, memo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import useSWR from "swr";
 import { useSession } from "next-auth/react";
@@ -196,7 +196,7 @@ export default function AttendanceGradePage() {
     Map<number, { weekly: WeeklyDay[]; totals: WeeklyTotals | null; ranking: WeeklyRanking | null; name: string }>
   >(new Map());
 
-  const today = getKstTodayString();
+  const today = useMemo(() => getKstTodayString(), []);
   const [selectedDate, setSelectedDate] = useState(today);
   const selectedDateFormatted = formatDateLabel(selectedDate);
 
