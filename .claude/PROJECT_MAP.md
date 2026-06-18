@@ -1,6 +1,6 @@
 # 자율학습 출석부 시스템 - 프로젝트 지도
 
-> 마지막 업데이트: 2026-05-01
+> 마지막 업데이트: 2026-06-18
 > 이 파일은 새 세션에서 코드베이스를 빠르게 파악하기 위한 참조 문서입니다.
 
 ## 개요
@@ -67,6 +67,8 @@ src/
 │   └── api/                    # API 라우트 (아래 별도 섹션)
 │
 ├── components/
+│   ├── attendance/
+│   │   └── AttendanceDatePicker.tsx  # 커스텀 월간 달력 팝오버 (props: value/today/onChange, "오늘로" 버튼, @/lib/calendar 의존)
 │   ├── admin-shared/
 │   │   ├── AdminNav.tsx        # 관리자 네비 (오늘 출결 메뉴 포함, exact match, 서브관리자용 교사 링크)
 │   │   ├── ParticipationManagement.tsx  # 참여설정 테이블 (grade prop)
@@ -85,6 +87,7 @@ src/
 ├── lib/
 │   ├── auth.ts         # NextAuth 설정 (Credentials×2 + Google, JWT 콜백)
 │   ├── api-auth.ts     # withAuth (+ "teacher" 의사역할: 모든 교사 허용), withGradeAuth, withHomeroomAuth 래퍼
+│   ├── calendar.ts     # KST 안전 순수 날짜 유틸 (getKstTodayString/formatDateValue/parseDateValue/formatDateLabel/shiftMonth/buildMonthCells, toISOString 미사용)
 │   └── prisma.ts       # PrismaClient 싱글톤 (PrismaPg 어댑터)
 │
 ├── middleware.ts       # 라우트 보호 (getToken + 명시적 cookieName/salt, /homeroom·/attendance 모든 교사 허용)
@@ -213,7 +216,15 @@ Teacher (+ primaryGrade: nullable int) ──< TeacherRole (admin/supervisor/hom
 - 비참여 좌석: 회색(`#e5e7eb`, opacity-60), 탭 클릭 무시
 - 길게 터치(500ms): `activatedStudents` Set에 추가 → 하늘색(활성화) → 탭으로 출석 토글 가능
 - 이미 출석 기록이 있는 비참여 학생은 활성 상태로 표시
-- ⚠ KST 날짜는 `getFullYear()/getMonth()/getDate()`로 생성 (`toISOString()` 사용 금지)
+- ⚠ KST 날짜는 `getFullYear()/getMonth()/getDate()`로 생성 (`toISOString()` 사용 금지). 날짜 유틸은 `@/lib/calendar` 사용
+
+### 4-1. 출석 그리드 — 권한별 날짜 선택 (`/attendance/[grade]`)
+- `useSession`으로 권한 판별: `canChangeDate = roles.includes("admin") || subAdminGrades.length > 0` (전체관리자/학년관리자만 임의 날짜 선택 가능, 일반 교사는 today 고정)
+- `selectedDate` state(기본 `today = getKstTodayString()`). 날짜 바 클릭 → `AttendanceDatePicker` 팝오버에서 임의 날짜 선택 → 해당 날짜 출결 조회/체크
+- 조회 SWR(`/api/attendance`)/토글(`/api/attendance/toggle`)/주간 팝업(`/api/attendance/weekly`)은 `selectedDate` 사용. 불참신청 일괄승인(`bulkCandidates`, `handleBulkApprove`)은 `today` 고정 유지
+- 날짜 변경 시 선택 좌석/활성화/누계/주간 캐시 초기화. `selectedDate !== today`면 "오늘 아님" 배지 표시
+- 팝오버는 날짜 행 `overflow-x-auto` 바깥(sticky 컨테이너 직속 자식, `absolute z-[120]`)에 렌더해 클리핑 방지. 백드롭 클릭/ESC로 닫힘
+- 백엔드 변경 없음 — `/api/attendance`, `/api/attendance/toggle`, `/api/attendance/weekly`가 이미 임의 `date` 파라미터 처리
 
 ### 5. 출석 그리드 — 불참신청 탭 (`/attendance/[grade]`)
 - 3번째 탭 "불참신청": 감독교사가 해당 학년의 불참신청 목록을 조회/승인/반려
@@ -244,6 +255,17 @@ Teacher (+ primaryGrade: nullable int) ──< TeacherRole (admin/supervisor/hom
 - **담임배정 자동 동기화**: homeroom-assignments POST/DELETE 시 TeacherRole("homeroom") 자동 부여/삭제
 
 ## 수정 이력 (주요 변경)
+
+### 2026-06-18: 권한별 날짜 선택 출결 체크 (feat/attendance-date-picker)
+- **신규 유틸**: `src/lib/calendar.ts` — KST 안전 순수 날짜 함수 모음. `getKstTodayString()`, `formatDateValue(y,m,d)`, `parseDateValue(date)`, `formatDateLabel(date)`(`2026.6.18 (목)` 형식), `shiftMonth(y,m,delta)`, `buildMonthCells(y,m)`. `toISOString()` 미사용으로 KST 새벽 시간대 전날 반환 버그 회피
+- **신규 컴포넌트**: `src/components/attendance/AttendanceDatePicker.tsx` — 커스텀 월간 달력 팝오버. props `{ value, today, onChange }`(YYYY-MM-DD). 월 네비게이션 + 요일 헤더 + 날짜 셀 + "오늘로" 버튼, `@/lib/calendar` 의존
+- **출석 페이지 수정**: `src/app/attendance/[grade]/page.tsx`
+  - `useSession`으로 권한 판별 → `canChangeDate = roles.includes("admin") || subAdminGrades.length > 0`. 전체관리자/학년관리자는 날짜 바 클릭으로 달력 팝오버를 열어 임의 날짜 선택, 일반 교사는 today 고정(텍스트만 표시)
+  - `selectedDate` state(기본 today) 도입. 조회 SWR/토글/주간 팝업이 `selectedDate` 사용. 불참신청 일괄승인은 `today` 고정 유지
+  - 날짜 변경 시 선택 좌석/활성화/누계/주간 캐시 초기화, `selectedDate !== today`면 "오늘 아님" 배지
+  - 팝오버는 날짜 행 `overflow-x-auto` 바깥(sticky 컨테이너 직속 자식)에 렌더해 클리핑 방지
+- **백엔드 변경 없음**: `/api/attendance`, `/api/attendance/toggle`, `/api/attendance/weekly`가 이미 임의 `date` 파라미터 처리
+- **테스트**: `tests/calendar.test.ts`(날짜 유틸 단위), `tests/attendance-date-picker.test.ts`(컴포넌트/페이지 배선 contract)
 
 ### 2026-05-01: `/help` MDX 사용설명서 전환
 - **커밋**: `6cca687 Convert help page to MDX manual` (`main` -> `origin/main`)
