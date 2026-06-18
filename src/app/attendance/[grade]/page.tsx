@@ -856,7 +856,7 @@ export default function AttendanceGradePage() {
   }
 
   return (
-    <div className="bg-[#f1f5f9] min-h-screen">
+    <div className="bg-[#f1f5f9] min-h-dvh">
       {/* 고정 상단 바 - seat-responsive-v2 디자인 */}
       <div className="sticky top-0 z-[100] bg-[#f1f5f9] px-3 pt-2 max-w-[960px] mx-auto relative">
         {/* 날짜 바 */}
