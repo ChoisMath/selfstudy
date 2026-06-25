@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
 
 interface NavItem {
   label: string;
@@ -113,6 +114,7 @@ export function AdminNav() {
                 {user?.roles?.includes("homeroom") ? "담임교사" : "감독일정"}
               </Link>
             )}
+            <NotificationBell />
             <span className="text-sm text-gray-500 whitespace-nowrap">{user?.name}</span>
             <button
               onClick={() => signOut({ callbackUrl: "/login" })}

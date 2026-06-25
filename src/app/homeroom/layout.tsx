@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
 
 // 담임 전용 탭
 const homeroomItems = [
@@ -90,6 +91,7 @@ export default function HomeroomLayout({ children }: { children: React.ReactNode
                   {assignmentText}
                 </span>
               )}
+              <NotificationBell />
               <span className="text-sm text-gray-500 whitespace-nowrap">{user?.name}</span>
               <button
                 onClick={() => signOut({ callbackUrl: "/login" })}

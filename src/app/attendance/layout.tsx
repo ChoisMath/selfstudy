@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { signOut, useSession } from "next-auth/react";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
 
 export default function AttendanceLayout({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession();
@@ -48,6 +49,7 @@ export default function AttendanceLayout({ children }: { children: React.ReactNo
                 {isHomeroom ? "담임교사" : "감독일정"}
               </Link>
             )}
+            <NotificationBell />
             <span className="text-xs sm:text-sm text-gray-600 whitespace-nowrap">{session?.user?.name}</span>
             <button
               onClick={() => signOut({ callbackUrl: "/login" })}
