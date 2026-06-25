@@ -43,10 +43,11 @@ export async function unsubscribeFromPush(): Promise<void> {
   const subscription = await registration.pushManager.getSubscription();
   if (!subscription) return;
 
-  await fetch("/api/push/unsubscribe", {
+  const res = await fetch("/api/push/unsubscribe", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ endpoint: subscription.endpoint }),
   });
   await subscription.unsubscribe();
+  if (!res.ok) throw new Error("구독 해제에 실패했습니다.");
 }
