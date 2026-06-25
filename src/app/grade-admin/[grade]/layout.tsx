@@ -1,6 +1,4 @@
 import { AdminNav } from "@/components/admin-shared/AdminNav";
-// NotificationBell is rendered inside AdminNav; the import here satisfies the placement contract
-import { NotificationBell as _NotificationBell } from "@/components/notifications/NotificationBell";
 
 export default function GradeAdminLayout({ children }: { children: React.ReactNode }) {
   return (
