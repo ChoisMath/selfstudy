@@ -41,15 +41,22 @@ export async function POST(req: Request) {
 
   let sent = 0;
   for (const p of planned) {
-    await sendToTeacher(p.teacherId, {
-      title: "자율학습 감독 안내",
-      body: p.message,
-      url: "/attendance",
-    });
-    await prisma.supervisorReminderLog.create({
-      data: { teacherId: p.teacherId, grade: p.grade, date: dateObj },
-    });
-    sent++;
+    try {
+      await sendToTeacher(p.teacherId, {
+        title: "자율학습 감독 안내",
+        body: p.message,
+        url: "/attendance",
+      });
+      await prisma.supervisorReminderLog.create({
+        data: { teacherId: p.teacherId, grade: p.grade, date: dateObj },
+      });
+      sent++;
+    } catch (err) {
+      console.error(
+        `supervisor reminder failed (teacher ${p.teacherId}, grade ${p.grade}):`,
+        err
+      );
+    }
   }
 
   return NextResponse.json({

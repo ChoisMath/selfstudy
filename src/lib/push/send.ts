@@ -35,7 +35,7 @@ export async function sendToTeacher(
     } catch (err) {
       const statusCode = (err as { statusCode?: number }).statusCode ?? 0;
       if (isExpiredSubscriptionError(statusCode)) {
-        await prisma.pushSubscription.delete({ where: { id: sub.id } });
+        await prisma.pushSubscription.deleteMany({ where: { id: sub.id } });
       } else {
         console.error(
           `push send failed (teacher ${teacherId}, sub ${sub.id}):`,
