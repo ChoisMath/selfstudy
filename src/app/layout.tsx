@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Providers } from "./providers";
 import { ServiceWorkerRegistrar } from "@/components/ServiceWorkerRegistrar";
@@ -18,7 +18,6 @@ export const metadata: Metadata = {
   title: "포산고 자율학습",
   description: "포산고 자율학습 출석 관리 시스템",
   manifest: "/manifest.webmanifest",
-  themeColor: "#1e40af",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
@@ -33,6 +32,10 @@ export const metadata: Metadata = {
       { url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
     ],
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#1e40af",
 };
 
 export default function RootLayout({

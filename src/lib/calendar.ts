@@ -35,3 +35,9 @@ export function buildMonthCells(year: number, month: number): (string | null)[] 
   for (let d = 1; d <= daysInMonth; d++) cells.push(formatDateValue(year, month, d));
   return cells;
 }
+
+export function formatDateWithWeekday(date: string): string {
+  const { year, month, day } = parseDateValue(date);
+  const weekday = new Date(year, month - 1, day).getDay();
+  return `${date}(${WEEKDAYS[weekday]})`;
+}
