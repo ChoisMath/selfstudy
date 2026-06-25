@@ -5,10 +5,11 @@ import type { NextRequest } from "next/server";
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // 공개 경로
+  // 공개 경로 (/api/cron 은 자체 CRON_SECRET Bearer 인증을 쓰므로 세션 미들웨어 우회)
   if (
     pathname.startsWith("/login") ||
     pathname.startsWith("/api/auth") ||
+    pathname.startsWith("/api/cron") ||
     pathname.startsWith("/help")
   ) {
     return NextResponse.next();
