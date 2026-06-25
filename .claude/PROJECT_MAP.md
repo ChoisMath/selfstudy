@@ -1,6 +1,6 @@
 # 자율학습 출석부 시스템 - 프로젝트 지도
 
-> 마지막 업데이트: 2026-06-18
+> 마지막 업데이트: 2026-06-25
 > 이 파일은 새 세션에서 코드베이스를 빠르게 파악하기 위한 참조 문서입니다.
 
 ## 개요
@@ -47,11 +47,11 @@ src/
 │   │   ├── seats/page.tsx      # 2탭 (오후자습/야간자습) + SeatingEditor
 │   │   └── supervisors/page.tsx # MonthlyCalendar (단일학년 2슬롯 모드)
 │   ├── attendance/             # 감독교사
-│   │   ├── layout.tsx          # 모든 교사에게 이동 버튼 (담임교사/감독일정/학년관리)
+│   │   ├── layout.tsx          # 모든 교사에게 이동 버튼 (담임교사/감독일정/학년관리) + NotificationBell
 │   │   ├── page.tsx            # 자동 학년 라우팅 / 학년 선택
 │   │   └── [grade]/page.tsx    # ★ 핵심: 좌석 출석 그리드 (3탭: 오후자습/야간자습/불참신청) + 불참신청 관리 UI
 │   ├── homeroom/               # 담임교사
-│   │   ├── layout.tsx          # 담임 5탭 + 공통 2탭 네비게이션 (세션 로딩 처리)
+│   │   ├── layout.tsx          # 담임 5탭 + 공통 2탭 네비게이션 (세션 로딩 처리) + NotificationBell
 │   │   ├── page.tsx            # 자기반 학생 + 주간출석
 │   │   ├── attendance/page.tsx # 담임 월간출결 테이블 + "시간" 컬럼 + Excel 다운로드
 │   │   ├── participation/page.tsx
@@ -69,8 +69,10 @@ src/
 ├── components/
 │   ├── attendance/
 │   │   └── AttendanceDatePicker.tsx  # 커스텀 월간 달력 팝오버 (props: value/today/onChange, "오늘로" 버튼, @/lib/calendar 의존)
+│   ├── notifications/
+│   │   └── NotificationBell.tsx # 공통 네비 알림 벨 (구독 토글 + iOS "홈 화면에 추가" 안내, BellState 분기)
 │   ├── admin-shared/
-│   │   ├── AdminNav.tsx        # 관리자 네비 (오늘 출결 메뉴 포함, exact match, 서브관리자용 교사 링크)
+│   │   ├── AdminNav.tsx        # 관리자 네비 (오늘 출결 메뉴 포함, exact match, 서브관리자용 교사 링크) + NotificationBell (grade-admin은 경유 상속)
 │   │   ├── ParticipationManagement.tsx  # 참여설정 테이블 (grade prop)
 │   │   ├── MonthlyCalendar.tsx  # 월간 감독배정 캘린더 (학년당 1슬롯, 텍스트 검색 교사 선택, 담당학년 우선 그룹)
 │   │   └── ExcelUploadModal.tsx # 공용 Excel 업로드 모달 (드래그앤드롭, 교사/학생 공용)
@@ -87,12 +89,22 @@ src/
 ├── lib/
 │   ├── auth.ts         # NextAuth 설정 (Credentials×2 + Google, JWT 콜백)
 │   ├── api-auth.ts     # withAuth (+ "teacher" 의사역할: 모든 교사 허용), withGradeAuth, withHomeroomAuth 래퍼
-│   ├── calendar.ts     # KST 안전 순수 날짜 유틸 (getKstTodayString/formatDateValue/parseDateValue/formatDateLabel/shiftMonth/buildMonthCells, toISOString 미사용)
+│   ├── calendar.ts     # KST 안전 순수 날짜 유틸 (getKstTodayString/formatDateValue/parseDateValue/formatDateLabel/formatDateWithWeekday/shiftMonth/buildMonthCells, toISOString 미사용)
+│   ├── push/
+│   │   ├── reminder-logic.ts  # 메시지 생성·(teacher,grade) dedupe·발송 계획 순수 함수 (planReminders/reminderKey/buildReminderMessage)
+│   │   ├── send.ts            # web-push 래퍼: sendToTeacher (교사별 발송 + 404/410 만료 구독 정리)
+│   │   └── client.ts          # 브라우저 구독/해제 + VAPID base64 변환 + iOS standalone 감지
 │   └── prisma.ts       # PrismaClient 싱글톤 (PrismaPg 어댑터)
 │
 ├── middleware.ts       # 라우트 보호 (getToken + 명시적 cookieName/salt, /homeroom·/attendance 모든 교사 허용)
 ├── types/next-auth.d.ts # Session/JWT 타입 확장
 └── generated/prisma/   # Prisma 자동 생성 (gitignore)
+
+scripts/
+└── trigger-supervisor-reminders.mjs  # Railway Cron 서비스가 호출 → APP_URL + Bearer CRON_SECRET 로 /api/cron/supervisor-reminders POST
+
+public/
+└── sw.js               # 서비스워커 (CACHE_NAME=selfstudy-v2, install/activate/fetch + push/notificationclick 핸들러)
 ```
 
 ## API 라우트 요약
@@ -166,7 +178,14 @@ src/
 | GET | `/api/teachers` | 교사 목록 (primaryGrade 포함) |
 | POST | `/api/auth/change-password` | 비밀번호 변경 |
 
-## 데이터 모델 (14개 모델, 6개 enum)
+### 푸시 알림 (`/api/push/`, `/api/cron/`)
+| 메서드 | 경로 | 설명 |
+|--------|------|------|
+| POST | `/api/push/subscribe` | 교사 푸시 구독 저장 (endpoint 기준 upsert), withAuth(["teacher"]) |
+| POST | `/api/push/unsubscribe` | endpoint 기준 구독 삭제(deleteMany), withAuth(["teacher"]) |
+| POST | `/api/cron/supervisor-reminders` | Bearer CRON_SECRET 보안 cron. KST 오늘 감독배정 조회 → (teacher,grade) dedupe → SupervisorReminderLog로 중복 방지 → web-push 발송. 응답 `{processed, planned, sent}` |
+
+## 데이터 모델 (16개 모델, 6개 enum)
 
 ```
 Student ──< Attendance (+ durationMinutes?, durationNote?) >── Teacher (checker)
@@ -184,7 +203,12 @@ Teacher (+ primaryGrade: nullable int) ──< TeacherRole (admin/supervisor/hom
   ├──< SubAdminAssignment (grade)
   ├──< SupervisorAssignment (date, grade, sessionType)
   ├──< SupervisorSwapHistory (original/replacement)
-  └──< AttendanceNote (creator)
+  ├──< AttendanceNote (creator)
+  ├──< PushSubscription (endpoint unique, onDelete: Cascade)
+  └──< SupervisorReminderLog (grade, date, onDelete: Cascade)
+
+PushSubscription: teacherId, endpoint(@unique, Text), p256dh, auth, userAgent?(VarChar 255), createdAt
+SupervisorReminderLog: teacherId, grade, date(@db.Date), sentAt — @@unique([teacherId, grade, date]) 로 하루 1회 발송 멱등성
 ```
 
 **삭제된 모델**: SeatingPeriod (기간 개념 제거, SeatLayout이 Room을 통해 직접 grade+sessionType 결정)
@@ -237,6 +261,15 @@ Teacher (+ primaryGrade: nullable int) ──< TeacherRole (admin/supervisor/hom
 ### 6. 학번 파싱
 - 5자리: A(학년) + BC(반) + DE(번호), 예: 20102 = 2학년 1반 2번
 
+### 7. 감독 푸시 알림 (web-push)
+- **구독**: 교사가 NotificationBell 클릭 → `Notification.requestPermission()` → `pushManager.subscribe` → `POST /api/push/subscribe`(endpoint upsert). 해제는 `POST /api/push/unsubscribe` + 브라우저 `subscription.unsubscribe()`
+- **발송 트리거**: Railway 별도 Cron 서비스가 `scripts/trigger-supervisor-reminders.mjs` 실행 → `POST /api/cron/supervisor-reminders`(Bearer CRON_SECRET)
+- **발송 계획**: cron이 KST 오늘 SupervisorAssignment 조회 → `planReminders`가 (teacherId,grade)로 dedupe(오후+야간 2행 → 1건) + `SupervisorReminderLog` 기존 발송분 제외 → 남은 건만 `sendToTeacher` 발송 후 로그 생성
+- **멱등성**: `SupervisorReminderLog @@unique([teacherId,grade,date])`로 같은 날 재실행해도 중복 발송 방지
+- **만료 구독 정리**: `sendToTeacher`가 404/410 응답 시 해당 PushSubscription 삭제
+- **iOS 대응**: standalone(PWA 설치) 아닌 iOS는 푸시 미지원 → NotificationBell이 "홈 화면에 추가" 안내 표시
+- **메시지 형식**: `{이름}선생님, {날짜(요일)} 에 {학년}학년 자율학습 감독교사 이십니다. 잘 부탁드립니다.` (`formatDateWithWeekday` → "2026-06-25(목)")
+
 ## 인증/인가 흐름
 
 ```
@@ -255,6 +288,16 @@ Teacher (+ primaryGrade: nullable int) ──< TeacherRole (admin/supervisor/hom
 - **담임배정 자동 동기화**: homeroom-assignments POST/DELETE 시 TeacherRole("homeroom") 자동 부여/삭제
 
 ## 수정 이력 (주요 변경)
+
+### 2026-06-25: 감독 푸시 알림 (feat/supervisor-push-notifications)
+- **신규 Prisma 모델 2개**: `PushSubscription`(teacherId, endpoint @unique, p256dh, auth, userAgent?, createdAt — onDelete:Cascade), `SupervisorReminderLog`(teacherId, grade, date, sentAt — @@unique([teacherId,grade,date]))로 하루 1회 발송 멱등성. Teacher에 역참조 `pushSubscriptions`, `reminderLogs` 추가. 마이그레이션 `20260625000000_add_push_notifications`
+- **신규 lib `src/lib/push/`**: `reminder-logic.ts`(planReminders/reminderKey/buildReminderMessage 순수 함수, (teacher,grade) dedupe), `send.ts`(web-push 래퍼 sendToTeacher + 404/410 만료 구독 정리), `client.ts`(브라우저 구독/해제 + VAPID base64 변환 + iOS standalone 감지)
+- **신규 컴포넌트**: `src/components/notifications/NotificationBell.tsx` — 공통 네비 알림 벨, BellState(unsupported/ios-install/default/subscribed/denied) 분기, iOS "홈 화면에 추가" 안내. 교사 레이아웃(`attendance/layout.tsx`, `homeroom/layout.tsx`)과 `AdminNav.tsx`(grade-admin은 경유 상속)에 배치
+- **신규 API 3개**: `POST /api/push/subscribe`(endpoint upsert), `POST /api/push/unsubscribe`(deleteMany), `POST /api/cron/supervisor-reminders`(Bearer CRON_SECRET, KST 오늘 감독배정 조회 → dedupe → 로그 멱등 → web-push 발송)
+- **신규 스크립트**: `scripts/trigger-supervisor-reminders.mjs` — Railway Cron 서비스가 APP_URL + CRON_SECRET 으로 cron 엔드포인트 호출
+- **수정**: `src/app/layout.tsx`(themeColor를 `viewport` export로 분리, Next 16 deprecation), `public/sw.js`(push/notificationclick 핸들러 추가, CACHE_NAME v2), `src/lib/calendar.ts`(`formatDateWithWeekday(date)` → "2026-06-25(목)"), `package.json`(web-push, @types/web-push 추가)
+- **신규 환경변수**: `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`(mailto:), `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `CRON_SECRET`
+- **배포**: Railway 별도 Cron 서비스 — 스케줄 `0 22 * * *`(UTC=07:00 KST), Start Command `node scripts/trigger-supervisor-reminders.mjs`, env `APP_URL` + `CRON_SECRET`
 
 ### 2026-06-18: 권한별 날짜 선택 출결 체크 (feat/attendance-date-picker)
 - **신규 유틸**: `src/lib/calendar.ts` — KST 안전 순수 날짜 함수 모음. `getKstTodayString()`, `formatDateValue(y,m,d)`, `parseDateValue(date)`, `formatDateLabel(date)`(`2026.6.18 (목)` 형식), `shiftMonth(y,m,delta)`, `buildMonthCells(y,m)`. `toISOString()` 미사용으로 KST 새벽 시간대 전날 반환 버그 회피
@@ -412,12 +455,14 @@ Teacher (+ primaryGrade: nullable int) ──< TeacherRole (admin/supervisor/hom
 ## 배포 정보
 
 - **Railway 프로젝트**: courageous-motivation
-- **서비스**: selfstudy + Postgres
+- **서비스**: selfstudy + Postgres + Cron(감독 알림)
 - **빌드**: `prisma generate && prisma db push && next build`
 - **시작**: `prisma migrate deploy && next start`
 - **배포 브랜치**: `main` (로컬 `master` → `git push origin master:main`)
 - **PORT**: 8080
 - **환경변수**: DATABASE_URL (reference: ${{Postgres.DATABASE_URL}}), NEXTAUTH_SECRET, NEXTAUTH_URL, AUTH_URL, AUTH_TRUST_HOST, NODE_ENV
+- **푸시 알림 환경변수**: VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT(mailto:), NEXT_PUBLIC_VAPID_PUBLIC_KEY, CRON_SECRET
+- **Cron 서비스** (감독 알림): 스케줄 `0 22 * * *` (UTC=07:00 KST), Start Command `node scripts/trigger-supervisor-reminders.mjs`, env `APP_URL` + `CRON_SECRET`
 
 ## 시드 데이터 (테스트 계정)
 
