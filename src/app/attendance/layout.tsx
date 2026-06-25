@@ -23,7 +23,7 @@ export default function AttendanceLayout({ children }: { children: React.ReactNo
           <span className="text-sm sm:text-base">출석부</span>
         </Link>
         {status !== "loading" && (
-          <div className="flex items-center gap-1.5 sm:gap-3 flex-nowrap">
+          <div className="flex items-center gap-1.5 sm:gap-3 flex-nowrap min-w-0 overflow-x-auto">
             {roles?.includes("admin") && (
               <Link
                 href="/admin"

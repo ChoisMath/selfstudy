@@ -79,7 +79,7 @@ export function NotificationBell() {
             : "알림 켜기";
 
   return (
-    <div className="relative">
+    <div className="relative shrink-0">
       <button
         type="button"
         onClick={handleClick}
@@ -93,7 +93,7 @@ export function NotificationBell() {
       </button>
 
       {showGuide && (
-        <div className="absolute right-0 z-[120] mt-1 w-64 rounded-md border border-gray-200 bg-white p-3 text-sm shadow-lg">
+        <div className="absolute right-0 z-[120] mt-1 w-64 max-w-[calc(100vw-1rem)] rounded-md border border-gray-200 bg-white p-3 text-sm shadow-lg">
           {state === "ios-install" ? (
             <p className="leading-relaxed">
               iPhone에서는 Safari 하단 <b>공유</b> 버튼 → <b>홈 화면에 추가</b>로
