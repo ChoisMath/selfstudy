@@ -50,6 +50,8 @@ model Teacher {
   swapsAsOriginal       SupervisorSwapHistory[] @relation("original")
   swapsAsReplacement    SupervisorSwapHistory[] @relation("replacement")
   createdNotes          AttendanceNote[]        @relation("noteCreator")
+  pushSubscriptions     PushSubscription[]
+  reminderLogs          SupervisorReminderLog[]
 
   @@map("teachers")
 }
@@ -307,4 +309,34 @@ enum RequestStatus {
   pending
   approved
   rejected
+}
+
+// ==================== 푸시 알림 ====================
+
+model PushSubscription {
+  id        Int      @id @default(autoincrement())
+  teacherId Int      @map("teacher_id")
+  endpoint  String   @unique @db.Text
+  p256dh    String   @db.Text
+  auth      String   @db.Text
+  userAgent String?  @map("user_agent") @db.VarChar(255)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  teacher Teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+
+  @@index([teacherId])
+  @@map("push_subscriptions")
+}
+
+model SupervisorReminderLog {
+  id        Int      @id @default(autoincrement())
+  teacherId Int      @map("teacher_id")
+  grade     Int
+  date      DateTime @db.Date
+  sentAt    DateTime @default(now()) @map("sent_at")
+
+  teacher Teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+
+  @@unique([teacherId, grade, date])
+  @@map("supervisor_reminder_logs")
 }
