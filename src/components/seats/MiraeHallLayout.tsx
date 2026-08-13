@@ -26,6 +26,21 @@ export const GAP_CONFIG: Record<string, number[]> = {
 };
 
 // 인라인 스타일 상수 (렌더링마다 새 객체 생성 방지)
+const CONTAINER_BASE = {
+  display: "grid" as const,
+  gridTemplateColumns: "90px 1fr 44px 1fr",
+  gridTemplateRows: "auto auto 1fr 1fr 1fr auto",
+  gridTemplateAreas: `
+    "sidebar label1   divider stairs"
+    "sidebar room1    divider bath"
+    "sidebar room2    divider room5"
+    "sidebar room3    divider room5"
+    "sidebar room4    divider room5"
+    "sidebar teacher  divider room5"
+  `,
+  gap: "6px",
+};
+
 const GRID_STYLES = {
   sidebar: { gridArea: "sidebar" } as const,
   label1: { gridArea: "label1" } as const,
@@ -39,29 +54,18 @@ const GRID_STYLES = {
   stairs: { gridArea: "stairs" } as const,
   bath: { gridArea: "bath" } as const,
   verticalText: { writingMode: "vertical-rl" } as const,
-  container: {
-    display: "grid" as const,
-    gridTemplateColumns: "90px 1fr 44px 1fr",
-    gridTemplateRows: "auto auto 1fr 1fr 1fr auto",
-    gridTemplateAreas: `
-      "sidebar label1   divider stairs"
-      "sidebar room1    divider bath"
-      "sidebar room2    divider room5"
-      "sidebar room3    divider room5"
-      "sidebar room4    divider room5"
-      "sidebar teacher  divider room5"
-    `,
-    gap: "6px",
-    minWidth: "700px",
-  },
+  container: { ...CONTAINER_BASE, minWidth: "700px" },
+  containerFit: { ...CONTAINER_BASE, width: "max-content" },
 };
 
 export default function MiraeHallLayout<T extends BaseRoom>({
   rooms,
   renderRoom,
+  fitContent,
 }: {
   rooms: T[];
   renderRoom: (room: T) => ReactNode;
+  fitContent?: boolean;
 }) {
   // 방 이름으로 매핑
   const roomByName = new Map(rooms.map((r) => [r.name, r]));
@@ -74,8 +78,8 @@ export default function MiraeHallLayout<T extends BaseRoom>({
 
   return (
     <div
-      className="bg-white rounded-lg border p-4 overflow-x-auto"
-      style={GRID_STYLES.container}
+      className={`bg-white rounded-lg border p-4 ${fitContent ? "" : "overflow-x-auto"}`}
+      style={fitContent ? GRID_STYLES.containerFit : GRID_STYLES.container}
     >
       {/* 좌측: 복도석 */}
       <div
