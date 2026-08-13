@@ -21,4 +21,20 @@ assert.match(miraeHall, /max-content/, "containerFit 이 width: max-content 를 
 assert.match(miraeHall, /minWidth: "700px"/, "기존 minWidth 700px 가 사라짐");
 assert.match(miraeHall, /overflow-x-auto/, "기존 가로 스크롤이 사라짐");
 
+// --- Task 5: SeatPrintGroup ---
+const seatPrintGroup = read("../src/components/seats/SeatPrintGroup.tsx");
+assert.match(seatPrintGroup, /PrintRoomGrid/, "SeatPrintGroup 이 PrintRoomGrid 를 쓰지 않음");
+assert.match(seatPrintGroup, /MiraeHallLayout/, "SeatPrintGroup 이 도면 레이아웃을 쓰지 않음");
+assert.match(seatPrintGroup, /fitContent/, "SeatPrintGroup 이 도면을 fitContent 로 렌더하지 않음");
+assert.match(seatPrintGroup, /GAP_CONFIG/, "SeatPrintGroup 이 서브블록 갭 설정을 넘기지 않음");
+assert.match(seatPrintGroup, /divisionLabel/, "SeatPrintGroup 이 분단 라벨 헬퍼를 쓰지 않음");
+assert.match(seatPrintGroup, /교탁/, "SeatPrintGroup 에 교탁 표시가 없음");
+// 교탁은 오후자습(divisions-*)에서만 — 야간(hall/stack)에는 없다
+assert.match(
+  seatPrintGroup,
+  /divisions-row"\s*\|\|[\s\S]{0,80}divisions-column"/,
+  "교탁 표시 조건이 오후자습 두 kind 로 한정되지 않음"
+);
+assert.doesNotMatch(seatPrintGroup, /@dnd-kit/, "SeatPrintGroup 이 dnd-kit 에 의존함");
+
 console.log("seat-print-wiring checks passed");
