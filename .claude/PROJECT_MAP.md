@@ -1,6 +1,6 @@
 # 자율학습 출석부 시스템 - 프로젝트 지도
 
-> 마지막 업데이트: 2026-06-25
+> 마지막 업데이트: 2026-08-13
 > 이 파일은 새 세션에서 코드베이스를 빠르게 파악하기 위한 참조 문서입니다.
 
 ## 개요
@@ -45,6 +45,7 @@ src/
 │   │   ├── students/page.tsx
 │   │   ├── participation/page.tsx
 │   │   ├── seats/page.tsx      # 2탭 (오후자습/야간자습) + SeatingEditor
+│   │   ├── seats/print/page.tsx # 인쇄 미리보기 (그룹별 가로/세로 + 체크박스)
 │   │   └── supervisors/page.tsx # MonthlyCalendar (단일학년 2슬롯 모드)
 │   ├── attendance/             # 감독교사
 │   │   ├── layout.tsx          # 모든 교사에게 이동 버튼 (담임교사/감독일정/학년관리) + NotificationBell
@@ -80,8 +81,12 @@ src/
 │   │   ├── TodayAttendanceDashboard.tsx  # 오늘출결 대시보드 (grade prop, 세션별 출석현황)
 │   │   └── GradeMonthlyAttendance.tsx    # 월간출결 테이블 (grade prop, 짝수반 배경 구분, "시간" 컬럼)
 │   ├── seats/
-│   │   ├── SeatingEditor.tsx       # DndContext + 저장 (props: grade, sessionType)
+│   │   ├── SeatingEditor.tsx       # DndContext + 저장 + 출력 버튼 (props: grade, sessionType)
 │   │   ├── RoomGrid.tsx            # 교실 격자 (droppable/draggable 셀)
+│   │   ├── MiraeHallLayout.tsx     # 2학년 야간 미래홀 도면 (fitContent 옵션)
+│   │   ├── PrintRoomGrid.tsx       # 인쇄용 읽기전용 좌석 격자 (dnd 없음, 고정 셀 크기)
+│   │   ├── SeatPrintGroup.tsx      # 인쇄 그룹 1개 (제목 + kind별 배치 + 교탁)
+│   │   ├── PrintPageFitter.tsx     # A4 페이지 박스 + 콘텐츠 실측 후 scale
 │   │   └── UnassignedStudents.tsx  # 미배정 학생 풀 (검색/반별 그룹)
 │   └── students/
 │       └── StudentManagement.tsx   # 학생 목록 + CRUD 모달 + ExcelUploadModal
@@ -94,6 +99,9 @@ src/
 │   │   ├── reminder-logic.ts  # 메시지 생성·(teacher,grade) dedupe·발송 계획 순수 함수 (planReminders/reminderKey/buildReminderMessage)
 │   │   ├── send.ts            # web-push 래퍼: sendToTeacher (교사별 발송 + 404/410 만료 구독 정리)
 │   │   └── client.ts          # 브라우저 구독/해제 + VAPID base64 변환 + iOS standalone 감지
+│   ├── seats/
+│   │   ├── print-groups.ts   # 방 목록 → 인쇄 그룹 분해 (화면/인쇄 공용)
+│   │   └── print-layout.ts   # A4 기하 상수 + 방향 추천/배율 계산
 │   └── prisma.ts       # PrismaClient 싱글톤 (PrismaPg 어댑터)
 │
 ├── middleware.ts       # 라우트 보호 (getToken + 명시적 cookieName/salt, /homeroom·/attendance 모든 교사 허용)
@@ -288,6 +296,15 @@ SupervisorReminderLog: teacherId, grade, date(@db.Date), sentAt — @@unique([te
 - **담임배정 자동 동기화**: homeroom-assignments POST/DELETE 시 TeacherRole("homeroom") 자동 부여/삭제
 
 ## 수정 이력 (주요 변경)
+
+### 2026-08-13: 좌석배치 인쇄(출력)
+- **신규 lib `src/lib/seats/`**: `print-groups.ts`(방 이름 접두사 기반 그룹 분해, kind = divisions-row/divisions-column/hall/stack), `print-layout.ts`(A4 기하 상수, `suggestOrientation` = 폭/높이 ≥ 1 이면 가로, `computeFitScale`)
+- **신규 컴포넌트 3개**: `PrintRoomGrid`(dnd 없는 읽기전용 격자 — RoomGrid 는 훅 때문에 DndContext 밖에서 못 씀), `SeatPrintGroup`(제목 + 분단 배치 + 교탁), `PrintPageFitter`(offsetWidth/Height 실측 → `transform: scale` 로 A4 채움)
+- **신규 라우트**: `/grade-admin/[grade]/seats/print?session=` — 새 탭 인쇄 미리보기. 그룹별 체크박스 + 가로/세로 토글, 방향은 `localStorage["seatPrintOrientation:{grade}:{session}"]` 에 저장
+- **혼합 방향 인쇄**: CSS 명명 페이지(`@page portraitPage/landscapePage` + `page:` 속성). Chrome·Edge 110+ 필요
+- **수정**: `SeatingEditor`(출력 버튼 + 인라인 그룹핑 → `buildPrintGroups` 통합), `MiraeHallLayout`(`fitContent` 프롭으로 minWidth·가로스크롤 해제)
+- **인쇄 단위**: 오후자습 = 학급별 1페이지, 야간자습 = 도면/나열 전체 1페이지
+- DB 스키마·API·환경변수 변경 없음
 
 ### 2026-06-25: 감독 푸시 알림 (feat/supervisor-push-notifications)
 - **신규 Prisma 모델 2개**: `PushSubscription`(teacherId, endpoint @unique, p256dh, auth, userAgent?, createdAt — onDelete:Cascade), `SupervisorReminderLog`(teacherId, grade, date, sentAt — @@unique([teacherId,grade,date]))로 하루 1회 발송 멱등성. Teacher에 역참조 `pushSubscriptions`, `reminderLogs` 추가. 마이그레이션 `20260625000000_add_push_notifications`
