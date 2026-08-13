@@ -11,6 +11,21 @@ assert.doesNotMatch(printRoomGrid, /@dnd-kit/, "PrintRoomGrid 가 dnd-kit 에 �
 assert.match(printRoomGrid, /SEAT_CELL_WIDTH/, "PrintRoomGrid 가 셀 폭 상수를 쓰지 않음");
 assert.match(printRoomGrid, /SEAT_CELL_HEIGHT/, "PrintRoomGrid 가 셀 높이 상수를 쓰지 않음");
 assert.match(printRoomGrid, /whitespace-nowrap/, "PrintRoomGrid 셀에 줄바꿈 금지 클래스 없음");
+assert.match(
+  printRoomGrid,
+  /gridTemplateColumns: `repeat\(\$\{room\.cols\}, \$\{SEAT_CELL_WIDTH\}px\)`/,
+  "격자 컬럼이 고정 px 가 아님 — 1fr 이면 자연 크기 실측이 무너진다"
+);
+assert.doesNotMatch(
+  printRoomGrid,
+  /gridTemplateColumns:[^\n]*1fr/,
+  "격자 컬럼에 1fr 사용"
+);
+assert.match(
+  printRoomGrid,
+  /marginBottom:[\s\S]{0,80}room\.rows - 1[\s\S]{0,20}\?\s*0/,
+  "마지막 행 marginBottom 이 0 이 아님 — 자연 높이 실측이 부정확해진다"
+);
 
 // --- Task 4: MiraeHallLayout fitContent ---
 const miraeHall = read("../src/components/seats/MiraeHallLayout.tsx");
@@ -52,5 +67,10 @@ assert.match(fitter, /computeFitScale/, "PrintPageFitter 가 배율 계산 함�
 assert.match(fitter, /print-page-landscape/, "가로 페이지 클래스가 없음");
 assert.match(fitter, /print-page-portrait/, "세로 페이지 클래스가 없음");
 assert.match(fitter, /fonts/, "폰트 로드 후 재측정 처리가 없음");
+assert.match(
+  fitter,
+  /ref=\{contentRef\}[^>]*shrink-0/,
+  "측정 대상 div 에 shrink-0 이 없음 — flex 축소로 offsetWidth 가 자연 폭 대신 페이지 폭을 반환한다"
+);
 
 console.log("seat-print-wiring checks passed");
