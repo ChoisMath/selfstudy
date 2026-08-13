@@ -279,14 +279,20 @@ window.open(`/grade-admin/${grade}/seats/print?session=${sessionType}`, "_blank"
 
 기존 관행대로 `npx tsx tests/*.test.ts` 로 실행하는 단위/계약 테스트를 추가한다.
 
-**`tests/seat-print-groups.test.ts`** — 순수 함수 단위 테스트
+**`tests/seat-print-layout.test.ts`** — A4 기하 순수 함수 단위 테스트
+- `pageSizeMm` / `contentBoxPx` 값 검증(가용 폭·높이 px)
+- 방향 추천: `r ≥ 1 → landscape`, `r < 1 → portrait`, 경계값 `r = 1` 포함
+- 배율: 가용 영역과 같으면 1, 두 배면 0.5, 작은 콘텐츠는 확대(상한 없음), 측정 전 0 방어
+
+**`tests/seat-print-groups.test.ts`** — 그룹 분해 순수 함수 단위 테스트
 - 오후자습 2학년 방 14개 → 그룹 5개, 순서와 `kind`가 기대와 일치
 - `오후미래혜윰*` 그룹만 `divisions-column`
-- 야간 2학년 → `hall` 1그룹, 야간 1학년 → `stack` 1그룹
+- 입력 순서가 뒤섞여도 `sortOrder` 기준으로 정렬, 원본 배열 불변
+- 야간 2학년 → `hall` 1그룹, 야간 1·3학년 → `stack` 1그룹
 - 방이 없으면 빈 배열
-- 방향 추천 함수: `r ≥ 1 → landscape`, `r < 1 → portrait`, 경계값 `r = 1` 포함
+- `roomPrefix` / `divisionLabel` 라벨 헬퍼
 
-**`tests/seat-print-page.test.ts`** — 배선 계약 테스트(소스 문자열 검증, 기존 `notification-bell-placement.test.ts` 방식)
+**`tests/seat-print-wiring.test.ts`** — 배선 계약 테스트(소스 문자열 검증, 기존 `notification-bell-placement.test.ts` 방식)
 - 인쇄 라우트 파일이 존재하고 `buildPrintGroups`를 사용
 - `print.css`에 `@page portraitPage` / `@page landscapePage` / `page:` 규칙이 있음
 - `SeatingEditor.tsx`에 `출력` 버튼과 `seats/print` 링크가 있고, `dirty` 확인 분기가 있음
@@ -322,6 +328,6 @@ window.open(`/grade-admin/${grade}/seats/print?session=${sessionType}`, "_blank"
 | 신규 | `src/app/grade-admin/[grade]/seats/print/print.css` |
 | 수정 | `src/components/seats/SeatingEditor.tsx` |
 | 수정 | `src/components/seats/MiraeHallLayout.tsx` |
-| 신규 테스트 | `tests/seat-print-groups.test.ts`, `tests/seat-print-page.test.ts` |
+| 신규 테스트 | `tests/seat-print-layout.test.ts`, `tests/seat-print-groups.test.ts`, `tests/seat-print-wiring.test.ts` |
 
 DB 스키마 변경 없음. API 추가 없음. 환경변수 추가 없음.
