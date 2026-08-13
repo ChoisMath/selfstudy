@@ -94,4 +94,15 @@ assert.match(printPage, /window\.print\(\)/, "인쇄 실행이 없음");
 // 기존 API 재사용 — 새 엔드포인트를 만들지 않는다
 assert.match(printPage, /\/seat-layouts\?sessionType=/, "기존 좌석 API 를 쓰지 않음");
 
+// --- Task 8: SeatingEditor 출력 버튼 + 그룹핑 통합 ---
+const editor = read("../src/components/seats/SeatingEditor.tsx");
+assert.match(editor, /출력/, "SeatingEditor 에 출력 버튼이 없음");
+assert.match(editor, /seats\/print\?session=/, "출력 버튼이 인쇄 라우트를 열지 않음");
+assert.match(editor, /window\.open/, "출력 버튼이 새 탭을 열지 않음");
+assert.match(editor, /dirty\.size > 0[\s\S]{0,200}confirm/, "미저장 변경 확인 분기가 없음");
+assert.match(editor, /buildPrintGroups/, "SeatingEditor 가 공용 그룹 헬퍼를 쓰지 않음");
+// 인라인 그룹핑 잔재가 남아 있으면 화면/인쇄가 갈라진다
+assert.doesNotMatch(editor, /currentPrefix/, "인라인 그룹핑 로직이 남아 있음");
+assert.doesNotMatch(editor, /startsWith\("오후미래혜윰"\)/, "인라인 접두사 분기가 남아 있음");
+
 console.log("seat-print-wiring checks passed");

@@ -16,6 +16,7 @@ import {
 import RoomGrid from "./RoomGrid";
 import UnassignedStudents from "./UnassignedStudents";
 import MiraeHallLayout, { GAP_CONFIG } from "./MiraeHallLayout";
+import { buildPrintGroups } from "@/lib/seats/print-groups";
 
 type ParticipationDay = {
   sessionType: string;
@@ -286,6 +287,16 @@ export default function SeatingEditor({
     }
   };
 
+  const handlePrint = () => {
+    if (
+      dirty.size > 0 &&
+      !confirm("저장하지 않은 변경사항은 인쇄에 반영되지 않습니다. 계속할까요?")
+    ) {
+      return;
+    }
+    window.open(`/grade-admin/${grade}/seats/print?session=${sessionType}`, "_blank");
+  };
+
   // 드래그 중인 아이템 정보
   const activeItem = useMemo(() => {
     if (!activeId) return null;
@@ -314,13 +325,21 @@ export default function SeatingEditor({
     <div>
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl font-bold text-gray-900">좌석 편집</h2>
-        <button
-          onClick={handleSave}
-          disabled={saving || dirty.size === 0}
-          className="px-4 py-2 text-sm text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {saving ? "저장 중..." : dirty.size > 0 ? `저장 (${dirty.size}개 교실 변경)` : "저장"}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handlePrint}
+            className="min-h-11 whitespace-nowrap rounded-md border border-gray-300 px-4 text-sm text-gray-700 hover:bg-gray-50"
+          >
+            출력
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={saving || dirty.size === 0}
+            className="px-4 py-2 text-sm text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {saving ? "저장 중..." : dirty.size > 0 ? `저장 (${dirty.size}개 교실 변경)` : "저장"}
+          </button>
+        </div>
       </div>
 
       {rooms.length === 0 ? (
@@ -354,40 +373,29 @@ export default function SeatingEditor({
               ) : sessionType === "afternoon" ? (
                 /* 오후 자습: 이름 접두사 기반 그룹 */
                 <div className="space-y-6">
-                  {(() => {
-                    const sorted = [...rooms].sort((a, b) => a.sortOrder - b.sortOrder);
-                    const groups: typeof rooms[] = [];
-                    let currentGroup: typeof rooms = [];
-                    let currentPrefix = "";
-                    for (const room of sorted) {
-                      const prefix = room.name.split(" ")[0];
-                      if (prefix !== currentPrefix && currentGroup.length > 0) {
-                        groups.push(currentGroup);
-                        currentGroup = [];
-                      }
-                      currentPrefix = prefix;
-                      currentGroup.push(room);
-                    }
-                    if (currentGroup.length > 0) groups.push(currentGroup);
-                    return groups.map((group, gi) => (
-                      <div key={gi}>
-                        <h3 className="font-semibold text-gray-700 mb-2">
-                          {group[0]?.name.split(" ")[0]}
-                        </h3>
-                        <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(${group[0]?.name.startsWith("오후미래혜윰") ? 1 : group.length}, 1fr)` }}>
-                          {group.map((room) => (
-                            <RoomGrid
-                              key={room.id}
-                              room={room}
-                              seats={seats.get(room.id) ?? EMPTY_ROOM_SEATS}
-                              onRemoveStudent={handleRemoveStudent}
-                              compact
-                            />
-                          ))}
-                        </div>
+                  {buildPrintGroups(rooms, "afternoon", grade).map((group, gi) => (
+                    <div key={`${group.key}-${gi}`}>
+                      <h3 className="font-semibold text-gray-700 mb-2">{group.title}</h3>
+                      <div
+                        className="grid gap-3"
+                        style={{
+                          gridTemplateColumns: `repeat(${
+                            group.kind === "divisions-column" ? 1 : group.rooms.length
+                          }, 1fr)`,
+                        }}
+                      >
+                        {group.rooms.map((room) => (
+                          <RoomGrid
+                            key={room.id}
+                            room={room}
+                            seats={seats.get(room.id) ?? EMPTY_ROOM_SEATS}
+                            onRemoveStudent={handleRemoveStudent}
+                            compact
+                          />
+                        ))}
                       </div>
-                    ));
-                  })()}
+                    </div>
+                  ))}
                 </div>
               ) : (
                 <div className="space-y-6">
