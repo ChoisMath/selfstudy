@@ -37,4 +37,20 @@ assert.match(
 );
 assert.doesNotMatch(seatPrintGroup, /@dnd-kit/, "SeatPrintGroup 이 dnd-kit 에 의존함");
 
+// --- Task 6: PrintPageFitter ---
+const fitter = read("../src/components/seats/PrintPageFitter.tsx");
+// 변환된 크기가 아닌 레이아웃 크기를 재야 하므로 offsetWidth/offsetHeight 를 쓴다
+assert.match(fitter, /offsetWidth/, "PrintPageFitter 가 offsetWidth 로 측정하지 않음");
+assert.match(fitter, /offsetHeight/, "PrintPageFitter 가 offsetHeight 로 측정하지 않음");
+assert.doesNotMatch(
+  fitter,
+  /getBoundingClientRect/,
+  "getBoundingClientRect 는 scale 적용 후 크기를 반환하므로 쓰면 안 됨"
+);
+assert.match(fitter, /useLayoutEffect/, "PrintPageFitter 가 레이아웃 측정 훅을 쓰지 않음");
+assert.match(fitter, /computeFitScale/, "PrintPageFitter 가 배율 계산 함수를 쓰지 않음");
+assert.match(fitter, /print-page-landscape/, "가로 페이지 클래스가 없음");
+assert.match(fitter, /print-page-portrait/, "세로 페이지 클래스가 없음");
+assert.match(fitter, /fonts/, "폰트 로드 후 재측정 처리가 없음");
+
 console.log("seat-print-wiring checks passed");
