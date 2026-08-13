@@ -1,0 +1,45 @@
+@page portraitPage {
+  size: A4 portrait;
+  margin: 0;
+}
+
+@page landscapePage {
+  size: A4 landscape;
+  margin: 0;
+}
+
+/* 1px 라도 넘치면 브라우저가 빈 페이지를 끼워 넣는다 */
+.print-page {
+  break-after: page;
+  overflow: hidden;
+}
+
+.print-page:last-child {
+  break-after: auto;
+}
+
+.print-page-portrait {
+  page: portraitPage;
+}
+
+.print-page-landscape {
+  page: landscapePage;
+}
+
+@media print {
+  body.seat-print-mode nav,
+  body.seat-print-mode .no-print {
+    display: none !important;
+  }
+
+  body.seat-print-mode main {
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  body.seat-print-mode .print-page {
+    margin: 0 !important;
+    box-shadow: none !important;
+  }
+}

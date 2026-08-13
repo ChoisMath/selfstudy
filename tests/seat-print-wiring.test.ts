@@ -73,4 +73,25 @@ assert.match(
   "측정 대상 div 에 shrink-0 이 없음 — flex 축소로 offsetWidth 가 자연 폭 대신 페이지 폭을 반환한다"
 );
 
+// --- Task 7: 인쇄 라우트 + CSS ---
+const printCss = read("../src/app/grade-admin/[grade]/seats/print/print.css");
+assert.match(printCss, /@page\s+portraitPage\s*\{[^}]*size:\s*A4 portrait/, "세로 명명 페이지 규칙 없음");
+assert.match(printCss, /@page\s+landscapePage\s*\{[^}]*size:\s*A4 landscape/, "가로 명명 페이지 규칙 없음");
+assert.match(printCss, /\.print-page-portrait\s*\{[^}]*page:\s*portraitPage/, "세로 page 속성 매핑 없음");
+assert.match(printCss, /\.print-page-landscape\s*\{[^}]*page:\s*landscapePage/, "가로 page 속성 매핑 없음");
+assert.match(printCss, /break-after:\s*page/, "페이지 분할 규칙 없음");
+assert.match(printCss, /seat-print-mode/, "인쇄 모드 스코프 클래스 없음");
+assert.match(printCss, /\.no-print/, "툴바 숨김 규칙 없음");
+
+const printPage = read("../src/app/grade-admin/[grade]/seats/print/page.tsx");
+assert.match(printPage, /buildPrintGroups/, "인쇄 페이지가 그룹 헬퍼를 쓰지 않음");
+assert.match(printPage, /PrintPageFitter/, "인쇄 페이지가 페이지 피터를 쓰지 않음");
+assert.match(printPage, /SeatPrintGroup/, "인쇄 페이지가 그룹 컴포넌트를 쓰지 않음");
+assert.match(printPage, /Suspense/, "useSearchParams 용 Suspense 경계가 없음");
+assert.match(printPage, /seatPrintOrientation:/, "localStorage 방향 저장 키가 없음");
+assert.match(printPage, /seat-print-mode/, "body 인쇄 모드 클래스 토글이 없음");
+assert.match(printPage, /window\.print\(\)/, "인쇄 실행이 없음");
+// 기존 API 재사용 — 새 엔드포인트를 만들지 않는다
+assert.match(printPage, /\/seat-layouts\?sessionType=/, "기존 좌석 API 를 쓰지 않음");
+
 console.log("seat-print-wiring checks passed");
