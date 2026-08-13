@@ -155,7 +155,7 @@ function SeatPrintView() {
                   key={group.key}
                   className="flex min-h-11 items-center gap-1 whitespace-nowrap rounded border px-2 py-1"
                 >
-                  <label className="flex items-center gap-1 text-sm text-gray-800">
+                  <label className="flex min-h-11 items-center gap-1 text-sm text-gray-800">
                     <input
                       type="checkbox"
                       className="h-4 w-4"
@@ -168,7 +168,7 @@ function SeatPrintView() {
                     <button
                       type="button"
                       onClick={() => setOrientation(group.key, "landscape")}
-                      className={`min-h-11 px-2 text-xs whitespace-nowrap ${
+                      className={`min-h-11 min-w-11 px-2 text-xs whitespace-nowrap ${
                         orientation === "landscape" ? "bg-blue-600 text-white" : "bg-white text-gray-600"
                       }`}
                     >
@@ -177,7 +177,7 @@ function SeatPrintView() {
                     <button
                       type="button"
                       onClick={() => setOrientation(group.key, "portrait")}
-                      className={`min-h-11 px-2 text-xs whitespace-nowrap ${
+                      className={`min-h-11 min-w-11 px-2 text-xs whitespace-nowrap ${
                         orientation === "portrait" ? "bg-blue-600 text-white" : "bg-white text-gray-600"
                       }`}
                     >
