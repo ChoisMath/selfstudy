@@ -60,7 +60,7 @@ const nightRooms: PrintBaseRoom[] = [
   room(22, "미래202", 3, 2, 2),
   room(23, "미래아띠존", 4, 2, 3),
   room(24, "미래201", 3, 2, 4),
-  room(25, "미래혜윤실1", 5, 10, 5),
+  room(25, "미래혜윰실1", 5, 10, 5),
 ];
 const nightGrade2 = buildPrintGroups(nightRooms, "night", 2);
 assert.equal(nightGrade2.length, 1);
