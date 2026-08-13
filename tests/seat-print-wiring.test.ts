@@ -105,4 +105,45 @@ assert.match(editor, /buildPrintGroups/, "SeatingEditor 가 공용 그룹 헬퍼
 assert.doesNotMatch(editor, /currentPrefix/, "인라인 그룹핑 로직이 남아 있음");
 assert.doesNotMatch(editor, /startsWith\("오후미래혜윰"\)/, "인라인 접두사 분기가 남아 있음");
 
+// --- Final review fixes ---
+
+// F-1: containerFit 은 max-content 트랙으로 시작해 96px 고정 복도석 셀을 그대로 수용해야 한다.
+// container(화면 경로)는 기존 90px 트랙과 minWidth 700px 을 그대로 유지해야 한다.
+assert.match(
+  miraeHall,
+  /containerFit:\s*\{\s*\.\.\.CONTAINER_BASE,\s*gridTemplateColumns:\s*"max-content 1fr 44px 1fr"/,
+  "containerFit 이 max-content 로 시작하는 그리드 트랙을 쓰지 않음"
+);
+assert.match(
+  miraeHall,
+  /container:\s*\{\s*\.\.\.CONTAINER_BASE,\s*gridTemplateColumns:\s*"90px 1fr 44px 1fr",\s*minWidth:\s*"700px"/,
+  "container 가 기존 90px 트랙과 minWidth 700px 을 유지하지 않음"
+);
+
+// F-2: print.css 가 root layout 의 html.h-full / body.flex 를 인쇄 시 무력화해야
+// 다중 페이지 인쇄가 잘리지 않는다.
+assert.match(
+  printCss,
+  /html\.seat-print-mode,\s*\n\s*body\.seat-print-mode\s*\{[^}]*height:\s*auto !important;[^}]*min-height:\s*0 !important;[^}]*display:\s*block !important;/,
+  "print.css 에 html.seat-print-mode 리셋 규칙이 없음"
+);
+assert.match(
+  printCss,
+  /body\.seat-print-mode\s*>\s*div\s*\{[^}]*min-height:\s*0 !important;/,
+  "print.css 에 body.seat-print-mode > div 래퍼 리셋 규칙이 없음"
+);
+
+// F-2: page.tsx 가 seat-print-mode 클래스를 body 뿐 아니라 documentElement(html) 에도 붙여야
+// print.css 의 html.seat-print-mode 셀렉터가 실제로 매치된다.
+assert.match(
+  printPage,
+  /document\.documentElement\.classList\.add\("seat-print-mode"\)/,
+  "page.tsx 가 documentElement 에 seat-print-mode 클래스를 붙이지 않음"
+);
+assert.match(
+  printPage,
+  /document\.documentElement\.classList\.remove\("seat-print-mode"\)/,
+  "page.tsx 가 documentElement 에서 seat-print-mode 클래스를 정리하지 않음"
+);
+
 console.log("seat-print-wiring checks passed");

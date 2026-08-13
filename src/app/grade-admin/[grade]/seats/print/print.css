@@ -42,4 +42,16 @@
     margin: 0 !important;
     box-shadow: none !important;
   }
+
+  /* 루트 레이아웃의 html.h-full / body.flex 는 페이지 분할을 막는다 */
+  html.seat-print-mode,
+  body.seat-print-mode {
+    height: auto !important;
+    min-height: 0 !important;
+    display: block !important;
+  }
+
+  body.seat-print-mode > div {
+    min-height: 0 !important;
+  }
 }

@@ -28,7 +28,6 @@ export const GAP_CONFIG: Record<string, number[]> = {
 // 인라인 스타일 상수 (렌더링마다 새 객체 생성 방지)
 const CONTAINER_BASE = {
   display: "grid" as const,
-  gridTemplateColumns: "90px 1fr 44px 1fr",
   gridTemplateRows: "auto auto 1fr 1fr 1fr auto",
   gridTemplateAreas: `
     "sidebar label1   divider stairs"
@@ -54,8 +53,10 @@ const GRID_STYLES = {
   stairs: { gridArea: "stairs" } as const,
   bath: { gridArea: "bath" } as const,
   verticalText: { writingMode: "vertical-rl" } as const,
-  container: { ...CONTAINER_BASE, minWidth: "700px" },
-  containerFit: { ...CONTAINER_BASE, width: "max-content" },
+  container: { ...CONTAINER_BASE, gridTemplateColumns: "90px 1fr 44px 1fr", minWidth: "700px" },
+  // 인쇄 경로: 복도석(sidebar) 셀은 96px 고정 폭(SEAT_CELL_WIDTH)이라
+  // 90px 트랙에 넣으면 넘친다. max-content 로 셀 실제 폭을 그대로 반영한다.
+  containerFit: { ...CONTAINER_BASE, gridTemplateColumns: "max-content 1fr 44px 1fr", width: "max-content" },
 };
 
 export default function MiraeHallLayout<T extends BaseRoom>({

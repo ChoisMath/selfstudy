@@ -91,8 +91,12 @@ function SeatPrintView() {
   }, [grade, sessionType]);
 
   useEffect(() => {
+    document.documentElement.classList.add("seat-print-mode");
     document.body.classList.add("seat-print-mode");
-    return () => document.body.classList.remove("seat-print-mode");
+    return () => {
+      document.documentElement.classList.remove("seat-print-mode");
+      document.body.classList.remove("seat-print-mode");
+    };
   }, []);
 
   useEffect(() => {
@@ -110,18 +114,16 @@ function SeatPrintView() {
   }, []);
 
   const setOrientation = (groupKey: string, next: Orientation) => {
-    setStored((prev) => {
-      const updated = { ...prev, [groupKey]: next };
-      try {
-        window.localStorage.setItem(
-          orientationStorageKey(grade, sessionType),
-          JSON.stringify(updated)
-        );
-      } catch {
-        // 저장 실패(프라이빗 모드 등)는 이번 세션 선택만 유지하면 충분하다
-      }
-      return updated;
-    });
+    const updated = { ...stored, [groupKey]: next };
+    setStored(updated);
+    try {
+      window.localStorage.setItem(
+        orientationStorageKey(grade, sessionType),
+        JSON.stringify(updated)
+      );
+    } catch {
+      // 저장 실패(프라이빗 모드 등)는 이번 세션 선택만 유지하면 충분하다
+    }
   };
 
   const toggleExcluded = (groupKey: string) => {
@@ -214,9 +216,9 @@ function SeatPrintView() {
 
       {/* flex 컨테이너 안에서는 인쇄 페이지 분할이 무시될 수 있어 블록 레이아웃을 쓴다 */}
       <div className="seat-print-pages">
-        {visibleGroups.map((group) => (
+        {visibleGroups.map((group, index) => (
           <PrintPageFitter
-            key={group.key}
+            key={`${group.key}-${index}`}
             orientation={orientationOf(group.key)}
             onMeasure={(next) => handleMeasure(group.key, next)}
           >
