@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import path from "node:path";
 
 const read = (rel: string) => readFileSync(new URL(rel, import.meta.url), "utf8");
 
@@ -144,6 +146,45 @@ assert.match(
   printPage,
   /document\.documentElement\.classList\.remove\("seat-print-mode"\)/,
   "page.tsx 가 documentElement 에서 seat-print-mode 클래스를 정리하지 않음"
+);
+
+// --- 그룹핑 단일 출처 ---
+// 오후자습 그룹핑 규칙이 여러 파일에 복사되어 있으면, 규칙을 한쪽만 고쳤을 때
+// 감독교사가 보는 좌석 배열과 실제 교실·인쇄물 배열이 아무 에러 없이 갈라진다.
+// 파일 단위 가드는 그 복사본을 잡지 못하므로 src/ 전체를 훑는다.
+const attendancePage = read("../src/app/attendance/[grade]/page.tsx");
+assert.match(attendancePage, /buildPrintGroups/, "출석 화면이 공용 그룹 헬퍼를 쓰지 않음");
+assert.doesNotMatch(attendancePage, /currentPrefix/, "출석 화면에 인라인 그룹핑 로직이 남아 있음");
+
+const SKIPPED_DIRS = new Set(["generated", "node_modules"]);
+const srcDir = fileURLToPath(new URL("../src/", import.meta.url));
+const groupingSource = path.join(srcDir, "lib", "seats", "print-groups.ts");
+
+function collectSourceFiles(dir: string): string[] {
+  const out: string[] = [];
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      if (!SKIPPED_DIRS.has(entry.name)) out.push(...collectSourceFiles(full));
+    } else if (entry.name.endsWith(".ts") || entry.name.endsWith(".tsx")) {
+      out.push(full);
+    }
+  }
+  return out;
+}
+
+const sourceFiles = collectSourceFiles(srcDir);
+assert.ok(sourceFiles.length > 20, `src 스캔이 비정상적으로 적게 잡힘 (${sourceFiles.length}개)`);
+
+const offenders = sourceFiles
+  .filter((file) => file !== groupingSource)
+  .filter((file) => /startsWith\("오후미래혜윰"\)/.test(readFileSync(file, "utf8")))
+  .map((file) => path.relative(srcDir, file).replace(/\\/g, "/"));
+
+assert.deepEqual(
+  offenders,
+  [],
+  "인라인 그룹핑 복사본이 남아 있음 — buildPrintGroups 로 통합할 것"
 );
 
 console.log("seat-print-wiring checks passed");

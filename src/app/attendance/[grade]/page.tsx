@@ -7,6 +7,7 @@ import { useSession } from "next-auth/react";
 import AttendanceDatePicker from "@/components/attendance/AttendanceDatePicker";
 import { getKstTodayString, formatDateLabel } from "@/lib/calendar";
 import MiraeHallLayout, { GAP_CONFIG } from "@/components/seats/MiraeHallLayout";
+import { buildPrintGroups } from "@/lib/seats/print-groups";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
@@ -987,33 +988,18 @@ export default function AttendanceGradePage() {
           ) : tab === "afternoon" ? (
             /* 오후 자습: 이름 접두사 기반 그룹 */
             <div className="flex flex-col gap-5">
-              {(() => {
-                const sorted = [...rooms].sort((a, b) => a.sortOrder - b.sortOrder);
-                const groups: typeof rooms[] = [];
-                let currentGroup: typeof rooms = [];
-                let currentPrefix = "";
-                for (const room of sorted) {
-                  const prefix = room.name.split(" ")[0];
-                  if (prefix !== currentPrefix && currentGroup.length > 0) {
-                    groups.push(currentGroup);
-                    currentGroup = [];
-                  }
-                  currentPrefix = prefix;
-                  currentGroup.push(room);
-                }
-                if (currentGroup.length > 0) groups.push(currentGroup);
-                return groups.map((group, gi) => (
-                  <div key={gi} className="border border-[#e2e8f0] rounded-[10px] overflow-hidden">
+              {buildPrintGroups(rooms, "afternoon", grade).map((group, gi) => (
+                  <div key={`${group.key}-${gi}`} className="border border-[#e2e8f0] rounded-[10px] overflow-hidden">
                     <div className="bg-[#f8fafc] px-3.5 py-2.5 border-b border-[#e2e8f0] flex justify-between items-center">
                       <span className="text-[clamp(12px,3vw,14px)] font-bold text-[#334155]">
-                        {group[0]?.name.split(" ")[0]}
+                        {group.title}
                       </span>
                       <span className="text-[clamp(10px,2.5vw,12px)] text-[#94a3b8] font-medium">
-                        {group.reduce((sum, r) => sum + r.seats.filter((s) => s.student).length, 0)}석
+                        {group.rooms.reduce((sum, r) => sum + r.seats.filter((s) => s.student).length, 0)}석
                       </span>
                     </div>
-                    <div className={`grid gap-1 p-[clamp(6px,1.5vw,12px)]`} style={{ gridTemplateColumns: `repeat(${group[0]?.name.startsWith("오후미래혜윰") ? 1 : group.length}, 1fr)` }}>
-                      {group.map((room) => (
+                    <div className={`grid gap-1 p-[clamp(6px,1.5vw,12px)]`} style={{ gridTemplateColumns: `repeat(${group.kind === "divisions-column" ? 1 : group.rooms.length}, 1fr)` }}>
+                      {group.rooms.map((room) => (
                         <div key={room.id}>
                           {renderAttendanceGrid(room)}
                         </div>
@@ -1023,8 +1009,7 @@ export default function AttendanceGradePage() {
                       교탁
                     </div>
                   </div>
-                ));
-              })()}
+              ))}
             </div>
           ) : (
             /* 기본: 세로 스택 */
