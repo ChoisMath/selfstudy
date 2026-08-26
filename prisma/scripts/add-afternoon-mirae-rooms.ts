@@ -1,4 +1,4 @@
-import { PrismaClient, SessionType } from "../../src/generated/prisma/client.js";
+import { PrismaClient, SeatSessionType } from "../../src/generated/prisma/client.js";
 import { PrismaPg } from "@prisma/adapter-pg";
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
@@ -9,7 +9,7 @@ async function main() {
 
   // 2학년 오후자습 세션 찾기
   const session = await prisma.studySession.findUnique({
-    where: { type_grade: { type: SessionType.afternoon, grade: 2 } },
+    where: { type_grade: { type: SeatSessionType.afternoon, grade: 2 } },
   });
   if (!session) {
     console.error("2학년 오후자습 세션을 찾을 수 없습니다.");

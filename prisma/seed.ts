@@ -1,4 +1,4 @@
-import { PrismaClient, Role, SessionType } from "../src/generated/prisma/client.js";
+import { PrismaClient, Role, SessionType, SeatSessionType } from "../src/generated/prisma/client.js";
 import { PrismaPg } from "@prisma/adapter-pg";
 import bcrypt from "bcryptjs";
 
@@ -94,15 +94,17 @@ async function main() {
           },
         });
 
-        // 참여 설정 (기본: 오후 전원 참여, 야간은 일부만)
-        await prisma.participationDay.create({
-          data: {
-            studentId: student.id,
-            sessionType: SessionType.afternoon,
-            isParticipating: true,
-            mon: true, tue: true, wed: true, thu: true, fri: true,
-          },
-        });
+        // 참여 설정 (기본: 오후 두 블록 전원 참여, 야간은 일부만)
+        for (const sessionType of [SessionType.afternoon1, SessionType.afternoon2]) {
+          await prisma.participationDay.create({
+            data: {
+              studentId: student.id,
+              sessionType,
+              isParticipating: true,
+              mon: true, tue: true, wed: true, thu: true, fri: true,
+            },
+          });
+        }
 
         // 야간: 짝수번 학생만 참여, 월수금만
         const nightParticipating = num % 2 === 0;
@@ -125,7 +127,7 @@ async function main() {
     // 오후 자습 세션 + 교실 3개 (실제 도면: X-4반, X-5반, X-6반 교실)
     const afternoonSession = await prisma.studySession.create({
       data: {
-        type: SessionType.afternoon,
+        type: SeatSessionType.afternoon,
         grade,
         name: `자율관: 교실`,
         timeStart: "16:30",
@@ -171,7 +173,7 @@ async function main() {
     // 야간 자습 세션 + 미래홀 방 5개 (실제 도면 기반)
     const nightSession = await prisma.studySession.create({
       data: {
-        type: SessionType.night,
+        type: SeatSessionType.night,
         grade,
         name: `미래홀`,
         timeStart: "19:20",
@@ -200,7 +202,7 @@ async function main() {
   for (let grade = 1; grade <= 3; grade++) {
     // 오후 교실별 좌석 배치
     const rooms = await prisma.room.findMany({
-      where: { session: { grade, type: SessionType.afternoon } },
+      where: { session: { grade, type: SeatSessionType.afternoon } },
       orderBy: { sortOrder: "asc" },
     });
 
@@ -260,7 +262,7 @@ async function main() {
       if (gradeTeachers.length === 0) continue;
       const teacher = gradeTeachers[d % gradeTeachers.length];
 
-      for (const sessionType of [SessionType.afternoon, SessionType.night]) {
+      for (const sessionType of Object.values(SessionType)) {
         await prisma.supervisorAssignment.create({
           data: {
             teacherId: teacher.id,

@@ -217,8 +217,9 @@ export function TodayAttendanceDemo() {
         <div className="text-center text-lg font-semibold text-gray-800">
           2026년 5월 1일 (금)
         </div>
-        <SessionSummary title="오후 자습" supervisor="김교사" values={[116, 3, 5, 12]} />
-        <SessionSummary title="야간 자습" supervisor="박교사" values={[98, 4, 8, 0]} />
+        <SessionSummary title="오후1 자습" supervisor="김교사" values={[116, 3, 5, 12]} />
+        <SessionSummary title="오후2 자습" supervisor="김교사" values={[112, 5, 7, 12]} />
+        <SessionSummary title="야간 자습" supervisor="김교사" values={[98, 4, 8, 0]} />
       </div>
     </DemoFrame>
   );

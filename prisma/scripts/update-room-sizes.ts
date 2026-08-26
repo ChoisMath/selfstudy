@@ -1,4 +1,4 @@
-import { PrismaClient, SessionType } from "../../src/generated/prisma/client.js";
+import { PrismaClient, SeatSessionType } from "../../src/generated/prisma/client.js";
 import { PrismaPg } from "@prisma/adapter-pg";
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
@@ -12,7 +12,7 @@ async function main() {
 
   for (let grade = 1; grade <= 3; grade++) {
     const session = await prisma.studySession.findUnique({
-      where: { type_grade: { type: SessionType.afternoon, grade } },
+      where: { type_grade: { type: SeatSessionType.afternoon, grade } },
     });
     if (!session) {
       console.log(`  Grade ${grade} afternoon session not found, skipping.`);
@@ -84,7 +84,7 @@ async function main() {
   console.log("\nPart 3: 2학년 야간 복도석 추가...");
 
   const nightSession2 = await prisma.studySession.findUnique({
-    where: { type_grade: { type: SessionType.night, grade: 2 } },
+    where: { type_grade: { type: SeatSessionType.night, grade: 2 } },
   });
 
   if (nightSession2) {
