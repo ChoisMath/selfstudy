@@ -946,7 +946,7 @@ export default function AttendanceGradePage() {
             <button
               key={sessionType}
               onClick={() => { setTab(sessionType); setSelectedSeat(null); setActivatedStudents(new Set()); }}
-              className={`flex-1 text-center py-2.5 rounded-t-[10px] text-[clamp(12px,3vw,14px)] font-semibold transition-all whitespace-nowrap min-w-[64px] ${
+              className={`flex-1 text-center py-2.5 rounded-t-[10px] text-[clamp(12px,3vw,14px)] font-semibold transition-all whitespace-nowrap min-w-[64px] min-h-11 ${
                 tab === sessionType
                   ? "bg-white text-[#2563eb] shadow-[0_-2px_8px_rgba(0,0,0,0.06)]"
                   : "bg-[#e2e8f0] text-[#94a3b8]"
@@ -957,7 +957,7 @@ export default function AttendanceGradePage() {
           ))}
           <button
             onClick={() => { setTab("absence"); setSelectedSeat(null); }}
-            className={`flex-1 text-center py-2.5 rounded-t-[10px] text-[clamp(12px,3vw,14px)] font-semibold transition-all relative whitespace-nowrap min-w-[64px] ${
+            className={`flex-1 text-center py-2.5 rounded-t-[10px] text-[clamp(12px,3vw,14px)] font-semibold transition-all relative whitespace-nowrap min-w-[64px] min-h-11 ${
               tab === "absence"
                 ? "bg-white text-[#2563eb] shadow-[0_-2px_8px_rgba(0,0,0,0.06)]"
                 : "bg-[#e2e8f0] text-[#94a3b8]"

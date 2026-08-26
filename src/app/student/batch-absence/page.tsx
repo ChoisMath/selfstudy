@@ -368,7 +368,7 @@ function SessionButton({
       <button
         type="button"
         disabled
-        className="px-3 py-1 text-xs rounded border bg-gray-100 text-gray-300 border-gray-200 cursor-not-allowed whitespace-nowrap"
+        className="px-3 py-1 text-xs rounded border bg-gray-100 text-gray-300 border-gray-200 cursor-not-allowed whitespace-nowrap min-h-11"
       >
         {label}
       </button>
@@ -381,7 +381,7 @@ function SessionButton({
       <button
         type="button"
         disabled
-        className="px-3 py-1 text-xs rounded border bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed whitespace-nowrap"
+        className="px-3 py-1 text-xs rounded border bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed whitespace-nowrap min-h-11"
       >
         신청됨
       </button>
@@ -394,7 +394,7 @@ function SessionButton({
       <button
         type="button"
         onClick={onClick}
-        className="px-3 py-1 text-xs rounded border bg-red-100 text-red-700 border-red-300 font-medium transition-colors whitespace-nowrap"
+        className="px-3 py-1 text-xs rounded border bg-red-100 text-red-700 border-red-300 font-medium transition-colors whitespace-nowrap min-h-11"
       >
         {label}
       </button>
@@ -406,7 +406,7 @@ function SessionButton({
       type="button"
       disabled={!enabled}
       onClick={onClick}
-      className={`px-3 py-1 text-xs rounded border transition-colors whitespace-nowrap ${
+      className={`px-3 py-1 text-xs rounded border transition-colors whitespace-nowrap min-h-11 ${
         enabled
           ? "bg-sky-100 text-sky-700 border-sky-300 hover:bg-sky-200"
           : "bg-sky-100 text-sky-700 border-sky-300 opacity-60 cursor-not-allowed"

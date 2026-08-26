@@ -130,7 +130,7 @@ export default function AbsenceReasonsPage() {
               {SESSION_TYPES.map((t) => (
                 <label
                   key={t}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-md border cursor-pointer transition-colors whitespace-nowrap ${
+                  className={`flex items-center gap-2 px-4 py-2 rounded-md border cursor-pointer transition-colors whitespace-nowrap min-h-11 ${
                     sessionType === t
                       ? "border-blue-500 bg-blue-50 text-blue-700"
                       : "border-gray-300 text-gray-600 hover:bg-gray-50"

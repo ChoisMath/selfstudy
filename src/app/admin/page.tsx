@@ -45,7 +45,7 @@ function SessionRow({ label, icon, stats }: { label: string; icon: string; stats
   return (
     <div className="mb-2.5 last:mb-0">
       <div className="flex items-center gap-2 mb-2">
-        <span className="text-sm font-semibold text-gray-500 w-16 whitespace-nowrap">{icon} {label}</span>
+        <span className="text-sm font-semibold text-gray-500 min-w-16 whitespace-nowrap">{icon} {label}</span>
         {stats.supervisor && (
           <span className="bg-blue-100 text-blue-800 px-2.5 py-0.5 rounded-full text-xs font-medium">
             {stats.supervisor}

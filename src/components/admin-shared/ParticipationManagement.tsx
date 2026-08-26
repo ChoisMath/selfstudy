@@ -129,7 +129,7 @@ export default function ParticipationManagement({ grade }: { grade: number }) {
                 [...Array(6)].map((_, i) => <col key={`${t}-${i}`} style={{ width: "36px" }} />)
               )}
             </colgroup>
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
               <tr>
                 <th rowSpan={3} className="px-2 py-3 text-left font-medium text-gray-600 border-b border-gray-200">이름</th>
                 <th rowSpan={3} className="py-3 text-center font-medium text-gray-600 border-b border-gray-200">반</th>
