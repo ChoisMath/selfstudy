@@ -229,7 +229,7 @@ type CopyPlan = { toCreate: { studentId; status: "present" | "absent" }[]; skipp
 - 탭 전환 시 기존과 동일하게 선택 좌석·활성화·주간 캐시 초기화. 주간 캐시 키는 `studentId` 그대로(응답이 3세션을 모두 담으므로 탭 간 재사용 가능).
 
 ### "오후1 결과 복사" 버튼
-- 오후2 탭(`tab === "afternoon2"`)의 날짜 바 우측에만 렌더. `min-h-11`.
+- 오후2 탭(`tab === "afternoon2"`)에서만, 교실 콘텐츠 카드 상단 우측에 렌더 (날짜 바는 높이가 작아 44px 터치 타겟을 넣으면 레이아웃이 흔들리므로). `min-h-11`.
 - 클릭 → `confirm("오후1 출석 결과를 오후2 미체크 학생에게 복사할까요?")` → `POST /api/attendance/copy-session` (`date` = 화면의 `selectedDate`, `from: "afternoon1"`, `to: "afternoon2"`) → `alert("n명 복사, m명 건너뜀")` → 좌석 SWR `mutate()`.
 - 감독교사 배정 여부는 요구하지 않는다(토글과 같은 `["teacher"]` 권한).
 
@@ -304,7 +304,8 @@ type CopyPlan = { toCreate: { studentId; status: "present" | "absent" }[]; skipp
 | `tests/copy-session-logic.test.ts` (신규) | `planSessionCopy`: present 복사, 사유 없는 absent 복사, 사유 있는 absent·미체크 건너뜀, 이미 체크된 to 보존, 비참여·불참신청 학생 제외 |
 | `tests/weekly-summary.test.ts` (신규) | `summarizeWeeklyCell` 우선순위: 불참승인 > 방과후 > 출석 > 결석 > 미체크; 비참여 "-" |
 | `tests/session-split-migration.test.ts` (신규) | 마이그레이션 SQL 문자열 계약: `SeatSessionType` 생성, 5개 테이블 `SessionType_new` 전환, `'afternoon2'` INSERT 5종 + `absence_reasons` 조인 복제, `DROP TYPE "SessionType_old"` |
-| `tests/session-literal-guard.test.ts` (신규) | `src/**` 스캔: `"afternoon"`/`'afternoon'` 리터럴은 `src/lib/sessions.ts` 와 좌석 컨텍스트 파일 허용 목록 밖에서 금지; `?? 100` 금지 |
+| `tests/session-literal-guard.test.ts` (신규) | `src/**` 스캔: `"afternoon"`/`'afternoon'` 리터럴은 `src/lib/sessions.ts` 와 좌석 세션 컨텍스트 파일 허용 목록(좌석·인쇄 파일 + 출석 화면의 `seatSession` 분기 + 학생 신청의 "오후 전체") 밖에서 금지; `?? 100`·`COALESCE(duration_minutes, 100)` 금지 |
+| `tests/{attendance-api,attendance-page,absence-request,participation,monthly-attendance,today-dashboard}-wiring.test.ts` (신규) | 파일 단위 문자열 계약: 옛 `afternoon`/`night` 키·삼항·튜플이 남지 않고 `SESSION_TYPES`/`SESSION_META`/`emptySessionRecord` 로 그리는지 |
 | `tests/supervisor-bulk-absence-approval.test.ts` | `SessionType` 3종, "다른 세션 미승인" 케이스를 `afternoon1` vs `afternoon2` 로 |
 | `tests/seat-print-groups.test.ts` | 타입만 `SeatSessionType` |
 | `tests/reminder-logic.test.ts` | 픽스처 (teacher, grade) 당 3행 → 1건 |
