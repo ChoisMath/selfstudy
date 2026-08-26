@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import useSWR from "swr";
+import { SESSION_TYPES, SESSION_META, type SessionType } from "@/lib/sessions";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -17,7 +18,7 @@ const REASON_LABELS: Record<string, string> = {
 
 type AttendanceRecord = {
   date: string;
-  sessionType: "afternoon" | "night";
+  sessionType: SessionType;
   status: "unchecked" | "present" | "absent";
   absenceReason: { reasonType: string; detail: string | null } | null;
 };
@@ -198,7 +199,7 @@ function WeeklyView({
     if (a.status === "absent" && a.absenceReason) {
       absenceNotes.push({
         date: a.date,
-        sessionType: a.sessionType === "afternoon" ? "오후" : "야간",
+        sessionType: SESSION_META[a.sessionType].shortLabel,
         reason:
           REASON_LABELS[a.absenceReason.reasonType] +
           (a.absenceReason.detail ? ` (${a.absenceReason.detail})` : ""),
@@ -250,10 +251,10 @@ function WeeklyView({
             </tr>
           </thead>
           <tbody>
-            {(["afternoon", "night"] as const).map((sessionType) => (
+            {SESSION_TYPES.map((sessionType) => (
               <tr key={sessionType} className="border-t border-gray-100">
-                <td className="px-3 py-3 text-gray-600 font-medium">
-                  {sessionType === "afternoon" ? "오후" : "야간"}
+                <td className="px-3 py-3 text-gray-600 font-medium whitespace-nowrap">
+                  {SESSION_META[sessionType].shortLabel}
                 </td>
                 {weekDates.map((d, i) => {
                   const record = attendanceMap.get(`${d}_${sessionType}`);
@@ -404,21 +405,20 @@ function MonthlyView({
         <div className="grid grid-cols-7">
           {calendarDays.map((day, idx) => {
             if (day === null) {
-              return <div key={`empty-${idx}`} className="p-2 min-h-[60px]" />;
+              return <div key={`empty-${idx}`} className="p-2 min-h-[72px]" />;
             }
 
             const dateObj = new Date(Date.UTC(year, mon - 1, day));
             const dow = dateObj.getUTCDay();
             const isWeekend = dow === 0 || dow === 6;
 
-            const afternoonStatus = getDayStatus(day, "afternoon");
-            const nightStatus = getDayStatus(day, "night");
-            const hasData = afternoonStatus || nightStatus;
+            const statusByType = SESSION_TYPES.map((t) => ({ t, status: getDayStatus(day, t) }));
+            const hasData = statusByType.some((s) => s.status);
 
             return (
               <div
                 key={day}
-                className={`p-1.5 min-h-[60px] border-t border-r border-gray-100 ${
+                className={`p-1.5 min-h-[72px] border-t border-r border-gray-100 ${
                   isWeekend ? "bg-gray-50" : ""
                 }`}
               >
@@ -431,14 +431,12 @@ function MonthlyView({
                 </div>
                 {hasData && !isWeekend && (
                   <div className="space-y-0.5">
-                    <div className="flex items-center gap-1">
-                      <span className="text-[10px] text-gray-400">오</span>
-                      <StatusDot status={afternoonStatus} />
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <span className="text-[10px] text-gray-400">야</span>
-                      <StatusDot status={nightStatus} />
-                    </div>
+                    {statusByType.map(({ t, status }) => (
+                      <div key={t} className="flex items-center gap-1">
+                        <span className="text-[10px] text-gray-400 whitespace-nowrap">{SESSION_META[t].shortLabel}</span>
+                        <StatusDot status={status} />
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>

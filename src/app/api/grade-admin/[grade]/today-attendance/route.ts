@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { withGradeAuth } from "@/lib/api-auth";
 import { prisma } from "@/lib/prisma";
+import { emptySessionRecord, type SessionType } from "@/lib/sessions";
 
 const DAY_FIELDS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
 const AFTER_SCHOOL_FIELDS = [
@@ -47,8 +48,7 @@ export async function GET(
         date: dateStr,
         dayOfWeek: DAY_NAMES[dayOfWeek],
         isWeekend: true,
-        afternoon: emptyStats(),
-        night: emptyStats(),
+        sessions: emptySessionRecord(() => emptyStats()),
       });
     }
 
@@ -81,7 +81,7 @@ export async function GET(
       supervisorMap.set(sa.sessionType, sa.teacher.name);
     }
 
-    function calcStats(sessionType: "afternoon" | "night"): SessionStats {
+    function calcStats(sessionType: SessionType): SessionStats {
       const stats = emptyStats();
       stats.supervisor = supervisorMap.get(sessionType) ?? null;
 
@@ -116,8 +116,7 @@ export async function GET(
       date: dateStr,
       dayOfWeek: DAY_NAMES[dayOfWeek],
       isWeekend: false,
-      afternoon: calcStats("afternoon"),
-      night: calcStats("night"),
+      sessions: emptySessionRecord((t) => calcStats(t)),
     });
   })(req);
 }

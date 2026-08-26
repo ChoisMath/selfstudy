@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { withAuth } from "@/lib/api-auth";
 import { prisma } from "@/lib/prisma";
+import { emptySessionRecord, type SessionType } from "@/lib/sessions";
 
 const DAY_FIELDS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
 const AFTER_SCHOOL_FIELDS = [
@@ -38,8 +39,7 @@ export const GET = withAuth(["admin"], async (req: Request) => {
       isWeekend: true,
       grades: [1, 2, 3].map((g) => ({
         grade: g,
-        afternoon: emptyStats(),
-        night: emptyStats(),
+        sessions: emptySessionRecord(() => emptyStats()),
       })),
     });
   }
@@ -80,7 +80,7 @@ export const GET = withAuth(["admin"], async (req: Request) => {
     supervisorMap.set(`${sa.grade}-${sa.sessionType}`, sa.teacher.name);
   }
 
-  function calcStats(gradeStudents: typeof students, gradeNum: number, sessionType: "afternoon" | "night"): SessionStats {
+  function calcStats(gradeStudents: typeof students, gradeNum: number, sessionType: SessionType): SessionStats {
     const stats = emptyStats();
     stats.supervisor = supervisorMap.get(`${gradeNum}-${sessionType}`) ?? null;
 
@@ -113,8 +113,7 @@ export const GET = withAuth(["admin"], async (req: Request) => {
 
   const grades = [1, 2, 3].map((g) => ({
     grade: g,
-    afternoon: calcStats(studentsByGrade.get(g) || [], g, "afternoon"),
-    night: calcStats(studentsByGrade.get(g) || [], g, "night"),
+    sessions: emptySessionRecord((t) => calcStats(studentsByGrade.get(g) || [], g, t)),
   }));
 
   return NextResponse.json({

@@ -1,6 +1,7 @@
 "use client";
 
 import useSWR from "swr";
+import { SESSION_TYPES, SESSION_META, type SessionType } from "@/lib/sessions";
 
 type SessionStats = {
   supervisor: string | null;
@@ -13,8 +14,7 @@ type SessionStats = {
 
 type GradeData = {
   grade: number;
-  afternoon: SessionStats;
-  night: SessionStats;
+  sessions: Record<SessionType, SessionStats>;
 };
 
 type TodayData = {
@@ -45,7 +45,7 @@ function SessionRow({ label, icon, stats }: { label: string; icon: string; stats
   return (
     <div className="mb-2.5 last:mb-0">
       <div className="flex items-center gap-2 mb-2">
-        <span className="text-sm font-semibold text-gray-500 w-14">{icon} {label}</span>
+        <span className="text-sm font-semibold text-gray-500 w-16 whitespace-nowrap">{icon} {label}</span>
         {stats.supervisor && (
           <span className="bg-blue-100 text-blue-800 px-2.5 py-0.5 rounded-full text-xs font-medium">
             {stats.supervisor}
@@ -101,8 +101,9 @@ export default function AdminDashboardPage() {
         {data.grades.map((g) => (
           <div key={g.grade} className="bg-white rounded-xl p-4 border border-gray-200">
             <div className="text-base font-bold text-gray-800 mb-3">{g.grade}학년</div>
-            <SessionRow label="오후" icon="☀️" stats={g.afternoon} />
-            <SessionRow label="야간" icon="🌙" stats={g.night} />
+            {SESSION_TYPES.map((t) => (
+              <SessionRow key={t} label={SESSION_META[t].shortLabel} icon={SESSION_META[t].icon} stats={g.sessions[t]} />
+            ))}
           </div>
         ))}
       </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import useSWR from "swr";
+import { SESSION_TYPES, SESSION_META, type SessionType } from "@/lib/sessions";
 
 type SessionStats = {
   supervisor: string | null;
@@ -15,8 +16,7 @@ type TodayData = {
   date: string;
   dayOfWeek: string;
   isWeekend: boolean;
-  afternoon: SessionStats;
-  night: SessionStats;
+  sessions: Record<SessionType, SessionStats>;
 };
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
@@ -94,8 +94,9 @@ export default function TodayAttendanceDashboard({ grade }: { grade: number }) {
         <span className="text-lg font-semibold text-gray-800">{dateDisplay}</span>
       </div>
       <div className="space-y-4">
-        <SessionCard title="오후자습" icon="☀️" stats={data.afternoon} />
-        <SessionCard title="야간자습" icon="🌙" stats={data.night} />
+        {SESSION_TYPES.map((t) => (
+          <SessionCard key={t} title={SESSION_META[t].label} icon={SESSION_META[t].icon} stats={data.sessions[t]} />
+        ))}
       </div>
     </div>
   );

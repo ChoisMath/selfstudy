@@ -2,17 +2,18 @@
 
 import { Fragment, useState } from "react";
 import useSWR from "swr";
+import { SESSION_TYPES, SESSION_META, type SessionType } from "@/lib/sessions";
 
 type AttendanceData = {
   date: string;
-  sessionType: "afternoon" | "night";
+  sessionType: SessionType;
   status: "unchecked" | "present" | "absent";
   reasonType: string | null;
   reasonDetail: string | null;
 };
 
 type ParticipationData = {
-  sessionType: "afternoon" | "night";
+  sessionType: SessionType;
   isParticipating: boolean;
   mon: boolean; tue: boolean; wed: boolean; thu: boolean; fri: boolean;
   afterSchoolMon: boolean; afterSchoolTue: boolean; afterSchoolWed: boolean;
@@ -21,7 +22,7 @@ type ParticipationData = {
 
 type NoteData = {
   date: string;
-  sessionType: "afternoon" | "night";
+  sessionType: SessionType;
   note: string;
 };
 
@@ -231,7 +232,7 @@ export default function HomeroomPage() {
                 {DAY_LABELS.map((label) => (
                   <th
                     key={label}
-                    colSpan={2}
+                    colSpan={3}
                     className="px-1 py-2 text-center font-medium text-gray-600 border-l border-gray-300"
                   >
                     {label}
@@ -241,16 +242,11 @@ export default function HomeroomPage() {
               <tr className="bg-gray-50">
                 {DAY_LABELS.map((label) => (
                   <Fragment key={label}>
-                    <th
-                      className="px-1 py-1 text-center text-xs font-medium text-gray-400 border-l border-gray-300"
-                    >
-                      오후
-                    </th>
-                    <th
-                      className="px-1 py-1 text-center text-xs font-medium text-gray-400"
-                    >
-                      야간
-                    </th>
+                    {SESSION_TYPES.map((t, i) => (
+                      <th key={t} className={`px-1 py-1 text-center text-xs font-medium text-gray-400 whitespace-nowrap ${i === 0 ? "border-l border-gray-300" : ""}`}>
+                        {SESSION_META[t].shortLabel}
+                      </th>
+                    ))}
                   </Fragment>
                 ))}
               </tr>
@@ -258,37 +254,33 @@ export default function HomeroomPage() {
             <tbody>
               {isLoading ? (
                 <tr>
-                  <td colSpan={13} className="px-4 py-8 text-center text-gray-400">
+                  <td colSpan={18} className="px-4 py-8 text-center text-gray-400">
                     불러오는 중...
                   </td>
                 </tr>
               ) : error ? (
                 <tr>
-                  <td colSpan={13} className="px-4 py-8 text-center text-red-500">
+                  <td colSpan={18} className="px-4 py-8 text-center text-red-500">
                     {error.message}
                   </td>
                 </tr>
               ) : students.length === 0 ? (
                 <tr>
-                  <td colSpan={13} className="px-4 py-8 text-center text-gray-400">
+                  <td colSpan={18} className="px-4 py-8 text-center text-gray-400">
                     학생이 없습니다.
                   </td>
                 </tr>
               ) : (
                 students.map((student) => {
-                  const afternoonPart = student.participationDays.find(
-                    (p) => p.sessionType === "afternoon"
-                  );
-                  const nightPart = student.participationDays.find(
-                    (p) => p.sessionType === "night"
-                  );
+                  const partByType = new Map(student.participationDays.map((p) => [p.sessionType, p]));
 
                   const dayKeys = ["mon", "tue", "wed", "thu", "fri"] as const;
                   const afterSchoolKeys = ["afterSchoolMon", "afterSchoolTue", "afterSchoolWed", "afterSchoolThu", "afterSchoolFri"] as const;
 
-                  const isAfternoonAllOff = afternoonPart ? !afternoonPart.isParticipating : false;
-                  const isNightAllOff = nightPart ? !nightPart.isParticipating : false;
-                  const isEntireRowGray = isAfternoonAllOff && isNightAllOff;
+                  const isEntireRowGray = SESSION_TYPES.every((t) => {
+                    const part = partByType.get(t);
+                    return part ? !part.isParticipating : false;
+                  });
 
                   // 비고 수집
                   const weekNotes = student.attendanceNotes.filter(
@@ -309,51 +301,27 @@ export default function HomeroomPage() {
                         </td>
                         {weekDates.map((date, idx) => {
                           const dayKey = dayKeys[idx];
-                          const afternoonAtt = student.attendances.find(
-                            (a) => a.date === date && a.sessionType === "afternoon"
-                          );
-                          const nightAtt = student.attendances.find(
-                            (a) => a.date === date && a.sessionType === "night"
-                          );
-
-                          const isAfternoonParticipating =
-                            afternoonPart
-                              ? afternoonPart.isParticipating && afternoonPart[dayKey]
-                              : true;
-                          const isNightParticipating =
-                            nightPart
-                              ? nightPart.isParticipating && nightPart[dayKey]
-                              : true;
-
-                          const isAfternoonAfterSchool = afternoonPart
-                            ? afternoonPart.isParticipating && afternoonPart[dayKey] && afternoonPart[afterSchoolKeys[idx]]
-                            : false;
-                          const isNightAfterSchool = nightPart
-                            ? nightPart.isParticipating && nightPart[dayKey] && nightPart[afterSchoolKeys[idx]]
-                            : false;
-
-                          const afternoonGray = !isAfternoonParticipating;
-                          const nightGray = !isNightParticipating;
-                          const afternoonHasData = afternoonAtt?.status && afternoonAtt.status !== "unchecked";
-                          const nightHasData = nightAtt?.status && nightAtt.status !== "unchecked";
-
-                          const afternoonNote = weekNotes.find((n) => n.date === date && n.sessionType === "afternoon");
-                          const nightNote = weekNotes.find((n) => n.date === date && n.sessionType === "night");
-
                           return (
                             <Fragment key={`${student.id}-${date}`}>
-                              <td className={`px-1 py-2 text-center border-l border-gray-300 ${afternoonGray && !afternoonHasData ? "bg-gray-100" : ""}`}>
-                                {afternoonGray && !afternoonHasData
-                                  ? <span className="text-xs text-gray-300">-</span>
-                                  : <StatusCell status={afternoonAtt?.status} isAfterSchool={isAfternoonAfterSchool} reasonType={afternoonAtt?.reasonType} reasonDetail={afternoonAtt?.reasonDetail} />}
-                                {afternoonNote && <NoteIndicator note={afternoonNote.note} />}
-                              </td>
-                              <td className={`px-1 py-2 text-center ${nightGray && !nightHasData ? "bg-gray-100" : ""}`}>
-                                {nightGray && !nightHasData
-                                  ? <span className="text-xs text-gray-300">-</span>
-                                  : <StatusCell status={nightAtt?.status} isAfterSchool={isNightAfterSchool} reasonType={nightAtt?.reasonType} reasonDetail={nightAtt?.reasonDetail} />}
-                                {nightNote && <NoteIndicator note={nightNote.note} />}
-                              </td>
+                              {SESSION_TYPES.map((t, i) => {
+                                const part = partByType.get(t);
+                                const att = student.attendances.find((a) => a.date === date && a.sessionType === t);
+                                const isParticipating = part ? part.isParticipating && part[dayKey] : true;
+                                const isAfterSchool = part
+                                  ? part.isParticipating && part[dayKey] && part[afterSchoolKeys[idx]]
+                                  : false;
+                                const gray = !isParticipating;
+                                const hasData = att?.status && att.status !== "unchecked";
+                                const note = weekNotes.find((n) => n.date === date && n.sessionType === t);
+                                return (
+                                  <td key={t} className={`px-1 py-2 text-center ${i === 0 ? "border-l border-gray-300" : ""} ${gray && !hasData ? "bg-gray-100" : ""}`}>
+                                    {gray && !hasData
+                                      ? <span className="text-xs text-gray-300">-</span>
+                                      : <StatusCell status={att?.status} isAfterSchool={isAfterSchool} reasonType={att?.reasonType} reasonDetail={att?.reasonDetail} />}
+                                    {note && <NoteIndicator note={note.note} />}
+                                  </td>
+                                );
+                              })}
                             </Fragment>
                           );
                         })}
@@ -370,46 +338,25 @@ export default function HomeroomPage() {
                   {weekDates.map((date, idx) => {
                     const dayKeys = ["mon", "tue", "wed", "thu", "fri"] as const;
                     const dayKey = dayKeys[idx];
-                    const afternoonPresent = students.filter((s) => {
-                      const att = s.attendances.find((a) => a.date === date && a.sessionType === "afternoon");
-                      return att?.status === "present";
-                    }).length;
-                    const afternoonAbsent = students.filter((s) => {
-                      const att = s.attendances.find((a) => a.date === date && a.sessionType === "afternoon");
-                      return att?.status === "absent";
-                    }).length;
-                    const afternoonParticipating = students.filter((s) => {
-                      const part = s.participationDays.find((p) => p.sessionType === "afternoon");
-                      return part ? part.isParticipating && part[dayKey] : true;
-                    }).length;
-                    const nightPresent = students.filter((s) => {
-                      const att = s.attendances.find((a) => a.date === date && a.sessionType === "night");
-                      return att?.status === "present";
-                    }).length;
-                    const nightAbsent = students.filter((s) => {
-                      const att = s.attendances.find((a) => a.date === date && a.sessionType === "night");
-                      return att?.status === "absent";
-                    }).length;
-                    const nightParticipating = students.filter((s) => {
-                      const part = s.participationDays.find((p) => p.sessionType === "night");
-                      return part ? part.isParticipating && part[dayKey] : true;
-                    }).length;
                     return (
                       <Fragment key={`total-${date}`}>
-                        <td className="px-1 py-2.5 text-center text-[10px] border-l border-gray-300">
-                          <span className="text-green-700 font-bold">{afternoonPresent}</span>
-                          <span className="text-gray-400">/</span>
-                          <span className="text-red-700 font-bold">{afternoonAbsent}</span>
-                          <span className="text-gray-400">/</span>
-                          <span className="text-gray-500">{afternoonParticipating}</span>
-                        </td>
-                        <td className="px-1 py-2.5 text-center text-[10px]">
-                          <span className="text-green-700 font-bold">{nightPresent}</span>
-                          <span className="text-gray-400">/</span>
-                          <span className="text-red-700 font-bold">{nightAbsent}</span>
-                          <span className="text-gray-400">/</span>
-                          <span className="text-gray-500">{nightParticipating}</span>
-                        </td>
+                        {SESSION_TYPES.map((t, i) => {
+                          const present = students.filter((s) => s.attendances.find((a) => a.date === date && a.sessionType === t)?.status === "present").length;
+                          const absent = students.filter((s) => s.attendances.find((a) => a.date === date && a.sessionType === t)?.status === "absent").length;
+                          const participating = students.filter((s) => {
+                            const part = s.participationDays.find((p) => p.sessionType === t);
+                            return part ? part.isParticipating && part[dayKey] : true;
+                          }).length;
+                          return (
+                            <td key={t} className={`px-1 py-2.5 text-center text-[10px] whitespace-nowrap ${i === 0 ? "border-l border-gray-300" : ""}`}>
+                              <span className="text-green-700 font-bold">{present}</span>
+                              <span className="text-gray-400">/</span>
+                              <span className="text-red-700 font-bold">{absent}</span>
+                              <span className="text-gray-400">/</span>
+                              <span className="text-gray-500">{participating}</span>
+                            </td>
+                          );
+                        })}
                       </Fragment>
                     );
                   })}
