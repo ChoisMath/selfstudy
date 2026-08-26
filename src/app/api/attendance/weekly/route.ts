@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { withAuth } from "@/lib/api-auth";
 import { computeGradeStudyRanking } from "@/lib/academic-year";
+import { attendanceMinutes } from "@/lib/sessions";
 
 // GET /api/attendance/weekly?studentId=1&date=2026-04-05
 export const GET = withAuth(
@@ -60,7 +61,7 @@ export const GET = withAuth(
           status: "present",
           date: { gte: monthStart, lte: monthEnd },
         },
-        select: { durationMinutes: true },
+        select: { sessionType: true, durationMinutes: true },
       }),
     ]);
 
@@ -151,7 +152,7 @@ export const GET = withAuth(
       : null;
 
     const monthlyMinutes = monthlyAttendances.reduce(
-      (sum, a) => sum + (a.durationMinutes ?? 100),
+      (sum, a) => sum + attendanceMinutes(a),
       0,
     );
     // 학년도 누계는 랭킹 계산 시 이미 집계됨 — 중복 쿼리 제거

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { withGradeAuth } from "@/lib/api-auth";
+import { attendanceMinutes } from "@/lib/sessions";
 
 export async function GET(
   req: Request,
@@ -79,7 +80,7 @@ export async function GET(
 
       const totalMinutes = student.attendances
         .filter((a) => a.status === "present")
-        .reduce((sum, a) => sum + (a.durationMinutes ?? 100), 0);
+        .reduce((sum, a) => sum + attendanceMinutes(a), 0);
       const studyHours = Math.round((totalMinutes / 60) * 10) / 10;
 
       return {

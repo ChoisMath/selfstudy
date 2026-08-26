@@ -77,7 +77,7 @@ export async function getGradeRankingMap(
   const rows = await prisma.$queryRaw<GroupRow[]>`
     SELECT
       a.student_id AS "studentId",
-      SUM(COALESCE(a.duration_minutes, 100))::int AS minutes
+      SUM(COALESCE(a.duration_minutes, CASE a.session_type WHEN 'night' THEN 100 ELSE 50 END))::int AS minutes
     FROM attendance a
     INNER JOIN students s ON s.id = a.student_id
     WHERE s.grade = ${grade}
@@ -86,7 +86,7 @@ export async function getGradeRankingMap(
       AND a.date >= ${start}
       AND a.date < ${end}
     GROUP BY a.student_id
-    HAVING SUM(COALESCE(a.duration_minutes, 100)) > 0
+    HAVING SUM(COALESCE(a.duration_minutes, CASE a.session_type WHEN 'night' THEN 100 ELSE 50 END)) > 0
   `;
 
   const map = buildRankingMap(rows);

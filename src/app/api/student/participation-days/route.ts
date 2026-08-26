@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { withAuth } from "@/lib/api-auth";
 import { computeGradeStudyRanking } from "@/lib/academic-year";
+import { attendanceMinutes } from "@/lib/sessions";
 
 // GET /api/student/participation-days
 export const GET = withAuth(["student"], async (_req: Request, user) => {
@@ -24,13 +25,13 @@ export const GET = withAuth(["student"], async (_req: Request, user) => {
         status: "present",
         date: { gte: monthStart, lte: monthEnd },
       },
-      select: { durationMinutes: true },
+      select: { sessionType: true, durationMinutes: true },
     }),
     grade ? computeGradeStudyRanking(grade, studentId, now) : Promise.resolve(null),
   ]);
 
   const monthlyMinutes = monthlyAttendances.reduce(
-    (sum, a) => sum + (a.durationMinutes ?? 100),
+    (sum, a) => sum + attendanceMinutes(a),
     0,
   );
   // 학년도 누계는 랭킹 계산 시 이미 집계됨 — 중복 쿼리 제거

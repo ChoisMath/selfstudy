@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { withAuth } from "@/lib/api-auth";
+import { attendanceMinutes } from "@/lib/sessions";
 
 // GET /api/homeroom/monthly-attendance?month=2026-04
 export const GET = withAuth(["homeroom", "admin"], async (req: Request, user) => {
@@ -87,7 +88,7 @@ export const GET = withAuth(["homeroom", "admin"], async (req: Request, user) =>
 
     const totalMinutes = student.attendances
       .filter((a) => a.status === "present")
-      .reduce((sum, a) => sum + (a.durationMinutes ?? 100), 0);
+      .reduce((sum, a) => sum + attendanceMinutes(a), 0);
     const studyHours = Math.round((totalMinutes / 60) * 10) / 10;
 
     return {
