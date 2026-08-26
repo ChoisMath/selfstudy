@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback, useEffect, useMemo, memo } from "react";
+import { Fragment, useState, useRef, useCallback, useEffect, useMemo, memo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import useSWR from "swr";
 import { useSession } from "next-auth/react";
@@ -8,6 +8,12 @@ import AttendanceDatePicker from "@/components/attendance/AttendanceDatePicker";
 import { getKstTodayString, formatDateLabel } from "@/lib/calendar";
 import MiraeHallLayout, { GAP_CONFIG } from "@/components/seats/MiraeHallLayout";
 import { buildPrintGroups } from "@/lib/seats/print-groups";
+import { SESSION_TYPES, SESSION_META, seatSessionOf, sessionTypesOfSeat, type SessionType } from "@/lib/sessions";
+import { reasonLabel } from "@/lib/absence-reasons";
+import { summarizeWeeklyCell, type WeeklyDayRow, type WeeklyCellKind } from "@/lib/attendance/weekly-summary";
+
+const COPY_SOURCE: SessionType = "afternoon1";
+const COPY_TARGET: SessionType = "afternoon2";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
@@ -41,19 +47,6 @@ interface AttendanceRecord {
   absenceReason?: { reasonType: string; detail: string | null };
 }
 
-interface WeeklyDay {
-  date: string;
-  dayOfWeek: string;
-  afternoon: { status: string; reason?: { type: string; detail: string | null } } | null;
-  night: { status: string; reason?: { type: string; detail: string | null } } | null;
-  afternoonParticipating: boolean;
-  nightParticipating: boolean;
-  afternoonNote: string | null;
-  nightNote: string | null;
-  afternoonAfterSchool: boolean;
-  nightAfterSchool: boolean;
-}
-
 interface WeeklyTotals {
   monthlyMinutes: number;
   monthlyHours: number;
@@ -67,7 +60,7 @@ interface WeeklyRanking {
   topPercent: number;
 }
 
-type Tab = "afternoon" | "night" | "absence";
+type Tab = SessionType | "absence";
 
 type AbsenceRequestItem = {
   id: number;
@@ -78,7 +71,7 @@ type AbsenceRequestItem = {
     classNumber: number;
     studentNumber: number;
   };
-  sessionType: "afternoon" | "night";
+  sessionType: SessionType;
   date: string;
   reasonType: string;
   detail: string | null;
@@ -91,7 +84,7 @@ type AbsenceRequestItem = {
 type TodaySupervisorAssignment = {
   id: number;
   grade: number;
-  sessionType: "afternoon" | "night";
+  sessionType: SessionType;
 };
 
 interface SeatCellProps {
@@ -177,10 +170,11 @@ export default function AttendanceGradePage() {
   const params = useParams();
   const router = useRouter();
   const grade = parseInt(params.grade as string);
-  const [tab, setTab] = useState<Tab>("afternoon");
+  const [tab, setTab] = useState<Tab>("afternoon1");
+  const [isCopying, setIsCopying] = useState(false);
   const [showGradeModal, setShowGradeModal] = useState(false);
   const [selectedSeat, setSelectedSeat] = useState<number | null>(null);
-  const [weeklyData, setWeeklyData] = useState<WeeklyDay[]>([]);
+  const [weeklyData, setWeeklyData] = useState<WeeklyDayRow[]>([]);
   const [weeklyTotals, setWeeklyTotals] = useState<WeeklyTotals | null>(null);
   const [weeklyRanking, setWeeklyRanking] = useState<WeeklyRanking | null>(null);
   const [weeklyName, setWeeklyName] = useState("");
@@ -194,7 +188,7 @@ export default function AttendanceGradePage() {
   const attendancesRef = useRef<Record<number, AttendanceRecord>>({});
   // 세션 캐시: 동일 학생 "i" 재클릭 시 네트워크 요청 생략
   const weeklyCacheRef = useRef<
-    Map<number, { weekly: WeeklyDay[]; totals: WeeklyTotals | null; ranking: WeeklyRanking | null; name: string }>
+    Map<number, { weekly: WeeklyDayRow[]; totals: WeeklyTotals | null; ranking: WeeklyRanking | null; name: string }>
   >(new Map());
 
   const today = useMemo(() => getKstTodayString(), []);
@@ -256,6 +250,7 @@ export default function AttendanceGradePage() {
       assignedSessionTypes.has(request.sessionType)
   );
 
+  const seatSession = tab === "absence" ? null : seatSessionOf(tab);
   const rooms: Room[] = data?.rooms || [];
   const attendances: Record<number, AttendanceRecord> = data?.attendances || {};
   attendancesRef.current = attendances;
@@ -369,7 +364,7 @@ export default function AttendanceGradePage() {
   function applyWeeklyResult(
     studentId: number,
     name: string,
-    weekly: WeeklyDay[],
+    weekly: WeeklyDayRow[],
     totals: WeeklyTotals | null,
     ranking: WeeklyRanking | null,
   ) {
@@ -380,7 +375,7 @@ export default function AttendanceGradePage() {
     setWeeklyRanking(ranking);
     const notes: Record<string, string> = {};
     for (const d of weekly) {
-      const noteVal = tab === "afternoon" ? d.afternoonNote : d.nightNote;
+      const noteVal = tab === "absence" ? null : d.sessions[tab].note;
       if (noteVal) notes[d.date] = noteVal;
     }
     setNoteValues(notes);
@@ -404,7 +399,7 @@ export default function AttendanceGradePage() {
     const res = await fetch(`/api/attendance/weekly?studentId=${studentId}&date=${selectedDate}`);
     if (!res.ok) return;
     const result = await res.json();
-    const weekly = (result.weekly || []) as WeeklyDay[];
+    const weekly = (result.weekly || []) as WeeklyDayRow[];
     const totals = (result.totals || null) as WeeklyTotals | null;
     const ranking = (result.ranking || null) as WeeklyRanking | null;
     weeklyCacheRef.current.set(studentId, { weekly, totals, ranking, name });
@@ -458,6 +453,30 @@ export default function AttendanceGradePage() {
         body: JSON.stringify({ studentId, sessionType: tab, date, note: note.trim() }),
       });
     } catch { /* silent */ }
+  }
+
+  async function handleCopyFromSource() {
+    if (!confirm("오후1 출석 결과를 오후2 미체크 학생에게 복사할까요?")) return;
+    setIsCopying(true);
+    try {
+      const res = await fetch("/api/attendance/copy-session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ grade, date: selectedDate, from: COPY_SOURCE, to: COPY_TARGET }),
+      });
+      const result = await res.json();
+      if (!res.ok) {
+        alert(result.error || "복사에 실패했습니다.");
+        return;
+      }
+      weeklyCacheRef.current.clear();
+      mutate();
+      alert(`${result.copied}명 복사, ${result.skipped}명 건너뜀`);
+    } catch {
+      alert("네트워크 오류가 발생했습니다.");
+    } finally {
+      setIsCopying(false);
+    }
   }
 
   // 좌석 그리드만 렌더링 (제목/교탁 없이)
@@ -539,8 +558,30 @@ export default function AttendanceGradePage() {
     );
   }
 
+  const weeklyCellStyle: Record<WeeklyCellKind, string> = {
+    "not-participating": "bg-[#e5e7eb] text-[#9ca3af]",
+    "approved-absence": "bg-[#fef9c3] text-[#ca8a04]",
+    "after-school": "bg-[#fef9c3] text-[#ca8a04]",
+    present: "bg-[#bbf7d0] text-[#166534]",
+    absent: "bg-[#fecaca] text-[#991b1b]",
+    unchecked: "bg-[#f3f4f6] text-[#9ca3af]",
+  };
+
   // 주간 팝업/모달 공통 콘텐츠 (래퍼 없음)
   function renderWeeklyContent(selectedInThisRow: Seat) {
+    if (tab === "absence") return null;
+    const blockTypes = sessionTypesOfSeat(seatSessionOf(tab));
+    const reasonLines = weeklyData.flatMap((d) =>
+      blockTypes.flatMap((t) => {
+        const cell = d.sessions[t];
+        const r = cell.approvedReason ?? cell.reason;
+        if (!r) return [];
+        return [`${d.dayOfWeek} ${SESSION_META[t].shortLabel}: ${reasonLabel(r.type)}${r.detail ? ` (${r.detail})` : ""}`];
+      })
+    );
+    const rowLabelClass =
+      "text-[clamp(9px,2.2vw,11px)] font-semibold text-[#6b7280] whitespace-nowrap flex items-center justify-center px-1";
+
     return (
       <>
         <div className="flex justify-between items-center mb-2 flex-wrap gap-1">
@@ -554,7 +595,8 @@ export default function AttendanceGradePage() {
             })()}
           </span>
         </div>
-        <div className="grid grid-cols-5 gap-[clamp(2px,0.6vw,4px)] text-center">
+        <div className="grid grid-cols-[auto_repeat(5,1fr)] gap-[clamp(2px,0.6vw,4px)] text-center">
+          <div />
           {weeklyData.map((d) => {
             const isToday = d.date === selectedDate;
             return (
@@ -570,36 +612,28 @@ export default function AttendanceGradePage() {
               </div>
             );
           })}
+          {blockTypes.map((t) => (
+            <Fragment key={t}>
+              <div className={rowLabelClass}>{SESSION_META[t].shortLabel}</div>
+              {weeklyData.map((d) => {
+                const isToday = d.date === selectedDate;
+                const { kind, label } = summarizeWeeklyCell(d.sessions[t]);
+                return (
+                  <div
+                    key={`cell-${t}-${d.date}`}
+                    className={`rounded-[4px] py-[clamp(6px,1.5vw,10px)] px-1 text-[clamp(9px,2.2vw,11px)] font-medium whitespace-nowrap ${weeklyCellStyle[kind]} ${
+                      isToday && kind !== "not-participating" ? "border-2 border-[#2563eb] font-bold" : ""
+                    }`}
+                  >
+                    {label}
+                  </div>
+                );
+              })}
+            </Fragment>
+          ))}
+          <div className={rowLabelClass}>비고</div>
           {weeklyData.map((d) => {
-            const isToday = d.date === selectedDate;
-            const participating = tab === "afternoon" ? d.afternoonParticipating : d.nightParticipating;
-            const isAfterSchoolDay = tab === "afternoon" ? d.afternoonAfterSchool : d.nightAfterSchool;
-            const record = tab === "afternoon" ? d.afternoon : d.night;
-            const status = record?.status;
-            if (!participating) {
-              return (
-                <div key={`cell-${d.date}`} className="rounded-[4px] py-[clamp(6px,1.5vw,10px)] px-1 text-[clamp(9px,2.2vw,11px)] font-medium bg-[#e5e7eb] text-[#9ca3af]">-</div>
-              );
-            }
-            if (isAfterSchoolDay && (!status || status === "unchecked")) {
-              return (
-                <div key={`cell-${d.date}`} className={`rounded-[4px] py-[clamp(6px,1.5vw,10px)] px-1 text-[clamp(9px,2.2vw,11px)] font-medium bg-[#fef9c3] text-[#ca8a04] ${isToday ? "border-2 border-[#2563eb] font-bold text-[clamp(10px,2.5vw,12px)]" : ""}`}>
-                  방과후
-                </div>
-              );
-            }
-            let cellClass = "bg-[#f3f4f6] text-[#9ca3af]";
-            let label = "-";
-            if (status === "present") { cellClass = "bg-[#bbf7d0] text-[#166534]"; label = "출석"; }
-            else if (status === "absent") { cellClass = "bg-[#fecaca] text-[#991b1b]"; label = "결석"; }
-            return (
-              <div key={`cell-${d.date}`} className={`rounded-[4px] py-[clamp(6px,1.5vw,10px)] px-1 text-[clamp(9px,2.2vw,11px)] font-medium ${cellClass} ${isToday ? "border-2 border-[#2563eb] font-bold text-[clamp(10px,2.5vw,12px)]" : ""}`}>
-                {label}
-              </div>
-            );
-          })}
-          {weeklyData.map((d) => {
-            const participating = tab === "afternoon" ? d.afternoonParticipating : d.nightParticipating;
+            const participating = d.sessions[tab].participating;
             const noteKey = d.date;
             return (
               <div key={`note-${d.date}`} style={{ paddingTop: "2px" }}>
@@ -621,18 +655,9 @@ export default function AttendanceGradePage() {
             );
           })}
         </div>
-        {weeklyData.some((d) => {
-          const r = tab === "afternoon" ? d.afternoon : d.night;
-          return r?.reason;
-        }) && (
+        {reasonLines.length > 0 && (
           <div className="mt-1.5 text-[clamp(9px,2.2vw,11px)] text-[#dc2626]">
-            {weeklyData
-              .filter((d) => (tab === "afternoon" ? d.afternoon : d.night)?.reason)
-              .map((d) => {
-                const r = (tab === "afternoon" ? d.afternoon : d.night)!.reason!;
-                return `${d.dayOfWeek}: ${r.type}${r.detail ? ` (${r.detail})` : ""}`;
-              })
-              .join(", ")}
+            {reasonLines.join(", ")}
           </div>
         )}
         {/* 누계·랭킹 블록 */}
@@ -680,13 +705,6 @@ export default function AttendanceGradePage() {
       </div>
     );
   }
-
-  const reasonLabels: Record<string, string> = {
-    academy: "학원",
-    afterschool: "방과후",
-    illness: "질병",
-    custom: "기타",
-  };
 
   const reasonColors: Record<string, string> = {
     academy: "text-[#f59e0b]",
@@ -816,9 +834,9 @@ export default function AttendanceGradePage() {
                         </span>
                       </div>
                       <div className="text-xs text-[#64748b] mt-1">
-                        {dateLabel} · {r.sessionType === "afternoon" ? "오후자습" : "야간자습"} ·{" "}
+                        {dateLabel} · {SESSION_META[r.sessionType].label} ·{" "}
                         <span className={reasonColors[r.reasonType] || "text-[#6b7280]"}>
-                          {reasonLabels[r.reasonType] || r.reasonType}
+                          {reasonLabel(r.reasonType)}
                         </span>
                       </div>
                       {r.detail && (
@@ -922,31 +940,24 @@ export default function AttendanceGradePage() {
           </button>
         </div>
 
-        {/* 오후/야간/불참신청 탭 */}
-        <div className="flex gap-1 mt-2">
-          <button
-            onClick={() => { setTab("afternoon"); setSelectedSeat(null); setActivatedStudents(new Set()); }}
-            className={`flex-1 text-center py-2.5 rounded-t-[10px] text-[clamp(12px,3vw,14px)] font-semibold transition-all ${
-              tab === "afternoon"
-                ? "bg-white text-[#2563eb] shadow-[0_-2px_8px_rgba(0,0,0,0.06)]"
-                : "bg-[#e2e8f0] text-[#94a3b8]"
-            }`}
-          >
-            오후자습
-          </button>
-          <button
-            onClick={() => { setTab("night"); setSelectedSeat(null); setActivatedStudents(new Set()); }}
-            className={`flex-1 text-center py-2.5 rounded-t-[10px] text-[clamp(12px,3vw,14px)] font-semibold transition-all ${
-              tab === "night"
-                ? "bg-white text-[#2563eb] shadow-[0_-2px_8px_rgba(0,0,0,0.06)]"
-                : "bg-[#e2e8f0] text-[#94a3b8]"
-            }`}
-          >
-            야간자습
-          </button>
+        {/* 블록 탭 3개 + 불참신청 */}
+        <div className="flex gap-1 mt-2 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
+          {SESSION_TYPES.map((sessionType) => (
+            <button
+              key={sessionType}
+              onClick={() => { setTab(sessionType); setSelectedSeat(null); setActivatedStudents(new Set()); }}
+              className={`flex-1 text-center py-2.5 rounded-t-[10px] text-[clamp(12px,3vw,14px)] font-semibold transition-all whitespace-nowrap min-w-[64px] ${
+                tab === sessionType
+                  ? "bg-white text-[#2563eb] shadow-[0_-2px_8px_rgba(0,0,0,0.06)]"
+                  : "bg-[#e2e8f0] text-[#94a3b8]"
+              }`}
+            >
+              {SESSION_META[sessionType].shortLabel}
+            </button>
+          ))}
           <button
             onClick={() => { setTab("absence"); setSelectedSeat(null); }}
-            className={`flex-1 text-center py-2.5 rounded-t-[10px] text-[clamp(12px,3vw,14px)] font-semibold transition-all relative ${
+            className={`flex-1 text-center py-2.5 rounded-t-[10px] text-[clamp(12px,3vw,14px)] font-semibold transition-all relative whitespace-nowrap min-w-[64px] ${
               tab === "absence"
                 ? "bg-white text-[#2563eb] shadow-[0_-2px_8px_rgba(0,0,0,0.06)]"
                 : "bg-[#e2e8f0] text-[#94a3b8]"
@@ -977,18 +988,30 @@ export default function AttendanceGradePage() {
       {/* 교실 콘텐츠 */}
       <div className="max-w-[960px] mx-auto px-3 pb-3">
         <div className="bg-white rounded-b-xl p-3 flex flex-col gap-5 shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+          {tab === COPY_TARGET && rooms.length > 0 && (
+            <div className="flex justify-end -mb-2">
+              <button
+                type="button"
+                onClick={handleCopyFromSource}
+                disabled={isCopying}
+                className="min-h-11 px-4 rounded-md text-[clamp(11px,2.8vw,13px)] font-semibold bg-[#eff6ff] text-[#1d4ed8] border border-[#bfdbfe] hover:bg-[#dbeafe] disabled:opacity-50 whitespace-nowrap"
+              >
+                {isCopying ? "복사 중..." : "오후1 결과 복사"}
+              </button>
+            </div>
+          )}
           {tab === "absence" ? (
             renderAbsenceRequests()
-          ) : grade === 2 && tab === "night" ? (
+          ) : grade === 2 && seatSession === "night" ? (
             /* 2학년 야간: 미래홀 공간 배치 */
             <MiraeHallLayout
               rooms={rooms}
               renderRoom={(room) => renderAttendanceRoom(room, { compact: true, hideTeacherDesk: true, gapAfterRows: GAP_CONFIG[room.name] })}
             />
-          ) : tab === "afternoon" ? (
-            /* 오후 자습: 이름 접두사 기반 그룹 */
+          ) : seatSession === "afternoon" ? (
+            /* 오후 좌석: 이름 접두사 기반 그룹 */
             <div className="flex flex-col gap-5">
-              {buildPrintGroups(rooms, "afternoon", grade).map((group, gi) => (
+              {buildPrintGroups(rooms, seatSession, grade).map((group, gi) => (
                   <div key={`${group.key}-${gi}`} className="border border-[#e2e8f0] rounded-[10px] overflow-hidden">
                     <div className="bg-[#f8fafc] px-3.5 py-2.5 border-b border-[#e2e8f0] flex justify-between items-center">
                       <span className="text-[clamp(12px,3vw,14px)] font-bold text-[#334155]">
@@ -1100,11 +1123,11 @@ export default function AttendanceGradePage() {
                         </td>
                         <td className="px-3 py-2 text-center text-[#475569] whitespace-nowrap">{request.date}</td>
                         <td className="px-3 py-2 text-center text-[#475569] whitespace-nowrap">
-                          {request.sessionType === "afternoon" ? "오후자습" : "야간자습"}
+                          {SESSION_META[request.sessionType].label}
                         </td>
                         <td className="px-3 py-2 text-center whitespace-nowrap">
                           <span className={reasonColors[request.reasonType] || "text-[#6b7280]"}>
-                            {reasonLabels[request.reasonType] || request.reasonType}
+                            {reasonLabel(request.reasonType)}
                           </span>
                         </td>
                         <td className="px-3 py-2 text-[#64748b] whitespace-nowrap max-w-[260px] truncate">
