@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import useSWR from "swr";
+import { SESSION_TYPES, SESSION_META, type SessionType } from "@/lib/sessions";
 
 type StudentData = {
   id: number;
@@ -20,11 +21,6 @@ const REASON_TYPES = [
   { value: "custom", label: "기타" },
 ] as const;
 
-const SESSION_TYPES = [
-  { value: "afternoon", label: "오후자습" },
-  { value: "night", label: "야간자습" },
-] as const;
-
 export default function AbsenceReasonsPage() {
   const { data } = useSWR<{ students: StudentData[] }>(
     "/api/homeroom/students",
@@ -38,7 +34,7 @@ export default function AbsenceReasonsPage() {
     const today = new Date();
     return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
   });
-  const [sessionType, setSessionType] = useState<"afternoon" | "night">("afternoon");
+  const [sessionType, setSessionType] = useState<SessionType>("afternoon1");
   const [reasonType, setReasonType] = useState<string>("academy");
   const [detail, setDetail] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -130,12 +126,12 @@ export default function AbsenceReasonsPage() {
             <label className="block text-sm font-medium text-gray-700 mb-1">
               자습 시간
             </label>
-            <div className="flex gap-3">
-              {SESSION_TYPES.map((st) => (
+            <div className="flex gap-3 overflow-x-auto">
+              {SESSION_TYPES.map((t) => (
                 <label
-                  key={st.value}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-md border cursor-pointer transition-colors ${
-                    sessionType === st.value
+                  key={t}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-md border cursor-pointer transition-colors whitespace-nowrap ${
+                    sessionType === t
                       ? "border-blue-500 bg-blue-50 text-blue-700"
                       : "border-gray-300 text-gray-600 hover:bg-gray-50"
                   }`}
@@ -143,14 +139,12 @@ export default function AbsenceReasonsPage() {
                   <input
                     type="radio"
                     name="sessionType"
-                    value={st.value}
-                    checked={sessionType === st.value}
-                    onChange={(e) =>
-                      setSessionType(e.target.value as "afternoon" | "night")
-                    }
+                    value={t}
+                    checked={sessionType === t}
+                    onChange={() => setSessionType(t)}
                     className="sr-only"
                   />
-                  <span className="text-sm font-medium">{st.label}</span>
+                  <span className="text-sm font-medium">{SESSION_META[t].label}</span>
                 </label>
               ))}
             </div>

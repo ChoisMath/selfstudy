@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { withAuth } from "@/lib/api-auth";
-import type { SessionType, ReasonType } from "@/generated/prisma/client";
+import type { ReasonType } from "@/generated/prisma/client";
+import { SESSION_TYPES, emptySessionRecord, isSessionType, type SessionType } from "@/lib/sessions";
+import { REASON_TYPES } from "@/lib/absence-reasons";
 
 // GET /api/student/batch-absence
 // 도우미 학생이 같은 반 학생들의 오늘 참여 정보를 조회
@@ -55,7 +57,7 @@ export const GET = withAuth(["student"], async (_req: Request, user) => {
   });
 
   // 학생별 기존 신청 맵 구성
-  const requestMap = new Map<number, Record<string, string>>();
+  const requestMap = new Map<number, Partial<Record<SessionType, string>>>();
   for (const req of existingRequests) {
     const existing = requestMap.get(req.studentId) ?? {};
     existing[req.sessionType] = req.status;
@@ -64,31 +66,15 @@ export const GET = withAuth(["student"], async (_req: Request, user) => {
 
   // 학생별 오늘 참여 여부 계산 및 응답 구성
   const students = classmates.map((s) => {
-    const afternoonDay = s.participationDays.find(
-      (pd) => pd.sessionType === "afternoon"
-    );
-    const nightDay = s.participationDays.find(
-      (pd) => pd.sessionType === "night"
-    );
-
-    const isAfternoon =
-      !!afternoonDay &&
-      afternoonDay.isParticipating &&
-      !!todayField &&
-      !!afternoonDay[todayField];
-
-    const isNight =
-      !!nightDay &&
-      nightDay.isParticipating &&
-      !!todayField &&
-      !!nightDay[todayField];
-
+    const byType = new Map(s.participationDays.map((pd) => [pd.sessionType, pd]));
     return {
       id: s.id,
       studentNumber: s.studentNumber,
       name: s.name,
-      afternoon: isAfternoon,
-      night: isNight,
+      participating: emptySessionRecord((t) => {
+        const pd = byType.get(t);
+        return !!pd && pd.isParticipating && !!todayField && !!pd[todayField];
+      }),
       existingRequests: requestMap.get(s.id) ?? {},
     };
   });
@@ -129,17 +115,14 @@ export const POST = withAuth(["student"], async (req: Request, user) => {
     );
   }
 
-  const validSessionTypes = ["afternoon", "night"];
-  const validReasonTypes = ["academy", "afterschool", "illness", "custom"];
-
   for (const r of requests) {
-    if (!validSessionTypes.includes(r.sessionType)) {
+    if (!isSessionType(r.sessionType)) {
       return NextResponse.json(
-        { error: "세션은 afternoon 또는 night만 가능합니다." },
+        { error: `자습 시간은 ${SESSION_TYPES.join(", ")} 중 하나여야 합니다.` },
         { status: 400 }
       );
     }
-    if (!validReasonTypes.includes(r.reasonType)) {
+    if (!(REASON_TYPES as readonly string[]).includes(r.reasonType)) {
       return NextResponse.json(
         { error: "유효하지 않은 사유타입입니다." },
         { status: 400 }

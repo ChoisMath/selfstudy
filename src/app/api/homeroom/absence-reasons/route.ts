@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { withAuth } from "@/lib/api-auth";
 import { ReasonType } from "@/generated/prisma/client";
+import { isSessionType } from "@/lib/sessions";
 
 const VALID_REASON_TYPES: ReasonType[] = ["academy", "afterschool", "illness", "custom"];
 
@@ -22,11 +23,8 @@ export const POST = withAuth(["homeroom", "admin"], async (req: Request, user) =
     );
   }
 
-  if (sessionType !== "afternoon" && sessionType !== "night") {
-    return NextResponse.json(
-      { error: "sessionType은 afternoon 또는 night이어야 합니다." },
-      { status: 400 }
-    );
+  if (!isSessionType(sessionType)) {
+    return NextResponse.json({ error: "유효하지 않은 sessionType 입니다." }, { status: 400 });
   }
 
   if (!VALID_REASON_TYPES.includes(reasonType)) {

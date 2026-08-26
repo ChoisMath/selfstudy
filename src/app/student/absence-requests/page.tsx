@@ -2,13 +2,10 @@
 
 import { useState } from "react";
 import useSWR from "swr";
+import { SESSION_TYPES, SESSION_META, sessionTypesOfSeat, type SessionType } from "@/lib/sessions";
+import { reasonLabel } from "@/lib/absence-reasons";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
-
-const SESSION_OPTIONS = [
-  { value: "afternoon", label: "오후자습" },
-  { value: "night", label: "야간자습" },
-] as const;
 
 const REASON_OPTIONS = [
   { value: "academy", label: "학원" },
@@ -16,13 +13,6 @@ const REASON_OPTIONS = [
   { value: "illness", label: "질병" },
   { value: "custom", label: "기타" },
 ] as const;
-
-const REASON_LABELS: Record<string, string> = {
-  academy: "학원",
-  afterschool: "방과후",
-  illness: "질병",
-  custom: "기타",
-};
 
 const STATUS_LABELS: Record<string, { text: string; className: string }> = {
   pending: { text: "대기중", className: "bg-yellow-100 text-yellow-700" },
@@ -33,7 +23,7 @@ const STATUS_LABELS: Record<string, { text: string; className: string }> = {
 type AbsenceRequestItem = {
   id: number;
   date: string;
-  sessionType: string;
+  sessionType: SessionType;
   reasonType: string;
   detail: string | null;
   status: string;
@@ -52,7 +42,20 @@ export default function AbsenceRequestsPage() {
 
   const [showForm, setShowForm] = useState(false);
   const [date, setDate] = useState(today);
-  const [sessionType, setSessionType] = useState("afternoon");
+  const [sessionTypes, setSessionTypes] = useState<SessionType[]>(["afternoon1"]);
+  const afternoonBlocks = sessionTypesOfSeat("afternoon");
+  const allAfternoonSelected = afternoonBlocks.every((t) => sessionTypes.includes(t));
+
+  function toggleSessionType(t: SessionType) {
+    setSessionTypes((prev) => (prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t]));
+  }
+  function toggleAllAfternoon() {
+    setSessionTypes((prev) =>
+      allAfternoonSelected
+        ? prev.filter((x) => !afternoonBlocks.includes(x))
+        : [...prev.filter((x) => !afternoonBlocks.includes(x)), ...afternoonBlocks]
+    );
+  }
   const [reasonType, setReasonType] = useState("academy");
   const [detail, setDetail] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -67,6 +70,11 @@ export default function AbsenceRequestsPage() {
       return;
     }
 
+    if (sessionTypes.length === 0) {
+      setError("자습 시간을 하나 이상 선택해주세요.");
+      return;
+    }
+
     setSubmitting(true);
     try {
       const res = await fetch("/api/student/absence-requests", {
@@ -74,7 +82,7 @@ export default function AbsenceRequestsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           date,
-          sessionType,
+          sessionTypes,
           reasonType,
           detail: detail.trim() || undefined,
         }),
@@ -87,7 +95,7 @@ export default function AbsenceRequestsPage() {
 
       // 성공: 폼 초기화 및 목록 갱신
       setDate(today);
-      setSessionType("afternoon");
+      setSessionTypes(["afternoon1"]);
       setReasonType("academy");
       setDetail("");
       setShowForm(false);
@@ -147,22 +155,34 @@ export default function AbsenceRequestsPage() {
             <label className="block text-sm font-medium text-gray-700 mb-1">
               세션
             </label>
-            <div className="flex gap-2">
-              {SESSION_OPTIONS.map((opt) => (
+            <div className="flex gap-2 overflow-x-auto">
+              {SESSION_TYPES.map((t) => (
                 <button
-                  key={opt.value}
+                  key={t}
                   type="button"
-                  onClick={() => setSessionType(opt.value)}
-                  className={`flex-1 px-3 py-2 text-sm font-medium rounded-md border transition-colors ${
-                    sessionType === opt.value
+                  onClick={() => toggleSessionType(t)}
+                  className={`flex-1 min-h-11 px-3 py-2 text-sm font-medium rounded-md border transition-colors whitespace-nowrap ${
+                    sessionTypes.includes(t)
                       ? "border-blue-600 bg-blue-50 text-blue-700"
                       : "border-gray-300 bg-white text-gray-600 hover:bg-gray-50"
                   }`}
                 >
-                  {opt.label}
+                  {SESSION_META[t].shortLabel}
                 </button>
               ))}
+              <button
+                type="button"
+                onClick={toggleAllAfternoon}
+                className={`min-h-11 px-3 py-2 text-sm font-medium rounded-md border transition-colors whitespace-nowrap ${
+                  allAfternoonSelected
+                    ? "border-blue-600 bg-blue-100 text-blue-800"
+                    : "border-dashed border-gray-300 bg-white text-gray-500 hover:bg-gray-50"
+                }`}
+              >
+                오후 전체
+              </button>
             </div>
+            <p className="mt-1 text-xs text-gray-400">여러 시간을 함께 선택할 수 있습니다.</p>
           </div>
 
           <div>
@@ -239,10 +259,10 @@ export default function AbsenceRequestsPage() {
                   <div>
                     <div className="text-sm font-medium text-gray-900">
                       {d.getUTCMonth() + 1}/{d.getUTCDate()}({dayName}){" "}
-                      {req.sessionType === "afternoon" ? "오후" : "야간"}
+                      {SESSION_META[req.sessionType]?.shortLabel ?? req.sessionType}
                     </div>
                     <div className="text-xs text-gray-500 mt-0.5">
-                      {REASON_LABELS[req.reasonType] || req.reasonType}
+                      {reasonLabel(req.reasonType)}
                       {req.detail && ` - ${req.detail}`}
                     </div>
                   </div>

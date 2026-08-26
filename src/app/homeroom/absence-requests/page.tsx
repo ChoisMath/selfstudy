@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import useSWR from "swr";
+import { SESSION_META, type SessionType } from "@/lib/sessions";
 
 type AbsenceRequestData = {
   id: number;
@@ -12,7 +13,7 @@ type AbsenceRequestData = {
     classNumber: number;
     studentNumber: number;
   };
-  sessionType: "afternoon" | "night";
+  sessionType: SessionType;
   date: string;
   reasonType: string;
   detail: string | null;
@@ -48,11 +49,6 @@ const REASON_LABELS: Record<string, string> = {
   afterschool: "방과후",
   illness: "질병",
   custom: "기타",
-};
-
-const SESSION_LABELS: Record<string, string> = {
-  afternoon: "오후",
-  night: "야간",
 };
 
 export default function AbsenceRequestsPage() {
@@ -166,7 +162,7 @@ export default function AbsenceRequestsPage() {
                       {req.date}
                     </td>
                     <td className="px-3 py-3 text-center text-gray-600 whitespace-nowrap">
-                      {SESSION_LABELS[req.sessionType]}
+                      {SESSION_META[req.sessionType].shortLabel}
                     </td>
                     <td className="px-3 py-3 text-center text-gray-600 whitespace-nowrap">
                       {REASON_LABELS[req.reasonType] ?? req.reasonType}

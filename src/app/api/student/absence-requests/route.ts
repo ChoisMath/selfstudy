@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { withAuth } from "@/lib/api-auth";
-import type { SessionType, ReasonType } from "@/generated/prisma/client";
+import type { ReasonType } from "@/generated/prisma/client";
+import { isSessionType, type SessionType } from "@/lib/sessions";
+import { REASON_TYPES } from "@/lib/absence-reasons";
 
 // GET /api/student/absence-requests
 export const GET = withAuth(["student"], async (_req: Request, user) => {
@@ -26,32 +28,33 @@ export const GET = withAuth(["student"], async (_req: Request, user) => {
 });
 
 // POST /api/student/absence-requests
+// Body: { date, sessionTypes: SessionType[], reasonType, detail? } — 블록마다 신청 1건
 export const POST = withAuth(["student"], async (req: Request, user) => {
   const studentId = user.userId;
   const body = await req.json();
-  const { date, sessionType, reasonType, detail } = body as {
+  const { date, sessionTypes, reasonType, detail } = body as {
     date: string;
-    sessionType: SessionType;
+    sessionTypes: unknown;
     reasonType: ReasonType;
     detail?: string;
   };
 
-  if (!date || !sessionType || !reasonType) {
+  if (!date || !Array.isArray(sessionTypes) || sessionTypes.length === 0 || !reasonType) {
     return NextResponse.json(
-      { error: "날짜, 세션, 사유타입은 필수입니다." },
+      { error: "날짜, 자습 시간, 사유타입은 필수입니다." },
       { status: 400 }
     );
   }
 
-  // 유효한 enum 값 검사
-  if (!["afternoon", "night"].includes(sessionType)) {
-    return NextResponse.json(
-      { error: "세션은 afternoon 또는 night만 가능합니다." },
-      { status: 400 }
-    );
+  const uniqueSessionTypes: SessionType[] = [];
+  for (const value of sessionTypes) {
+    if (!isSessionType(value)) {
+      return NextResponse.json({ error: "유효하지 않은 자습 시간입니다." }, { status: 400 });
+    }
+    if (!uniqueSessionTypes.includes(value)) uniqueSessionTypes.push(value);
   }
 
-  if (!["academy", "afterschool", "illness", "custom"].includes(reasonType)) {
+  if (!(REASON_TYPES as readonly string[]).includes(reasonType)) {
     return NextResponse.json(
       { error: "유효하지 않은 사유타입입니다." },
       { status: 400 }
@@ -70,46 +73,26 @@ export const POST = withAuth(["student"], async (req: Request, user) => {
     );
   }
 
-  // 중복 신청 검사
-  const existing = await prisma.absenceRequest.findUnique({
-    where: {
-      studentId_sessionType_date: {
-        studentId,
-        sessionType,
-        date: dateObj,
-      },
-    },
-  });
-
-  if (existing) {
-    return NextResponse.json(
-      { error: "이미 해당 날짜/세션에 불참 신청이 있습니다." },
-      { status: 409 }
-    );
-  }
-
-  const request = await prisma.absenceRequest.create({
-    data: {
+  const result = await prisma.absenceRequest.createMany({
+    data: uniqueSessionTypes.map((sessionType) => ({
       studentId,
       sessionType,
       date: dateObj,
       reasonType,
       detail: detail || null,
-    },
+    })),
+    skipDuplicates: true,
   });
 
+  if (result.count === 0) {
+    return NextResponse.json(
+      { error: "이미 해당 날짜/시간에 불참 신청이 있습니다." },
+      { status: 409 }
+    );
+  }
+
   return NextResponse.json(
-    {
-      request: {
-        id: request.id,
-        date: request.date.toISOString().split("T")[0],
-        sessionType: request.sessionType,
-        reasonType: request.reasonType,
-        detail: request.detail,
-        status: request.status,
-        createdAt: request.createdAt.toISOString(),
-      },
-    },
+    { created: result.count, skipped: uniqueSessionTypes.length - result.count },
     { status: 201 }
   );
 });

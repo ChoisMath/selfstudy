@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { SESSION_META, isSessionType } from "@/lib/sessions";
 
 interface SwapRecord {
   id: number;
@@ -50,7 +51,9 @@ export default function SwapHistoryPage() {
                   <td className="px-4 py-3 text-gray-500">{new Date(h.swappedAt).toLocaleString("ko-KR")}</td>
                   <td className="px-4 py-3">{new Date(h.assignment.date).toLocaleDateString("ko-KR")}</td>
                   <td className="px-4 py-3">{h.assignment.grade}학년</td>
-                  <td className="px-4 py-3">{h.assignment.sessionType === "afternoon" ? "오후" : "야간"}</td>
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    {isSessionType(h.assignment.sessionType) ? SESSION_META[h.assignment.sessionType].shortLabel : h.assignment.sessionType}
+                  </td>
                   <td className="px-4 py-3">{h.originalTeacher.name}</td>
                   <td className="px-4 py-3 font-medium">{h.replacementTeacher.name}</td>
                   <td className="px-4 py-3 text-gray-500">{h.reason || "-"}</td>

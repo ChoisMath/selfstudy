@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import useSWR from "swr";
+import { SESSION_TYPES, SESSION_META, type SessionType } from "@/lib/sessions";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
@@ -9,21 +10,20 @@ type StudentData = {
   id: number;
   studentNumber: number;
   name: string;
-  afternoon: boolean;
-  night: boolean;
-  existingRequests: {
-    afternoon?: string;
-    night?: string;
-  };
+  participating: Record<SessionType, boolean>;
+  existingRequests: Partial<Record<SessionType, string>>;
 };
 
 type RowState = {
   checked: boolean;
-  afternoonSelected: boolean;
-  nightSelected: boolean;
+  selected: Record<SessionType, boolean>;
   reasonType: string;
   detail: string;
 };
+
+function noneSelected(): Record<SessionType, boolean> {
+  return { afternoon1: false, afternoon2: false, night: false };
+}
 
 const REASON_OPTIONS = [
   { value: "academy", label: "학원" },
@@ -34,8 +34,7 @@ const REASON_OPTIONS = [
 function initRowState(): RowState {
   return {
     checked: false,
-    afternoonSelected: false,
-    nightSelected: false,
+    selected: noneSelected(),
     reasonType: "academy",
     detail: "",
   };
@@ -51,10 +50,7 @@ function initAllRows(students: StudentData[]): Record<number, RowState> {
 
 /** Whether a student has at least one selectable session (participates and no existing request) */
 function hasSelectableSession(s: StudentData): boolean {
-  return (
-    (s.afternoon && !s.existingRequests.afternoon) ||
-    (s.night && !s.existingRequests.night)
-  );
+  return SESSION_TYPES.some((t) => s.participating[t] && !s.existingRequests[t]);
 }
 
 export default function BatchAbsencePage() {
@@ -114,18 +110,11 @@ export default function BatchAbsencePage() {
       const row = rows[s.id];
       if (!row?.checked) continue;
 
-      if (row.afternoonSelected) {
+      for (const t of SESSION_TYPES) {
+        if (!row.selected[t]) continue;
         requests.push({
           studentId: s.id,
-          sessionType: "afternoon",
-          reasonType: row.reasonType,
-          detail: row.detail.trim(),
-        });
-      }
-      if (row.nightSelected) {
-        requests.push({
-          studentId: s.id,
-          sessionType: "night",
+          sessionType: t,
           reasonType: row.reasonType,
           detail: row.detail.trim(),
         });
@@ -184,7 +173,7 @@ export default function BatchAbsencePage() {
   const { students, today } = data;
 
   // No participating students
-  const anyParticipating = students.some((s) => s.afternoon || s.night);
+  const anyParticipating = students.some((s) => SESSION_TYPES.some((t) => s.participating[t]));
   if (!anyParticipating) {
     return (
       <div>
@@ -202,9 +191,7 @@ export default function BatchAbsencePage() {
   // Check if submit should be disabled
   const hasValidSelection = students.some((s) => {
     const row = rows[s.id];
-    return (
-      row?.checked && (row.afternoonSelected || row.nightSelected)
-    );
+    return row?.checked && SESSION_TYPES.some((t) => row.selected[t]);
   });
 
   const allSelectableChecked =
@@ -287,30 +274,21 @@ export default function BatchAbsencePage() {
                   {/* Session type buttons */}
                   <td className="px-3 py-2.5">
                     <div className="flex gap-1.5 justify-center">
-                      <SessionButton
-                        label="오후"
-                        participates={s.afternoon}
-                        existingRequest={s.existingRequests.afternoon}
-                        selected={row.afternoonSelected}
-                        enabled={isChecked}
-                        onClick={() =>
-                          updateRow(s.id, {
-                            afternoonSelected: !row.afternoonSelected,
-                          })
-                        }
-                      />
-                      <SessionButton
-                        label="야간"
-                        participates={s.night}
-                        existingRequest={s.existingRequests.night}
-                        selected={row.nightSelected}
-                        enabled={isChecked}
-                        onClick={() =>
-                          updateRow(s.id, {
-                            nightSelected: !row.nightSelected,
-                          })
-                        }
-                      />
+                      {SESSION_TYPES.map((t) => (
+                        <SessionButton
+                          key={t}
+                          label={SESSION_META[t].shortLabel}
+                          participates={s.participating[t]}
+                          existingRequest={s.existingRequests[t]}
+                          selected={row.selected[t]}
+                          enabled={isChecked}
+                          onClick={() =>
+                            updateRow(s.id, {
+                              selected: { ...row.selected, [t]: !row.selected[t] },
+                            })
+                          }
+                        />
+                      ))}
                     </div>
                   </td>
 
@@ -368,7 +346,7 @@ export default function BatchAbsencePage() {
   );
 }
 
-/** Individual session button (오후 / 야간) */
+/** Individual session button (블록 1개) */
 function SessionButton({
   label,
   participates,
@@ -390,7 +368,7 @@ function SessionButton({
       <button
         type="button"
         disabled
-        className="px-3 py-1 text-xs rounded border bg-gray-100 text-gray-300 border-gray-200 cursor-not-allowed"
+        className="px-3 py-1 text-xs rounded border bg-gray-100 text-gray-300 border-gray-200 cursor-not-allowed whitespace-nowrap"
       >
         {label}
       </button>
@@ -403,7 +381,7 @@ function SessionButton({
       <button
         type="button"
         disabled
-        className="px-3 py-1 text-xs rounded border bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
+        className="px-3 py-1 text-xs rounded border bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed whitespace-nowrap"
       >
         신청됨
       </button>
@@ -416,7 +394,7 @@ function SessionButton({
       <button
         type="button"
         onClick={onClick}
-        className="px-3 py-1 text-xs rounded border bg-red-100 text-red-700 border-red-300 font-medium transition-colors"
+        className="px-3 py-1 text-xs rounded border bg-red-100 text-red-700 border-red-300 font-medium transition-colors whitespace-nowrap"
       >
         {label}
       </button>
@@ -428,7 +406,7 @@ function SessionButton({
       type="button"
       disabled={!enabled}
       onClick={onClick}
-      className={`px-3 py-1 text-xs rounded border transition-colors ${
+      className={`px-3 py-1 text-xs rounded border transition-colors whitespace-nowrap ${
         enabled
           ? "bg-sky-100 text-sky-700 border-sky-300 hover:bg-sky-200"
           : "bg-sky-100 text-sky-700 border-sky-300 opacity-60 cursor-not-allowed"
