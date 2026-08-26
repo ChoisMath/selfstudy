@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import React, { useState, useCallback } from "react";
 import { useParams } from "next/navigation";
 import useSWR from "swr";
+import { SESSION_TYPES, SESSION_META, type SessionType } from "@/lib/sessions";
 
 type DaySettings = {
   isParticipating: boolean;
@@ -18,8 +19,7 @@ type StudentParticipation = {
   name: string;
   classNumber: number;
   studentNumber: number;
-  afternoon: DaySettings;
-  night: DaySettings;
+  sessions: Record<SessionType, DaySettings>;
 };
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
@@ -51,14 +51,14 @@ export default function ParticipationPage() {
   const handleUpdate = useCallback(
     async (
       studentId: number,
-      sessionType: "afternoon" | "night",
+      sessionType: SessionType,
       field: string,
       value: boolean
     ) => {
       const student = students.find((s) => s.id === studentId);
       if (!student) return;
 
-      const current = sessionType === "afternoon" ? student.afternoon : student.night;
+      const current = student.sessions[sessionType];
       const updated = { ...current, [field]: value };
 
       // 낙관적 업데이트
@@ -71,7 +71,7 @@ export default function ParticipationPage() {
             s.id === studentId
               ? {
                   ...s,
-                  [sessionType]: updated,
+                  sessions: { ...s.sessions, [sessionType]: updated },
                 }
               : s
           ),
@@ -166,43 +166,20 @@ export default function ParticipationPage() {
                 >
                   번호
                 </th>
-                <th
-                  colSpan={6}
-                  className="px-3 py-2 text-center font-medium text-gray-600 border-l border-gray-200"
-                >
-                  오후자습
-                </th>
-                <th
-                  colSpan={6}
-                  className="px-3 py-2 text-center font-medium text-gray-600 border-l border-gray-200"
-                >
-                  야간자습
-                </th>
-              </tr>
-              <tr className="bg-gray-50">
-                {/* 오후 */}
-                <th className="px-2 py-2 text-center text-xs font-medium text-gray-500 border-l border-gray-200">
-                  참가
-                </th>
-                {DAY_LABELS.map((label) => (
-                  <th
-                    key={`afternoon-${label}`}
-                    className="px-1 py-2 text-center text-xs font-medium text-gray-500"
-                  >
-                    {label}
+                {SESSION_TYPES.map((t) => (
+                  <th key={t} colSpan={6} className="px-3 py-2 text-center font-medium text-gray-600 border-l border-gray-200 whitespace-nowrap">
+                    {SESSION_META[t].label}
                   </th>
                 ))}
-                {/* 야간 */}
-                <th className="px-2 py-2 text-center text-xs font-medium text-gray-500 border-l border-gray-200">
-                  참가
-                </th>
-                {DAY_LABELS.map((label) => (
-                  <th
-                    key={`night-${label}`}
-                    className="px-1 py-2 text-center text-xs font-medium text-gray-500"
-                  >
-                    {label}
-                  </th>
+              </tr>
+              <tr className="bg-gray-50">
+                {SESSION_TYPES.map((t) => (
+                  <React.Fragment key={t}>
+                    <th className="px-2 py-2 text-center text-xs font-medium text-gray-500 border-l border-gray-200 whitespace-nowrap">참가</th>
+                    {DAY_LABELS.map((label) => (
+                      <th key={`${t}-${label}`} className="px-1 py-2 text-center text-xs font-medium text-gray-500">{label}</th>
+                    ))}
+                  </React.Fragment>
                 ))}
               </tr>
             </thead>
@@ -210,7 +187,7 @@ export default function ParticipationPage() {
               {isLoading ? (
                 <tr>
                   <td
-                    colSpan={15}
+                    colSpan={21}
                     className="px-4 py-8 text-center text-gray-400"
                   >
                     불러오는 중...
@@ -219,7 +196,7 @@ export default function ParticipationPage() {
               ) : filteredStudents.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={15}
+                    colSpan={21}
                     className="px-4 py-8 text-center text-gray-400"
                   >
                     학생이 없습니다.
@@ -238,93 +215,38 @@ export default function ParticipationPage() {
                       {student.studentNumber}
                     </td>
 
-                    {/* 오후자습 */}
-                    <td className="px-2 py-2.5 text-center border-l border-gray-100">
-                      <input
-                        type="checkbox"
-                        checked={student.afternoon.isParticipating}
-                        onChange={(e) =>
-                          handleUpdate(
-                            student.id,
-                            "afternoon",
-                            "isParticipating",
-                            e.target.checked
-                          )
-                        }
-                        className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                      />
-                    </td>
-                    {DAY_KEYS.map((day) => (
-                      <td
-                        key={`${student.id}-afternoon-${day}`}
-                        className="px-1 py-2.5 text-center"
-                      >
-                        <button
-                          onClick={() =>
-                            handleUpdate(
-                              student.id,
-                              "afternoon",
-                              day,
-                              !student.afternoon[day]
-                            )
-                          }
-                          disabled={!student.afternoon.isParticipating}
-                          className={`w-7 h-7 rounded text-xs font-medium transition-colors ${
-                            !student.afternoon.isParticipating
-                              ? "bg-gray-100 text-gray-300 cursor-not-allowed"
-                              : student.afternoon[day]
-                                ? "bg-blue-100 text-blue-700 hover:bg-blue-200"
-                                : "bg-gray-100 text-gray-400 hover:bg-gray-200"
-                          }`}
-                        >
-                          {DAY_LABELS[DAY_KEYS.indexOf(day)]}
-                        </button>
-                      </td>
-                    ))}
-
-                    {/* 야간자습 */}
-                    <td className="px-2 py-2.5 text-center border-l border-gray-100">
-                      <input
-                        type="checkbox"
-                        checked={student.night.isParticipating}
-                        onChange={(e) =>
-                          handleUpdate(
-                            student.id,
-                            "night",
-                            "isParticipating",
-                            e.target.checked
-                          )
-                        }
-                        className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                      />
-                    </td>
-                    {DAY_KEYS.map((day) => (
-                      <td
-                        key={`${student.id}-night-${day}`}
-                        className="px-1 py-2.5 text-center"
-                      >
-                        <button
-                          onClick={() =>
-                            handleUpdate(
-                              student.id,
-                              "night",
-                              day,
-                              !student.night[day]
-                            )
-                          }
-                          disabled={!student.night.isParticipating}
-                          className={`w-7 h-7 rounded text-xs font-medium transition-colors ${
-                            !student.night.isParticipating
-                              ? "bg-gray-100 text-gray-300 cursor-not-allowed"
-                              : student.night[day]
-                                ? "bg-blue-100 text-blue-700 hover:bg-blue-200"
-                                : "bg-gray-100 text-gray-400 hover:bg-gray-200"
-                          }`}
-                        >
-                          {DAY_LABELS[DAY_KEYS.indexOf(day)]}
-                        </button>
-                      </td>
-                    ))}
+                    {SESSION_TYPES.map((t) => {
+                      const settings = student.sessions[t];
+                      return (
+                        <React.Fragment key={t}>
+                          <td className="px-2 py-2.5 text-center border-l border-gray-100">
+                            <input
+                              type="checkbox"
+                              checked={settings.isParticipating}
+                              onChange={(e) => handleUpdate(student.id, t, "isParticipating", e.target.checked)}
+                              className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                            />
+                          </td>
+                          {DAY_KEYS.map((day) => (
+                            <td key={`${student.id}-${t}-${day}`} className="px-1 py-2.5 text-center">
+                              <button
+                                onClick={() => handleUpdate(student.id, t, day, !settings[day])}
+                                disabled={!settings.isParticipating}
+                                className={`w-7 h-7 rounded text-xs font-medium transition-colors ${
+                                  !settings.isParticipating
+                                    ? "bg-gray-100 text-gray-300 cursor-not-allowed"
+                                    : settings[day]
+                                      ? "bg-blue-100 text-blue-700 hover:bg-blue-200"
+                                      : "bg-gray-100 text-gray-400 hover:bg-gray-200"
+                                }`}
+                              >
+                                {DAY_LABELS[DAY_KEYS.indexOf(day)]}
+                              </button>
+                            </td>
+                          ))}
+                        </React.Fragment>
+                      );
+                    })}
                   </tr>
                 ))
               )}

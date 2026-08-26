@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { withGradeAuth } from "@/lib/api-auth";
 import { prisma } from "@/lib/prisma";
+import { emptySessionRecord, isSessionType } from "@/lib/sessions";
 
 // GET: 학년별 학생 참여설정 목록 조회
 export async function GET(
@@ -23,53 +24,32 @@ export async function GET(
       },
     });
 
-    const result = students.map((student) => {
-      const afternoon = student.participationDays.find(
-        (p) => p.sessionType === "afternoon"
-      );
-      const night = student.participationDays.find(
-        (p) => p.sessionType === "night"
-      );
+    const DEFAULT_DAYS = {
+      isParticipating: true,
+      mon: true, tue: true, wed: true, thu: true, fri: true,
+      afterSchoolMon: false, afterSchoolTue: false, afterSchoolWed: false,
+      afterSchoolThu: false, afterSchoolFri: false,
+    };
 
+    const result = students.map((student) => {
+      const byType = new Map(student.participationDays.map((p) => [p.sessionType, p]));
       return {
         id: student.id,
         name: student.name,
         classNumber: student.classNumber,
         studentNumber: student.studentNumber,
-        afternoon: afternoon
-          ? {
-              isParticipating: afternoon.isParticipating,
-              mon: afternoon.mon, tue: afternoon.tue, wed: afternoon.wed,
-              thu: afternoon.thu, fri: afternoon.fri,
-              afterSchoolMon: afternoon.afterSchoolMon,
-              afterSchoolTue: afternoon.afterSchoolTue,
-              afterSchoolWed: afternoon.afterSchoolWed,
-              afterSchoolThu: afternoon.afterSchoolThu,
-              afterSchoolFri: afternoon.afterSchoolFri,
-            }
-          : {
-              isParticipating: true,
-              mon: true, tue: true, wed: true, thu: true, fri: true,
-              afterSchoolMon: false, afterSchoolTue: false, afterSchoolWed: false,
-              afterSchoolThu: false, afterSchoolFri: false,
-            },
-        night: night
-          ? {
-              isParticipating: night.isParticipating,
-              mon: night.mon, tue: night.tue, wed: night.wed,
-              thu: night.thu, fri: night.fri,
-              afterSchoolMon: night.afterSchoolMon,
-              afterSchoolTue: night.afterSchoolTue,
-              afterSchoolWed: night.afterSchoolWed,
-              afterSchoolThu: night.afterSchoolThu,
-              afterSchoolFri: night.afterSchoolFri,
-            }
-          : {
-              isParticipating: true,
-              mon: true, tue: true, wed: true, thu: true, fri: true,
-              afterSchoolMon: false, afterSchoolTue: false, afterSchoolWed: false,
-              afterSchoolThu: false, afterSchoolFri: false,
-            },
+        sessions: emptySessionRecord((t) => {
+          const p = byType.get(t);
+          return p
+            ? {
+                isParticipating: p.isParticipating,
+                mon: p.mon, tue: p.tue, wed: p.wed, thu: p.thu, fri: p.fri,
+                afterSchoolMon: p.afterSchoolMon, afterSchoolTue: p.afterSchoolTue,
+                afterSchoolWed: p.afterSchoolWed, afterSchoolThu: p.afterSchoolThu,
+                afterSchoolFri: p.afterSchoolFri,
+              }
+            : { ...DEFAULT_DAYS };
+        }),
       };
     });
 
@@ -93,11 +73,8 @@ export async function PUT(
     const body = await req.json();
     const { sessionType, isParticipating } = body;
 
-    if (sessionType !== "afternoon" && sessionType !== "night") {
-      return NextResponse.json(
-        { error: "sessionType은 afternoon 또는 night이어야 합니다." },
-        { status: 400 }
-      );
+    if (!isSessionType(sessionType)) {
+      return NextResponse.json({ error: "유효하지 않은 sessionType 입니다." }, { status: 400 });
     }
 
     // 일괄 업데이트: studentIds 배열이 있으면 bulk 처리

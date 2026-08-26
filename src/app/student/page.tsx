@@ -1,6 +1,7 @@
 "use client";
 
 import useSWR from "swr";
+import { SESSION_TYPES, SESSION_META } from "@/lib/sessions";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -35,16 +36,13 @@ export default function StudentParticipationPage() {
     fetcher
   );
 
-  const afternoon = data?.participationDays?.afternoon;
-  const night = data?.participationDays?.night;
-
   function renderSession(
     label: string,
     settings: DaySettings | undefined
   ) {
     if (!settings || !settings.isParticipating) {
       return (
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
+        <div key={label} className="bg-white rounded-lg border border-gray-200 p-4">
           <h3 className="text-sm font-medium text-gray-600 mb-3">{label}</h3>
           <p className="text-sm text-gray-400">미참가</p>
         </div>
@@ -54,7 +52,7 @@ export default function StudentParticipationPage() {
     const activeDays = DAY_KEYS.filter((key) => settings[key]);
 
     return (
-      <div className="bg-white rounded-lg border border-gray-200 p-4">
+      <div key={label} className="bg-white rounded-lg border border-gray-200 p-4">
         <h3 className="text-sm font-medium text-gray-600 mb-3">{label}</h3>
         <div className="flex gap-2">
           {DAY_KEYS.map((key, i) => {
@@ -92,8 +90,7 @@ export default function StudentParticipationPage() {
     <div>
       <h2 className="text-xl font-bold text-gray-900 mb-4">내 참여일정</h2>
       <div className="space-y-4">
-        {renderSession("오후자습", afternoon)}
-        {renderSession("야간자습", night)}
+        {SESSION_TYPES.map((t) => renderSession(SESSION_META[t].label, data?.participationDays?.[t]))}
       </div>
 
       {data && (
@@ -123,7 +120,7 @@ export default function StudentParticipationPage() {
         </div>
       )}
 
-      {!afternoon && !night && (
+      {SESSION_TYPES.every((t) => !data?.participationDays?.[t]) && (
         <p className="mt-4 text-sm text-gray-400">
           참여일정이 설정되지 않았습니다. 담당 선생님에게 문의하세요.
         </p>

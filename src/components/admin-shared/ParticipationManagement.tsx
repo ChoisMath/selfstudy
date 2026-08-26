@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useMemo } from "react";
 import useSWR from "swr";
+import { SESSION_TYPES, SESSION_META, emptySessionRecord, type SessionType } from "@/lib/sessions";
 
 type DaySettings = {
   isParticipating: boolean;
@@ -15,8 +16,7 @@ type StudentParticipation = {
   name: string;
   classNumber: number;
   studentNumber: number;
-  afternoon: DaySettings;
-  night: DaySettings;
+  sessions: Record<SessionType, DaySettings>;
 };
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
@@ -39,23 +39,23 @@ export default function ParticipationManagement({ grade }: { grade: number }) {
   const classNumbers = Array.from(new Set(students.map((s) => s.classNumber))).sort((a, b) => a - b);
 
   // 전체 참가 상태 계산 (헤더 체크박스용)
-  const allChecked = useMemo(() => {
-    if (filteredStudents.length === 0) return { afternoon: false, night: false };
-    return {
-      afternoon: filteredStudents.every((s) => s.afternoon.isParticipating),
-      night: filteredStudents.every((s) => s.night.isParticipating),
-    };
-  }, [filteredStudents]);
+  const allChecked = useMemo(
+    () =>
+      emptySessionRecord(
+        (t) => filteredStudents.length > 0 && filteredStudents.every((s) => s.sessions[t].isParticipating)
+      ),
+    [filteredStudents]
+  );
 
   const handleUpdate = useCallback(
-    async (studentId: number, sessionType: "afternoon" | "night", field: string, value: boolean) => {
+    async (studentId: number, sessionType: SessionType, field: string, value: boolean) => {
       const student = students.find((s) => s.id === studentId);
       if (!student) return;
-      const current = sessionType === "afternoon" ? student.afternoon : student.night;
+      const current = student.sessions[sessionType];
       const updated = { ...current, [field]: value };
       const key = `${studentId}-${sessionType}-${field}`;
       setSavingKey(key);
-      mutate({ students: students.map((s) => s.id === studentId ? { ...s, [sessionType]: updated } : s) }, false);
+      mutate({ students: students.map((s) => s.id === studentId ? { ...s, sessions: { ...s.sessions, [sessionType]: updated } } : s) }, false);
       try {
         const res = await fetch(apiUrl, {
           method: "PUT",
@@ -74,17 +74,17 @@ export default function ParticipationManagement({ grade }: { grade: number }) {
   );
 
   const handleBulkToggle = useCallback(
-    async (sessionType: "afternoon" | "night", value: boolean) => {
+    async (sessionType: SessionType, value: boolean) => {
       const targets = filteredStudents;
       if (targets.length === 0) return;
-      const label = sessionType === "afternoon" ? "오후자습" : "야간자습";
+      const label = SESSION_META[sessionType].label;
       if (!confirm(`${classFilter ? classFilter + "반" : "전체"} 학생 ${targets.length}명의 ${label} 참가를 ${value ? "설정" : "해제"}하시겠습니까?`)) return;
 
       setBulkSaving(sessionType);
       const targetIds = new Set(targets.map((s) => s.id));
       mutate({
         students: students.map((s) =>
-          targetIds.has(s.id) ? { ...s, [sessionType]: { ...s[sessionType], isParticipating: value } } : s
+          targetIds.has(s.id) ? { ...s, sessions: { ...s.sessions, [sessionType]: { ...s.sessions[sessionType], isParticipating: value } } } : s
         ),
       }, false);
       try {
@@ -125,21 +125,23 @@ export default function ParticipationManagement({ grade }: { grade: number }) {
               <col style={{ width: "80px" }} />
               <col style={{ width: "44px" }} />
               <col style={{ width: "44px" }} />
-              {/* 오후: 참가 + 5요일 = 6열 */}
-              {[...Array(6)].map((_, i) => <col key={`a${i}`} style={{ width: "36px" }} />)}
-              {/* 야간: 참가 + 5요일 = 6열 */}
-              {[...Array(6)].map((_, i) => <col key={`n${i}`} style={{ width: "36px" }} />)}
+              {SESSION_TYPES.flatMap((t) =>
+                [...Array(6)].map((_, i) => <col key={`${t}-${i}`} style={{ width: "36px" }} />)
+              )}
             </colgroup>
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
                 <th rowSpan={3} className="px-2 py-3 text-left font-medium text-gray-600 border-b border-gray-200">이름</th>
                 <th rowSpan={3} className="py-3 text-center font-medium text-gray-600 border-b border-gray-200">반</th>
                 <th rowSpan={3} className="py-3 text-center font-medium text-gray-600 border-b border-gray-200">번호</th>
-                <th colSpan={6} className="py-2 text-center font-medium text-gray-600 border-l border-gray-200">오후자습</th>
-                <th colSpan={6} className="py-2 text-center font-medium text-gray-600 border-l border-gray-200">야간자습</th>
+                {SESSION_TYPES.map((t) => (
+                  <th key={t} colSpan={6} className="py-2 text-center font-medium text-gray-600 border-l border-gray-200 whitespace-nowrap">
+                    {SESSION_META[t].label}
+                  </th>
+                ))}
               </tr>
               <tr className="bg-gray-50">
-                {(["afternoon", "night"] as const).map((session) => [
+                {SESSION_TYPES.map((session) => [
                   <th key={`${session}-chk`} className="py-2 text-center text-xs font-medium text-gray-500 border-l border-gray-200">
                     <input
                       type="checkbox"
@@ -147,7 +149,7 @@ export default function ParticipationManagement({ grade }: { grade: number }) {
                       onChange={(e) => handleBulkToggle(session, e.target.checked)}
                       disabled={!!bulkSaving || filteredStudents.length === 0}
                       className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50"
-                      title={`${session === "afternoon" ? "오후" : "야간"} 전체 참가 토글`}
+                      title={`${SESSION_META[session].shortLabel} 전체 참가 토글`}
                     />
                   </th>,
                   ...DAY_LABELS.map((l) => (
@@ -156,7 +158,7 @@ export default function ParticipationManagement({ grade }: { grade: number }) {
                 ])}
               </tr>
               <tr className="bg-orange-50">
-                {(["afternoon", "night"] as const).map((session) => [
+                {SESSION_TYPES.map((session) => [
                   <th key={`${session}-as-empty`} className="py-1 border-l border-gray-200" />,
                   ...DAY_LABELS.map((l, i) => (
                     <th key={`${session}-as-${l}`} className="py-1 text-center text-[10px] font-medium text-orange-600">
@@ -168,17 +170,17 @@ export default function ParticipationManagement({ grade }: { grade: number }) {
             </thead>
             <tbody className="divide-y divide-gray-100">
               {isLoading ? (
-                <tr><td colSpan={15} className="px-4 py-8 text-center text-gray-400">불러오는 중...</td></tr>
+                <tr><td colSpan={21} className="px-4 py-8 text-center text-gray-400">불러오는 중...</td></tr>
               ) : filteredStudents.length === 0 ? (
-                <tr><td colSpan={15} className="px-4 py-8 text-center text-gray-400">학생이 없습니다.</td></tr>
+                <tr><td colSpan={21} className="px-4 py-8 text-center text-gray-400">학생이 없습니다.</td></tr>
               ) : (
                 filteredStudents.map((student) => (
                   <tr key={student.id} className="hover:bg-gray-50">
                     <td className="px-2 py-2 text-gray-900 font-medium whitespace-nowrap truncate">{student.name}</td>
                     <td className="py-2 text-center text-gray-600">{student.classNumber}</td>
                     <td className="py-2 text-center text-gray-600">{student.studentNumber}</td>
-                    {(["afternoon", "night"] as const).map((session) => {
-                      const settings = student[session];
+                    {SESSION_TYPES.map((session) => {
+                      const settings = student.sessions[session];
                       return [
                         <td key={`${session}-chk`} className="py-2 text-center border-l border-gray-100">
                           <input
@@ -225,14 +227,14 @@ export default function ParticipationManagement({ grade }: { grade: number }) {
               <tfoot className="bg-gray-50 border-t-2 border-gray-300">
                 <tr>
                   <td colSpan={3} className="px-2 py-2.5 text-right font-semibold text-gray-600 text-xs">합계</td>
-                  {(["afternoon", "night"] as const).map((session) => {
-                    const participating = filteredStudents.filter((s) => s[session].isParticipating).length;
+                  {SESSION_TYPES.map((session) => {
+                    const participating = filteredStudents.filter((s) => s.sessions[session].isParticipating).length;
                     return [
                       <td key={`${session}-total`} className="py-2.5 text-center font-bold text-blue-700 text-xs border-l border-gray-200">
                         {participating}
                       </td>,
                       ...DAY_KEYS.map((day) => {
-                        const count = filteredStudents.filter((s) => s[session].isParticipating && s[session][day]).length;
+                        const count = filteredStudents.filter((s) => s.sessions[session].isParticipating && s.sessions[session][day]).length;
                         return (
                           <td key={`${session}-${day}-total`} className="py-2.5 text-center font-medium text-gray-600 text-xs">
                             {count}
