@@ -3,6 +3,7 @@
 import { useState, useCallback } from "react";
 import useSWR from "swr";
 import { SESSION_META, type SessionType } from "@/lib/sessions";
+import { reasonLabel } from "@/lib/absence-reasons";
 
 type AbsenceRequestData = {
   id: number;
@@ -42,13 +43,6 @@ const STATUS_COLORS: Record<string, string> = {
   pending: "bg-yellow-100 text-yellow-800",
   approved: "bg-green-100 text-green-800",
   rejected: "bg-red-100 text-red-800",
-};
-
-const REASON_LABELS: Record<string, string> = {
-  academy: "학원",
-  afterschool: "방과후",
-  illness: "질병",
-  custom: "기타",
 };
 
 export default function AbsenceRequestsPage() {
@@ -165,7 +159,7 @@ export default function AbsenceRequestsPage() {
                       {SESSION_META[req.sessionType].shortLabel}
                     </td>
                     <td className="px-3 py-3 text-center text-gray-600 whitespace-nowrap">
-                      {REASON_LABELS[req.reasonType] ?? req.reasonType}
+                      {reasonLabel(req.reasonType)}
                     </td>
                     <td className="px-3 py-3 text-gray-600 whitespace-nowrap max-w-[200px] truncate">
                       {req.detail || "-"}

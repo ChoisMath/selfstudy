@@ -1,10 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { withAuth } from "@/lib/api-auth";
-import { ReasonType } from "@/generated/prisma/client";
 import { isSessionType } from "@/lib/sessions";
-
-const VALID_REASON_TYPES: ReasonType[] = ["academy", "afterschool", "illness", "custom"];
+import { REASON_TYPES } from "@/lib/absence-reasons";
 
 // POST /api/homeroom/absence-reasons - 불참사유 등록
 export const POST = withAuth(["homeroom", "admin"], async (req: Request, user) => {
@@ -27,7 +25,7 @@ export const POST = withAuth(["homeroom", "admin"], async (req: Request, user) =
     return NextResponse.json({ error: "유효하지 않은 sessionType 입니다." }, { status: 400 });
   }
 
-  if (!VALID_REASON_TYPES.includes(reasonType)) {
+  if (!(REASON_TYPES as readonly string[]).includes(reasonType)) {
     return NextResponse.json(
       { error: "올바른 사유 유형을 선택하세요." },
       { status: 400 }

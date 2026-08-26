@@ -471,7 +471,7 @@ export default function AttendanceGradePage() {
       }
       weeklyCacheRef.current.clear();
       mutate();
-      alert(`${result.copied}명 복사, ${result.skipped}명 건너뜀`);
+      alert(`${result.copied}명 복사, ${result.skipped}명은 오후1 미체크·사유결석이라 건너뜀`);
     } catch {
       alert("네트워크 오류가 발생했습니다.");
     } finally {

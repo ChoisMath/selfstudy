@@ -6,12 +6,12 @@ const plan = planSessionCopy({
   fromAttendance: new Map([
     [1, { status: "present", hasReason: false }],   // → present
     [2, { status: "absent", hasReason: false }],    // → absent (사유 없음)
-    [3, { status: "absent", hasReason: true }],     // 사유 있는 결석 → 건너뜀
-    [4, { status: "present", hasReason: false }],   // 오후2 이미 체크됨 → 건너뜀
-    [5, { status: "present", hasReason: false }],   // 오후2 비참여 → 건너뜀
-    [6, { status: "present", hasReason: false }],   // 오후2 불참신청 있음 → 건너뜀
-    // 7: 오후1 미체크 → 건너뜀
-    [8, { status: "unchecked", hasReason: false }], // → 건너뜀
+    [3, { status: "absent", hasReason: true }],     // 사유 있는 결석 → 건너뜀(카운트)
+    [4, { status: "present", hasReason: false }],   // 오후2 이미 체크됨 → 대상 아님(미카운트)
+    [5, { status: "present", hasReason: false }],   // 오후2 비참여 → 대상 아님
+    [6, { status: "present", hasReason: false }],   // 오후2 불참신청 있음 → 대상 아님
+    // 7: 오후1 미체크 → 건너뜀(카운트)
+    [8, { status: "unchecked", hasReason: false }], // 8: unchecked → 건너뜀(카운트)
   ]),
   toAttendanceStudentIds: new Set([4]),
   toParticipatingStudentIds: new Set([1, 2, 3, 4, 6, 7, 8]),
@@ -22,7 +22,7 @@ assert.deepEqual(plan.toCreate, [
   { studentId: 1, status: "present" },
   { studentId: 2, status: "absent" },
 ]);
-assert.equal(plan.skipped, 6);
+assert.equal(plan.skipped, 3);
 
 // 좌석에 없는 학생은 대상이 아니다
 const none = planSessionCopy({

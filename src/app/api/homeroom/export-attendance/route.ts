@@ -2,11 +2,8 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { withAuth } from "@/lib/api-auth";
 import { SESSION_TYPES, SESSION_META } from "@/lib/sessions";
+import { reasonLabel } from "@/lib/absence-reasons";
 import ExcelJS from "exceljs";
-
-const REASON_KO: Record<string, string> = {
-  academy: "학원", afterschool: "방과후", illness: "질병", custom: "기타",
-};
 
 // GET /api/homeroom/export-attendance?month=2026-04
 export const GET = withAuth(["homeroom", "admin"], async (req: Request, user) => {
@@ -128,7 +125,7 @@ export const GET = withAuth(["homeroom", "admin"], async (req: Request, user) =>
             if (a.status === "absent") {
               const reason = a.absenceReason;
               if (reason) {
-                const label = REASON_KO[reason.reasonType] || reason.reasonType;
+                const label = reasonLabel(reason.reasonType);
                 return reason.detail ? `△(${label}: ${reason.detail})` : `△(${label})`;
               }
               return "X";

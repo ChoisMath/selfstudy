@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { withGradeAuth } from "@/lib/api-auth";
 import { prisma } from "@/lib/prisma";
-import { isSeatSessionType, type SeatSessionType } from "@/lib/sessions";
+import { isSeatSessionType } from "@/lib/sessions";
 
 // GET: 학년 + 세션타입의 좌석 배치 조회
 export async function GET(

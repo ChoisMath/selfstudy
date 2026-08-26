@@ -156,7 +156,9 @@ FROM "supervisor_assignments" WHERE session_type = 'afternoon1';
 2. Railway Postgres **스냅샷/`pg_dump`** 확보.
 3. `main` 푸시 → start 의 `prisma migrate deploy` 가 적용.
 4. 검증 SQL: 5개 테이블 각각 `count(*) FILTER (WHERE session_type='afternoon1') = count(*) FILTER (WHERE session_type='afternoon2')`, `study_sessions.type` 값이 `afternoon|night` 뿐인지.
-5. 롤백 = 스냅샷 복원 + 이전 커밋 재배포. API 형태와 소비자가 함께 바뀌므로 **부분 배포 불가, 단일 배포**.
+   `SELECT count(*) FROM absence_reasons r JOIN attendance a ON a.id = r.attendance_id WHERE a.session_type = 'afternoon2';  -- afternoon1 쪽과 동일해야 함`
+5. 롤백 = 스냅샷 복원 후 **반드시** `npx prisma migrate resolve --rolled-back 20260826000000_split_afternoon_session`(로컬에서 `DATABASE_URL=$DATABASE_PUBLIC_URL` 로 실행)으로 실패 기록을 지운 뒤 이전 커밋 재배포. 이 단계를 빼면 이전 커밋의 `migrate deploy` 도 P3009 로 거부된다. API 형태와 소비자가 함께 바뀌므로 **부분 배포 불가, 단일 배포**.
+6. Railway 무중단 교체 구간 동안 구 컨테이너가 옛 enum 값(`afternoon`)으로 조회해 잠시 500 을 낼 수 있다 — 자습 시간 밖에 배포한다.
 
 ---
 
@@ -215,7 +217,7 @@ type CopyPlan = { toCreate: { studentId; status: "present" | "absent" }[]; skipp
 ```
 
 - 대상: `seatedStudentIds` 중 `toAttendance` 에 없고, `toParticipating` 에 있고, `toBlockedByRequest` 에 없는 학생.
-- `from` 이 `present` → `present`; `absent` 이고 `hasReason === false` → `absent`; 그 외(미체크, 사유 있는 결석) → 건너뜀.
+- `from` 이 `present` → `present`; `absent` 이고 `hasReason === false` → `absent`; 그 외(대상이지만 미체크·사유 있는 결석) → `skipped` 로 카운트. 대상이 아닌 학생(이미 체크됨·비참여·불참신청 있음)은 `copied`/`skipped` 어느 쪽에도 포함되지 않는다.
 - 서버는 계획을 `attendance.createMany({ checkedBy: 요청 교사 })` 로 저장, 응답 `{ copied, skipped }`.
 - 이미 체크된 `to` 레코드는 어떤 경우에도 덮어쓰지 않는다.
 
@@ -230,7 +232,7 @@ type CopyPlan = { toCreate: { studentId; status: "present" | "absent" }[]; skipp
 
 ### "오후1 결과 복사" 버튼
 - 오후2 탭(`tab === "afternoon2"`)에서만, 교실 콘텐츠 카드 상단 우측에 렌더 (날짜 바는 높이가 작아 44px 터치 타겟을 넣으면 레이아웃이 흔들리므로). `min-h-11`.
-- 클릭 → `confirm("오후1 출석 결과를 오후2 미체크 학생에게 복사할까요?")` → `POST /api/attendance/copy-session` (`date` = 화면의 `selectedDate`, `from: "afternoon1"`, `to: "afternoon2"`) → `alert("n명 복사, m명 건너뜀")` → 좌석 SWR `mutate()`.
+- 클릭 → `confirm("오후1 출석 결과를 오후2 미체크 학생에게 복사할까요?")` → `POST /api/attendance/copy-session` (`date` = 화면의 `selectedDate`, `from: "afternoon1"`, `to: "afternoon2"`) → `alert("n명 복사, m명은 오후1 미체크·사유결석이라 건너뜀")` → 좌석 SWR `mutate()`.
 - 감독교사 배정 여부는 요구하지 않는다(토글과 같은 `["teacher"]` 권한).
 
 ### "i" 주간 팝업 (`renderWeeklyContent`)

@@ -3,18 +3,12 @@
 import { useState, useMemo } from "react";
 import useSWR from "swr";
 import { SESSION_TYPES, SESSION_META, type SessionType } from "@/lib/sessions";
+import { reasonLabel } from "@/lib/absence-reasons";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 const DAY_LABELS = ["월", "화", "수", "목", "금"] as const;
 const DAY_KEYS = ["mon", "tue", "wed", "thu", "fri"] as const;
-
-const REASON_LABELS: Record<string, string> = {
-  academy: "학원",
-  afterschool: "방과후",
-  illness: "질병",
-  custom: "기타",
-};
 
 type AttendanceRecord = {
   date: string;
@@ -201,7 +195,7 @@ function WeeklyView({
         date: a.date,
         sessionType: SESSION_META[a.sessionType].shortLabel,
         reason:
-          REASON_LABELS[a.absenceReason.reasonType] +
+          reasonLabel(a.absenceReason.reasonType) +
           (a.absenceReason.detail ? ` (${a.absenceReason.detail})` : ""),
       });
     }

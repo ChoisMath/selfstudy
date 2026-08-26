@@ -3826,4 +3826,4 @@ SELECT count(*) FROM absence_reasons r JOIN attendance a ON a.id = r.attendance_
 
 - [ ] **Step 6: 실패 시 롤백**
 
-스냅샷 복원 후 이전 커밋(`git revert` 또는 이전 SHA 재배포). 마이그레이션은 단일 트랜잭션이라 부분 적용 상태는 남지 않는다.
+스냅샷 복원 후 **반드시** `npx prisma migrate resolve --rolled-back 20260826000000_split_afternoon_session`(로컬에서 `DATABASE_URL=$DATABASE_PUBLIC_URL` 로 실행)으로 실패 기록을 지운 뒤 이전 커밋 재배포. 이 단계를 빼면 이전 커밋의 `migrate deploy` 도 P3009 로 거부된다. API 형태와 소비자가 함께 바뀌므로 부분 배포 불가, 단일 배포.

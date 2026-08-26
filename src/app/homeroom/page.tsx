@@ -3,6 +3,7 @@
 import { Fragment, useState } from "react";
 import useSWR from "swr";
 import { SESSION_TYPES, SESSION_META, type SessionType } from "@/lib/sessions";
+import { reasonLabel } from "@/lib/absence-reasons";
 
 type AttendanceData = {
   date: string;
@@ -68,10 +69,6 @@ function getWeekDates(weekStart: string): string[] {
   });
 }
 
-const REASON_KO: Record<string, string> = {
-  academy: "학원", afterschool: "방과후", illness: "질병", custom: "기타",
-};
-
 function StatusCell({ status, isAfterSchool, reasonType, reasonDetail }: {
   status?: string; isAfterSchool: boolean; reasonType?: string | null; reasonDetail?: string | null;
 }) {
@@ -89,7 +86,7 @@ function StatusCell({ status, isAfterSchool, reasonType, reasonDetail }: {
   if (status === "absent") {
     const hasReason = !!reasonType;
     const tooltipText = hasReason
-      ? `${REASON_KO[reasonType!] || reasonType}${reasonDetail ? `: ${reasonDetail}` : ""}`
+      ? `${reasonLabel(reasonType!)}${reasonDetail ? `: ${reasonDetail}` : ""}`
       : null;
 
     return (

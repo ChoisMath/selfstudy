@@ -520,6 +520,7 @@ SupervisorReminderLog: teacherId, grade, date(@db.Date), sentAt — @@unique([te
 - **Railway 프로젝트**: courageous-motivation
 - **서비스**: selfstudy + Postgres + Cron(감독 알림)
 - **빌드**: `prisma generate && next build` (⚠ Railway 대시보드의 빌드 명령에 `prisma db push`가 남아 있으면 반드시 제거할 것 — 마이그레이션 적용 전에 enum을 임의로 바꿔 `prisma migrate deploy`가 실패한다. 스키마 변경은 오직 마이그레이션으로만)
+- **마이그레이션 실패 시 롤백**: 스냅샷 복원 → `npx prisma migrate resolve --rolled-back <migration>` 으로 `_prisma_migrations` 의 실패 기록 제거 → 이전 커밋 재배포. 이 단계 없이는 이전 커밋도 `migrate deploy` 가 P3009 로 거부됨.
 - **시작**: `prisma migrate deploy && next start`
 - **배포 브랜치**: `main` (로컬 `master` → `git push origin master:main`)
 - **PORT**: 8080
