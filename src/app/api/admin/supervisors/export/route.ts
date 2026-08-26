@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { withAuth } from "@/lib/api-auth";
 import { buildSupervisorWorkbook } from "@/lib/excel/supervisor-export";
+import { REPRESENTATIVE_SESSION_TYPE } from "@/lib/sessions";
 
 export const GET = withAuth(["admin"], async (req, _user) => {
   const url = new URL(req.url);
@@ -53,14 +54,14 @@ export const GET = withAuth(["admin"], async (req, _user) => {
       await Promise.all([
         prisma.supervisorAssignment.findMany({
           where: {
-            sessionType: "afternoon",
+            sessionType: REPRESENTATIVE_SESSION_TYPE,
             date: { gte: monthStart, lte: monthEnd },
           },
           select: { date: true, grade: true, teacherId: true },
         }),
         prisma.supervisorAssignment.findMany({
           where: {
-            sessionType: "afternoon",
+            sessionType: REPRESENTATIVE_SESSION_TYPE,
             date: { gte: syStart, lte: syEnd },
           },
           select: { date: true, grade: true, teacherId: true },

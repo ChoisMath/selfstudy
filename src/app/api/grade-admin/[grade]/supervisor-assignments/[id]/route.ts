@@ -27,7 +27,7 @@ export async function DELETE(
       );
     }
 
-    // 같은 날짜, 같은 학년의 오후+야간 모두 삭제 (교체이력 먼저 정리)
+    // 같은 날짜, 같은 학년의 모든 블록 배정 삭제 (교체이력 먼저 정리)
     await prisma.$transaction(async (tx) => {
       await tx.supervisorSwapHistory.deleteMany({
         where: { assignment: { grade, date: assignment.date } },

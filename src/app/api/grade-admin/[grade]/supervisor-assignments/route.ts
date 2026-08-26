@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { withGradeAuth } from "@/lib/api-auth";
 import { prisma } from "@/lib/prisma";
+import { SESSION_TYPES, REPRESENTATIVE_SESSION_TYPE } from "@/lib/sessions";
 
 // GET: 학년별 감독교사 배정 목록 조회
 export async function GET(
@@ -109,9 +110,9 @@ export async function POST(
       );
     }
 
-    // 오후 + 야간 동시 배정 (upsert)
-    const [afternoon, night] = await Promise.all(
-      (["afternoon", "night"] as const).map((sessionType) =>
+    // 하루 1명이 모든 블록을 맡으므로 블록마다 같은 교사로 upsert
+    const assignments = await Promise.all(
+      SESSION_TYPES.map((sessionType) =>
         prisma.supervisorAssignment.upsert({
           where: {
             date_grade_sessionType: { date: parsedDate, grade, sessionType },
@@ -122,7 +123,8 @@ export async function POST(
         })
       )
     );
+    const representative = assignments[SESSION_TYPES.indexOf(REPRESENTATIVE_SESSION_TYPE)];
 
-    return NextResponse.json({ assignment: afternoon, assignments: [afternoon, night] }, { status: 200 });
+    return NextResponse.json({ assignment: representative, assignments }, { status: 200 });
   })(req);
 }

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { withAuth } from "@/lib/api-auth";
+import { REPRESENTATIVE_SESSION_TYPE } from "@/lib/sessions";
 
 // GET /api/homeroom/schedule - 전체 감독 배정표 조회
 export const GET = withAuth(["teacher"], async (req: Request, user) => {
@@ -50,8 +51,8 @@ export const GET = withAuth(["teacher"], async (req: Request, user) => {
     orderBy: { name: "asc" },
   });
 
-  // 오후/야간이 동일 감독이므로 afternoon만 반환 (중복 제거)
-  const uniqueAssignments = assignments.filter((a) => a.sessionType === "afternoon");
+  // 모든 블록이 동일 감독이므로 대표행만 반환 (중복 제거)
+  const uniqueAssignments = assignments.filter((a) => a.sessionType === REPRESENTATIVE_SESSION_TYPE);
 
   return NextResponse.json({
     currentUserId: user.userId,

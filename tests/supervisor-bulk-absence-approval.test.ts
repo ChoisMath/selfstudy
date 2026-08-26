@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import { approvePendingAbsenceRequestsForSupervisor } from "../src/lib/absence-request-bulk-approval";
+import type { SessionType } from "../src/lib/sessions";
 
 type RequestStatus = "pending" | "approved" | "rejected";
-type SessionType = "afternoon" | "night";
 
 type RequestRow = {
   id: number;
@@ -186,7 +186,7 @@ async function testApprovesOnlyAssignedPendingRequests() {
       {
         id: 4,
         studentId: 104,
-        sessionType: "afternoon",
+        sessionType: "afternoon1",
         date: dateOnly("2026-04-30"),
         reasonType: "academy",
         detail: null,
@@ -261,9 +261,25 @@ async function testRejectsUnassignedTeacher() {
   );
 }
 
+async function testRejectsLegacySessionType() {
+  const prisma = createFakePrisma({ assignments: [], requests: [] });
+  await assert.rejects(
+    () =>
+      approvePendingAbsenceRequestsForSupervisor({
+        prisma,
+        teacherId: 7,
+        grade: 2,
+        date: "2026-04-30",
+        sessionType: "afternoon" as unknown as SessionType,
+      }),
+    /invalid sessionType/
+  );
+}
+
 async function main() {
   await testApprovesOnlyAssignedPendingRequests();
   await testRejectsUnassignedTeacher();
+  await testRejectsLegacySessionType();
   console.log("supervisor bulk absence approval tests passed");
 }
 

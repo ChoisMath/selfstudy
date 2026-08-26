@@ -29,7 +29,7 @@ export function planReminders(
   const result: PlannedReminder[] = [];
   for (const a of assignments) {
     const key = reminderKey(a.teacherId, a.grade);
-    if (seen.has(key)) continue; // 오후+야간 2행 → 1건
+    if (seen.has(key)) continue; // 블록별 행(오후1·오후2·야간) → 1건
     seen.add(key);
     if (alreadySent.has(key)) continue; // 이미 발송됨
     result.push({

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { withAuth } from "@/lib/api-auth";
+import { REPRESENTATIVE_SESSION_TYPE } from "@/lib/sessions";
 
 // GET /api/homeroom/schedule/summary - 학년도 기준 교사별 월별 감독횟수 집계
 export const GET = withAuth(["teacher"], async (req: Request, user) => {
@@ -21,11 +22,11 @@ export const GET = withAuth(["teacher"], async (req: Request, user) => {
       ? new Date(currentYear + 1, 1, 28, 23, 59, 59, 999) // 익년 2월 28일
       : new Date(currentYear, 1, 28, 23, 59, 59, 999);
 
-  // 오후+야간 동일 감독이므로 afternoon만 카운트
+  // 모든 블록이 동일 감독이므로 대표행만 카운트
   const assignments = await prisma.supervisorAssignment.findMany({
     where: {
       date: { gte: schoolYearStart, lte: schoolYearEnd },
-      sessionType: "afternoon",
+      sessionType: REPRESENTATIVE_SESSION_TYPE,
     },
     select: {
       date: true,

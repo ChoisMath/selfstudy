@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo, useRef, memo } from "react";
+import { REPRESENTATIVE_SESSION_TYPE, type SessionType } from "@/lib/sessions";
 
 type Teacher = { id: number; name: string; primaryGrade?: number | null };
 type Assignment = {
@@ -8,13 +9,13 @@ type Assignment = {
   teacherId: number;
   date: string;
   grade: number;
-  sessionType: "afternoon" | "night";
+  sessionType: SessionType;
   teacher: { id: number; name: string };
 };
 
 type SlotConfig = {
   grade: number;
-  sessionType: "afternoon" | "night";
+  sessionType: SessionType;
   label: string;
 };
 
@@ -60,11 +61,11 @@ export default function MonthlyCalendar({
   const slots: SlotConfig[] = useMemo(() => {
     if (showAllGrades) {
       return [1, 2, 3].map((g) => ({
-        grade: g, sessionType: "afternoon" as const, label: `${g}학년`,
+        grade: g, sessionType: REPRESENTATIVE_SESSION_TYPE, label: `${g}학년`,
       }));
     }
     return [
-      { grade: grade!, sessionType: "afternoon" as const, label: "감독" },
+      { grade: grade!, sessionType: REPRESENTATIVE_SESSION_TYPE, label: "감독" },
     ];
   }, [grade, showAllGrades]);
 
@@ -140,12 +141,12 @@ export default function MonthlyCalendar({
     teacherId: number | null
   ) => {
     const dateStr = formatDate(date);
-    const cellKey = `${dateStr}-${g}-afternoon`;
+    const cellKey = `${dateStr}-${g}-${REPRESENTATIVE_SESSION_TYPE}`;
     setSaving(cellKey);
     try {
       if (teacherId === null) {
-        // 해당 날짜+학년의 afternoon 배정을 찾아 DELETE (API가 양쪽 모두 삭제)
-        const existing = getAssignment(date, g, "afternoon");
+        // 대표행을 찾아 DELETE (API 가 모든 블록을 삭제)
+        const existing = getAssignment(date, g, REPRESENTATIVE_SESSION_TYPE);
         if (existing) {
           const res = await fetch(
             `/api/grade-admin/${g}/supervisor-assignments/${existing.id}`,
@@ -157,7 +158,7 @@ export default function MonthlyCalendar({
             );
         }
       } else {
-        // POST가 오후+야간 동시 생성
+        // POST 가 모든 블록을 동시 생성
         const res = await fetch(
           `/api/grade-admin/${g}/supervisor-assignments`,
           {

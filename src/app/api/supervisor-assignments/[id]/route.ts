@@ -34,7 +34,7 @@ export const PUT = withAuth(["teacher"], async (req: Request, user) => {
       (h) => h.grade !== assignment.grade
     ) ?? true;
 
-  // 같은 날짜, 같은 학년의 오후+야간 배정 모두 찾기
+  // 같은 날짜, 같은 학년의 모든 블록 배정 찾기
   const pairAssignments = await prisma.supervisorAssignment.findMany({
     where: {
       grade: assignment.grade,
@@ -43,7 +43,7 @@ export const PUT = withAuth(["teacher"], async (req: Request, user) => {
     },
   });
 
-  // 트랜잭션으로 교체 처리 (오후+야간 모두)
+  // 트랜잭션으로 교체 처리 (모든 블록)
   await prisma.$transaction([
     // 이력 기록 (대표 1건)
     prisma.supervisorSwapHistory.create({

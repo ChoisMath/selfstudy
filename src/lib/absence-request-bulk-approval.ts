@@ -1,4 +1,5 @@
-import type { ReasonType, SessionType } from "@/generated/prisma/client";
+import type { ReasonType } from "@/generated/prisma/client";
+import { isSessionType, type SessionType } from "@/lib/sessions";
 
 type RequestStatus = "pending" | "approved" | "rejected";
 
@@ -123,7 +124,7 @@ export async function approvePendingAbsenceRequestsForSupervisor({
     throw new BulkAbsenceApprovalError("invalid grade", 400);
   }
 
-  if (sessionType !== "afternoon" && sessionType !== "night") {
+  if (!isSessionType(sessionType)) {
     throw new BulkAbsenceApprovalError("invalid sessionType", 400);
   }
 

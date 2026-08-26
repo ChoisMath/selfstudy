@@ -4,12 +4,13 @@ import { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import useSWR from "swr";
 import SupervisorSummaryModal from "@/components/homeroom/SupervisorSummaryModal";
+import { REPRESENTATIVE_SESSION_TYPE, type SessionType } from "@/lib/sessions";
 
 type AssignmentData = {
   id: number;
   date: string;
   grade: number;
-  sessionType: "afternoon" | "night";
+  sessionType: SessionType;
   teacherId: number;
   teacherName: string;
 };
@@ -32,7 +33,7 @@ const fetcher = (url: string) => fetch(url).then((res) => res.json());
 const DAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"];
 
 const SLOTS = [1, 2, 3].map((g) => ({
-  grade: g, sessionType: "afternoon" as const, label: `${g}학년`,
+  grade: g, sessionType: REPRESENTATIVE_SESSION_TYPE, label: `${g}학년`,
 }));
 
 function formatDate(d: Date) {
@@ -173,7 +174,7 @@ export default function SchedulePage() {
           <span className="flex items-center gap-1">
             <span className="w-3 h-3 rounded bg-yellow-100 border border-yellow-300 inline-block" /> 내 배정
           </span>
-          <span className="whitespace-nowrap">학년별 1명 오후+야간</span>
+          <span className="whitespace-nowrap">학년별 1명 (오후1·오후2·야간)</span>
         </div>
         <div className="flex items-center gap-1.5">
           <button

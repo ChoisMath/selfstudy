@@ -20,12 +20,13 @@ assert.equal(
 // reminderKey
 assert.equal(reminderKey(7, 2), "7-2");
 
-// planReminders: 오후+야간 중복 → 1건으로 dedupe
-const sameTeacherTwoSessions: ReminderAssignment[] = [
+// planReminders: 오후1+오후2+야간 3행 → 1건으로 dedupe
+const sameTeacherThreeSessions: ReminderAssignment[] = [
+  { teacherId: 7, grade: 2, teacherName: "김교사" },
   { teacherId: 7, grade: 2, teacherName: "김교사" },
   { teacherId: 7, grade: 2, teacherName: "김교사" },
 ];
-const r1 = planReminders(sameTeacherTwoSessions, "2026-06-25", new Set());
+const r1 = planReminders(sameTeacherThreeSessions, "2026-06-25", new Set());
 assert.equal(r1.length, 1);
 assert.equal(r1[0].teacherId, 7);
 assert.equal(r1[0].grade, 2);

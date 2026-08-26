@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { withGradeAuth } from "@/lib/api-auth";
 import { buildSupervisorWorkbook } from "@/lib/excel/supervisor-export";
+import { REPRESENTATIVE_SESSION_TYPE } from "@/lib/sessions";
 
 export async function GET(
   req: Request,
@@ -65,14 +66,14 @@ export async function GET(
           prisma.supervisorAssignment.findMany({
             where: {
               grade,
-              sessionType: "afternoon",
+              sessionType: REPRESENTATIVE_SESSION_TYPE,
               date: { gte: monthStart, lte: monthEnd },
             },
             select: { date: true, grade: true, teacherId: true },
           }),
           prisma.supervisorAssignment.findMany({
             where: {
-              sessionType: "afternoon",
+              sessionType: REPRESENTATIVE_SESSION_TYPE,
               date: { gte: syStart, lte: syEnd },
             },
             select: { date: true, grade: true, teacherId: true },
