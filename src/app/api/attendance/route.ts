@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { withAuth } from "@/lib/api-auth";
-import type { SessionType } from "@/generated/prisma/client";
+import { isSessionType, seatSessionOf } from "@/lib/sessions";
 
 // GET /api/attendance?date=2026-04-05&session=afternoon&grade=2
 export const GET = withAuth(
@@ -9,11 +9,14 @@ export const GET = withAuth(
   async (req: Request) => {
     const { searchParams } = new URL(req.url);
     const date = searchParams.get("date");
-    const session = searchParams.get("session") as SessionType;
+    const session = searchParams.get("session");
     const grade = searchParams.get("grade");
 
     if (!date || !session || !grade) {
       return NextResponse.json({ error: "date, session, grade 파라미터가 필요합니다." }, { status: 400 });
+    }
+    if (!isSessionType(session)) {
+      return NextResponse.json({ error: "유효하지 않은 session 값입니다." }, { status: 400 });
     }
 
     const gradeNum = parseInt(grade);
@@ -26,7 +29,7 @@ export const GET = withAuth(
 
     // 해당 학년 + 세션의 교실(Room) 목록
     const studySession = await prisma.studySession.findUnique({
-      where: { type_grade: { type: session, grade: gradeNum } },
+      where: { type_grade: { type: seatSessionOf(session), grade: gradeNum } },
       include: {
         rooms: { orderBy: { sortOrder: "asc" } },
       },

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { withAuth } from "@/lib/api-auth";
+import { isSessionType, type SessionType } from "@/lib/sessions";
 
 // GET /api/attendance/notes?studentId=1&date=2026-04-05
 export const GET = withAuth(
@@ -34,16 +35,11 @@ export const GET = withAuth(
       },
     });
 
-    // { "2026-04-05": { afternoon: "...", night: "..." }, ... }
-    const result: Record<string, { afternoon?: string; night?: string }> = {};
+    const result: Record<string, Partial<Record<SessionType, string>>> = {};
     for (const n of notes) {
       const key = n.date.toISOString().split("T")[0];
       if (!result[key]) result[key] = {};
-      if (n.sessionType === "afternoon") {
-        result[key].afternoon = n.note;
-      } else if (n.sessionType === "night") {
-        result[key].night = n.note;
-      }
+      result[key][n.sessionType] = n.note;
     }
 
     return NextResponse.json({ notes: result });
@@ -63,6 +59,9 @@ export const PUT = withAuth(
         { error: "studentId, sessionType, date가 필요합니다." },
         { status: 400 }
       );
+    }
+    if (!isSessionType(sessionType)) {
+      return NextResponse.json({ error: "유효하지 않은 sessionType 입니다." }, { status: 400 });
     }
 
     const dateObj = new Date(date + "T00:00:00Z");

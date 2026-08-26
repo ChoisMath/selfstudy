@@ -1,11 +1,16 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { withAuth } from "@/lib/api-auth";
+import { isSessionType } from "@/lib/sessions";
 
 // POST /api/attendance/toggle - 좌석 탭 시 출석 상태 순환
 export const POST = withAuth(["teacher"], async (req: Request, user) => {
   const body = await req.json();
   const { studentId, sessionType, date, currentStatus } = body;
+
+  if (!isSessionType(sessionType)) {
+    return NextResponse.json({ error: "유효하지 않은 sessionType 입니다." }, { status: 400 });
+  }
 
   // 순환: unchecked → present → absent → unchecked
   const nextStatus =

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { withAuth } from "@/lib/api-auth";
+import { isSessionType } from "@/lib/sessions";
 
 // PUT /api/attendance/:id - 출석 상태 토글
 export const PUT = withAuth(["supervisor", "admin"], async (req: Request, user) => {
@@ -28,6 +29,10 @@ export const PUT = withAuth(["supervisor", "admin"], async (req: Request, user) 
 async function handleToggle(req: Request, user: { userId: number }) {
   const body = await req.json();
   const { studentId, sessionType, date, currentStatus } = body;
+
+  if (!isSessionType(sessionType)) {
+    return NextResponse.json({ error: "유효하지 않은 sessionType 입니다." }, { status: 400 });
+  }
 
   // 순환: unchecked → present → absent → unchecked
   const nextStatus =
