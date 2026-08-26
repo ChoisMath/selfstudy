@@ -1,6 +1,6 @@
 # 자율학습 출석부 시스템 - 프로젝트 지도
 
-> 마지막 업데이트: 2026-08-14
+> 마지막 업데이트: 2026-08-27
 > 이 파일은 새 세션에서 코드베이스를 빠르게 파악하기 위한 참조 문서입니다.
 
 ## 개요
@@ -50,21 +50,22 @@ src/
 │   ├── attendance/             # 감독교사
 │   │   ├── layout.tsx          # 모든 교사에게 이동 버튼 (담임교사/감독일정/학년관리) + NotificationBell
 │   │   ├── page.tsx            # 자동 학년 라우팅 / 학년 선택
-│   │   └── [grade]/page.tsx    # ★ 핵심: 좌석 출석 그리드 (3탭: 오후자습/야간자습/불참신청, 오후 그룹은 buildPrintGroups 공용) + 불참신청 관리 UI
+│   │   └── [grade]/page.tsx    # ★ 핵심: 좌석 출석 그리드 (4탭: 오후1/오후2/야간자습/불참신청, 오후 그룹은 buildPrintGroups 공용). 오후2 탭 "오후1 결과 복사" 버튼(`/api/attendance/copy-session`) + 불참신청 관리 UI
 │   ├── homeroom/               # 담임교사
 │   │   ├── layout.tsx          # 담임 5탭 + 공통 2탭 네비게이션 (세션 로딩 처리) + NotificationBell
-│   │   ├── page.tsx            # 자기반 학생 + 주간출석
-│   │   ├── attendance/page.tsx # 담임 월간출결 테이블 + "시간" 컬럼 + Excel 다운로드
-│   │   ├── participation/page.tsx
+│   │   ├── page.tsx            # 자기반 학생 + 주간출석 (날짜당 3셀: 오후1/오후2/야간)
+│   │   ├── attendance/page.tsx # 담임 월간출결 테이블 + "시간" 컬럼 + Excel 다운로드 (날짜당 3셀)
+│   │   ├── participation/page.tsx  # 참여설정 18열(세션 3 × 참가+5요일)
 │   │   ├── absence-reasons/page.tsx
 │   │   ├── absence-requests/page.tsx
-│   │   ├── schedule/page.tsx   # 월간 달력 그리드 (전체 학년 감독배정 + 교체)
+│   │   ├── schedule/page.tsx   # 월간 달력 그리드 (전체 학년 감독배정 + 교체) + SupervisorSummaryModal 연동
 │   │   └── password/page.tsx
 │   ├── student/                # 학생
 │   │   ├── layout.tsx          # 3개 탭
 │   │   ├── page.tsx            # 참여일정 + 참여시간 카드 (월간/연간)
 │   │   ├── attendance/page.tsx # 주간/월간 출결
-│   │   └── absence-requests/page.tsx
+│   │   ├── absence-requests/page.tsx  # 세션 다중선택(오후1/오후2/야간) + "오후 전체" 편의 버튼
+│   │   └── batch-absence/page.tsx     # 도우미 학생 전용 — 반 전체 일괄 불참신청, 학생당 세션 버튼 3개
 │   └── api/                    # API 라우트 (아래 별도 섹션)
 │
 ├── components/
@@ -78,8 +79,10 @@ src/
 │   │   ├── MonthlyCalendar.tsx  # 월간 감독배정 캘린더 (학년당 1슬롯, 텍스트 검색 교사 선택, 담당학년 우선 그룹)
 │   │   └── ExcelUploadModal.tsx # 공용 Excel 업로드 모달 (드래그앤드롭, 교사/학생 공용)
 │   ├── grade-admin/
-│   │   ├── TodayAttendanceDashboard.tsx  # 오늘출결 대시보드 (grade prop, 세션별 출석현황)
-│   │   └── GradeMonthlyAttendance.tsx    # 월간출결 테이블 (grade prop, 짝수반 배경 구분, "시간" 컬럼)
+│   │   ├── TodayAttendanceDashboard.tsx  # 오늘출결 대시보드 (grade prop, SESSION_TYPES 3카드)
+│   │   └── GradeMonthlyAttendance.tsx    # 월간출결 테이블 (grade prop, 짝수반 배경 구분, 날짜당 3셀 + "시간" 컬럼)
+│   ├── homeroom/
+│   │   └── SupervisorSummaryModal.tsx  # 학년도 기준 교사별 월별 감독횟수 집계 모달 (`/api/homeroom/schedule/summary`, 본인 행 sticky 강조)
 │   ├── seats/
 │   │   ├── SeatingEditor.tsx       # DndContext + 저장 + 출력 버튼 (props: grade, sessionType)
 │   │   ├── RoomGrid.tsx            # 교실 격자 (droppable/draggable 셀)
@@ -95,12 +98,18 @@ src/
 │   ├── auth.ts         # NextAuth 설정 (Credentials×2 + Google, JWT 콜백)
 │   ├── api-auth.ts     # withAuth (+ "teacher" 의사역할: 모든 교사 허용), withGradeAuth, withHomeroomAuth 래퍼
 │   ├── calendar.ts     # KST 안전 순수 날짜 유틸 (getKstTodayString/formatDateValue/parseDateValue/formatDateLabel/formatDateWithWeekday/shiftMonth/buildMonthCells, toISOString 미사용)
+│   ├── sessions.ts     # ★ 세션 진실 공급원 — SESSION_TYPES(afternoon1/afternoon2/night)/SEAT_SESSION_TYPES(afternoon/night)/SESSION_META/SEAT_SESSION_META/REPRESENTATIVE_SESSION_TYPE("afternoon1")/isSessionType/isSeatSessionType/seatSessionOf/sessionTypesOfSeat/attendanceMinutes/emptySessionRecord. `"afternoon"`/`"night"` 리터럴·`100` 상수는 이 모듈 밖 사용 금지(session-literal-guard 테스트로 고정)
+│   ├── absence-reasons.ts  # REASON_TYPES/REASON_LABELS(한글)/reasonLabel — 기존 7곳에 중복되던 사유 라벨 맵의 단일 출처(수정한 파일만 교체)
+│   ├── academic-year.ts    # 학년도(3월~익년2월) 범위 계산 + 학년 내 자습시간 랭킹(getGradeRankingMap, 모듈 인메모리 캐시 TTL 60초) — raw SQL로 `COALESCE(duration_minutes, CASE session_type WHEN 'night' THEN 100 ELSE 50 END)` 집계
+│   ├── attendance/
+│   │   ├── weekly-summary.ts  # buildWeeklyRows/summarizeWeeklyCell/weekDatesOf — 주간 API·"i" 팝업 공용. 셀 상태 우선순위: 비참여 › 불참승인 › 방과후 › 출석 › 결석 › 미체크
+│   │   └── copy-session.ts    # planSessionCopy — "오후1 결과 복사" 순수 규칙(대상: 미체크+참여+불참신청無, present 그대로/사유없는 absent만 복사)
 │   ├── push/
 │   │   ├── reminder-logic.ts  # 메시지 생성·(teacher,grade) dedupe·발송 계획 순수 함수 (planReminders/reminderKey/buildReminderMessage)
 │   │   ├── send.ts            # web-push 래퍼: sendToTeacher (교사별 발송 + 404/410 만료 구독 정리)
 │   │   └── client.ts          # 브라우저 구독/해제 + VAPID base64 변환 + iOS standalone 감지
 │   ├── seats/
-│   │   ├── print-groups.ts   # 방 목록 → 인쇄 그룹 분해 (화면/인쇄 공용)
+│   │   ├── print-groups.ts   # 방 목록 → 인쇄 그룹 분해 (화면/인쇄 공용, 타입은 SeatSessionType)
 │   │   └── print-layout.ts   # A4 기하 상수 + 방향 추천/배율 계산
 │   └── prisma.ts       # PrismaClient 싱글톤 (PrismaPg 어댑터)
 │
@@ -120,24 +129,27 @@ public/
 ### 출석 (`/api/attendance/`)
 | 메서드 | 경로 | 설명 |
 |--------|------|------|
-| GET | `/api/attendance?date&session&grade` | 좌석+출석 현황 조회 (학생별 `hasPendingAbsenceRequest` 포함) |
-| POST | `/api/attendance/toggle` | 출석 상태 순환 토글 |
-| GET | `/api/attendance/weekly?studentId&date` | 주간 출석 + 참여설정 + 비고 |
+| GET | `/api/attendance?date&session&grade` | 좌석+출석 현황 조회 (`session`은 `SessionType`, 좌석/교실은 `seatSessionOf(session)`으로 조회. 학생별 `hasPendingAbsenceRequest` 포함) |
+| POST | `/api/attendance/toggle` | 출석 상태 순환 토글 (`sessionType`을 `isSessionType`으로 검증) |
+| PUT | `/api/attendance/[id]` | 상태 직접 수정 (`sessionType` 검증 추가) |
+| POST | `/api/attendance/copy-session` | **신규.** `{grade,date,from,to}`(같은 좌석 세션의 서로 다른 블록만) — `from`(보통 오후1) 결과를 `to`(오후2) 미체크·참여·불참신청無 학생에게 복사(`planSessionCopy`). 응답 `{copied,skipped}` |
+| GET | `/api/attendance/weekly?studentId&date` | 주간 출석. `weekly[].sessions: Record<SessionType,…>`(status/reason/participating/afterSchool/note/`isApprovedAbsence`/`approvedReason`) — 승인된 `AbsenceRequest`를 주간 범위로 조회해 팝업에 불참승인 노란색+한글 사유 반영. `totals`/`ranking` 형태 불변 |
 | GET | `/api/attendance/absence-requests?grade&status` | 학년별 불참신청 목록 조회 (감독교사용) |
 | POST | `/api/attendance/absence-requests/bulk-approve` | 감독교사 배정 검증 후 해당 날짜/학년/세션의 pending 불참신청 일괄승인 |
-| GET/PUT | `/api/attendance/notes?studentId&date` | 요일별 비고 조회/수정 (upsert/삭제) |
+| GET/PUT | `/api/attendance/notes?studentId&date` | 요일별 비고 조회/수정 (upsert/삭제). GET 응답 `{ [date]: Partial<Record<SessionType,string>> }` |
 
 ### 담임 (`/api/homeroom/`)
 | 메서드 | 경로 | 설명 |
 |--------|------|------|
 | GET | `students` | 자기반 학생+주간출석 |
-| GET/PUT | `participation-days` | 참여설정 조회/수정 (afterSchool 포함) |
-| POST | `absence-reasons` | 불참사유 등록 (트랜잭션) |
+| GET/PUT | `participation-days` | 참여설정 조회/수정. GET `students[].sessions: Record<SessionType, DaySettings>`(18열), PUT 검증 `isSessionType` |
+| POST | `absence-reasons` | 불참사유 등록 (트랜잭션, `sessionType` 검증 추가) |
 | GET | `absence-requests` | 반 학생 불참신청 목록 |
 | PUT | `absence-requests/[id]` | 승인/반려 (트랜잭션, 모든 교사 허용) |
-| GET | `schedule` | 전체 학년 감독배정 (본인 포함) |
-| GET | `monthly-attendance` | 담임 월간 출결 데이터 |
-| GET | `export-attendance` | 담임 출결 Excel 다운로드 |
+| GET | `schedule` | 전체 학년 감독배정 (본인 포함), `REPRESENTATIVE_SESSION_TYPE`로 필터 |
+| GET | `schedule/summary?grade` | **신규(맵 누락분 반영).** 학년도(3월~익년2월) 기준 교사별 월별 감독횟수 집계, `REPRESENTATIVE_SESSION_TYPE`만 카운트. `SupervisorSummaryModal` 소비 |
+| GET | `monthly-attendance` | 담임 월간 출결 데이터. `dates[date]: Partial<Record<SessionType,{status,reason?}>>`, "시간" 컬럼은 `attendanceMinutes()` |
+| GET | `export-attendance` | 담임 출결 Excel 다운로드 (날짜당 3셀: 오후1/오후2/야간) |
 
 ### 학년관리 (`/api/grade-admin/[grade]/`)
 | 메서드 | 경로 | 설명 |
@@ -145,21 +157,23 @@ public/
 | GET/POST | `students` | 학생 목록/등록 |
 | PUT/DELETE | `students/[id]` | 학생 수정/삭제 |
 | POST | `students/bulk-upload` | Excel 일괄업로드 (기존 비활성화 + 새 생성) |
-| GET/PUT | `participation-days` | 참여설정 (afterSchool 포함) |
-| GET/POST | `seat-layouts` | 좌석 배치 조회/저장(트랜잭션, roomId 기반) |
-| GET/POST | `supervisor-assignments` | 감독 배정 (POST: 오후+야간 동시 생성) |
-| DELETE | `supervisor-assignments/[id]` | 배정 해제 (오후+야간 동시 삭제) |
-| GET | `today-attendance` | 학년별 오늘 출결 현황 (세션별 출석/결석/사유결석/방과후 집계) |
-| GET | `monthly-attendance?month=YYYY-MM` | 학년 전체 월간 출결 데이터 |
-| GET | `export-attendance?month=YYYY-MM` | 학년 전체 월간 출결 Excel 다운로드 |
-| GET | `supervisor-assignments/export?month=YYYY-MM` | 학년 감독배정 Excel (Month+누계 시트) |
+| GET/PUT | `participation-days` | 참여설정. GET `students[].sessions: Record<SessionType, DaySettings>`(세션 3 × 참가+5요일 = 18열), PUT 검증 `isSessionType` |
+| GET/POST | `seat-layouts` | 좌석 배치 조회/저장(트랜잭션, roomId 기반, `sessionType`은 `SeatSessionType` — `isSeatSessionType` 검증) |
+| GET/POST | `supervisor-assignments` | 감독 배정 (POST: `SESSION_TYPES` 3행 동시 upsert, 응답 `{ assignment: 대표행(afternoon1), assignments: [3행] }`) |
+| DELETE | `supervisor-assignments/[id]` | 배정 해제 (3행 동시 삭제) |
+| GET | `today-attendance` | 학년별 오늘 출결 현황. `sessions: Record<SessionType, SessionStats>`(출석/결석/사유결석/방과후 집계) |
+| GET | `monthly-attendance?month=YYYY-MM` | 학년 전체 월간 출결 데이터. `dates[date]: Partial<Record<SessionType,{status,reason?}>>` |
+| GET | `export-attendance?month=YYYY-MM` | 학년 전체 월간 출결 Excel 다운로드 (날짜당 3셀) |
+| GET | `supervisor-assignments/export?month=YYYY-MM` | 학년 감독배정 Excel (Month+누계 시트), `REPRESENTATIVE_SESSION_TYPE`로 필터 |
 
 ### 학생 (`/api/student/`)
 | 메서드 | 경로 | 설명 |
 |--------|------|------|
-| GET/POST | `absence-requests` | 불참신청 조회/생성 |
-| GET | `attendance?type&date/month` | 주간/월간 출결 |
-| GET | `participation-days` | 참여일정 |
+| GET/POST | `absence-requests` | 불참신청 조회/생성. POST 입력 `sessionTypes: SessionType[]`(1개 이상, "오후 전체" 지원) → `createMany({skipDuplicates})`, 응답 `{created,skipped}` |
+| GET | `attendance?type&date/month` | 주간/월간 출결 (3세션 루프) |
+| GET | `participation-days` | 참여일정. `monthlyStudyHours`/`yearlyStudyHours`는 `attendanceMinutes()` 합산 |
+| GET | `batch-absence` | **신규(맵 누락분 반영).** 도우미 학생 전용 — 같은 반 학생별 오늘 `participating: Record<SessionType,boolean>` + `existingRequests: Partial<Record<SessionType,string>>` |
+| POST | `batch-absence` | **신규(맵 누락분 반영).** 도우미 학생이 반 전체 불참신청 일괄 등록. `sessionType`은 `isSessionType` 검증, `createMany({skipDuplicates})`, 응답 `{created,total,skipped}` |
 
 ### 관리자 (`/api/admin/`)
 | 메서드 | 경로 | 설명 |
@@ -171,18 +185,18 @@ public/
 | GET/POST/DELETE | `sub-admins` | 서브관리자 지정 |
 | GET/POST/DELETE | `homeroom-assignments` | 담임배정 (배정 시 TeacherRole "homeroom" 자동 부여/해제) |
 | GET | `supervisor-swap-history` | 감독교체이력 |
-| GET | `statistics?from&to&grade&class` | 출결통계 |
-| GET | `export-excel?from&to&grade` | Excel 다운로드 |
+| GET | `statistics?from&to&grade&class` | 출결통계. `dates[date]: Partial<Record<SessionType,{status,reason?}>>` |
+| GET | `export-excel?from&to&grade` | Excel 다운로드 (날짜당 3셀) |
 | GET | `students/template` | 업로드 템플릿 |
 | POST | `students/reset` | 학생 전체 초기화 |
-| GET | `today-attendance` | 전학년 오늘 출결 현황 (1~3학년 세션별 집계) |
-| GET | `supervisors/export?month=YYYY-MM` | 전학년 감독배정 Excel (Month+누계 시트) |
+| GET | `today-attendance` | 전학년 오늘 출결 현황. `sessions: Record<SessionType, SessionStats>` × 1~3학년 |
+| GET | `supervisors/export?month=YYYY-MM` | 전학년 감독배정 Excel (Month+누계 시트), `REPRESENTATIVE_SESSION_TYPE`로 필터 |
 
 ### 기타
 | 메서드 | 경로 | 설명 |
 |--------|------|------|
 | GET | `/api/supervisor-assignments/my-today` | 오늘 감독배정 확인 |
-| PUT | `/api/supervisor-assignments/[id]` | 감독교체 (오후+야간 동시, 모든 교사 허용) |
+| PUT | `/api/supervisor-assignments/[id]` | 감독교체 (모든 블록 동시, 모든 교사 허용) |
 | GET | `/api/teachers` | 교사 목록 (primaryGrade 포함) |
 | POST | `/api/auth/change-password` | 비밀번호 변경 |
 
@@ -197,19 +211,20 @@ public/
 
 ```
 Student ──< Attendance (+ durationMinutes?, durationNote?) >── Teacher (checker)
-  │              │
+  │              │            sessionType: SessionType (afternoon1/afternoon2/night)
   │              └── AbsenceReason >── Teacher (registrar)
   │
-  ├──< ParticipationDay (afternoon/night × 월~금 + afterSchool월~금)
+  ├──< ParticipationDay (afternoon1/afternoon2/night × 월~금 + afterSchool월~금)
   ├──< AttendanceNote >── Teacher (creator)
   ├──< AbsenceRequest >── Teacher (reviewer)
   └──< SeatLayout >── Room >── StudySession
          (unique: roomId + rowIndex + colIndex)
+         StudySession.type: SeatSessionType (afternoon/night) — 좌석 배치·인쇄 전용, 오후1·오후2 는 같은 "오후" 좌석을 공유
 
 Teacher (+ primaryGrade: nullable int) ──< TeacherRole (admin/supervisor/homeroom)
   ├──< HomeroomAssignment (grade, classNumber)
   ├──< SubAdminAssignment (grade)
-  ├──< SupervisorAssignment (date, grade, sessionType)
+  ├──< SupervisorAssignment (date, grade, sessionType — 배정 시 3행(afternoon1/afternoon2/night) 동시 생성, 같은 교사)
   ├──< SupervisorSwapHistory (original/replacement)
   ├──< AttendanceNote (creator)
   ├──< PushSubscription (endpoint unique, onDelete: Cascade)
@@ -223,7 +238,8 @@ SupervisorReminderLog: teacherId, grade, date(@db.Date), sentAt — @@unique([te
 
 ### 주요 Enum
 - `Role`: admin, supervisor, homeroom
-- `SessionType`: afternoon, night
+- `SeatSessionType`: afternoon, night — `StudySession.type` 전용 (좌석 배치·인쇄), 오후1·오후2 는 "afternoon" 좌석을 공유
+- `SessionType`: afternoon1, afternoon2, night — `Attendance`/`AbsenceRequest`/`ParticipationDay`/`AttendanceNote`/`SupervisorAssignment.sessionType` (출석 블록 단위). 진실 공급원은 `src/lib/sessions.ts`
 - `AttendanceStatus`: unchecked, present, absent
 - `ReasonType`: academy, afterschool, illness, custom
 - `RequestStatus`: pending, approved, rejected
@@ -259,7 +275,7 @@ SupervisorReminderLog: teacherId, grade, date(@db.Date), sentAt — @@unique([te
 - 백엔드 변경 없음 — `/api/attendance`, `/api/attendance/toggle`, `/api/attendance/weekly`가 이미 임의 `date` 파라미터 처리
 
 ### 5. 출석 그리드 — 불참신청 탭 (`/attendance/[grade]`)
-- 3번째 탭 "불참신청": 감독교사가 해당 학년의 불참신청 목록을 조회/승인/반려
+- 4번째 탭 "불참신청"(오후1/오후2/야간 다음): 감독교사가 해당 학년의 불참신청 목록을 조회/승인/반려
 - `/api/attendance/absence-requests?grade&status`로 학년별 신청 조회
 - `/api/homeroom/absence-requests/[id]` PUT으로 승인/반려 처리 (모든 교사 허용)
 - `일괄승인` 버튼: 오늘 해당 학년 감독으로 배정된 세션의 pending 불참신청만 후보로 표시, 확인 모달에서 학생/날짜/시간/사유/상세 테이블을 가로 스크롤 방식으로 보여준 뒤 승인
@@ -272,11 +288,27 @@ SupervisorReminderLog: teacherId, grade, date(@db.Date), sentAt — @@unique([te
 ### 7. 감독 푸시 알림 (web-push)
 - **구독**: 교사가 NotificationBell 클릭 → `Notification.requestPermission()` → `pushManager.subscribe` → `POST /api/push/subscribe`(endpoint upsert). 해제는 `POST /api/push/unsubscribe` + 브라우저 `subscription.unsubscribe()`
 - **발송 트리거**: Railway 별도 Cron 서비스가 `scripts/trigger-supervisor-reminders.mjs` 실행 → `POST /api/cron/supervisor-reminders`(Bearer CRON_SECRET)
-- **발송 계획**: cron이 KST 오늘 SupervisorAssignment 조회 → `planReminders`가 (teacherId,grade)로 dedupe(오후+야간 2행 → 1건) + `SupervisorReminderLog` 기존 발송분 제외 → 남은 건만 `sendToTeacher` 발송 후 로그 생성
+- **발송 계획**: cron이 KST 오늘 SupervisorAssignment 조회 → `planReminders`가 (teacherId,grade)로 dedupe(블록별 행(오후1·오후2·야간) 3행 → 1건) + `SupervisorReminderLog` 기존 발송분 제외 → 남은 건만 `sendToTeacher` 발송 후 로그 생성
 - **멱등성**: `SupervisorReminderLog @@unique([teacherId,grade,date])`로 같은 날 재실행해도 중복 발송 방지
 - **만료 구독 정리**: `sendToTeacher`가 404/410 응답 시 해당 PushSubscription 삭제
 - **iOS 대응**: standalone(PWA 설치) 아닌 iOS는 푸시 미지원 → NotificationBell이 "홈 화면에 추가" 안내 표시
 - **메시지 형식**: `{이름}선생님, {날짜(요일)} 에 {학년}학년 자율학습 감독교사 이십니다. 잘 부탁드립니다.` (`formatDateWithWeekday` → "2026-06-25(목)")
+
+### 8. 세션 블록 분리 (오후1/오후2/야간) — `src/lib/sessions.ts`
+- 좌석 세션(`SeatSessionType`: afternoon/night, `StudySession.type`)과 출석 블록(`SessionType`: afternoon1/afternoon2/night, `Attendance` 등)은 별개 enum. `seatSessionOf(session)`으로 블록→좌석 매핑, `sessionTypesOfSeat(seat)`으로 역매핑(오후 → `[afternoon1, afternoon2]`)
+- 기본 소요시간은 `SESSION_META[t].defaultMinutes`(afternoon1/afternoon2 = 50분, night = 100분), `durationMinutes`가 있으면 그 값 우선(`attendanceMinutes()`가 유일한 계산 지점)
+- 감독배정은 (date,grade)당 `SESSION_TYPES` 3행이 항상 같은 교사 — "하루 1건"으로 다뤄야 하는 조회(담임 일정, 감독횟수 요약, 감독 Excel, 달력 슬롯)는 `REPRESENTATIVE_SESSION_TYPE`("afternoon1")로 필터
+- `"afternoon"`/`"night"` 문자열 리터럴과 `100`/`?? 100` 매직넘버는 `src/lib/sessions.ts`와 좌석 컨텍스트 파일(좌석·인쇄, 출석 화면의 `seatSession` 분기, 학생 신청의 "오후 전체") 밖에서 금지 — `tests/session-literal-guard.test.ts`가 src 전체를 스캔해 회귀 차단
+
+### 9. "오후1 결과 복사" (`POST /api/attendance/copy-session`)
+- 대상: from/to가 공유하는 좌석 세션에 배정된 학생 중 — to 블록에 이미 출석 기록이 없고, to 블록+해당 요일 참여 중이고, to 블록에 pending/approved 불참신청이 없는 학생만
+- from이 `present` → `present` 그대로 복사; `absent`이고 사유 없음 → `absent` 복사; 그 외(미체크, 사유 있는 결석)는 건너뜀. 이미 체크된 to 레코드는 어떤 경우에도 덮어쓰지 않음
+- 규칙은 순수 함수 `planSessionCopy()`(`src/lib/attendance/copy-session.ts`)로 분리, API는 후보 조회 + `attendance.createMany({skipDuplicates:true})`만 담당. 오후2 탭에서만 노출, 감독 배정 여부는 요구하지 않음(`["teacher"]` 권한)
+
+### 10. "i" 주간 팝업 — 불참승인 표시 (`src/lib/attendance/weekly-summary.ts`)
+- `summarizeWeeklyCell()` 우선순위: 비참여("-") › 불참승인("불참승인", 노랑 `#fef9c3`) › 방과후(상태 미체크일 때만, 노랑) › 출석(초록) › 결석(빨강) › 미체크("-") — 좌석 그리드(SeatCell)와 동일한 우선순위
+- 오후 탭이면 오후1·오후2 두 행, 야간 탭이면 한 행(`sessionTypesOfSeat(seatSessionOf(tab))` 순서). 비고 입력은 현재 탭 블록 기준으로 저장
+- 주간 API가 승인된 `AbsenceRequest`를 같은 주간 범위로 함께 조회해 `isApprovedAbsence`/`approvedReason`을 제공 — 과거엔 `Attendance.status`만 봐서 팝업이 빨간 "결석"+영문 사유로만 보이던 버그를 수정(그리드는 이미 정상 동작 중이었음)
 
 ## 인증/인가 흐름
 
@@ -296,6 +328,19 @@ SupervisorReminderLog: teacherId, grade, date(@db.Date), sentAt — @@unique([te
 - **담임배정 자동 동기화**: homeroom-assignments POST/DELETE 시 TeacherRole("homeroom") 자동 부여/삭제
 
 ## 수정 이력 (주요 변경)
+
+### 2026-08-26: 오후자습 2블록 분리(오후1·오후2) + 주간 팝업 불참승인 표시
+- **설계 스펙**: `docs/superpowers/specs/2026-08-26-afternoon-session-split-design.md`
+- **Enum 분리**: `SeatSessionType { afternoon night }`(`StudySession.type` 전용, 오후1·오후2 좌석 공유) + `SessionType { afternoon1 afternoon2 night }`(Attendance/AbsenceRequest/ParticipationDay/AttendanceNote/SupervisorAssignment). 마이그레이션 `prisma/migrations/20260826000000_split_afternoon_session/migration.sql`(수기 작성, 단일 트랜잭션) — 5개 테이블 `afternoon`→`afternoon1` 전환 후 `afternoon2`로 복제(참여설정/출석/사유/불참신청/비고/감독배정), `duration_minutes`는 반분해 합 보존
+- **신규 lib**: `src/lib/sessions.ts`(SESSION_TYPES/SESSION_META/SEAT_SESSION_META/REPRESENTATIVE_SESSION_TYPE/isSessionType/isSeatSessionType/seatSessionOf/sessionTypesOfSeat/attendanceMinutes/emptySessionRecord — 진실 공급원), `src/lib/absence-reasons.ts`(REASON_TYPES/REASON_LABELS/reasonLabel), `src/lib/attendance/weekly-summary.ts`(buildWeeklyRows/summarizeWeeklyCell/weekDatesOf), `src/lib/attendance/copy-session.ts`(planSessionCopy)
+- **신규 API**: `POST /api/attendance/copy-session` `{grade,date,from,to}` → `{copied,skipped}` — 오후1 결과를 오후2 미체크 학생에게 복사
+- **API 응답 형태 변경**: weekly → `weekly[].sessions: Record<SessionType,…>`(+`isApprovedAbsence`/`approvedReason`); notes GET → `Record<date, Partial<Record<SessionType,string>>>`; today-attendance ×2 → `sessions: Record<SessionType,SessionStats>`; monthly-attendance ×2 + admin statistics → `dates[date]: Partial<Record<SessionType,{status,reason?}>>`; participation-days GET ×2 → `students[].sessions: Record<SessionType,DaySettings>`; student absence-requests POST → `sessionTypes: SessionType[]` → `{created,skipped}`; student batch-absence GET → `participating: Record<SessionType,boolean>`; supervisor-assignments POST → 3행 upsert, `assignment`=대표행(afternoon1); homeroom schedule/summary·감독 Excel ×2 → `REPRESENTATIVE_SESSION_TYPE` 필터
+- **화면**: 출석체크 `/attendance/[grade]` 탭 3개(오후/야간/불참신청) → 4개(오후1/오후2/야간/불참신청), 오후2 탭 "오후1 결과 복사" 버튼, "i" 주간 팝업이 오후1·오후2 두 행 + 불참승인 노란색·한글 사유; 참여설정 표 18열(세션 3×참가+5요일); 월간출결·통계·Excel 날짜당 3셀; 오늘출결 카드 3개; 학생 불참신청 다중 선택 + "오후 전체"; 도우미 일괄신청 학생당 3버튼; 담임 사유등록 3옵션
+- **시간 계산**: `attendanceMinutes(a)`(afternoon1/afternoon2=50분, night=100분, durationMinutes 우선), `src/lib/academic-year.ts` raw SQL을 `COALESCE(duration_minutes, CASE session_type WHEN 'night' THEN 100 ELSE 50 END)`로 변경 — 학년도 누계·랭킹 값은 오후1+오후2=기존 오후 100분과 동일해 불변
+- **시드**: `prisma/seed.ts` 학생당 `ParticipationDay` 3행, 감독배정 3행
+- **테스트 신규 12개**: `sessions`, `session-split-migration`, `attendance-api-wiring`, `weekly-summary`, `copy-session-logic`, `attendance-page-wiring`, `absence-request-wiring`, `participation-wiring`, `monthly-attendance-wiring`, `today-dashboard-wiring`, `session-literal-guard`(+기존 `supervisor-bulk-absence-approval`/`seat-print-groups`/`reminder-logic` 픽스처 갱신). `session-literal-guard`는 src 전체에서 `"afternoon"` 리터럴을 좌석 컨텍스트 허용 목록 밖에서 금지
+- **비목표**: 오후/야간 감독교사 분리 배정, 오후1·오후2 시작/종료 시각 UI, `durationMinutes` 편집 UI, 좌석배치·인쇄 로직 자체 변경(타입 이름 교체만)
+- **배포 주의**: Railway 대시보드 빌드 명령에 `prisma db push`가 남아있으면 마이그레이션 적용 전에 enum을 임의로 바꿔 배포가 실패한다 — 반드시 `npm run build`(=`prisma generate && next build`)로 정정 후 배포. 마이그레이션 적용은 start의 `prisma migrate deploy`. API 형태와 소비자가 함께 바뀌므로 부분 배포 불가(단일 배포), 배포 전 Postgres 스냅샷 확보
 
 ### 2026-08-13: 좌석배치 인쇄(출력)
 - **신규 lib `src/lib/seats/`**: `print-groups.ts`(방 이름 접두사 기반 그룹 분해, kind = divisions-row/divisions-column/hall/stack), `print-layout.ts`(A4 기하 상수, `suggestOrientation` = 폭/높이 ≥ 1 이면 가로, `computeFitScale`)
@@ -474,7 +519,7 @@ SupervisorReminderLog: teacherId, grade, date(@db.Date), sentAt — @@unique([te
 
 - **Railway 프로젝트**: courageous-motivation
 - **서비스**: selfstudy + Postgres + Cron(감독 알림)
-- **빌드**: `prisma generate && prisma db push && next build`
+- **빌드**: `prisma generate && next build` (⚠ Railway 대시보드의 빌드 명령에 `prisma db push`가 남아 있으면 반드시 제거할 것 — 마이그레이션 적용 전에 enum을 임의로 바꿔 `prisma migrate deploy`가 실패한다. 스키마 변경은 오직 마이그레이션으로만)
 - **시작**: `prisma migrate deploy && next start`
 - **배포 브랜치**: `main` (로컬 `master` → `git push origin master:main`)
 - **PORT**: 8080
