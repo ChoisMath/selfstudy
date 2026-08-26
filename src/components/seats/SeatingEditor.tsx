@@ -17,6 +17,7 @@ import RoomGrid from "./RoomGrid";
 import UnassignedStudents from "./UnassignedStudents";
 import MiraeHallLayout, { GAP_CONFIG } from "./MiraeHallLayout";
 import { buildPrintGroups } from "@/lib/seats/print-groups";
+import { type SeatSessionType } from "@/lib/sessions";
 
 type ParticipationDay = {
   sessionType: string;
@@ -51,7 +52,7 @@ type Room = {
 
 type StudySession = {
   id: number;
-  type: "afternoon" | "night";
+  type: SeatSessionType;
   grade: number;
   name: string;
   rooms: Room[];
@@ -75,7 +76,7 @@ export default function SeatingEditor({
   sessionType,
 }: {
   grade: number;
-  sessionType: "afternoon" | "night";
+  sessionType: SeatSessionType;
 }) {
   const [seats, setSeats] = useState<AllSeats>(new Map());
   const [dirty, setDirty] = useState<Set<number>>(new Set()); // 변경된 roomId 세트

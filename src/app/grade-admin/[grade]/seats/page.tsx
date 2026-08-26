@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useParams } from "next/navigation";
 import dynamic from "next/dynamic";
+import { type SeatSessionType } from "@/lib/sessions";
 
 const SeatingEditor = dynamic(() => import("@/components/seats/SeatingEditor"), {
   ssr: false,
@@ -12,7 +13,7 @@ const SeatingEditor = dynamic(() => import("@/components/seats/SeatingEditor"), 
 export default function GradeAdminSeatsPage() {
   const params = useParams();
   const grade = Number(params.grade);
-  const [sessionType, setSessionType] = useState<"afternoon" | "night">("afternoon");
+  const [sessionType, setSessionType] = useState<SeatSessionType>("afternoon");
 
   return (
     <div>

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import dynamic from "next/dynamic";
+import { type SeatSessionType } from "@/lib/sessions";
 
 const SeatingEditor = dynamic(() => import("@/components/seats/SeatingEditor"), {
   ssr: false,
@@ -11,7 +12,7 @@ const SeatingEditor = dynamic(() => import("@/components/seats/SeatingEditor"), 
 type TabConfig = {
   label: string;
   grade: number;
-  sessionType: "afternoon" | "night";
+  sessionType: SeatSessionType;
 };
 
 const TABS: TabConfig[] = [

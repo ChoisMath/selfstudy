@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useParams } from "next/navigation";
 import SupervisorSummaryModal from "@/components/homeroom/SupervisorSummaryModal";
 import dynamic from "next/dynamic";
+import { type SeatSessionType } from "@/lib/sessions";
 
 const StudentManagement = dynamic(() => import("@/components/students/StudentManagement"), {
   ssr: false,
@@ -45,7 +46,7 @@ export default function GradeAdminPage() {
   const params = useParams();
   const grade = parseInt(params.grade as string);
   const [activeTab, setActiveTab] = useState<TabKey>("today");
-  const [sessionType, setSessionType] = useState<"afternoon" | "night">("afternoon");
+  const [sessionType, setSessionType] = useState<SeatSessionType>("afternoon");
   const [showSummary, setShowSummary] = useState(false);
 
   if (isNaN(grade) || grade < 1 || grade > 3) {

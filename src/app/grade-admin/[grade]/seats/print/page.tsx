@@ -8,6 +8,7 @@ import type { PrintRoomSeats } from "@/components/seats/PrintRoomGrid";
 import SeatPrintGroup from "@/components/seats/SeatPrintGroup";
 import { buildPrintGroups, type PrintBaseRoom } from "@/lib/seats/print-groups";
 import type { Orientation } from "@/lib/seats/print-layout";
+import { SEAT_SESSION_META, type SeatSessionType } from "@/lib/sessions";
 import "./print.css";
 
 type SeatStudent = {
@@ -25,7 +26,7 @@ type SeatLayoutItem = {
 };
 
 type ApiRoom = PrintBaseRoom & { seatLayouts: SeatLayoutItem[] };
-type ApiSession = { id: number; type: "afternoon" | "night"; rooms: ApiRoom[] };
+type ApiSession = { id: number; type: SeatSessionType; rooms: ApiRoom[] };
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -53,7 +54,7 @@ function SeatPrintView() {
   const params = useParams();
   const searchParams = useSearchParams();
   const grade = Number(params.grade);
-  const sessionType: "afternoon" | "night" =
+  const sessionType: SeatSessionType =
     searchParams.get("session") === "night" ? "night" : "afternoon";
 
   const { data, isLoading } = useSWR<{ sessions: ApiSession[] }>(
@@ -100,7 +101,7 @@ function SeatPrintView() {
   }, []);
 
   useEffect(() => {
-    const sessionLabel = sessionType === "afternoon" ? "오후자습" : "야간자습";
+    const sessionLabel = SEAT_SESSION_META[sessionType].label;
     document.title = `${grade}학년 ${sessionLabel} 좌석배치`;
   }, [grade, sessionType]);
 

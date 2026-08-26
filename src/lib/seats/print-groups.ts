@@ -1,3 +1,5 @@
+import { type SeatSessionType } from "@/lib/sessions";
+
 export type PrintBaseRoom = {
   id: number;
   name: string;
@@ -34,7 +36,7 @@ export function divisionLabel(name: string): string {
 
 export function buildPrintGroups<T extends PrintBaseRoom>(
   rooms: T[],
-  sessionType: "afternoon" | "night",
+  sessionType: SeatSessionType,
   grade: number
 ): PrintGroup<T>[] {
   if (rooms.length === 0) return [];

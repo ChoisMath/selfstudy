@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { withGradeAuth } from "@/lib/api-auth";
 import { prisma } from "@/lib/prisma";
+import { isSeatSessionType, type SeatSessionType } from "@/lib/sessions";
 
 // GET: 학년 + 세션타입의 좌석 배치 조회
 export async function GET(
@@ -18,11 +19,8 @@ export async function GET(
     const { searchParams } = new URL(req.url);
     const sessionType = searchParams.get("sessionType");
 
-    if (sessionType !== "afternoon" && sessionType !== "night") {
-      return NextResponse.json(
-        { error: "sessionType은 afternoon 또는 night이어야 합니다." },
-        { status: 400 }
-      );
+    if (!isSeatSessionType(sessionType)) {
+      return NextResponse.json({ error: "sessionType은 afternoon 또는 night이어야 합니다." }, { status: 400 });
     }
 
     const sessions = await prisma.studySession.findMany({
