@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { withGradeAuth } from "@/lib/api-auth";
+import { SESSION_TYPES, SESSION_META } from "@/lib/sessions";
 import ExcelJS from "exceljs";
 
 const REASON_KO: Record<string, string> = {
@@ -66,16 +67,16 @@ export async function GET(
       const headerRow2 = ["", "", ""];
       for (const date of dates) {
         const dayName = ["일", "월", "화", "수", "목", "금", "토"][new Date(date).getDay()];
-        headerRow1.push(`${date.slice(5)} (${dayName})`, "");
-        headerRow2.push("오후", "야간");
+        headerRow1.push(`${date.slice(5)} (${dayName})`, ...SESSION_TYPES.slice(1).map(() => ""));
+        headerRow2.push(...SESSION_TYPES.map((t) => SESSION_META[t].shortLabel));
       }
 
       sheet.addRow(headerRow1);
       sheet.addRow(headerRow2);
 
       for (let i = 0; i < dates.length; i++) {
-        const col = 4 + i * 2;
-        sheet.mergeCells(1, col, 1, col + 1);
+        const col = 4 + i * SESSION_TYPES.length;
+        sheet.mergeCells(1, col, 1, col + SESSION_TYPES.length - 1);
         const cell = sheet.getCell(1, col);
         cell.alignment = { horizontal: "center" };
       }
@@ -112,10 +113,7 @@ export async function GET(
         ];
 
         for (const date of dates) {
-          const afternoon = attMap.get(`${date}-afternoon`);
-          const night = attMap.get(`${date}-night`);
-
-          const statusSymbol = (a: typeof afternoon) => {
+          const statusSymbol = (a: (typeof student.attendances)[number] | undefined) => {
             if (!a) return "-";
             if (a.status === "present") return "O";
             if (a.status === "absent") {
@@ -129,7 +127,7 @@ export async function GET(
             return "-";
           };
 
-          row.push(statusSymbol(afternoon), statusSymbol(night));
+          row.push(...SESSION_TYPES.map((t) => statusSymbol(attMap.get(`${date}-${t}`))));
         }
 
         const excelRow = sheet.addRow(row);
@@ -145,8 +143,7 @@ export async function GET(
       sheet.getColumn(2).width = 6;
       sheet.getColumn(3).width = 10;
       for (let i = 0; i < dates.length; i++) {
-        sheet.getColumn(4 + i * 2).width = 14;
-        sheet.getColumn(5 + i * 2).width = 14;
+        for (let k = 0; k < SESSION_TYPES.length; k++) sheet.getColumn(4 + i * SESSION_TYPES.length + k).width = 14;
       }
 
       const uint8 = new Uint8Array(await workbook.xlsx.writeBuffer());

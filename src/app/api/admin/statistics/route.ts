@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { withAuth } from "@/lib/api-auth";
+import { SESSION_TYPES, type SessionType } from "@/lib/sessions";
 
 // GET /api/admin/statistics?from=2026-04-01&to=2026-04-05&grade=2&class=1
 export const GET = withAuth(["admin"], async (req: Request) => {
@@ -60,18 +61,15 @@ export const GET = withAuth(["admin"], async (req: Request) => {
     for (const r of records) {
       recordMap.set(`${r.date.toISOString().split("T")[0]}-${r.sessionType}`, r);
     }
-    const byDate: Record<string, { afternoon?: string; night?: string; afternoonReason?: string; nightReason?: string }> = {};
+    const byDate: Record<string, Partial<Record<SessionType, { status: string; reason?: string }>>> = {};
 
     for (const date of dates) {
-      const afternoon = recordMap.get(`${date}-afternoon`);
-      const night = recordMap.get(`${date}-night`);
-
-      byDate[date] = {
-        afternoon: afternoon?.status || "unchecked",
-        night: night?.status || "unchecked",
-        afternoonReason: afternoon?.absenceReason?.reasonType,
-        nightReason: night?.absenceReason?.reasonType,
-      };
+      const cells: Partial<Record<SessionType, { status: string; reason?: string }>> = {};
+      for (const t of SESSION_TYPES) {
+        const r = recordMap.get(`${date}-${t}`);
+        cells[t] = { status: r?.status ?? "unchecked", reason: r?.absenceReason?.reasonType };
+      }
+      byDate[date] = cells;
     }
 
     return {

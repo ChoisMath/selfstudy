@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { withAuth } from "@/lib/api-auth";
+import { SESSION_TYPES, SESSION_META } from "@/lib/sessions";
 import ExcelJS from "exceljs";
 
 // GET /api/admin/export-excel?from=2026-04-01&to=2026-04-05&grade=2
@@ -45,22 +46,22 @@ export const GET = withAuth(["admin"], async (req: Request) => {
     const workbook = new ExcelJS.Workbook();
     const sheet = workbook.addWorksheet(`${gradeNum}학년 출결`);
 
-    // 헤더: 이름, 반, 번호, 날짜별(오후/야간)
+    // 헤더: 이름, 반, 번호, 날짜별(블록 수만큼)
     const headerRow1 = ["이름", "반", "번호"];
     const headerRow2 = ["", "", ""];
     for (const date of dates) {
       const dayName = ["일", "월", "화", "수", "목", "금", "토"][new Date(date).getDay()];
-      headerRow1.push(`${date.slice(5)} (${dayName})`, "");
-      headerRow2.push("오후", "야간");
+      headerRow1.push(`${date.slice(5)} (${dayName})`, ...SESSION_TYPES.slice(1).map(() => ""));
+      headerRow2.push(...SESSION_TYPES.map((t) => SESSION_META[t].shortLabel));
     }
 
     sheet.addRow(headerRow1);
     sheet.addRow(headerRow2);
 
-    // 날짜 헤더 셀 병합 (각 날짜가 오후/야간 2칸을 차지)
+    // 날짜 헤더 셀 병합 (각 날짜가 블록 수만큼 칸을 차지)
     for (let i = 0; i < dates.length; i++) {
-      const col = 4 + i * 2; // 1-based, 이름/반/번호 다음부터
-      sheet.mergeCells(1, col, 1, col + 1);
+      const col = 4 + i * SESSION_TYPES.length; // 1-based, 이름/반/번호 다음부터
+      sheet.mergeCells(1, col, 1, col + SESSION_TYPES.length - 1);
       const cell = sheet.getCell(1, col);
       cell.alignment = { horizontal: "center" };
     }
@@ -87,10 +88,7 @@ export const GET = withAuth(["admin"], async (req: Request) => {
       const row: string[] = [student.name, String(student.classNumber), String(student.studentNumber)];
 
       for (const date of dates) {
-        const afternoon = attendanceMap.get(`${student.id}-${date}-afternoon`);
-        const night = attendanceMap.get(`${student.id}-${date}-night`);
-
-        const statusSymbol = (a: typeof afternoon) => {
+        const statusSymbol = (a: (typeof attendances)[number] | undefined) => {
           if (!a) return "-";
           if (a.status === "present") return "O";
           if (a.status === "absent") {
@@ -101,7 +99,7 @@ export const GET = withAuth(["admin"], async (req: Request) => {
           return "-";
         };
 
-        row.push(statusSymbol(afternoon), statusSymbol(night));
+        row.push(...SESSION_TYPES.map((t) => statusSymbol(attendanceMap.get(`${student.id}-${date}-${t}`))));
       }
 
       sheet.addRow(row);
@@ -112,8 +110,7 @@ export const GET = withAuth(["admin"], async (req: Request) => {
     sheet.getColumn(2).width = 5;
     sheet.getColumn(3).width = 5;
     for (let i = 0; i < dates.length; i++) {
-      sheet.getColumn(4 + i * 2).width = 8;
-      sheet.getColumn(5 + i * 2).width = 8;
+      for (let k = 0; k < SESSION_TYPES.length; k++) sheet.getColumn(4 + i * SESSION_TYPES.length + k).width = 8;
     }
 
     const uint8 = new Uint8Array(await workbook.xlsx.writeBuffer());

@@ -2,9 +2,10 @@
 
 import React, { useState } from "react";
 import useSWR from "swr";
+import { SESSION_TYPES, SESSION_META, type SessionType } from "@/lib/sessions";
 
 type ParticipationData = {
-  sessionType: "afternoon" | "night";
+  sessionType: SessionType;
   isParticipating: boolean;
   mon: boolean; tue: boolean; wed: boolean; thu: boolean; fri: boolean;
   afterSchoolMon: boolean; afterSchoolTue: boolean; afterSchoolWed: boolean;
@@ -17,12 +18,7 @@ type StudentData = {
   grade: number;
   classNumber: number;
   studentNumber: number;
-  dates: Record<string, {
-    afternoon?: string;
-    night?: string;
-    afternoonReason?: string;
-    nightReason?: string;
-  }>;
+  dates: Record<string, Partial<Record<SessionType, { status: string; reason?: string }>>>;
   participationDays: ParticipationData[];
   studyHours: number;
 };
@@ -128,7 +124,7 @@ export default function GradeMonthlyAttendance({ grade }: { grade: number }) {
                     const d = new Date(date);
                     const dayName = ["일", "월", "화", "수", "목", "금", "토"][d.getDay()];
                     return (
-                      <th key={date} colSpan={2} className="px-1 py-2 text-center font-medium text-gray-600 border-l border-gray-300 whitespace-nowrap">
+                      <th key={date} colSpan={3} className="px-1 py-2 text-center font-medium text-gray-600 border-l border-gray-300 whitespace-nowrap">
                         {date.slice(8)}/{dayName}
                       </th>
                     );
@@ -141,8 +137,11 @@ export default function GradeMonthlyAttendance({ grade }: { grade: number }) {
                   <th className="sticky left-[72px] bg-gray-50 z-10" />
                   {dates.map((date) => (
                     <React.Fragment key={date}>
-                      <th className="px-1 py-1 text-center text-gray-400 border-l border-gray-300">오</th>
-                      <th className="px-1 py-1 text-center text-gray-400">야</th>
+                      {SESSION_TYPES.map((t, i) => (
+                        <th key={t} className={`px-1 py-1 text-center text-gray-400 whitespace-nowrap ${i === 0 ? "border-l border-gray-300" : ""}`}>
+                          {SESSION_META[t].shortLabel}
+                        </th>
+                      ))}
                     </React.Fragment>
                   ))}
                   <th className="border-l border-gray-300" />
@@ -158,8 +157,7 @@ export default function GradeMonthlyAttendance({ grade }: { grade: number }) {
                     const rowBg = isEvenClass ? "bg-[#f0f7ff]" : "bg-white";
                     const stickyBg = isEvenClass ? "bg-[#f0f7ff]" : "bg-white";
 
-                    const afternoonPart = student.participationDays.find((p) => p.sessionType === "afternoon");
-                    const nightPart = student.participationDays.find((p) => p.sessionType === "night");
+                    const partByType = new Map(student.participationDays.map((p) => [p.sessionType, p]));
 
                     return (
                       <tr key={student.id} className={`border-b border-gray-300 ${rowBg}`}>
@@ -176,60 +174,39 @@ export default function GradeMonthlyAttendance({ grade }: { grade: number }) {
                           const att = student.dates[date] || {};
                           const dayKey = getDayKey(date);
                           const dayIdx = DAY_KEYS.indexOf(dayKey);
-
-                          const isAfternoonParticipating = afternoonPart
-                            ? afternoonPart.isParticipating && afternoonPart[dayKey]
-                            : true;
-                          const isNightParticipating = nightPart
-                            ? nightPart.isParticipating && nightPart[dayKey]
-                            : true;
-
-                          const isAfternoonAfterSchool = afternoonPart
-                            ? afternoonPart.isParticipating && afternoonPart[dayKey] && afternoonPart[AFTER_SCHOOL_KEYS[dayIdx]]
-                            : false;
-                          const isNightAfterSchool = nightPart
-                            ? nightPart.isParticipating && nightPart[dayKey] && nightPart[AFTER_SCHOOL_KEYS[dayIdx]]
-                            : false;
-
-                          const afternoonGray = !isAfternoonParticipating;
-                          const nightGray = !isNightParticipating;
-                          const afternoonHasData = att.afternoon && att.afternoon !== "unchecked";
-                          const nightHasData = att.night && att.night !== "unchecked";
-
                           return (
                             <React.Fragment key={date}>
-                              <td className={`px-1 py-1.5 text-center text-sm font-extrabold border-l border-gray-300 ${
-                                afternoonGray ? "bg-gray-100" : ""
-                              } ${
-                                afternoonGray && !afternoonHasData ? "text-gray-300"
-                                  : isAfternoonAfterSchool && (!att.afternoon || att.afternoon === "unchecked") ? "text-yellow-600 bg-yellow-50"
-                                  : att.afternoon === "present" ? "text-green-700"
-                                  : att.afternoon === "absent" && att.afternoonReason ? "text-orange-500"
-                                  : att.afternoon === "absent" ? "text-red-700"
-                                  : "text-gray-400"
-                              }`}>
-                                {afternoonGray && !afternoonHasData ? "-"
-                                  : isAfternoonAfterSchool && (!att.afternoon || att.afternoon === "unchecked") ? "방"
-                                  : att.afternoon === "present" ? "O"
-                                  : att.afternoon === "absent" ? (att.afternoonReason ? "△" : "X")
-                                  : "-"}
-                              </td>
-                              <td className={`px-1 py-1.5 text-center text-sm font-extrabold ${
-                                nightGray ? "bg-gray-100" : ""
-                              } ${
-                                nightGray && !nightHasData ? "text-gray-300"
-                                  : isNightAfterSchool && (!att.night || att.night === "unchecked") ? "text-yellow-600 bg-yellow-50"
-                                  : att.night === "present" ? "text-green-700"
-                                  : att.night === "absent" && att.nightReason ? "text-orange-500"
-                                  : att.night === "absent" ? "text-red-700"
-                                  : "text-gray-400"
-                              }`}>
-                                {nightGray && !nightHasData ? "-"
-                                  : isNightAfterSchool && (!att.night || att.night === "unchecked") ? "방"
-                                  : att.night === "present" ? "O"
-                                  : att.night === "absent" ? (att.nightReason ? "△" : "X")
-                                  : "-"}
-                              </td>
+                              {SESSION_TYPES.map((t, i) => {
+                                const part = partByType.get(t);
+                                const cell = att[t];
+                                const status = cell?.status;
+                                const isParticipating = part ? part.isParticipating && part[dayKey] : true;
+                                const isAfterSchool = part
+                                  ? part.isParticipating && part[dayKey] && part[AFTER_SCHOOL_KEYS[dayIdx]]
+                                  : false;
+                                const gray = !isParticipating;
+                                const hasData = !!status && status !== "unchecked";
+                                const isAfterSchoolIdle = isAfterSchool && (!status || status === "unchecked");
+                                const colorClass = gray && !hasData ? "text-gray-300"
+                                  : isAfterSchoolIdle ? "text-yellow-600 bg-yellow-50"
+                                  : status === "present" ? "text-green-700"
+                                  : status === "absent" && cell?.reason ? "text-orange-500"
+                                  : status === "absent" ? "text-red-700"
+                                  : "text-gray-400";
+                                const symbol = gray && !hasData ? "-"
+                                  : isAfterSchoolIdle ? "방"
+                                  : status === "present" ? "O"
+                                  : status === "absent" ? (cell?.reason ? "△" : "X")
+                                  : "-";
+                                return (
+                                  <td
+                                    key={t}
+                                    className={`px-1 py-1.5 text-center text-sm font-extrabold ${i === 0 ? "border-l border-gray-300" : ""} ${gray ? "bg-gray-100" : ""} ${colorClass}`}
+                                  >
+                                    {symbol}
+                                  </td>
+                                );
+                              })}
                             </React.Fragment>
                           );
                         })}

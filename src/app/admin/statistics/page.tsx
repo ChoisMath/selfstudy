@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { SESSION_TYPES, SESSION_META, type SessionType } from "@/lib/sessions";
 
 interface StudentStat {
   id: number;
@@ -8,7 +9,7 @@ interface StudentStat {
   grade: number;
   classNumber: number;
   studentNumber: number;
-  dates: Record<string, { afternoon?: string; night?: string; afternoonReason?: string; nightReason?: string }>;
+  dates: Record<string, Partial<Record<SessionType, { status: string; reason?: string }>>>;
 }
 
 const STATUS_SYMBOL: Record<string, string> = { present: "O", absent: "X", unchecked: "-" };
@@ -103,7 +104,7 @@ export default function StatisticsPage() {
                   const d = new Date(date);
                   const dayName = ["일", "월", "화", "수", "목", "금", "토"][d.getDay()];
                   return (
-                    <th key={date} colSpan={2} className="px-2 py-2 text-center font-medium text-gray-600 border-l border-gray-200">
+                    <th key={date} colSpan={3} className="px-2 py-2 text-center font-medium text-gray-600 border-l border-gray-200">
                       {date.slice(5)} ({dayName})
                     </th>
                   );
@@ -115,8 +116,11 @@ export default function StatisticsPage() {
                 <th></th>
                 {dates.map((date) => (
                   <React.Fragment key={date}>
-                    <th className="px-1 py-1 text-center text-gray-400 border-l border-gray-200">오후</th>
-                    <th className="px-1 py-1 text-center text-gray-400">야간</th>
+                    {SESSION_TYPES.map((t, i) => (
+                      <th key={t} className={`px-1 py-1 text-center text-gray-400 whitespace-nowrap ${i === 0 ? "border-l border-gray-200" : ""}`}>
+                        {SESSION_META[t].shortLabel}
+                      </th>
+                    ))}
                   </React.Fragment>
                 ))}
               </tr>
@@ -131,12 +135,14 @@ export default function StatisticsPage() {
                     const data = s.dates[date] || {};
                     return (
                       <React.Fragment key={date}>
-                        <td className={`px-1 py-2 text-center font-bold border-l border-gray-200 ${STATUS_COLOR[data.afternoon || "unchecked"]}`}>
-                          {STATUS_SYMBOL[data.afternoon || "unchecked"]}
-                        </td>
-                        <td className={`px-1 py-2 text-center font-bold ${STATUS_COLOR[data.night || "unchecked"]}`}>
-                          {STATUS_SYMBOL[data.night || "unchecked"]}
-                        </td>
+                        {SESSION_TYPES.map((t, i) => {
+                          const status = data[t]?.status || "unchecked";
+                          return (
+                            <td key={t} className={`px-1 py-2 text-center font-bold ${i === 0 ? "border-l border-gray-200" : ""} ${STATUS_COLOR[status]}`}>
+                              {STATUS_SYMBOL[status]}
+                            </td>
+                          );
+                        })}
                       </React.Fragment>
                     );
                   })}

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { withAuth } from "@/lib/api-auth";
-import { attendanceMinutes } from "@/lib/sessions";
+import { attendanceMinutes, SESSION_TYPES, type SessionType } from "@/lib/sessions";
 
 // GET /api/homeroom/monthly-attendance?month=2026-04
 export const GET = withAuth(["homeroom", "admin"], async (req: Request, user) => {
@@ -67,23 +67,15 @@ export const GET = withAuth(["homeroom", "admin"], async (req: Request, user) =>
     for (const a of student.attendances) {
       attMap.set(`${a.date.toISOString().split("T")[0]}-${a.sessionType}`, a);
     }
-    const dateMap: Record<string, {
-      afternoon?: string;
-      night?: string;
-      afternoonReason?: string;
-      nightReason?: string;
-    }> = {};
+    const dateMap: Record<string, Partial<Record<SessionType, { status: string; reason?: string }>>> = {};
 
     for (const date of dates) {
-      const afternoon = attMap.get(`${date}-afternoon`);
-      const night = attMap.get(`${date}-night`);
-
-      dateMap[date] = {
-        afternoon: afternoon?.status,
-        night: night?.status,
-        afternoonReason: afternoon?.absenceReason?.reasonType,
-        nightReason: night?.absenceReason?.reasonType,
-      };
+      const cells: Partial<Record<SessionType, { status: string; reason?: string }>> = {};
+      for (const t of SESSION_TYPES) {
+        const a = attMap.get(`${date}-${t}`);
+        if (a) cells[t] = { status: a.status, reason: a.absenceReason?.reasonType };
+      }
+      dateMap[date] = cells;
     }
 
     const totalMinutes = student.attendances

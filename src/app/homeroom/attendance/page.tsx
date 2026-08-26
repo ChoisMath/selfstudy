@@ -2,9 +2,10 @@
 
 import React, { useState } from "react";
 import useSWR from "swr";
+import { SESSION_TYPES, SESSION_META, type SessionType } from "@/lib/sessions";
 
 type ParticipationData = {
-  sessionType: "afternoon" | "night";
+  sessionType: SessionType;
   isParticipating: boolean;
   mon: boolean; tue: boolean; wed: boolean; thu: boolean; fri: boolean;
   afterSchoolMon: boolean; afterSchoolTue: boolean; afterSchoolWed: boolean;
@@ -17,12 +18,7 @@ type StudentData = {
   grade: number;
   classNumber: number;
   studentNumber: number;
-  dates: Record<string, {
-    afternoon?: string;
-    night?: string;
-    afternoonReason?: string;
-    nightReason?: string;
-  }>;
+  dates: Record<string, Partial<Record<SessionType, { status: string; reason?: string }>>>;
   participationDays: ParticipationData[];
   studyHours: number;
 };
@@ -171,7 +167,7 @@ export default function MonthlyAttendancePage() {
                           return (
                             <th
                               key={date}
-                              colSpan={2}
+                              colSpan={3}
                               className="px-1 py-2 text-center font-medium text-gray-600 border-l border-gray-300 whitespace-nowrap"
                             >
                               {date.slice(8)}/{dayName}
@@ -185,8 +181,11 @@ export default function MonthlyAttendancePage() {
                         <th className="sticky left-[60px] bg-gray-50 z-10" />
                         {dates.map((date) => (
                           <React.Fragment key={date}>
-                            <th className="px-1 py-1 text-center text-gray-400 border-l border-gray-300">오</th>
-                            <th className="px-1 py-1 text-center text-gray-400">야</th>
+                            {SESSION_TYPES.map((t, i) => (
+                              <th key={t} className={`px-1 py-1 text-center text-gray-400 whitespace-nowrap ${i === 0 ? "border-l border-gray-300" : ""}`}>
+                                {SESSION_META[t].shortLabel}
+                              </th>
+                            ))}
                           </React.Fragment>
                         ))}
                         <th className="border-l border-gray-300" />
@@ -194,16 +193,11 @@ export default function MonthlyAttendancePage() {
                     </thead>
                     <tbody>
                       {classStudents.map((student) => {
-                        const afternoonPart = student.participationDays.find(
-                          (p) => p.sessionType === "afternoon"
-                        );
-                        const nightPart = student.participationDays.find(
-                          (p) => p.sessionType === "night"
-                        );
-
-                        const isAfternoonAllOff = afternoonPart ? !afternoonPart.isParticipating : false;
-                        const isNightAllOff = nightPart ? !nightPart.isParticipating : false;
-                        const isEntireRowGray = isAfternoonAllOff && isNightAllOff;
+                        const partByType = new Map(student.participationDays.map((p) => [p.sessionType, p]));
+                        const isEntireRowGray = SESSION_TYPES.every((t) => {
+                          const part = partByType.get(t);
+                          return part ? !part.isParticipating : false;
+                        });
                         const rowBg = isEntireRowGray ? "bg-gray-100" : "hover:bg-gray-50";
                         const stickyBg = isEntireRowGray ? "bg-gray-100" : "bg-white";
 
@@ -219,62 +213,39 @@ export default function MonthlyAttendancePage() {
                               const att = student.dates[date] || {};
                               const dayKey = getDayKey(date);
                               const dayIdx = DAY_KEYS.indexOf(dayKey);
-
-                              const isAfternoonParticipating = afternoonPart
-                                ? afternoonPart.isParticipating && afternoonPart[dayKey]
-                                : true;
-                              const isNightParticipating = nightPart
-                                ? nightPart.isParticipating && nightPart[dayKey]
-                                : true;
-
-                              const isAfternoonAfterSchool = afternoonPart
-                                ? afternoonPart.isParticipating && afternoonPart[dayKey] && afternoonPart[AFTER_SCHOOL_KEYS[dayIdx]]
-                                : false;
-                              const isNightAfterSchool = nightPart
-                                ? nightPart.isParticipating && nightPart[dayKey] && nightPart[AFTER_SCHOOL_KEYS[dayIdx]]
-                                : false;
-
-                              const afternoonGray = !isAfternoonParticipating;
-                              const nightGray = !isNightParticipating;
-
-                              // 비참여이더라도 출결 기록이 있으면 회색 배경 + 출결 표시
-                              const afternoonHasData = att.afternoon && att.afternoon !== "unchecked";
-                              const nightHasData = att.night && att.night !== "unchecked";
-
                               return (
                                 <React.Fragment key={date}>
-                                  <td className={`px-1 py-1.5 text-center text-sm font-extrabold border-l border-gray-300 ${
-                                    afternoonGray ? "bg-gray-100" : ""
-                                  } ${
-                                    afternoonGray && !afternoonHasData ? "text-gray-300"
-                                      : isAfternoonAfterSchool && (!att.afternoon || att.afternoon === "unchecked") ? "text-yellow-600 bg-yellow-50"
-                                      : att.afternoon === "present" ? "text-green-700"
-                                      : att.afternoon === "absent" && att.afternoonReason ? "text-orange-500"
-                                      : att.afternoon === "absent" ? "text-red-700"
-                                      : "text-gray-400"
-                                  }`}>
-                                    {afternoonGray && !afternoonHasData ? "-"
-                                      : isAfternoonAfterSchool && (!att.afternoon || att.afternoon === "unchecked") ? "방"
-                                      : att.afternoon === "present" ? "O"
-                                      : att.afternoon === "absent" ? (att.afternoonReason ? "△" : "X")
-                                      : "-"}
-                                  </td>
-                                  <td className={`px-1 py-1.5 text-center text-sm font-extrabold ${
-                                    nightGray ? "bg-gray-100" : ""
-                                  } ${
-                                    nightGray && !nightHasData ? "text-gray-300"
-                                      : isNightAfterSchool && (!att.night || att.night === "unchecked") ? "text-yellow-600 bg-yellow-50"
-                                      : att.night === "present" ? "text-green-700"
-                                      : att.night === "absent" && att.nightReason ? "text-orange-500"
-                                      : att.night === "absent" ? "text-red-700"
-                                      : "text-gray-400"
-                                  }`}>
-                                    {nightGray && !nightHasData ? "-"
-                                      : isNightAfterSchool && (!att.night || att.night === "unchecked") ? "방"
-                                      : att.night === "present" ? "O"
-                                      : att.night === "absent" ? (att.nightReason ? "△" : "X")
-                                      : "-"}
-                                  </td>
+                                  {SESSION_TYPES.map((t, i) => {
+                                    const part = partByType.get(t);
+                                    const cell = att[t];
+                                    const status = cell?.status;
+                                    const isParticipating = part ? part.isParticipating && part[dayKey] : true;
+                                    const isAfterSchool = part
+                                      ? part.isParticipating && part[dayKey] && part[AFTER_SCHOOL_KEYS[dayIdx]]
+                                      : false;
+                                    const gray = !isParticipating;
+                                    const hasData = !!status && status !== "unchecked";
+                                    const isAfterSchoolIdle = isAfterSchool && (!status || status === "unchecked");
+                                    const colorClass = gray && !hasData ? "text-gray-300"
+                                      : isAfterSchoolIdle ? "text-yellow-600 bg-yellow-50"
+                                      : status === "present" ? "text-green-700"
+                                      : status === "absent" && cell?.reason ? "text-orange-500"
+                                      : status === "absent" ? "text-red-700"
+                                      : "text-gray-400";
+                                    const symbol = gray && !hasData ? "-"
+                                      : isAfterSchoolIdle ? "방"
+                                      : status === "present" ? "O"
+                                      : status === "absent" ? (cell?.reason ? "△" : "X")
+                                      : "-";
+                                    return (
+                                      <td
+                                        key={t}
+                                        className={`px-1 py-1.5 text-center text-sm font-extrabold ${i === 0 ? "border-l border-gray-300" : ""} ${gray ? "bg-gray-100" : ""} ${colorClass}`}
+                                      >
+                                        {symbol}
+                                      </td>
+                                    );
+                                  })}
                                 </React.Fragment>
                               );
                             })}
@@ -291,34 +262,25 @@ export default function MonthlyAttendancePage() {
                         <td className="px-2 py-2 sticky left-[60px] bg-gray-50 z-10" />
                         {dates.map((date) => {
                           const dayKey = getDayKey(date);
-                          const aPresent = classStudents.filter((s) => s.dates[date]?.afternoon === "present").length;
-                          const aAbsent = classStudents.filter((s) => s.dates[date]?.afternoon === "absent").length;
-                          const aParticipating = classStudents.filter((s) => {
-                            const p = s.participationDays.find((pd) => pd.sessionType === "afternoon");
-                            return p ? p.isParticipating && p[dayKey] : true;
-                          }).length;
-                          const nPresent = classStudents.filter((s) => s.dates[date]?.night === "present").length;
-                          const nAbsent = classStudents.filter((s) => s.dates[date]?.night === "absent").length;
-                          const nParticipating = classStudents.filter((s) => {
-                            const p = s.participationDays.find((pd) => pd.sessionType === "night");
-                            return p ? p.isParticipating && p[dayKey] : true;
-                          }).length;
                           return (
                             <React.Fragment key={`total-${date}`}>
-                              <td className="px-0.5 py-2 text-center text-[9px] border-l border-gray-300">
-                                <span className="text-green-700 font-bold">{aPresent}</span>
-                                <span className="text-gray-400">/</span>
-                                <span className="text-red-700 font-bold">{aAbsent}</span>
-                                <span className="text-gray-400">/</span>
-                                <span className="text-gray-500">{aParticipating}</span>
-                              </td>
-                              <td className="px-0.5 py-2 text-center text-[9px]">
-                                <span className="text-green-700 font-bold">{nPresent}</span>
-                                <span className="text-gray-400">/</span>
-                                <span className="text-red-700 font-bold">{nAbsent}</span>
-                                <span className="text-gray-400">/</span>
-                                <span className="text-gray-500">{nParticipating}</span>
-                              </td>
+                              {SESSION_TYPES.map((t, i) => {
+                                const present = classStudents.filter((s) => s.dates[date]?.[t]?.status === "present").length;
+                                const absent = classStudents.filter((s) => s.dates[date]?.[t]?.status === "absent").length;
+                                const participating = classStudents.filter((s) => {
+                                  const p = s.participationDays.find((pd) => pd.sessionType === t);
+                                  return p ? p.isParticipating && p[dayKey] : true;
+                                }).length;
+                                return (
+                                  <td key={t} className={`px-0.5 py-2 text-center text-[9px] whitespace-nowrap ${i === 0 ? "border-l border-gray-300" : ""}`}>
+                                    <span className="text-green-700 font-bold">{present}</span>
+                                    <span className="text-gray-400">/</span>
+                                    <span className="text-red-700 font-bold">{absent}</span>
+                                    <span className="text-gray-400">/</span>
+                                    <span className="text-gray-500">{participating}</span>
+                                  </td>
+                                );
+                              })}
                             </React.Fragment>
                           );
                         })}

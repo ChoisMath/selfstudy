@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { withAuth } from "@/lib/api-auth";
+import { SESSION_TYPES, SESSION_META } from "@/lib/sessions";
 import ExcelJS from "exceljs";
 
 const REASON_KO: Record<string, string> = {
@@ -81,13 +82,13 @@ export const GET = withAuth(["homeroom", "admin"], async (req: Request, user) =>
 
       const classStudents = studentsByClass.get(`${cls.grade}-${cls.classNumber}`) || [];
 
-      // 헤더 행 1: 이름, 번호, 날짜별(2칸씩)
+      // 헤더 행 1: 이름, 번호, 날짜별(블록 수만큼)
       const headerRow1 = ["이름", "번호"];
       const headerRow2 = ["", ""];
       for (const date of dates) {
         const dayName = ["일", "월", "화", "수", "목", "금", "토"][new Date(date).getDay()];
-        headerRow1.push(`${date.slice(5)} (${dayName})`, "");
-        headerRow2.push("오후", "야간");
+        headerRow1.push(`${date.slice(5)} (${dayName})`, ...SESSION_TYPES.slice(1).map(() => ""));
+        headerRow2.push(...SESSION_TYPES.map((t) => SESSION_META[t].shortLabel));
       }
 
       sheet.addRow(headerRow1);
@@ -95,8 +96,8 @@ export const GET = withAuth(["homeroom", "admin"], async (req: Request, user) =>
 
       // 날짜 헤더 셀 병합
       for (let i = 0; i < dates.length; i++) {
-        const col = 3 + i * 2; // 1-based, 이름/번호 다음
-        sheet.mergeCells(1, col, 1, col + 1);
+        const col = 3 + i * SESSION_TYPES.length; // 1-based, 이름/번호 다음
+        sheet.mergeCells(1, col, 1, col + SESSION_TYPES.length - 1);
         const cell = sheet.getCell(1, col);
         cell.alignment = { horizontal: "center" };
       }
@@ -121,10 +122,7 @@ export const GET = withAuth(["homeroom", "admin"], async (req: Request, user) =>
         const row: string[] = [student.name, String(student.studentNumber)];
 
         for (const date of dates) {
-          const afternoon = attMap.get(`${date}-afternoon`);
-          const night = attMap.get(`${date}-night`);
-
-          const statusSymbol = (a: typeof afternoon) => {
+          const statusSymbol = (a: (typeof student.attendances)[number] | undefined) => {
             if (!a) return "-";
             if (a.status === "present") return "O";
             if (a.status === "absent") {
@@ -138,7 +136,7 @@ export const GET = withAuth(["homeroom", "admin"], async (req: Request, user) =>
             return "-";
           };
 
-          row.push(statusSymbol(afternoon), statusSymbol(night));
+          row.push(...SESSION_TYPES.map((t) => statusSymbol(attMap.get(`${date}-${t}`))));
         }
 
         sheet.addRow(row);
@@ -148,8 +146,7 @@ export const GET = withAuth(["homeroom", "admin"], async (req: Request, user) =>
       sheet.getColumn(1).width = 10;
       sheet.getColumn(2).width = 6;
       for (let i = 0; i < dates.length; i++) {
-        sheet.getColumn(3 + i * 2).width = 14;
-        sheet.getColumn(4 + i * 2).width = 14;
+        for (let k = 0; k < SESSION_TYPES.length; k++) sheet.getColumn(3 + i * SESSION_TYPES.length + k).width = 14;
       }
     }
 
