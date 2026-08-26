@@ -1,6 +1,6 @@
 # 자율학습 출석부 시스템 - 프로젝트 지도
 
-> 마지막 업데이트: 2026-08-13
+> 마지막 업데이트: 2026-08-14
 > 이 파일은 새 세션에서 코드베이스를 빠르게 파악하기 위한 참조 문서입니다.
 
 ## 개요
@@ -50,7 +50,7 @@ src/
 │   ├── attendance/             # 감독교사
 │   │   ├── layout.tsx          # 모든 교사에게 이동 버튼 (담임교사/감독일정/학년관리) + NotificationBell
 │   │   ├── page.tsx            # 자동 학년 라우팅 / 학년 선택
-│   │   └── [grade]/page.tsx    # ★ 핵심: 좌석 출석 그리드 (3탭: 오후자습/야간자습/불참신청) + 불참신청 관리 UI
+│   │   └── [grade]/page.tsx    # ★ 핵심: 좌석 출석 그리드 (3탭: 오후자습/야간자습/불참신청, 오후 그룹은 buildPrintGroups 공용) + 불참신청 관리 UI
 │   ├── homeroom/               # 담임교사
 │   │   ├── layout.tsx          # 담임 5탭 + 공통 2탭 네비게이션 (세션 로딩 처리) + NotificationBell
 │   │   ├── page.tsx            # 자기반 학생 + 주간출석
@@ -302,7 +302,8 @@ SupervisorReminderLog: teacherId, grade, date(@db.Date), sentAt — @@unique([te
 - **신규 컴포넌트 3개**: `PrintRoomGrid`(dnd 없는 읽기전용 격자 — RoomGrid 는 훅 때문에 DndContext 밖에서 못 씀), `SeatPrintGroup`(제목 + 분단 배치 + 교탁), `PrintPageFitter`(offsetWidth/Height 실측 → `transform: scale` 로 A4 채움)
 - **신규 라우트**: `/grade-admin/[grade]/seats/print?session=` — 새 탭 인쇄 미리보기. 그룹별 체크박스 + 가로/세로 토글, 방향은 `localStorage["seatPrintOrientation:{grade}:{session}"]` 에 저장
 - **혼합 방향 인쇄**: CSS 명명 페이지(`@page portraitPage/landscapePage` + `page:` 속성). Chrome·Edge 110+ 필요
-- **수정**: `SeatingEditor`(출력 버튼 + 인라인 그룹핑 → `buildPrintGroups` 통합), `MiraeHallLayout`(`fitContent` 프롭으로 minWidth·가로스크롤 해제)
+- **수정**: `SeatingEditor`(출력 버튼 + 인라인 그룹핑 → `buildPrintGroups` 통합), `attendance/[grade]/page.tsx`(오후자습 탭 인라인 그룹핑 → `buildPrintGroups` 통합 — 감독 화면·편집기·인쇄물의 좌석 배열이 갈라지지 않도록 단일 규칙 공유), `MiraeHallLayout`(`fitContent` 프롭으로 minWidth·가로스크롤 해제)
+- **회귀 가드**: `tests/seat-print-wiring.test.ts` 가 src 전체를 스캔해 접두사 그룹핑 인라인 복사본 재등장을 차단
 - **인쇄 단위**: 오후자습 = 학급별 1페이지, 야간자습 = 도면/나열 전체 1페이지
 - DB 스키마·API·환경변수 변경 없음
 
