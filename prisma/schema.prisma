@@ -133,20 +133,26 @@ model SupervisorSwapHistory {
   @@map("supervisor_swap_history")
 }
 
-enum SessionType {
+enum SeatSessionType {
   afternoon
+  night
+}
+
+enum SessionType {
+  afternoon1
+  afternoon2
   night
 }
 
 // ==================== 자습 공간 ====================
 
 model StudySession {
-  id        Int         @id @default(autoincrement())
-  type      SessionType
+  id        Int             @id @default(autoincrement())
+  type      SeatSessionType
   grade     Int
-  name      String      @db.VarChar(50)
-  timeStart String      @db.VarChar(10) @map("time_start")
-  timeEnd   String      @db.VarChar(10) @map("time_end")
+  name      String          @db.VarChar(50)
+  timeStart String          @db.VarChar(10) @map("time_start")
+  timeEnd   String          @db.VarChar(10) @map("time_end")
 
   rooms Room[]
 
