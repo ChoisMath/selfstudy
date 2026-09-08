@@ -25,6 +25,9 @@ type Room = {
   rows: number;
 };
 
+// 이름 4자(text-xs, 한글 ≈1em) + 테두리 2px 가 한 줄에 들어가는 폭. 44px 터치 타겟(responsive-ui §6)보다 넓다.
+const MIN_SEAT_WIDTH = 52;
+
 function SeatCell({
   roomId,
   row,
@@ -71,7 +74,10 @@ function SeatCell({
           {...listeners}
           className="w-full h-full flex items-center justify-center cursor-grab active:cursor-grabbing group"
         >
-          <span className="text-center leading-tight font-medium text-gray-800">
+          <span
+            className="block min-w-0 max-w-full whitespace-nowrap overflow-hidden text-ellipsis text-center leading-tight font-medium text-gray-800"
+            title={cell.student.name}
+          >
             <span className="text-[10px] text-gray-400 block">
               {cell.student.classNumber}-{cell.student.studentNumber}
             </span>
@@ -83,7 +89,7 @@ function SeatCell({
               onRemove();
             }}
             onPointerDown={(e) => e.stopPropagation()}
-            className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full text-[10px] leading-none flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+            className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full text-[10px] leading-none flex items-center justify-center opacity-0 group-hover:opacity-100 pointer-coarse:opacity-100 pointer-coarse:w-7 pointer-coarse:h-7 pointer-coarse:text-xs transition-opacity hover:bg-red-600"
             title="배정 해제"
           >
             x
@@ -105,6 +111,7 @@ export default memo(function RoomGrid({
   gapAfterRows,
   hideTeacherDesk,
   compact,
+  preserveSeatWidth,
 }: {
   room: Room;
   seats: RoomSeats;
@@ -112,6 +119,7 @@ export default memo(function RoomGrid({
   gapAfterRows?: number[];
   hideTeacherDesk?: boolean;
   compact?: boolean;
+  preserveSeatWidth?: boolean;
 }) {
   return (
     <div className={`bg-white rounded-lg border ${compact ? "p-2" : "p-4"}`}>
@@ -130,7 +138,11 @@ export default memo(function RoomGrid({
             <div
               className="grid gap-1"
               style={{
-                gridTemplateColumns: `repeat(${room.cols}, minmax(0, 1fr))`,
+                // minmax(0, 1fr) 은 폭이 부족하면 셀을 0 까지 줄여 이름이 글자 단위로 쪼개진다.
+                // 최소 폭을 고정하면 격자가 부모(overflow-x-auto) 안에서 가로 스크롤된다.
+                gridTemplateColumns: `repeat(${room.cols}, minmax(${
+                  preserveSeatWidth ? MIN_SEAT_WIDTH : 0
+                }px, 1fr))`,
                 marginBottom: gapAfterRows?.includes(r) ? "12px" : "4px",
               }}
             >

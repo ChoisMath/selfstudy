@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { withAuth } from "@/lib/api-auth";
 import bcrypt from "bcryptjs";
 
-export const PUT = withAuth(["admin"], async (req: Request, user) => {
+export const PUT = withAuth(["admin"], async (req: Request) => {
   try {
     const url = new URL(req.url);
     const id = parseInt(url.pathname.split("/").pop()!, 10);

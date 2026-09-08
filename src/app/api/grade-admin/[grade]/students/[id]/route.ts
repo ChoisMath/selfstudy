@@ -15,7 +15,7 @@ export async function PUT(
     return NextResponse.json({ error: "잘못된 요청입니다." }, { status: 400 });
   }
 
-  return withGradeAuth(grade, async (req, user) => {
+  return withGradeAuth(grade, async (req) => {
     const body = await req.json();
     const { name, classNumber, studentNumber, isActive, isHelper } = body;
 
@@ -90,7 +90,7 @@ export async function DELETE(
     return NextResponse.json({ error: "잘못된 요청입니다." }, { status: 400 });
   }
 
-  return withGradeAuth(grade, async (req, user) => {
+  return withGradeAuth(grade, async () => {
     const student = await prisma.student.findFirst({
       where: { id, grade },
     });

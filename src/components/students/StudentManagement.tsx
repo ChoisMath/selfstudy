@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo } from "react";
 import useSWR from "swr";
 import ExcelUploadModal from "@/components/admin-shared/ExcelUploadModal";
 
@@ -29,31 +29,22 @@ function computeStudentId(grade: number, classNumber: number, studentNumber: num
 
 // --- 모달 컴포넌트 ---
 function StudentModal({
-  isOpen,
   onClose,
   onSubmit,
   initialData,
   grade,
   isLoading,
 }: {
-  isOpen: boolean;
   onClose: () => void;
   onSubmit: (data: StudentFormData) => void;
   initialData?: StudentFormData;
   grade: number;
   isLoading: boolean;
 }) {
+  // 부모가 열려 있는 동안만 마운트하므로, 열 때마다 initialData 로 새로 초기화된다
   const [form, setForm] = useState<StudentFormData>(
     initialData ?? { name: "", classNumber: "", studentNumber: "" }
   );
-
-  useEffect(() => {
-    if (isOpen) {
-      setForm(initialData ?? { name: "", classNumber: "", studentNumber: "" });
-    }
-  }, [isOpen, initialData]);
-
-  if (!isOpen) return null;
 
   const previewId =
     form.classNumber && form.studentNumber
@@ -176,18 +167,13 @@ export default function StudentManagement({ grade }: { grade: number }) {
   const apiUrl = `/api/grade-admin/${grade}/students`;
   const { data, mutate, isLoading } = useSWR<{ students: Student[] }>(apiUrl, fetcher);
 
-  const allStudents = data?.students ?? [];
+  const allStudents = useMemo(() => data?.students ?? [], [data]);
 
   // 클라이언트 사이드 필터링 (SWR 키 변경 없이)
   const students = useMemo(
     () => classFilter ? allStudents.filter((s) => s.classNumber === parseInt(classFilter, 10)) : allStudents,
     [allStudents, classFilter]
   );
-
-  // 반 목록 추출 (필터용)
-  const classNumbers = Array.from(
-    new Set(allStudents.map((s) => s.classNumber))
-  ).sort((a, b) => a - b);
 
   const handleAdd = useCallback(() => {
     setEditingStudent(null);
@@ -506,26 +492,27 @@ export default function StudentManagement({ grade }: { grade: number }) {
       </div>
 
       {/* 모달 */}
-      <StudentModal
-        isOpen={modalOpen}
-        onClose={() => {
-          setModalOpen(false);
-          setEditingStudent(null);
-          setError(null);
-        }}
-        onSubmit={handleSubmit}
-        initialData={
-          editingStudent
-            ? {
-                name: editingStudent.name,
-                classNumber: String(editingStudent.classNumber),
-                studentNumber: String(editingStudent.studentNumber),
-              }
-            : undefined
-        }
-        grade={grade}
-        isLoading={isSubmitting}
-      />
+      {modalOpen && (
+        <StudentModal
+          onClose={() => {
+            setModalOpen(false);
+            setEditingStudent(null);
+            setError(null);
+          }}
+          onSubmit={handleSubmit}
+          initialData={
+            editingStudent
+              ? {
+                  name: editingStudent.name,
+                  classNumber: String(editingStudent.classNumber),
+                  studentNumber: String(editingStudent.studentNumber),
+                }
+              : undefined
+          }
+          grade={grade}
+          isLoading={isSubmitting}
+        />
+      )}
     </div>
   );
 }

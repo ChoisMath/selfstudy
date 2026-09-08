@@ -9,16 +9,6 @@ interface BaseRoom {
   rows: number;
 }
 
-// 방 이름 → CSS grid area 매핑
-const ROOM_AREAS: Record<string, string> = {
-  복도석: "sidebar",
-  미래혜윰실2: "room1",
-  미래202: "room2",
-  미래아띠존: "room3",
-  미래201: "room4",
-  미래혜윰실1: "room5",
-};
-
 // 행 간 시각적 갭 설정 (서브블록 구분용)
 export const GAP_CONFIG: Record<string, number[]> = {
   미래혜윰실2: [1],           // 2 sub-blocks of 5×2
@@ -57,6 +47,8 @@ const GRID_STYLES = {
   // 인쇄 경로: 복도석(sidebar) 셀은 96px 고정 폭(SEAT_CELL_WIDTH)이라
   // 90px 트랙에 넣으면 넘친다. max-content 로 셀 실제 폭을 그대로 반영한다.
   containerFit: { ...CONTAINER_BASE, gridTemplateColumns: "max-content 1fr 44px 1fr", width: "max-content" },
+  // 인쇄 경로의 바깥 박스도 max-content 여야 PrintPageFitter 가 재는 폭이 격자+padding 으로 유지된다
+  fitBox: { width: "max-content" } as const,
 };
 
 export default function MiraeHallLayout<T extends BaseRoom>({
@@ -80,77 +72,80 @@ export default function MiraeHallLayout<T extends BaseRoom>({
   return (
     <div
       className={`bg-white rounded-lg border p-4 ${fitContent ? "" : "overflow-x-auto"}`}
-      style={fitContent ? GRID_STYLES.containerFit : GRID_STYLES.container}
+      style={fitContent ? GRID_STYLES.fitBox : undefined}
     >
-      {/* 좌측: 복도석 */}
-      <div
-        style={GRID_STYLES.sidebar}
-        className="border-r border-gray-300 pr-1"
-      >
-        {renderRoomArea("복도석")}
-      </div>
-
-      {/* 사감실 라벨 */}
-      <div
-        style={GRID_STYLES.label1}
-        className="text-center py-2 bg-gray-50 rounded border text-sm font-medium text-gray-600"
-      >
-        사감실
-      </div>
-
-      {/* 중앙 교실들 */}
-      <div style={GRID_STYLES.room1}>{renderRoomArea("미래혜윰실2")}</div>
-      <div style={GRID_STYLES.room2}>{renderRoomArea("미래202")}</div>
-      <div style={GRID_STYLES.room3}>{renderRoomArea("미래아띠존")}</div>
-      <div style={GRID_STYLES.room4}>{renderRoomArea("미래201")}</div>
-
-      {/* 감독교사 대기석 */}
-      <div
-        style={GRID_STYLES.teacher}
-        className="flex items-center justify-end py-2 px-3"
-      >
-        <div className="border border-gray-300 px-4 py-1 text-sm bg-gray-100 rounded text-gray-600">
-          감독교사 대기석
-        </div>
-      </div>
-
-      {/* 창의홀 디바이더 */}
-      <div
-        style={GRID_STYLES.divider}
-        className="flex flex-col items-center justify-center border-l border-r border-gray-300 py-4"
-      >
-        <div className="text-sm text-gray-400 mb-2">&darr;</div>
+      {/* minWidth 격자를 스크롤 박스 안쪽에 두어야 좁은 화면에서 문서가 아니라 이 박스가 가로 스크롤된다 */}
+      <div style={fitContent ? GRID_STYLES.containerFit : GRID_STYLES.container}>
+        {/* 좌측: 복도석 */}
         <div
-          className="font-bold tracking-widest text-base text-gray-500"
-          style={GRID_STYLES.verticalText}
+          style={GRID_STYLES.sidebar}
+          className="border-r border-gray-300 pr-1"
         >
-          창의홀
+          {renderRoomArea("복도석")}
         </div>
-      </div>
 
-      {/* 우측 상단: 계단 */}
-      <div
-        style={GRID_STYLES.stairs}
-        className="flex items-center justify-center bg-gray-50 rounded border text-sm font-medium text-gray-500"
-      >
-        계단
-      </div>
-
-      {/* 우측: 화장실 */}
-      <div
-        style={GRID_STYLES.bath}
-        className="flex flex-col rounded border overflow-hidden"
-      >
-        <div className="flex-1 flex items-center justify-center text-xs text-gray-500 border-b bg-gray-50">
-          화장실(남)
+        {/* 사감실 라벨 */}
+        <div
+          style={GRID_STYLES.label1}
+          className="text-center py-2 bg-gray-50 rounded border text-sm font-medium text-gray-600"
+        >
+          사감실
         </div>
-        <div className="flex-1 flex items-center justify-center text-xs text-gray-500 bg-gray-50">
-          화장실(여)
-        </div>
-      </div>
 
-      {/* 우측: 미래혜윰실1 */}
-      <div style={GRID_STYLES.room5}>{renderRoomArea("미래혜윰실1")}</div>
+        {/* 중앙 교실들 */}
+        <div style={GRID_STYLES.room1}>{renderRoomArea("미래혜윰실2")}</div>
+        <div style={GRID_STYLES.room2}>{renderRoomArea("미래202")}</div>
+        <div style={GRID_STYLES.room3}>{renderRoomArea("미래아띠존")}</div>
+        <div style={GRID_STYLES.room4}>{renderRoomArea("미래201")}</div>
+
+        {/* 감독교사 대기석 */}
+        <div
+          style={GRID_STYLES.teacher}
+          className="flex items-center justify-end py-2 px-3"
+        >
+          <div className="border border-gray-300 px-4 py-1 text-sm bg-gray-100 rounded text-gray-600">
+            감독교사 대기석
+          </div>
+        </div>
+
+        {/* 창의홀 디바이더 */}
+        <div
+          style={GRID_STYLES.divider}
+          className="flex flex-col items-center justify-center border-l border-r border-gray-300 py-4"
+        >
+          <div className="text-sm text-gray-400 mb-2">&darr;</div>
+          <div
+            className="font-bold tracking-widest text-base text-gray-500"
+            style={GRID_STYLES.verticalText}
+          >
+            창의홀
+          </div>
+        </div>
+
+        {/* 우측 상단: 계단 */}
+        <div
+          style={GRID_STYLES.stairs}
+          className="flex items-center justify-center bg-gray-50 rounded border text-sm font-medium text-gray-500"
+        >
+          계단
+        </div>
+
+        {/* 우측: 화장실 */}
+        <div
+          style={GRID_STYLES.bath}
+          className="flex flex-col rounded border overflow-hidden"
+        >
+          <div className="flex-1 flex items-center justify-center text-xs text-gray-500 border-b bg-gray-50">
+            화장실(남)
+          </div>
+          <div className="flex-1 flex items-center justify-center text-xs text-gray-500 bg-gray-50">
+            화장실(여)
+          </div>
+        </div>
+
+        {/* 우측: 미래혜윰실1 */}
+        <div style={GRID_STYLES.room5}>{renderRoomArea("미래혜윰실1")}</div>
+      </div>
     </div>
   );
 }

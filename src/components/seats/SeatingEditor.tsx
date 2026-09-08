@@ -324,7 +324,7 @@ export default function SeatingEditor({
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-bold text-gray-900">좌석 편집</h2>
+        <h2 className="whitespace-nowrap text-xl font-bold text-gray-900">좌석 편집</h2>
         <div className="flex items-center gap-2">
           <button
             onClick={handlePrint}
@@ -335,7 +335,7 @@ export default function SeatingEditor({
           <button
             onClick={handleSave}
             disabled={saving || dirty.size === 0}
-            className="px-4 py-2 text-sm text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="min-h-11 whitespace-nowrap px-4 text-sm text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {saving ? "저장 중..." : dirty.size > 0 ? `저장 (${dirty.size}개 교실 변경)` : "저장"}
           </button>
@@ -354,8 +354,8 @@ export default function SeatingEditor({
           onDragEnd={handleDragEnd}
         >
           <div className="grid grid-cols-1 xl:grid-cols-[1fr_280px] gap-6">
-            {/* 교실 격자 */}
-            <div>
+            {/* 교실 격자 — min-w-0: 1fr 트랙의 auto 최소폭이 격자 min-content 를 따라 커져 xl 에서 문서가 가로로 넘치는 것을 막는다 */}
+            <div className="min-w-0">
               {grade === 2 && sessionType === "night" ? (
                 <MiraeHallLayout
                   rooms={rooms}
@@ -372,10 +372,11 @@ export default function SeatingEditor({
                 />
               ) : sessionType === "afternoon" ? (
                 /* 오후 자습: 이름 접두사 기반 그룹 */
-                <div className="space-y-6">
+                <div className="space-y-6 overflow-x-auto">
+                  {/* preserveSeatWidth: 폭이 부족하면 셀을 줄이지 않고 이 래퍼가 스크롤한다. 미래홀 도면은 자체 minWidth/스크롤이 있어 켜지 않는다. */}
                   {buildPrintGroups(rooms, "afternoon", grade).map((group, gi) => (
                     <div key={`${group.key}-${gi}`}>
-                      <h3 className="font-semibold text-gray-700 mb-2">{group.title}</h3>
+                      <h3 className="whitespace-nowrap font-semibold text-gray-700 mb-2">{group.title}</h3>
                       <div
                         className="grid gap-3"
                         style={{
@@ -391,6 +392,7 @@ export default function SeatingEditor({
                             seats={seats.get(room.id) ?? EMPTY_ROOM_SEATS}
                             onRemoveStudent={handleRemoveStudent}
                             compact
+                            preserveSeatWidth
                           />
                         ))}
                       </div>
@@ -398,13 +400,14 @@ export default function SeatingEditor({
                   ))}
                 </div>
               ) : (
-                <div className="space-y-6">
+                <div className="space-y-6 overflow-x-auto">
                   {rooms.map((room) => (
                     <RoomGrid
                       key={room.id}
                       room={room}
                       seats={seats.get(room.id) ?? EMPTY_ROOM_SEATS}
                       onRemoveStudent={handleRemoveStudent}
+                    preserveSeatWidth
                     />
                   ))}
                 </div>
@@ -419,7 +422,7 @@ export default function SeatingEditor({
 
           <DragOverlay>
             {activeItem ? (
-              <div className="bg-blue-100 border-2 border-blue-400 rounded px-2 py-1 text-xs font-medium shadow-lg">
+              <div className="whitespace-nowrap bg-blue-100 border-2 border-blue-400 rounded px-2 py-1 text-xs font-medium shadow-lg">
                 {activeItem.classNumber}반 {activeItem.studentNumber}번 {activeItem.name}
               </div>
             ) : null}

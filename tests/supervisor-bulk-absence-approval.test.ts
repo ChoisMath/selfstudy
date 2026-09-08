@@ -26,7 +26,7 @@ function sameDate(a: Date, b: Date) {
 }
 
 function createFakePrisma(seed: {
-  assignments: Array<{ teacherId: number; grade: number; sessionType: SessionType; date: Date }>;
+  assignments: Array<{ id: number; teacherId: number; grade: number; sessionType: SessionType; date: Date }>;
   requests: RequestRow[];
 }) {
   const attendanceRows: Array<{
@@ -145,7 +145,7 @@ function createFakePrisma(seed: {
 async function testApprovesOnlyAssignedPendingRequests() {
   const fixedNow = new Date("2026-04-30T01:23:45.000Z");
   const prisma = createFakePrisma({
-    assignments: [{ teacherId: 7, grade: 2, sessionType: "night", date: dateOnly("2026-04-30") }],
+    assignments: [{ id: 1, teacherId: 7, grade: 2, sessionType: "night", date: dateOnly("2026-04-30") }],
     requests: [
       {
         id: 1,

@@ -15,7 +15,7 @@ export async function GET(
     return NextResponse.json({ error: "잘못된 학년입니다." }, { status: 400 });
   }
 
-  return withGradeAuth(grade, async (req, user) => {
+  return withGradeAuth(grade, async () => {
     const students = await prisma.student.findMany({
       where: { grade, isActive: true },
       orderBy: [{ classNumber: "asc" }, { studentNumber: "asc" }],
@@ -69,7 +69,7 @@ export async function PUT(
     return NextResponse.json({ error: "잘못된 학년입니다." }, { status: 400 });
   }
 
-  return withGradeAuth(grade, async (req, user) => {
+  return withGradeAuth(grade, async (req) => {
     const body = await req.json();
     const { sessionType, isParticipating } = body;
 

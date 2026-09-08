@@ -32,7 +32,7 @@ export default function ParticipationManagement({ grade }: { grade: number }) {
   const apiUrl = `/api/grade-admin/${grade}/participation-days`;
   const { data, mutate, isLoading } = useSWR<{ students: StudentParticipation[] }>(apiUrl, fetcher);
 
-  const students = data?.students ?? [];
+  const students = useMemo(() => data?.students ?? [], [data]);
   const filteredStudents = classFilter
     ? students.filter((s) => s.classNumber === parseInt(classFilter, 10))
     : students;
@@ -160,7 +160,7 @@ export default function ParticipationManagement({ grade }: { grade: number }) {
               <tr className="bg-orange-50">
                 {SESSION_TYPES.map((session) => [
                   <th key={`${session}-as-empty`} className="py-1 border-l border-gray-200" />,
-                  ...DAY_LABELS.map((l, i) => (
+                  ...DAY_LABELS.map((l) => (
                     <th key={`${session}-as-${l}`} className="py-1 text-center text-[10px] font-medium text-orange-600">
                       방과후
                     </th>

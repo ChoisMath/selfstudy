@@ -40,14 +40,6 @@ type MonthlyData = {
 
 type ViewTab = "weekly" | "monthly";
 
-function getMonday(d: Date): Date {
-  const date = new Date(d);
-  const day = date.getUTCDay();
-  const diff = day === 0 ? -6 : 1 - day;
-  date.setUTCDate(date.getUTCDate() + diff);
-  return date;
-}
-
 function formatDate(dateStr: string): string {
   const d = new Date(dateStr + "T00:00:00Z");
   return `${d.getUTCMonth() + 1}/${d.getUTCDate()}`;

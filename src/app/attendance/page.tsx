@@ -7,7 +7,7 @@ export default function AttendancePage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
-  const [assignedGrade, setAssignedGrade] = useState<number | null>(null);
+  const [assignedGrade] = useState<number | null>(null);
 
   useEffect(() => {
     fetch("/api/supervisor-assignments/my-today")
@@ -27,11 +27,11 @@ export default function AttendancePage() {
   }, [router]);
 
   if (loading && !showModal) {
-    return <div className="flex items-center justify-center min-h-[60vh] text-gray-500">감독 배정 확인 중...</div>;
+    return <div className="flex items-center justify-center min-h-[60dvh] text-gray-500">감독 배정 확인 중...</div>;
   }
 
   return (
-    <div className="flex items-center justify-center min-h-[60vh]">
+    <div className="flex items-center justify-center min-h-[60dvh]">
       <div className="bg-white rounded-lg shadow-lg p-8 max-w-sm w-full mx-4 text-center">
         <h2 className="text-lg font-semibold text-gray-900 mb-2">출석 확인할 학년 선택</h2>
         {assignedGrade && (

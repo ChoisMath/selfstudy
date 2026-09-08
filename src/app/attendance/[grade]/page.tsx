@@ -271,7 +271,6 @@ export default function AttendanceGradePage() {
     (s) => attendances[s.student!.id]?.status === "absent"
   ).length;
   const uncheckedCount = allStudents.length - presentCount - absentCount - afterSchoolDefaultCount;
-  const totalSeats = rooms.reduce((sum, r) => sum + r.seats.filter((s) => s.student).length, 0);
 
   async function handleToggle(studentId: number) {
     const current = attendances[studentId]?.status || "unchecked";
@@ -1082,7 +1081,7 @@ export default function AttendanceGradePage() {
           <div
             role="dialog"
             aria-modal="true"
-            className="relative bg-white rounded-xl shadow-xl w-full max-w-3xl max-h-[85vh] overflow-hidden"
+            className="relative bg-white rounded-xl shadow-xl w-full max-w-3xl max-h-[85dvh] overflow-hidden"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="px-4 py-3 border-b border-[#e2e8f0] flex items-center justify-between gap-3">
@@ -1100,7 +1099,7 @@ export default function AttendanceGradePage() {
                 ×
               </button>
             </div>
-            <div className="p-4 overflow-y-auto max-h-[60vh]">
+            <div className="p-4 overflow-y-auto max-h-[60dvh]">
               <div className="overflow-x-auto border border-[#e2e8f0] rounded-lg">
                 <table className="w-full text-sm">
                   <thead className="bg-[#f8fafc] border-b border-[#e2e8f0]">
@@ -1187,7 +1186,7 @@ export default function AttendanceGradePage() {
             <div
               role="dialog"
               aria-modal="true"
-              className="relative bg-[#eff6ff] border-2 border-[#2563eb] rounded-xl max-w-md w-full max-h-[90vh] overflow-y-auto p-4 shadow-xl"
+              className="relative bg-[#eff6ff] border-2 border-[#2563eb] rounded-xl max-w-md w-full max-h-[90dvh] overflow-y-auto p-4 shadow-xl"
               onClick={(e) => e.stopPropagation()}
             >
               <button

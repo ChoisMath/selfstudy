@@ -15,7 +15,7 @@ export async function GET(
     return NextResponse.json({ error: "잘못된 학년입니다." }, { status: 400 });
   }
 
-  return withGradeAuth(grade, async (req, user) => {
+  return withGradeAuth(grade, async (req) => {
     const { searchParams } = new URL(req.url);
     const from = searchParams.get("from");
     const to = searchParams.get("to");
@@ -72,7 +72,7 @@ export async function POST(
     return NextResponse.json({ error: "잘못된 학년입니다." }, { status: 400 });
   }
 
-  return withGradeAuth(grade, async (req, user) => {
+  return withGradeAuth(grade, async (req) => {
     const body = await req.json();
     const { teacherId, date } = body;
 

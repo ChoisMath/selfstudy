@@ -374,7 +374,13 @@ const CalendarTeacherSelect = memo(function CalendarTeacherSelect({
     [grouped]
   );
 
-  useEffect(() => { setHighlightIdx(0); }, [allFiltered]);
+  // 필터 결과가 바뀔 때 하이라이트를 첫 항목으로 되돌림.
+  // effect 대신 렌더 중 상태 조정으로 처리해 이전 인덱스가 한 프레임 노출되는 것을 막음.
+  const [prevAllFiltered, setPrevAllFiltered] = useState(allFiltered);
+  if (prevAllFiltered !== allFiltered) {
+    setPrevAllFiltered(allFiltered);
+    setHighlightIdx(0);
+  }
 
   useEffect(() => {
     if (isOpen && listRef.current) {

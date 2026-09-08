@@ -14,7 +14,7 @@ export async function GET(
     return NextResponse.json({ error: "잘못된 학년입니다." }, { status: 400 });
   }
 
-  return withGradeAuth(grade, async (req, user) => {
+  return withGradeAuth(grade, async (req) => {
     const url = new URL(req.url);
     const monthStr = url.searchParams.get("month");
 

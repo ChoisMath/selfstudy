@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { buildMonthCells, parseDateValue, shiftMonth } from "@/lib/calendar";
 
 const WEEKDAY_HEADERS = ["일", "월", "화", "수", "목", "금", "토"];
@@ -11,14 +11,21 @@ interface AttendanceDatePickerProps {
   onChange: (date: string) => void;
 }
 
-export default function AttendanceDatePicker({ value, today, onChange }: AttendanceDatePickerProps) {
-  const initial = parseDateValue(value);
-  const [view, setView] = useState({ year: initial.year, month: initial.month });
+function monthOf(date: string): { year: number; month: number } {
+  const { year, month } = parseDateValue(date);
+  return { year, month };
+}
 
-  useEffect(() => {
-    const next = parseDateValue(value);
-    setView({ year: next.year, month: next.month });
-  }, [value]);
+export default function AttendanceDatePicker({ value, today, onChange }: AttendanceDatePickerProps) {
+  const [view, setView] = useState(() => monthOf(value));
+  const [syncedValue, setSyncedValue] = useState(value);
+
+  // Re-sync the visible month during render (React's "adjust state on prop change" pattern)
+  // so the arrows can still navigate freely between external date changes.
+  if (syncedValue !== value) {
+    setSyncedValue(value);
+    setView(monthOf(value));
+  }
 
   const cells = buildMonthCells(view.year, view.month);
 

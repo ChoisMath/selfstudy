@@ -18,7 +18,7 @@ assert.match(page, /import\s+HelpContent\s+from\s+"\.[/\\]content\.mdx"/);
 assert.match(page, /<HelpContent\s*\/>/);
 
 const content = read("src/app/help/content.mdx");
-assert.match(content, /import\s+\{[^}]*SeatLayoutDemo[^}]*\}\s+from\s+["']@\/components\/help\/HelpDemos["']/s);
+assert.match(content, /import\s+\{[^}]*SeatLayoutDemo[^}]*\}\s+from\s+["']@\/components\/help\/HelpDemos["']/);
 assert.match(content, /<SeatLayoutDemo\s*\/>/);
 assert.match(content, /<UnassignedStudentsDemo\s*\/>/);
 assert.match(content, /<ExcelUploadDemo\s*\/>/);
@@ -31,6 +31,6 @@ assert.ok(!demos.includes("useRouter"), "help demos must not route users");
 
 const nextConfig = read("next.config.ts");
 assert.match(nextConfig, /@next\/mdx/);
-assert.match(nextConfig, /pageExtensions:\s*\[[^\]]*"md"[^\]]*"mdx"[^\]]*\]/s);
+assert.match(nextConfig, /pageExtensions:\s*\[[^\]]*"md"[^\]]*"mdx"[^\]]*\]/);
 
 console.log("help MDX contract checks passed");

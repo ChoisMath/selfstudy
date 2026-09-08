@@ -15,7 +15,7 @@ export async function DELETE(
     return NextResponse.json({ error: "잘못된 요청입니다." }, { status: 400 });
   }
 
-  return withGradeAuth(grade, async (req, user) => {
+  return withGradeAuth(grade, async () => {
     const assignment = await prisma.supervisorAssignment.findFirst({
       where: { id, grade },
     });

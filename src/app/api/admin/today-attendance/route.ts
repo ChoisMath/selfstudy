@@ -22,7 +22,7 @@ function emptyStats(): SessionStats {
   return { supervisor: null, total: 0, present: 0, absent: 0, excusedAbsent: 0, afterSchool: 0 };
 }
 
-export const GET = withAuth(["admin"], async (req: Request) => {
+export const GET = withAuth(["admin"], async () => {
   const now = new Date();
   const kstOffset = now.getTime() + 9 * 60 * 60 * 1000;
   const kst = new Date(kstOffset);

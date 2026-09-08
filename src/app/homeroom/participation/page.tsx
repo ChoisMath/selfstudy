@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import useSWR from "swr";
 import { SESSION_TYPES, SESSION_META, type SessionType } from "@/lib/sessions";
 
@@ -34,7 +34,7 @@ export default function HomeroomParticipationPage() {
     students: StudentParticipation[];
   }>(apiUrl, fetcher);
 
-  const students = data?.students ?? [];
+  const students = useMemo(() => data?.students ?? [], [data]);
 
   const handleUpdate = useCallback(
     async (
@@ -131,7 +131,7 @@ export default function HomeroomParticipationPage() {
               <tr className="bg-orange-50">
                 {SESSION_TYPES.map((session) => [
                   <th key={`${session}-as-empty`} className="py-1 border-l border-gray-200 whitespace-nowrap" />,
-                  ...DAY_LABELS.map((l, i) => (
+                  ...DAY_LABELS.map((l) => (
                     <th key={`${session}-as-${l}`} className="py-1 text-center text-[10px] font-medium text-orange-600 whitespace-nowrap">
                       방과후
                     </th>

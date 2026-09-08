@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import { useParams } from "next/navigation";
 import useSWR from "swr";
 import { SESSION_TYPES, SESSION_META, type SessionType } from "@/lib/sessions";
@@ -38,7 +38,7 @@ export default function ParticipationPage() {
     students: StudentParticipation[];
   }>(apiUrl, fetcher);
 
-  const students = data?.students ?? [];
+  const students = useMemo(() => data?.students ?? [], [data]);
 
   const filteredStudents = classFilter
     ? students.filter((s) => s.classNumber === parseInt(classFilter, 10))

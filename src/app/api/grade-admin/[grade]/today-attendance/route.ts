@@ -33,7 +33,7 @@ export async function GET(
     return NextResponse.json({ error: "잘못된 학년입니다." }, { status: 400 });
   }
 
-  return withGradeAuth(grade, async (req, user) => {
+  return withGradeAuth(grade, async () => {
     const now = new Date();
     const kstOffset = now.getTime() + 9 * 60 * 60 * 1000;
     const kst = new Date(kstOffset);

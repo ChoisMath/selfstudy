@@ -73,8 +73,6 @@ export default function GradeMonthlyAttendance({ grade }: { grade: number }) {
     URL.revokeObjectURL(url);
   };
 
-  let prevClassNumber = -1;
-
   return (
     <div>
       {/* Header: month nav + Excel button */}
@@ -148,75 +146,72 @@ export default function GradeMonthlyAttendance({ grade }: { grade: number }) {
                 </tr>
               </thead>
               <tbody>
-                {(() => {
-                  prevClassNumber = -1;
-                  return students.map((student) => {
-                    const showClass = student.classNumber !== prevClassNumber;
-                    prevClassNumber = student.classNumber;
-                    const isEvenClass = student.classNumber % 2 === 0;
-                    const rowBg = isEvenClass ? "bg-[#f0f7ff]" : "bg-white";
-                    const stickyBg = isEvenClass ? "bg-[#f0f7ff]" : "bg-white";
+                {students.map((student, index) => {
+                  const prevClassNumber = index === 0 ? -1 : students[index - 1].classNumber;
+                  const showClass = student.classNumber !== prevClassNumber;
+                  const isEvenClass = student.classNumber % 2 === 0;
+                  const rowBg = isEvenClass ? "bg-[#f0f7ff]" : "bg-white";
+                  const stickyBg = isEvenClass ? "bg-[#f0f7ff]" : "bg-white";
 
-                    const partByType = new Map(student.participationDays.map((p) => [p.sessionType, p]));
+                  const partByType = new Map(student.participationDays.map((p) => [p.sessionType, p]));
 
-                    return (
-                      <tr key={student.id} className={`border-b border-gray-300 ${rowBg}`}>
-                        <td className={`px-2 py-1.5 text-center font-semibold sticky left-0 z-10 ${stickyBg}`}>
-                          {showClass ? student.classNumber : ""}
-                        </td>
-                        <td className={`px-2 py-1.5 text-center sticky left-[36px] z-10 ${stickyBg} text-gray-600`}>
-                          {student.studentNumber}
-                        </td>
-                        <td className={`px-3 py-1.5 font-medium sticky left-[72px] z-10 ${stickyBg} text-gray-900`}>
-                          {student.name}
-                        </td>
-                        {dates.map((date) => {
-                          const att = student.dates[date] || {};
-                          const dayKey = getDayKey(date);
-                          const dayIdx = DAY_KEYS.indexOf(dayKey);
-                          return (
-                            <React.Fragment key={date}>
-                              {SESSION_TYPES.map((t, i) => {
-                                const part = partByType.get(t);
-                                const cell = att[t];
-                                const status = cell?.status;
-                                const isParticipating = part ? part.isParticipating && part[dayKey] : true;
-                                const isAfterSchool = part
-                                  ? part.isParticipating && part[dayKey] && part[AFTER_SCHOOL_KEYS[dayIdx]]
-                                  : false;
-                                const gray = !isParticipating;
-                                const hasData = !!status && status !== "unchecked";
-                                const isAfterSchoolIdle = isAfterSchool && (!status || status === "unchecked");
-                                const colorClass = gray && !hasData ? "text-gray-300"
-                                  : isAfterSchoolIdle ? "text-yellow-600 bg-yellow-50"
-                                  : status === "present" ? "text-green-700"
-                                  : status === "absent" && cell?.reason ? "text-orange-500"
-                                  : status === "absent" ? "text-red-700"
-                                  : "text-gray-400";
-                                const symbol = gray && !hasData ? "-"
-                                  : isAfterSchoolIdle ? "방"
-                                  : status === "present" ? "O"
-                                  : status === "absent" ? (cell?.reason ? "△" : "X")
-                                  : "-";
-                                return (
-                                  <td
-                                    key={t}
-                                    className={`px-1 py-1.5 text-center text-sm font-extrabold ${i === 0 ? "border-l border-gray-300" : ""} ${gray ? "bg-gray-100" : ""} ${colorClass}`}
-                                  >
-                                    {symbol}
-                                  </td>
-                                );
-                              })}
-                            </React.Fragment>
-                          );
-                        })}
-                        <td className="px-2 py-1.5 text-center text-sm font-bold text-blue-600 border-l border-gray-300">
-                          {student.studyHours > 0 ? student.studyHours.toFixed(1) : "-"}
-                        </td>
-                      </tr>
-                    );
-                  });
-                })()}
+                  return (
+                    <tr key={student.id} className={`border-b border-gray-300 ${rowBg}`}>
+                      <td className={`px-2 py-1.5 text-center font-semibold sticky left-0 z-10 ${stickyBg}`}>
+                        {showClass ? student.classNumber : ""}
+                      </td>
+                      <td className={`px-2 py-1.5 text-center sticky left-[36px] z-10 ${stickyBg} text-gray-600`}>
+                        {student.studentNumber}
+                      </td>
+                      <td className={`px-3 py-1.5 font-medium sticky left-[72px] z-10 ${stickyBg} text-gray-900`}>
+                        {student.name}
+                      </td>
+                      {dates.map((date) => {
+                        const att = student.dates[date] || {};
+                        const dayKey = getDayKey(date);
+                        const dayIdx = DAY_KEYS.indexOf(dayKey);
+                        return (
+                          <React.Fragment key={date}>
+                            {SESSION_TYPES.map((t, i) => {
+                              const part = partByType.get(t);
+                              const cell = att[t];
+                              const status = cell?.status;
+                              const isParticipating = part ? part.isParticipating && part[dayKey] : true;
+                              const isAfterSchool = part
+                                ? part.isParticipating && part[dayKey] && part[AFTER_SCHOOL_KEYS[dayIdx]]
+                                : false;
+                              const gray = !isParticipating;
+                              const hasData = !!status && status !== "unchecked";
+                              const isAfterSchoolIdle = isAfterSchool && (!status || status === "unchecked");
+                              const colorClass = gray && !hasData ? "text-gray-300"
+                                : isAfterSchoolIdle ? "text-yellow-600 bg-yellow-50"
+                                : status === "present" ? "text-green-700"
+                                : status === "absent" && cell?.reason ? "text-orange-500"
+                                : status === "absent" ? "text-red-700"
+                                : "text-gray-400";
+                              const symbol = gray && !hasData ? "-"
+                                : isAfterSchoolIdle ? "방"
+                                : status === "present" ? "O"
+                                : status === "absent" ? (cell?.reason ? "△" : "X")
+                                : "-";
+                              return (
+                                <td
+                                  key={t}
+                                  className={`px-1 py-1.5 text-center text-sm font-extrabold ${i === 0 ? "border-l border-gray-300" : ""} ${gray ? "bg-gray-100" : ""} ${colorClass}`}
+                                >
+                                  {symbol}
+                                </td>
+                              );
+                            })}
+                          </React.Fragment>
+                        );
+                      })}
+                      <td className="px-2 py-1.5 text-center text-sm font-bold text-blue-600 border-l border-gray-300">
+                        {student.studyHours > 0 ? student.studyHours.toFixed(1) : "-"}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

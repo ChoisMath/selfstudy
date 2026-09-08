@@ -6,7 +6,7 @@ import { Role } from "@/generated/prisma/client";
 // GET: 교사 목록 (역할 필터 지원)
 export const GET = withAuth(
   ["admin", "sub_admin"],
-  async (req, user) => {
+  async (req) => {
     const { searchParams } = new URL(req.url);
     const roleFilter = searchParams.get("role");
 

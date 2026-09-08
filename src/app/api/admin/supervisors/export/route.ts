@@ -4,7 +4,7 @@ import { withAuth } from "@/lib/api-auth";
 import { buildSupervisorWorkbook } from "@/lib/excel/supervisor-export";
 import { REPRESENTATIVE_SESSION_TYPE } from "@/lib/sessions";
 
-export const GET = withAuth(["admin"], async (req, _user) => {
+export const GET = withAuth(["admin"], async (req) => {
   const url = new URL(req.url);
   const monthStr = url.searchParams.get("month");
 

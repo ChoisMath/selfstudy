@@ -77,7 +77,7 @@ export default function SchedulePage() {
 
   const currentUserId = data?.currentUserId ?? 0;
   const assignments = data?.assignments ?? [];
-  const teachers = data?.teachers ?? [];
+  const teachers = useMemo(() => data?.teachers ?? [], [data]);
 
   const monthDays = useMemo(() => getMonthDays(year, month, !showWeekend), [year, month, showWeekend]);
 
@@ -204,7 +204,7 @@ export default function SchedulePage() {
       <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
         {/* 요일 헤더 */}
         <div className={`grid ${showWeekend ? "grid-cols-7" : "grid-cols-5"} bg-gray-50 border-b border-gray-200`}>
-          {DAY_LABELS.filter((_, i) => showWeekend || (i >= 1 && i <= 5)).map((label, i) => (
+          {DAY_LABELS.filter((_, i) => showWeekend || (i >= 1 && i <= 5)).map((label) => (
             <div
               key={label}
               className={`px-2 py-2 sm:py-3 text-center text-xs sm:text-sm font-medium ${
@@ -396,7 +396,11 @@ function TeacherSearchSelect({
     ? grouped.primary.length - 1
     : -1;
 
-  useEffect(() => { setHighlightIdx(0); }, [allFiltered]);
+  const [prevAllFiltered, setPrevAllFiltered] = useState(allFiltered);
+  if (prevAllFiltered !== allFiltered) {
+    setPrevAllFiltered(allFiltered);
+    setHighlightIdx(0);
+  }
 
   useEffect(() => {
     if (isOpen && listRef.current) {

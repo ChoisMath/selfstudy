@@ -22,7 +22,7 @@ async function main() {
   // ==================== 교사 ====================
   const passwordHash = await bcrypt.hash("admin1234", 12);
 
-  const adminTeacher = await prisma.teacher.create({
+  await prisma.teacher.create({
     data: {
       loginId: "admin",
       passwordHash,

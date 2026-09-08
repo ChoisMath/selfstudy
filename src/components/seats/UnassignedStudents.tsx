@@ -76,7 +76,7 @@ export default memo(function UnassignedStudents({
         className="w-full px-2 py-1.5 border border-gray-200 rounded text-xs mb-3 focus:outline-none focus:ring-1 focus:ring-blue-400"
       />
 
-      <div className="max-h-[60vh] overflow-y-auto space-y-3">
+      <div className="max-h-[60dvh] overflow-y-auto space-y-3">
         {classNumbers.length === 0 ? (
           <div className="text-center py-4 text-gray-400 text-xs">
             {search ? "검색 결과 없음" : "모든 학생이 배정되었습니다"}
