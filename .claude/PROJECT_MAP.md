@@ -1,6 +1,6 @@
 # 자율학습 출석부 시스템 - 프로젝트 지도
 
-> 마지막 업데이트: 2026-08-27
+> 마지막 업데이트: 2026-09-08
 > 이 파일은 새 세션에서 코드베이스를 빠르게 파악하기 위한 참조 문서입니다.
 
 ## 개요
@@ -84,15 +84,15 @@ src/
 │   ├── homeroom/
 │   │   └── SupervisorSummaryModal.tsx  # 학년도 기준 교사별 월별 감독횟수 집계 모달 (`/api/homeroom/schedule/summary`, 본인 행 sticky 강조)
 │   ├── seats/
-│   │   ├── SeatingEditor.tsx       # DndContext + 저장 + 출력 버튼 (props: grade, sessionType)
-│   │   ├── RoomGrid.tsx            # 교실 격자 (droppable/draggable 셀)
+│   │   ├── SeatingEditor.tsx       # DndContext + 저장 + 출력 버튼 (props: grade, sessionType). 미배정 목록은 `participatesInSeatSession` 으로 필터
+│   │   ├── RoomGrid.tsx            # 교실 격자 (droppable/draggable 셀). `preserveSeatWidth` prop: 오후 분기 전용 최소 셀 폭(`MIN_SEAT_WIDTH=52`) — 셀을 찌그러뜨리지 않고 래퍼가 가로 스크롤
 │   │   ├── MiraeHallLayout.tsx     # 2학년 야간 미래홀 도면 (fitContent 옵션)
 │   │   ├── PrintRoomGrid.tsx       # 인쇄용 읽기전용 좌석 격자 (dnd 없음, 고정 셀 크기)
 │   │   ├── SeatPrintGroup.tsx      # 인쇄 그룹 1개 (제목 + kind별 배치 + 교탁)
 │   │   ├── PrintPageFitter.tsx     # A4 페이지 박스 + 콘텐츠 실측 후 scale
 │   │   └── UnassignedStudents.tsx  # 미배정 학생 풀 (검색/반별 그룹)
 │   └── students/
-│       └── StudentManagement.tsx   # 학생 목록 + CRUD 모달 + ExcelUploadModal
+│       └── StudentManagement.tsx   # 학생 목록 + CRUD 모달 + ExcelUploadModal. 모달은 열려 있을 때만 마운트(`{modalOpen && <StudentModal/>}`, 마운트 시 initialData 로 초기화)
 │
 ├── lib/
 │   ├── auth.ts         # NextAuth 설정 (Credentials×2 + Google, JWT 콜백)
@@ -110,7 +110,8 @@ src/
 │   │   └── client.ts          # 브라우저 구독/해제 + VAPID base64 변환 + iOS standalone 감지
 │   ├── seats/
 │   │   ├── print-groups.ts   # 방 목록 → 인쇄 그룹 분해 (화면/인쇄 공용, 타입은 SeatSessionType)
-│   │   └── print-layout.ts   # A4 기하 상수 + 방향 추천/배율 계산
+│   │   ├── print-layout.ts   # A4 기하 상수 + 방향 추천/배율 계산
+│   │   └── seat-participation.ts  # participatesInSeatSession: 좌석 세션의 블록 중 하나라도 참여(레코드 없으면 기본 참여)면 자리 필요
 │   └── prisma.ts       # PrismaClient 싱글톤 (PrismaPg 어댑터)
 │
 ├── middleware.ts       # 라우트 보호 (getToken + 명시적 cookieName/salt, /homeroom·/attendance 모든 교사 허용)
@@ -299,6 +300,7 @@ SupervisorReminderLog: teacherId, grade, date(@db.Date), sentAt — @@unique([te
 - 기본 소요시간은 `SESSION_META[t].defaultMinutes`(afternoon1/afternoon2 = 50분, night = 100분), `durationMinutes`가 있으면 그 값 우선(`attendanceMinutes()`가 유일한 계산 지점)
 - 감독배정은 (date,grade)당 `SESSION_TYPES` 3행이 항상 같은 교사 — "하루 1건"으로 다뤄야 하는 조회(담임 일정, 감독횟수 요약, 감독 Excel, 달력 슬롯)는 `REPRESENTATIVE_SESSION_TYPE`("afternoon1")로 필터
 - `"afternoon"`/`"night"` 문자열 리터럴과 `100`/`?? 100` 매직넘버는 `src/lib/sessions.ts`와 좌석 컨텍스트 파일(좌석·인쇄, 출석 화면의 `seatSession` 분기, 학생 신청의 "오후 전체") 밖에서 금지 — `tests/session-literal-guard.test.ts`가 src 전체를 스캔해 회귀 차단
+- 좌석 편집기의 참여 판정은 `participatesInSeatSession`(`src/lib/seats/seat-participation.ts`, 블록 중 하나라도 참여) — 좌석 세션 값을 `ParticipationDay.sessionType`과 직접 비교하면 오후는 항상 불일치하므로 금지. `tests/seat-participation.test.ts`가 회귀 차단
 
 ### 9. "오후1 결과 복사" (`POST /api/attendance/copy-session`)
 - 대상: from/to가 공유하는 좌석 세션에 배정된 학생 중 — to 블록에 이미 출석 기록이 없고, to 블록+해당 요일 참여 중이고, to 블록에 pending/approved 불참신청이 없는 학생만
@@ -327,7 +329,25 @@ SupervisorReminderLog: teacherId, grade, date(@db.Date), sentAt — @@unique([te
 - **리다이렉트**: admin→`/admin`, 기타 교사→`/attendance`, 학생→`/student`
 - **담임배정 자동 동기화**: homeroom-assignments POST/DELETE 시 TeacherRole("homeroom") 자동 부여/삭제
 
+## 주의사항 / 특이 패턴
+
+- `react-hooks/set-state-in-effect`는 eslint 오류(빌드 게이트 아님)이며 "이전 값 저장 후 렌더 중 상태 조정" 패턴으로 대응 — `eslint-disable` 금지. 검수(tsc/eslint/build)는 `~/dev/selfstudy` 로컬 클론에서 실행(Google Drive 트리는 I/O로 정지)
+
 ## 수정 이력 (주요 변경)
+
+### 2026-09-08: 오후 좌석 편집기 미배정 목록 참여 필터 회귀 수정
+- **증상**: `/grade-admin/[grade]/seats`·`/admin/seats`의 "오후 자율학습" 탭 미배정 목록에 전체 학생이 표시. 원인은 `SeatingEditor`의 참여 필터가 좌석 세션 값(`"afternoon"`)을 `ParticipationDay.sessionType`(afternoon1/afternoon2/night)과 직접 비교 — 2026-08-26 오후 분리 이후 항상 불일치해 "기본 참여"로 떨어짐(야간은 양쪽 enum에 `"night"`가 있어 우연히 정상)
+- **신규 lib**: `src/lib/seats/seat-participation.ts` — `participatesInSeatSession(participationDays, seat)`: `sessionTypesOfSeat(seat)`의 블록 중 하나라도 참여(레코드 없으면 기본 참여)면 true. 오후 좌석 = 오후1·오후2 중 하나라도 참여하면 자리 필요
+- **수정**: `SeatingEditor.tsx`의 `allStudents` 필터가 이 헬퍼를 사용
+- **테스트**: `tests/seat-participation.test.ts` — 순수 규칙 7건 + 배선 가드(SeatingEditor가 `p.sessionType === sessionType` 직접 비교로 회귀하지 않는지 src 스캔)
+
+### 2026-09-08: lint/tsc 정리 + 좌석 편집기 반응형 보강
+- **eslint 오류 5건 제거(동작 보존)**: `set-state-in-effect` 4곳 — `homeroom/schedule/page.tsx`(TeacherSearchSelect 하이라이트 리셋), `MonthlyCalendar.tsx`(CalendarTeacherSelect), `AttendanceDatePicker.tsx`(value→view 동기화)는 "이전 값 저장 후 렌더 중 상태 조정" 패턴으로 교체, `StudentManagement.tsx`는 `StudentModal`의 `isOpen` prop+useEffect 리셋을 제거하고 `{modalOpen && <StudentModal/>}`로 열려 있을 때만 마운트. `react-hooks/immutability` 1곳 — `GradeMonthlyAttendance.tsx`의 렌더 중 재할당 `prevClassNumber`를 `students[index-1]` 비교로 대체
+- **eslint 경고 38건 제거**: `no-unused-vars` 32건(API 라우트 15개 파일의 미사용 `req`/`user` 인자, `prisma/seed.ts` `adminTeacher`, `attendance/[grade]/page.tsx` `totalSeats`, `attendance/page.tsx` `setAssignedGrade`, `student/attendance/page.tsx` `getMonday`, `MiraeHallLayout.tsx` `ROOM_AREAS`·`classNumbers`, map 콜백 `i` 3곳), `exhaustive-deps` 6건(`students`/`teachers`/`allStudents`의 `?? []`를 useMemo로 — ParticipationManagement, grade-admin/homeroom participation 페이지, homeroom schedule, StudentManagement). 남은 경고는 `@next/next/no-img-element` 7건뿐(의도적 유지)
+- **tsc 오류 5건 제거(테스트 파일만)**: `tests/help-mdx.test.ts` 정규식 `s` 플래그 → `[\s\S]`(target ES2017), `tests/supervisor-bulk-absence-approval.test.ts` 가짜 prisma `supervisorAssignment` 행에 `id` 추가(`ApprovalPrisma` 타입 일치)
+- **좌석 편집기 반응형(responsive-ui 규칙)**: `SeatingEditor` 저장 버튼 `min-h-11 whitespace-nowrap`, 드래그 칩·제목 `whitespace-nowrap`, 오후 그룹 래퍼 `overflow-x-auto`, 격자 컬럼 `min-w-0`; `RoomGrid`에 `preserveSeatWidth` prop 신설(`minmax(52px,1fr)`, `MIN_SEAT_WIDTH=52` — 오후 분기에서만 켜서 모바일에서 셀이 39px로 찌그러지는 대신 래퍼가 가로 스크롤, 미래홀/야간 기본 분기는 영향 없음); `UnassignedStudents` `max-h-[60vh]` → `60dvh`
+- **테스트**: `tests/seating-editor-responsive.test.ts` 신규(저장 버튼/드래그 칩/제목 nowrap, 오후 래퍼 overflow-x-auto, 60dvh를 src 스캔으로 고정) — 총 29개
+- **검수 환경**: Google Drive 트리에서는 tsc/eslint/build가 I/O로 정지 → `~/dev/selfstudy` 로컬 클론(`git clone`+`npm ci`+`npx prisma generate`)에서 검수. 결과: eslint 오류 0/경고 7(img), tsc 0, 테스트 29/29, `next build` 성공
 
 ### 2026-08-26: 오후자습 2블록 분리(오후1·오후2) + 주간 팝업 불참승인 표시
 - **설계 스펙**: `docs/superpowers/specs/2026-08-26-afternoon-session-split-design.md`
