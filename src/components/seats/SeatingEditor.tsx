@@ -17,6 +17,7 @@ import RoomGrid from "./RoomGrid";
 import UnassignedStudents from "./UnassignedStudents";
 import MiraeHallLayout, { GAP_CONFIG } from "./MiraeHallLayout";
 import { buildPrintGroups } from "@/lib/seats/print-groups";
+import { participatesInSeatSession } from "@/lib/seats/seat-participation";
 import { type SeatSessionType } from "@/lib/sessions";
 
 type ParticipationDay = {
@@ -102,9 +103,7 @@ export default function SeatingEditor({
   const allStudents = useMemo(
     () => (studentData?.students ?? []).filter((s: Student & { isActive?: boolean }) => {
       if ((s as { isActive?: boolean }).isActive === false) return false;
-      // 해당 세션에 참가 설정된 학생만 포함 (participationDays 레코드 없으면 기본 참가)
-      const pd = s.participationDays?.find((p) => p.sessionType === sessionType);
-      return pd ? pd.isParticipating : true;
+      return participatesInSeatSession(s.participationDays, sessionType);
     }),
     [studentData, sessionType]
   );
