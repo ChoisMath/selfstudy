@@ -26,6 +26,7 @@
 src/
 ├── app/
 │   ├── layout.tsx              # 루트 (Providers 래핑)
+│   ├── globals.css             # Tailwind 진입 + `:root --header-h: 3.5rem`(sticky nav h-14) + `@utility table-scroll`(표 래퍼 내부 스크롤포트)
 │   ├── page.tsx                # / → admin→/admin, 기타 교사→/attendance
 │   ├── providers.tsx           # SessionProvider
 │   ├── login/
@@ -76,7 +77,7 @@ src/
 │   ├── admin-shared/
 │   │   ├── AdminNav.tsx        # 관리자 네비 (오늘 출결 메뉴 포함, exact match, 서브관리자용 교사 링크) + NotificationBell (grade-admin은 경유 상속)
 │   │   ├── ParticipationManagement.tsx  # 참여설정 테이블 (grade prop)
-│   │   ├── MonthlyCalendar.tsx  # 월간 감독배정 캘린더 (학년당 1슬롯, 텍스트 검색 교사 선택, 담당학년 우선 그룹)
+│   │   ├── MonthlyCalendar.tsx  # 월간 감독배정 캘린더 (학년당 1슬롯, 텍스트 검색 교사 선택, 담당학년 우선 그룹). 래퍼 `table-scroll`, 마지막 2주 행은 `CalendarTeacherSelect openUpward`로 드롭다운을 위로
 │   │   └── ExcelUploadModal.tsx # 공용 Excel 업로드 모달 (드래그앤드롭, 교사/학생 공용)
 │   ├── grade-admin/
 │   │   ├── TodayAttendanceDashboard.tsx  # 오늘출결 대시보드 (grade prop, SESSION_TYPES 3카드)
@@ -84,13 +85,13 @@ src/
 │   ├── homeroom/
 │   │   └── SupervisorSummaryModal.tsx  # 학년도 기준 교사별 월별 감독횟수 집계 모달 (`/api/homeroom/schedule/summary`, 본인 행 sticky 강조)
 │   ├── seats/
-│   │   ├── SeatingEditor.tsx       # DndContext + 저장 + 출력 버튼 (props: grade, sessionType). 미배정 목록은 `participatesInSeatSession` 으로 필터
-│   │   ├── RoomGrid.tsx            # 교실 격자 (droppable/draggable 셀). `preserveSeatWidth` prop: 오후 분기 전용 최소 셀 폭(`MIN_SEAT_WIDTH=52`) — 셀을 찌그러뜨리지 않고 래퍼가 가로 스크롤
+│   │   ├── SeatingEditor.tsx       # DndContext + 저장 + 출력 버튼 (props: grade, sessionType). 미배정 목록은 `participatesInSeatSession` 으로 필터. 좌석 해제: `selectedSeat` 선택 → 루트 마지막 자식 `sticky bottom-2` 액션바(배정 해제/취소/Escape), 또는 좌석→미배정 패널 드롭. 충돌 감지 커스텀(패널은 `getBoundingClientRect()` 실시간, 나머지는 패널 제외 `closestCenter`)
+│   │   ├── RoomGrid.tsx            # 교실 격자 (droppable/draggable 셀). X(해제) 버튼 없음 — props `selectedSeatKey?`/`onSelectSeat?(SeatRef|null)`(`export type SeatRef`)로 좌석 탭 선택(ring), 핸들 Delete/Backspace도 선택. `preserveSeatWidth` prop: 오후 분기 전용 최소 셀 폭(`MIN_SEAT_WIDTH=52`) — 셀을 찌그러뜨리지 않고 래퍼가 가로 스크롤
 │   │   ├── MiraeHallLayout.tsx     # 2학년 야간 미래홀 도면 (fitContent 옵션)
 │   │   ├── PrintRoomGrid.tsx       # 인쇄용 읽기전용 좌석 격자 (dnd 없음, 고정 셀 크기)
 │   │   ├── SeatPrintGroup.tsx      # 인쇄 그룹 1개 (제목 + kind별 배치 + 교탁)
 │   │   ├── PrintPageFitter.tsx     # A4 페이지 박스 + 콘텐츠 실측 후 scale
-│   │   └── UnassignedStudents.tsx  # 미배정 학생 풀 (검색/반별 그룹)
+│   │   └── UnassignedStudents.tsx  # 미배정 학생 풀 (검색/반별 그룹). `export const UNASSIGNED_DROP_ID = "unassigned"` + `useDroppable` — 좌석을 끌어다 놓으면 해제(좌석 드래그 중에만 isOver 링)
 │   └── students/
 │       └── StudentManagement.tsx   # 학생 목록 + CRUD 모달 + ExcelUploadModal. 모달은 열려 있을 때만 마운트(`{modalOpen && <StudentModal/>}`, 마운트 시 initialData 로 초기화)
 │
@@ -332,8 +333,22 @@ SupervisorReminderLog: teacherId, grade, date(@db.Date), sentAt — @@unique([te
 ## 주의사항 / 특이 패턴
 
 - `react-hooks/set-state-in-effect`는 eslint 오류(빌드 게이트 아님)이며 "이전 값 저장 후 렌더 중 상태 조정" 패턴으로 대응 — `eslint-disable` 금지. 검수(tsc/eslint/build)는 `~/dev/selfstudy` 로컬 클론에서 실행(Google Drive 트리는 I/O로 정지)
+- 표 래퍼는 `overflow-x-auto table-scroll`(`globals.css` `@utility`, `--header-h` 기반 내부 스크롤포트) + thead `sticky top-0 z-20` / thead 안 인덱스 th `z-30` / 본문 인덱스 td `z-10` 관행 — 래퍼에 `overflow-x-auto`만 두면 높이 제한이 없어 sticky thead가 붙지 않음. 새 표는 이 구조를 따르고 `tests/responsive-tables.test.ts`의 `TABLE_FILES`에 추가. 헤더가 다른 레이아웃은 루트에 `[--header-h:…]` 재정의(학생 `7.625rem`)
+- `RoomGrid`에는 X(해제) 버튼이 없음 — 해제는 좌석 탭→선택→`SeatingEditor` 하단 액션바, 또는 좌석→`UnassignedStudents` 패널 드롭(`UNASSIGNED_DROP_ID`). `tests/responsive-tables.test.ts`·`tests/seating-editor-responsive.test.ts`가 클래스/식별자를 src 스캔으로 고정하므로 관련 클래스(`min-h-11`, `z-20`, `table-scroll`, `ring-2 ring-blue-500` 등) 변경 시 테스트도 함께 갱신
 
 ## 수정 이력 (주요 변경)
+
+### 2026-09-08: 반응형 위반 정리(핸드오프 §4.2) + 좌석 해제 44px 설계
+- **계획 문서**: `.plans/2026-09-08-responsive-cleanup-final.md`(초안·리뷰·사후검토 문서 동반). DB/API 변경 없음 — src 24파일 수정 + 테스트 1개 신규/1개 갱신
+- **`src/app/globals.css` 신설 관행**: `:root { --header-h: 3.5rem }`(sticky nav `h-14`) + `@utility table-scroll { max-height: calc(100dvh - var(--header-h)); overflow: auto }`. 표 래퍼는 `overflow-x-auto table-scroll`로 내부 스크롤포트를 만들어 sticky thead가 붙게 함 — `overflow-x: auto`만 있으면 래퍼가 스크롤포트가 되는데 높이 제한이 없어 sticky가 무효였음. 학생 레이아웃은 헤더가 높아 루트에 `[--header-h:7.625rem]` 재정의
+- **z 서열 관행(thead 단위 sticky)**: 본문 인덱스 td `z-10` < thead `z-20`(stacking context) < thead 안 인덱스 th `z-30`(thead 컨텍스트 로컬 — 형제 th보다 위라는 뜻, 바깥 td와 비교되지 않음). 적용 표 7곳: `MonthlyCalendar`(헤더 div), `ParticipationManagement`, `GradeMonthlyAttendance`, `StudentManagement`, `homeroom/participation`, `grade-admin/[grade]/participation`, `student/attendance`. sticky 셀은 불투명 배경 명시, 행 hover는 `tr group` + td `group-hover:bg-gray-50`
+- **44px 터치 타겟(§6)**: 버튼 `min-h-11`(화살표류 `+min-w-11`); 체크박스는 시각 크기 유지 + `<label className="… h-11 w-11">` 히트 영역(방과후 label은 `mx-auto mt-2 flex` 블록 — `inline-flex`면 참여 버튼 옆에 놓여 겹침); 참여설정 colgroup 36→52px; 감독일정 슬롯 행 전체가 button(`rowClass` `min-h-11`, `aria-label`); 날짜 팝오버 `w-[min(100vw-1.5rem,344px)]`; 네비 링크/로그아웃 `inline-flex min-h-11 items-center`; 출석 그리드 팝업 닫기 `w-11 h-11`
+- **레이아웃**: `min-h-screen`→`min-h-dvh` 7파일(admin/grade-admin/homeroom/student/attendance 레이아웃, login, help), main `px-2 md:px-3 lg:px-4`(모바일 8px = §1 범위)
+- **좌석 해제 설계 변경(hover 전용 X 버튼 제거)**: `RoomGrid` props `onRemoveStudent` 제거 → `selectedSeatKey?: string|null`, `onSelectSeat?: (seat: SeatRef|null) => void`(`export type SeatRef = {roomId,row,col}`). 좌석 탭(바깥 droppable div `onClick` — dnd-kit 활성화 5px 전 click은 전달됨, 빈 좌석 탭은 null) → 선택 ring(`ring-2 ring-blue-500 ring-offset-1`) → `SeatingEditor` 루트 마지막 자식 `sticky bottom-2 z-40` 액션바(`배정 해제` autoFocus / `취소` / Escape, xl은 `sm:mr-auto sm:w-96`로 격자 열 정렬). 같은 좌석 재탭·드래그 시작·데이터 재로드·해제 후 선택 초기화. 데스크탑은 좌석→`UnassignedStudents` 패널 드롭(`export const UNASSIGNED_DROP_ID = "unassigned"`, `useDroppable`). 충돌 감지: 패널은 `getBoundingClientRect()` 실시간 판정(xl:sticky 패널은 dnd-kit 캐시 rect와 autoScroll 시 어긋나 해제 대신 교환 발생), 나머지는 패널을 제외한 `closestCenter`. 핸들 Delete/Backspace → 선택. `HelpDemos`의 `onRemoveStudent` 제거
+- **`MonthlyCalendar`**: `CalendarTeacherSelect`에 `openUpward` prop — 마지막 2주 행은 드롭다운을 `bottom-full mb-0.5`로 위로 펼쳐 `table-scroll` 래퍼 하단 클리핑 회피(중간 행은 기존과 동일)
+- **테스트**: 신규 `tests/responsive-tables.test.ts`(globals/레이아웃/표 7곳/버튼/모달/팝오버를 src 스캔으로 고정, `TABLE_FILES` 목록), `tests/seating-editor-responsive.test.ts`의 해제 버튼 단언 → 새 설계 단언(onSelectSeat/ring/UNASSIGNED_DROP_ID/getBoundingClientRect/closestCenter 패널 제외/Escape)으로 교체 — 총 30개
+- **검수 결과**: 테스트 30/30, eslint 오류 0(경고 7 `no-img-element`), tsc 0, `next build` 성공. 커밋 전 상태(사용자 확인 대기, `main` = 프로덕션)
+- **남긴 후속 과제**: 좌석 격자 `gap-1`(4px, §6 8px 미달 — 미래홀 도면 기하 회귀 위험으로 보류, 드래그가 주 인터랙션), 범위 밖 동일 패턴 표(`homeroom/attendance`, `homeroom/page`, `homeroom/absence-requests`, `admin/users`, `student/batch-absence`, `admin/statistics`), `MonthlyCalendar` 콤보박스 input 높이, `AttendanceDatePicker` 셀 간격 2px
 
 ### 2026-09-08: 오후 좌석 편집기 미배정 목록 참여 필터 회귀 수정
 - **증상**: `/grade-admin/[grade]/seats`·`/admin/seats`의 "오후 자율학습" 탭 미배정 목록에 전체 학생이 표시. 원인은 `SeatingEditor`의 참여 필터가 좌석 세션 값(`"afternoon"`)을 `ParticipationDay.sessionType`(afternoon1/afternoon2/night)과 직접 비교 — 2026-08-26 오후 분리 이후 항상 불일치해 "기본 참여"로 떨어짐(야간은 양쪽 enum에 `"night"`가 있어 우연히 정상)
