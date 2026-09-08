@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function HelpPage() {
   return (
-    <main className="min-h-screen bg-gray-50 text-gray-950">
+    <main className="min-h-dvh bg-gray-50 text-gray-950">
       <header className="border-b border-blue-800 bg-blue-700 text-white">
         <div className="mx-auto flex w-full max-w-5xl items-center gap-3 px-4 py-4 sm:px-6">
           <Image src="/posan.svg" alt="포산고 로고" width={34} height={34} priority />
@@ -20,8 +20,8 @@ export default function HelpPage() {
         </div>
       </header>
 
-      <div className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 lg:py-12">
-        <article className="rounded-lg border border-gray-200 bg-white px-5 py-7 shadow-sm sm:px-8 sm:py-10">
+      <div className="mx-auto w-full max-w-5xl px-2 py-4 sm:px-6 sm:py-8 lg:py-12">
+        <article className="rounded-lg border border-gray-200 bg-white px-3 py-5 shadow-sm sm:px-8 sm:py-10">
           <HelpContent />
         </article>
       </div>

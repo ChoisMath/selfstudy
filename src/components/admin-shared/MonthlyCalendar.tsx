@@ -20,6 +20,8 @@ type SlotConfig = {
 };
 
 const DAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"];
+// 래퍼(table-scroll) 하단에서 감독 드롭다운이 잘리지 않도록 마지막 N 주는 위로 펼친다
+const UPWARD_DROPDOWN_WEEKS = 2;
 
 function formatDate(d: Date) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -70,6 +72,8 @@ export default function MonthlyCalendar({
   }, [grade, showAllGrades]);
 
   const monthDays = useMemo(() => getMonthDays(year, month), [year, month]);
+  const upwardFromIndex =
+    (Math.ceil(monthDays.length / DAY_LABELS.length) - UPWARD_DROPDOWN_WEEKS) * DAY_LABELS.length;
 
   const fromStr = `${year}-${String(month + 1).padStart(2, "0")}-01`;
   const lastDate = new Date(year, month + 1, 0);
@@ -212,7 +216,7 @@ export default function MonthlyCalendar({
       <div className="flex items-center justify-between mb-4">
         <button
           onClick={prevMonth}
-          className="px-3 py-2 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+          className="min-h-11 whitespace-nowrap px-3 py-2 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50"
         >
           &larr; 이전달
         </button>
@@ -222,14 +226,14 @@ export default function MonthlyCalendar({
           </span>
           <button
             onClick={goToday}
-            className="px-3 py-1.5 text-xs bg-blue-50 text-blue-600 border border-blue-200 rounded-md hover:bg-blue-100"
+            className="min-h-11 whitespace-nowrap px-3 py-1.5 text-xs bg-blue-50 text-blue-600 border border-blue-200 rounded-md hover:bg-blue-100"
           >
             이번달
           </button>
           {excelHref && (
             <a
               href={`${excelHref}?month=${year}-${String(month + 1).padStart(2, "0")}`}
-              className="px-3 py-1.5 text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-md hover:bg-emerald-100"
+              className="inline-flex items-center min-h-11 whitespace-nowrap px-3 py-1.5 text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-md hover:bg-emerald-100"
             >
               Excel
             </a>
@@ -237,7 +241,7 @@ export default function MonthlyCalendar({
         </div>
         <button
           onClick={nextMonth}
-          className="px-3 py-2 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+          className="min-h-11 whitespace-nowrap px-3 py-2 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50"
         >
           다음달 &rarr;
         </button>
@@ -247,9 +251,9 @@ export default function MonthlyCalendar({
         <div className="text-center py-4 text-sm text-gray-400">로딩 중...</div>
       )}
 
-      <div className="bg-white border border-gray-200 rounded-lg overflow-x-auto">
+      <div className="bg-white border border-gray-200 rounded-lg overflow-x-auto table-scroll">
         <div className="min-w-[700px]">
-        <div className="grid grid-cols-7 bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
+        <div className="grid grid-cols-7 bg-gray-50 border-b border-gray-200 sticky top-0 z-20">
           {DAY_LABELS.map((label, i) => (
             <div
               key={i}
@@ -265,6 +269,7 @@ export default function MonthlyCalendar({
         <div className="grid grid-cols-7">
           {monthDays.map((date, idx) => {
             const isSingleSlot = slots.length === 1;
+            const openUpward = idx >= upwardFromIndex;
             return (
               <div
                 key={idx}
@@ -313,6 +318,7 @@ export default function MonthlyCalendar({
                                 disabled={loading || isSaving}
                                 isSaving={isSaving}
                                 isSingleSlot={isSingleSlot}
+                                openUpward={openUpward}
                                 onChange={(id) =>
                                   handleAssign(date, slot.grade, slot.sessionType, id)
                                 }
@@ -341,6 +347,7 @@ const CalendarTeacherSelect = memo(function CalendarTeacherSelect({
   disabled,
   isSaving,
   isSingleSlot,
+  openUpward,
   onChange,
 }: {
   teachers: Teacher[];
@@ -349,6 +356,7 @@ const CalendarTeacherSelect = memo(function CalendarTeacherSelect({
   disabled: boolean;
   isSaving: boolean;
   isSingleSlot: boolean;
+  openUpward: boolean;
   onChange: (id: number | null) => void;
 }) {
   const [query, setQuery] = useState("");
@@ -442,11 +450,11 @@ const CalendarTeacherSelect = memo(function CalendarTeacherSelect({
       {isOpen && (
         <ul
           ref={listRef}
-          className="absolute z-50 w-48 mt-0.5 bg-white border border-gray-200 rounded-md shadow-lg max-h-48 overflow-y-auto text-sm"
+          className={`absolute z-50 w-48 ${openUpward ? "bottom-full mb-0.5" : "mt-0.5"} bg-white border border-gray-200 rounded-md shadow-lg max-h-48 overflow-y-auto text-sm`}
         >
           <li
             onMouseDown={() => select(null)}
-            className={`px-2 py-1.5 cursor-pointer text-gray-400 hover:bg-gray-50 ${
+            className={`min-h-11 flex items-center px-2 cursor-pointer text-gray-400 hover:bg-gray-50 ${
               highlightIdx === -1 ? "bg-blue-50" : ""
             }`}
           >
@@ -457,7 +465,7 @@ const CalendarTeacherSelect = memo(function CalendarTeacherSelect({
               key={t.id}
               onMouseDown={() => select(t.id)}
               onMouseEnter={() => setHighlightIdx(idx)}
-              className={`px-2 py-1.5 cursor-pointer ${
+              className={`min-h-11 flex items-center px-2 cursor-pointer ${
                 idx === highlightIdx ? "bg-blue-50 text-blue-700" : "text-gray-700 hover:bg-gray-50"
               } ${t.id === value ? "font-semibold" : ""} ${
                 idx === separatorAfter ? "border-b border-gray-200" : ""

@@ -32,17 +32,17 @@ export default function AttendancePage() {
 
   return (
     <div className="flex items-center justify-center min-h-[60dvh]">
-      <div className="bg-white rounded-lg shadow-lg p-8 max-w-sm w-full mx-4 text-center">
+      <div className="bg-white rounded-lg shadow-lg p-4 sm:p-8 max-w-sm w-full mx-2 text-center">
         <h2 className="text-lg font-semibold text-gray-900 mb-2">출석 확인할 학년 선택</h2>
         {assignedGrade && (
           <p className="text-sm text-blue-600 mb-4">* 오늘 감독: {assignedGrade}학년 (배정됨)</p>
         )}
-        <div className="flex gap-3 justify-center mt-4">
+        <div className="flex gap-2 sm:gap-3 justify-center mt-4">
           {[1, 2, 3].map((g) => (
             <button
               key={g}
               onClick={() => router.push(`/attendance/${g}`)}
-              className={`px-6 py-4 rounded-lg text-lg font-bold transition-colors ${
+              className={`px-4 sm:px-6 py-4 rounded-lg text-base sm:text-lg font-bold whitespace-nowrap transition-colors ${
                 assignedGrade === g
                   ? "bg-blue-600 text-white hover:bg-blue-700"
                   : "bg-gray-100 text-gray-700 hover:bg-gray-200"

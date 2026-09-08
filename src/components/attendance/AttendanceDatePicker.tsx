@@ -30,7 +30,7 @@ export default function AttendanceDatePicker({ value, today, onChange }: Attenda
   const cells = buildMonthCells(view.year, view.month);
 
   return (
-    <div className="bg-white border border-[#e2e8f0] rounded-xl shadow-xl p-3 w-[clamp(260px,80vw,320px)]">
+    <div className="bg-white border border-[#e2e8f0] rounded-xl shadow-xl p-3 w-[min(100vw-1.5rem,344px)]">
       <div className="flex items-center justify-between mb-2">
         <button
           type="button"
@@ -77,7 +77,7 @@ export default function AttendanceDatePicker({ value, today, onChange }: Attenda
               key={date}
               type="button"
               onClick={() => onChange(date)}
-              className={`aspect-square min-h-9 rounded-md text-[13px] font-medium transition-colors ${
+              className={`aspect-square min-h-11 rounded-md text-[13px] font-medium transition-colors ${
                 isSelected
                   ? "bg-[#2563eb] text-white"
                   : isToday

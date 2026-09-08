@@ -150,7 +150,7 @@ export default function SchedulePage() {
     <div>
       {/* 월 네비게이션 */}
       <div className="flex items-center justify-between mb-4 gap-2">
-        <button onClick={prevMonth} className="px-3 py-2 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50 shrink-0">
+        <button onClick={prevMonth} className="min-h-11 min-w-11 px-3 py-2 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50 shrink-0">
           &larr;
         </button>
         <div className="flex items-center justify-center gap-2 flex-1">
@@ -158,12 +158,12 @@ export default function SchedulePage() {
             {year}.{String(month + 1).padStart(2, "0")}
           </span>
           {(year !== today.getFullYear() || month !== today.getMonth()) && (
-            <button onClick={goToday} className="px-3 py-1.5 text-xs bg-blue-50 text-blue-600 border border-blue-200 rounded-md hover:bg-blue-100 whitespace-nowrap">
+            <button onClick={goToday} className="min-h-11 px-3 py-1.5 text-xs bg-blue-50 text-blue-600 border border-blue-200 rounded-md hover:bg-blue-100 whitespace-nowrap">
               Now
             </button>
           )}
         </div>
-        <button onClick={nextMonth} className="px-3 py-2 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50 shrink-0">
+        <button onClick={nextMonth} className="min-h-11 min-w-11 px-3 py-2 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50 shrink-0">
           &rarr;
         </button>
       </div>
@@ -176,10 +176,10 @@ export default function SchedulePage() {
           </span>
           <span className="whitespace-nowrap">학년별 1명 (오후1·오후2·야간)</span>
         </div>
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-2">
           <button
             onClick={() => setShowWeekend(!showWeekend)}
-            className={`px-2.5 py-1 text-xs rounded-md border transition-colors whitespace-nowrap ${
+            className={`min-h-11 px-2.5 py-1 text-xs rounded-md border transition-colors whitespace-nowrap ${
               showWeekend
                 ? "bg-blue-50 text-blue-600 border-blue-200"
                 : "bg-gray-50 text-gray-500 border-gray-200"
@@ -189,7 +189,7 @@ export default function SchedulePage() {
           </button>
           <button
             onClick={() => setShowSummary(true)}
-            className="px-2.5 py-1 text-xs rounded-md border border-gray-200 bg-gray-50 text-gray-500 hover:bg-gray-100 transition-colors whitespace-nowrap"
+            className="min-h-11 px-2.5 py-1 text-xs rounded-md border border-gray-200 bg-gray-50 text-gray-500 hover:bg-gray-100 transition-colors whitespace-nowrap"
           >
             누계
           </button>
@@ -247,29 +247,35 @@ export default function SchedulePage() {
                         const isMine = assignment?.teacherId === currentUserId;
                         const isFutureOrToday = formatDate(date) >= todayStr;
 
-                        return (
-                          <div
-                            key={`${slot.grade}-${slot.sessionType}`}
-                            className={`flex items-center gap-0.5 sm:gap-1 px-1 py-0.5 sm:py-1 rounded text-[10px] sm:text-sm leading-tight ${
-                              isMine
-                                ? "bg-yellow-100 border border-yellow-300 font-bold text-yellow-900"
-                                : assignment
-                                  ? "text-gray-800 font-medium"
-                                  : "text-gray-300"
-                            }`}
-                          >
+                        // 9px "교체" 글자 대신 행 전체가 44px 탭 타겟(responsive-ui §6)
+                        const rowClass = `flex min-h-11 items-center gap-0.5 sm:gap-1 px-1 py-0.5 sm:py-1 rounded text-[10px] sm:text-sm leading-tight ${
+                          isMine
+                            ? "bg-yellow-100 border border-yellow-300 font-bold text-yellow-900"
+                            : assignment
+                              ? "text-gray-800 font-medium"
+                              : "text-gray-300"
+                        }`;
+                        const rowContent = (
+                          <>
                             <span className="text-[9px] sm:text-xs text-gray-400 shrink-0">{slot.grade}</span>
-                            <span className="truncate flex-1">
-                              {assignment?.teacherName ?? "-"}
-                            </span>
-                            {assignment && isFutureOrToday && (
-                              <button
-                                onClick={() => handleSwapClick(assignment)}
-                                className="shrink-0 text-[9px] sm:text-xs text-blue-600 hover:text-blue-800 font-medium"
-                              >
-                                교체
-                              </button>
-                            )}
+                            <span className="truncate flex-1">{assignment?.teacherName ?? "-"}</span>
+                          </>
+                        );
+
+                        return assignment && isFutureOrToday ? (
+                          <button
+                            key={`${slot.grade}-${slot.sessionType}`}
+                            type="button"
+                            onClick={() => handleSwapClick(assignment)}
+                            aria-label={`${slot.grade}학년 ${assignment.teacherName} 감독 교체`}
+                            className={`${rowClass} w-full text-left ${isMine ? "hover:bg-yellow-200" : "hover:bg-blue-50"}`}
+                          >
+                            {rowContent}
+                            <span className="shrink-0 text-[9px] sm:text-xs text-blue-600 font-medium">교체</span>
+                          </button>
+                        ) : (
+                          <div key={`${slot.grade}-${slot.sessionType}`} className={rowClass}>
+                            {rowContent}
                           </div>
                         );
                       })}
@@ -290,7 +296,7 @@ export default function SchedulePage() {
       {/* 교체 모달 */}
       {swapTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 p-6">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-2 p-3 sm:mx-4 sm:p-6">
             <h2 className="text-lg font-bold text-gray-900 mb-4">감독 교체</h2>
             <div className="text-sm text-gray-600 mb-4">
               {swapTarget.date} {swapTarget.grade}학년 감독을 교체합니다.
@@ -335,14 +341,14 @@ export default function SchedulePage() {
             <div className="flex items-center justify-end gap-2 mt-6">
               <button
                 onClick={() => setSwapTarget(null)}
-                className="px-4 py-2 text-sm text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+                className="min-h-11 px-4 py-2 text-sm text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
               >
                 취소
               </button>
               <button
                 onClick={handleSwapSubmit}
                 disabled={!selectedTeacher || processing}
-                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="min-h-11 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {processing
                   ? "처리 중..."

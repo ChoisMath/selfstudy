@@ -105,7 +105,7 @@ export default function StudentAttendancePage() {
       <div className="flex gap-2 mb-4">
         <button
           onClick={() => setViewTab("weekly")}
-          className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+          className={`min-h-11 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
             viewTab === "weekly"
               ? "bg-blue-600 text-white"
               : "bg-gray-100 text-gray-600 hover:bg-gray-200"
@@ -115,7 +115,7 @@ export default function StudentAttendancePage() {
         </button>
         <button
           onClick={() => setViewTab("monthly")}
-          className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+          className={`min-h-11 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
             viewTab === "monthly"
               ? "bg-blue-600 text-white"
               : "bg-gray-100 text-gray-600 hover:bg-gray-200"
@@ -202,7 +202,7 @@ function WeeklyView({
       <div className="flex items-center justify-between mb-4">
         <button
           onClick={onPrev}
-          className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg"
+          className="min-h-11 min-w-11 flex items-center justify-center p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg"
         >
           &lt;
         </button>
@@ -211,7 +211,7 @@ function WeeklyView({
         </span>
         <button
           onClick={onNext}
-          className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg"
+          className="min-h-11 min-w-11 flex items-center justify-center p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg"
         >
           &gt;
         </button>
@@ -219,45 +219,47 @@ function WeeklyView({
 
       {/* 테이블 */}
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="bg-gray-50 border-b border-gray-200">
-            <tr>
-              <th className="px-3 py-2.5 text-left font-medium text-gray-600 w-16"></th>
-              {weekDates.map((d, i) => (
-                <th
-                  key={d}
-                  className="px-2 py-2.5 text-center font-medium text-gray-600"
-                >
-                  <div>{DAY_LABELS[i]}</div>
-                  <div className="text-xs text-gray-400 font-normal">
-                    {formatDate(d)}
-                  </div>
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {SESSION_TYPES.map((sessionType) => (
-              <tr key={sessionType} className="border-t border-gray-100">
-                <td className="px-3 py-3 text-gray-600 font-medium whitespace-nowrap">
-                  {SESSION_META[sessionType].shortLabel}
-                </td>
-                {weekDates.map((d, i) => {
-                  const record = attendanceMap.get(`${d}_${sessionType}`);
-                  const participating = isParticipating(sessionType, i);
-                  return (
-                    <td key={d} className="px-2 py-3 text-center">
-                      <StatusBadge
-                        status={record?.status}
-                        isParticipating={participating}
-                      />
-                    </td>
-                  );
-                })}
+        <div className="overflow-x-auto table-scroll">
+          <table className="w-full text-sm whitespace-nowrap">
+            <thead className="bg-gray-50 border-b border-gray-200 sticky top-0 z-20">
+              <tr>
+                <th className="sticky left-0 z-30 bg-gray-50 px-3 py-2.5 text-left font-medium text-gray-600 w-16"></th>
+                {weekDates.map((d, i) => (
+                  <th
+                    key={d}
+                    className="px-2 py-2.5 text-center font-medium text-gray-600"
+                  >
+                    <div>{DAY_LABELS[i]}</div>
+                    <div className="text-xs text-gray-400 font-normal">
+                      {formatDate(d)}
+                    </div>
+                  </th>
+                ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {SESSION_TYPES.map((sessionType) => (
+                <tr key={sessionType} className="border-t border-gray-100">
+                  <td className="sticky left-0 z-10 bg-white px-3 py-3 text-gray-600 font-medium whitespace-nowrap">
+                    {SESSION_META[sessionType].shortLabel}
+                  </td>
+                  {weekDates.map((d, i) => {
+                    const record = attendanceMap.get(`${d}_${sessionType}`);
+                    const participating = isParticipating(sessionType, i);
+                    return (
+                      <td key={d} className="px-2 py-3 text-center">
+                        <StatusBadge
+                          status={record?.status}
+                          isParticipating={participating}
+                        />
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* 결석 사유 */}
@@ -358,7 +360,7 @@ function MonthlyView({
       <div className="flex items-center justify-between mb-4">
         <button
           onClick={onPrev}
-          className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg"
+          className="min-h-11 min-w-11 flex items-center justify-center p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg"
         >
           &lt;
         </button>
@@ -367,7 +369,7 @@ function MonthlyView({
         </span>
         <button
           onClick={onNext}
-          className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg"
+          className="min-h-11 min-w-11 flex items-center justify-center p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg"
         >
           &gt;
         </button>

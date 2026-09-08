@@ -110,7 +110,7 @@ export default function ParticipationManagement({ grade }: { grade: number }) {
         <select
           value={classFilter}
           onChange={(e) => setClassFilter(e.target.value)}
-          className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="min-h-11 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="">전체 반</option>
           {classNumbers.map((n) => (<option key={n} value={n}>{n}반</option>))}
@@ -119,19 +119,19 @@ export default function ParticipationManagement({ grade }: { grade: number }) {
       </div>
 
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm" style={{ tableLayout: "fixed" }}>
+        <div className="overflow-x-auto table-scroll">
+          <table className="w-full text-sm whitespace-nowrap" style={{ tableLayout: "fixed" }}>
             <colgroup>
               <col style={{ width: "80px" }} />
               <col style={{ width: "44px" }} />
               <col style={{ width: "44px" }} />
               {SESSION_TYPES.flatMap((t) =>
-                [...Array(6)].map((_, i) => <col key={`${t}-${i}`} style={{ width: "36px" }} />)
+                [...Array(6)].map((_, i) => <col key={`${t}-${i}`} style={{ width: "52px" }} />)
               )}
             </colgroup>
-            <thead className="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
+            <thead className="bg-gray-50 border-b border-gray-200 sticky top-0 z-20">
               <tr>
-                <th rowSpan={3} className="px-2 py-3 text-left font-medium text-gray-600 border-b border-gray-200">이름</th>
+                <th rowSpan={3} className="sticky left-0 z-30 bg-gray-50 px-2 py-3 text-left font-medium text-gray-600 border-b border-gray-200">이름</th>
                 <th rowSpan={3} className="py-3 text-center font-medium text-gray-600 border-b border-gray-200">반</th>
                 <th rowSpan={3} className="py-3 text-center font-medium text-gray-600 border-b border-gray-200">번호</th>
                 {SESSION_TYPES.map((t) => (
@@ -143,14 +143,18 @@ export default function ParticipationManagement({ grade }: { grade: number }) {
               <tr className="bg-gray-50">
                 {SESSION_TYPES.map((session) => [
                   <th key={`${session}-chk`} className="py-2 text-center text-xs font-medium text-gray-500 border-l border-gray-200">
-                    <input
-                      type="checkbox"
-                      checked={allChecked[session]}
-                      onChange={(e) => handleBulkToggle(session, e.target.checked)}
-                      disabled={!!bulkSaving || filteredStudents.length === 0}
-                      className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50"
+                    <label
+                      className="inline-flex h-11 w-11 cursor-pointer items-center justify-center"
                       title={`${SESSION_META[session].shortLabel} 전체 참가 토글`}
-                    />
+                    >
+                      <input
+                        type="checkbox"
+                        checked={allChecked[session]}
+                        onChange={(e) => handleBulkToggle(session, e.target.checked)}
+                        disabled={!!bulkSaving || filteredStudents.length === 0}
+                        className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50"
+                      />
+                    </label>
                   </th>,
                   ...DAY_LABELS.map((l) => (
                     <th key={`${session}-${l}`} className="py-2 text-center text-xs font-medium text-gray-500">{l}</th>
@@ -175,27 +179,29 @@ export default function ParticipationManagement({ grade }: { grade: number }) {
                 <tr><td colSpan={21} className="px-4 py-8 text-center text-gray-400">학생이 없습니다.</td></tr>
               ) : (
                 filteredStudents.map((student) => (
-                  <tr key={student.id} className="hover:bg-gray-50">
-                    <td className="px-2 py-2 text-gray-900 font-medium whitespace-nowrap truncate">{student.name}</td>
-                    <td className="py-2 text-center text-gray-600">{student.classNumber}</td>
-                    <td className="py-2 text-center text-gray-600">{student.studentNumber}</td>
+                  <tr key={student.id} className="group hover:bg-gray-50">
+                    <td className="sticky left-0 z-10 bg-white group-hover:bg-gray-50 px-2 py-1 text-gray-900 font-medium whitespace-nowrap truncate">{student.name}</td>
+                    <td className="py-1 text-center text-gray-600">{student.classNumber}</td>
+                    <td className="py-1 text-center text-gray-600">{student.studentNumber}</td>
                     {SESSION_TYPES.map((session) => {
                       const settings = student.sessions[session];
                       return [
-                        <td key={`${session}-chk`} className="py-2 text-center border-l border-gray-100">
-                          <input
-                            type="checkbox"
-                            checked={settings.isParticipating}
-                            onChange={(e) => handleUpdate(student.id, session, "isParticipating", e.target.checked)}
-                            className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                          />
+                        <td key={`${session}-chk`} className="py-1 text-center border-l border-gray-100">
+                          <label className="inline-flex h-11 w-11 cursor-pointer items-center justify-center">
+                            <input
+                              type="checkbox"
+                              checked={settings.isParticipating}
+                              onChange={(e) => handleUpdate(student.id, session, "isParticipating", e.target.checked)}
+                              className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                            />
+                          </label>
                         </td>,
                         ...DAY_KEYS.map((day, dayIdx) => (
-                          <td key={`${session}-${day}`} className="py-2 text-center">
+                          <td key={`${session}-${day}`} className="py-1 text-center">
                             <button
                               onClick={() => handleUpdate(student.id, session, day, !settings[day])}
                               disabled={!settings.isParticipating}
-                              className={`w-7 h-7 rounded text-xs font-medium transition-colors ${
+                              className={`h-11 w-11 rounded text-xs font-medium transition-colors ${
                                 !settings.isParticipating
                                   ? "bg-gray-100 text-gray-300 cursor-not-allowed"
                                   : settings[day]
@@ -205,7 +211,7 @@ export default function ParticipationManagement({ grade }: { grade: number }) {
                             >
                               {DAY_LABELS[dayIdx]}
                             </button>
-                            <div className="mt-1">
+                            <label className="mx-auto mt-2 flex h-11 w-11 cursor-pointer items-center justify-center">
                               <input
                                 type="checkbox"
                                 checked={settings[AFTER_SCHOOL_KEYS[dayIdx]]}
@@ -214,7 +220,7 @@ export default function ParticipationManagement({ grade }: { grade: number }) {
                                 className="w-3.5 h-3.5 rounded border-gray-300 disabled:opacity-30"
                                 style={{ accentColor: '#ea580c' }}
                               />
-                            </div>
+                            </label>
                           </td>
                         )),
                       ];

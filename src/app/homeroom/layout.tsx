@@ -36,7 +36,7 @@ export default function HomeroomLayout({ children }: { children: React.ReactNode
 
   if (status === "loading") {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-dvh bg-gray-50">
         <nav className="bg-white border-b border-gray-200">
           <div className="max-w-7xl mx-auto px-4">
             <div className="flex items-center h-14">
@@ -45,13 +45,13 @@ export default function HomeroomLayout({ children }: { children: React.ReactNode
             </div>
           </div>
         </nav>
-        <main className="max-w-7xl mx-auto px-4 py-6">{children}</main>
+        <main className="max-w-7xl mx-auto px-2 md:px-3 lg:px-4 py-6">{children}</main>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-dvh bg-gray-50">
       <nav className="bg-white border-b border-gray-200 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex items-center justify-between h-14">
@@ -73,7 +73,7 @@ export default function HomeroomLayout({ children }: { children: React.ReactNode
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`px-3 py-2 text-sm font-medium rounded-md whitespace-nowrap transition-colors ${
+                    className={`inline-flex min-h-11 items-center px-3 text-sm font-medium rounded-md whitespace-nowrap transition-colors ${
                       isActive
                         ? "bg-blue-50 text-blue-700"
                         : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
@@ -95,7 +95,7 @@ export default function HomeroomLayout({ children }: { children: React.ReactNode
               <span className="text-sm text-gray-500 whitespace-nowrap">{user?.name}</span>
               <button
                 onClick={() => signOut({ callbackUrl: "/login" })}
-                className="text-sm text-gray-500 hover:text-gray-700 whitespace-nowrap"
+                className="min-h-11 px-2 text-sm text-gray-500 hover:text-gray-700 whitespace-nowrap"
               >
                 로그아웃
               </button>
@@ -103,7 +103,7 @@ export default function HomeroomLayout({ children }: { children: React.ReactNode
           </div>
         </div>
       </nav>
-      <main className="max-w-7xl mx-auto px-4 py-6">{children}</main>
+      <main className="max-w-7xl mx-auto px-2 md:px-3 lg:px-4 py-6">{children}</main>
     </div>
   );
 }

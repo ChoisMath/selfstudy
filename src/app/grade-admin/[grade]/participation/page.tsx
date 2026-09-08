@@ -127,7 +127,7 @@ export default function ParticipationPage() {
           <select
             value={classFilter}
             onChange={(e) => setClassFilter(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="min-h-11 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="">전체 반</option>
             {classNumbers.map((n) => (
@@ -144,13 +144,13 @@ export default function ParticipationPage() {
 
       {/* 테이블 */}
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
+        <div className="overflow-x-auto table-scroll">
+          <table className="w-full text-sm whitespace-nowrap">
+            <thead className="bg-gray-50 border-b border-gray-200 sticky top-0 z-20">
               <tr>
                 <th
                   rowSpan={2}
-                  className="px-4 py-3 text-left font-medium text-gray-600 border-b border-gray-200"
+                  className="sticky left-0 z-30 bg-gray-50 px-4 py-3 text-left font-medium text-gray-600 border-b border-gray-200"
                 >
                   이름
                 </th>
@@ -204,14 +204,14 @@ export default function ParticipationPage() {
                 </tr>
               ) : (
                 filteredStudents.map((student) => (
-                  <tr key={student.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-2.5 text-gray-900 font-medium whitespace-nowrap">
+                  <tr key={student.id} className="group hover:bg-gray-50">
+                    <td className="sticky left-0 z-10 bg-white group-hover:bg-gray-50 px-4 py-1 text-gray-900 font-medium whitespace-nowrap">
                       {student.name}
                     </td>
-                    <td className="px-3 py-2.5 text-center text-gray-600">
+                    <td className="px-3 py-1 text-center text-gray-600">
                       {student.classNumber}
                     </td>
-                    <td className="px-3 py-2.5 text-center text-gray-600">
+                    <td className="px-3 py-1 text-center text-gray-600">
                       {student.studentNumber}
                     </td>
 
@@ -219,20 +219,22 @@ export default function ParticipationPage() {
                       const settings = student.sessions[t];
                       return (
                         <React.Fragment key={t}>
-                          <td className="px-2 py-2.5 text-center border-l border-gray-100">
-                            <input
-                              type="checkbox"
-                              checked={settings.isParticipating}
-                              onChange={(e) => handleUpdate(student.id, t, "isParticipating", e.target.checked)}
-                              className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                            />
+                          <td className="px-2 py-1 text-center border-l border-gray-100">
+                            <label className="inline-flex h-11 w-11 cursor-pointer items-center justify-center">
+                              <input
+                                type="checkbox"
+                                checked={settings.isParticipating}
+                                onChange={(e) => handleUpdate(student.id, t, "isParticipating", e.target.checked)}
+                                className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                              />
+                            </label>
                           </td>
                           {DAY_KEYS.map((day) => (
-                            <td key={`${student.id}-${t}-${day}`} className="px-1 py-2.5 text-center">
+                            <td key={`${student.id}-${t}-${day}`} className="px-1 py-1 text-center">
                               <button
                                 onClick={() => handleUpdate(student.id, t, day, !settings[day])}
                                 disabled={!settings.isParticipating}
-                                className={`w-7 h-7 rounded text-xs font-medium transition-colors ${
+                                className={`h-11 w-11 rounded text-xs font-medium transition-colors ${
                                   !settings.isParticipating
                                     ? "bg-gray-100 text-gray-300 cursor-not-allowed"
                                     : settings[day]

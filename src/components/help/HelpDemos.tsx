@@ -96,7 +96,6 @@ export function SeatLayoutDemo() {
               <RoomGrid
                 room={room}
                 seats={roomSeats.get(room.id) ?? new Map()}
-                onRemoveStudent={() => undefined}
                 gapAfterRows={GAP_CONFIG[room.name]}
                 hideTeacherDesk
                 compact

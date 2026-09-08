@@ -10,11 +10,12 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
+  type CollisionDetection,
   type DragStartEvent,
   type DragEndEvent,
 } from "@dnd-kit/core";
-import RoomGrid from "./RoomGrid";
-import UnassignedStudents from "./UnassignedStudents";
+import RoomGrid, { type SeatRef } from "./RoomGrid";
+import UnassignedStudents, { UNASSIGNED_DROP_ID } from "./UnassignedStudents";
 import MiraeHallLayout, { GAP_CONFIG } from "./MiraeHallLayout";
 import { buildPrintGroups } from "@/lib/seats/print-groups";
 import { participatesInSeatSession } from "@/lib/seats/seat-participation";
@@ -83,6 +84,7 @@ export default function SeatingEditor({
   const [dirty, setDirty] = useState<Set<number>>(new Set()); // 변경된 roomId 세트
   const [saving, setSaving] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [selectedSeat, setSelectedSeat] = useState<SeatRef | null>(null);
 
   // 좌석 데이터
   const {
@@ -139,6 +141,7 @@ export default function SeatingEditor({
 
     setSeats(newSeats);
     setDirty(new Set());
+    setSelectedSeat(null);
   }, [layoutData]);
 
   // 배정된 학생 ID 세트
@@ -165,6 +168,23 @@ export default function SeatingEditor({
 
   const handleDragStart = useCallback((event: DragStartEvent) => {
     setActiveId(event.active.id as string);
+    setSelectedSeat(null);
+  }, []);
+
+  // xl 에서 미배정 패널은 sticky 라 dnd-kit 이 스크롤량으로 보정한 캐시 rect 와 실제 위치가 어긋난다
+  // (autoScroll 중 해제 대신 좌석 교환이 일어남). 패널만 실시간 rect 로 판정하고 나머지는 기존 closestCenter.
+  const collisionDetection = useCallback<CollisionDetection>((args) => {
+    const panel = args.droppableContainers.find((c) => c.id === UNASSIGNED_DROP_ID);
+    const rect = panel?.node.current?.getBoundingClientRect();
+    const p = args.pointerCoordinates;
+    if (panel && rect && p && p.x >= rect.left && p.x <= rect.right && p.y >= rect.top && p.y <= rect.bottom) {
+      return [{ id: panel.id, data: { droppableContainer: panel, value: 0 } }];
+    }
+    // 패널 밖에서는 패널이 closestCenter 후보에 남지 않게 — 우측 열 빈 공간에서 해제가 일어나는 것을 막는다
+    return closestCenter({
+      ...args,
+      droppableContainers: args.droppableContainers.filter((c) => c.id !== UNASSIGNED_DROP_ID),
+    });
   }, []);
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -179,6 +199,14 @@ export default function SeatingEditor({
 
     // 드래그 소스 분석
     const activeSource = parseDragId(activeIdStr);
+
+    if (overIdStr === UNASSIGNED_DROP_ID) {
+      if (activeSource?.type === "seat") {
+        handleRemoveStudent(activeSource.roomId, activeSource.row, activeSource.col);
+      }
+      return;
+    }
+
     const overTarget = parseDragId(overIdStr);
 
     if (!overTarget || overTarget.type !== "seat") return;
@@ -248,6 +276,28 @@ export default function SeatingEditor({
     });
     setDirty((d) => new Set(d).add(roomId));
   }, []);
+
+  // 좌석 탭 → 선택(같은 좌석 재탭·빈 좌석 탭은 해제). deps 없음 — memo(RoomGrid) 가 콜백 변화로 재렌더되지 않도록.
+  const handleSelectSeat = useCallback((seat: SeatRef | null) => {
+    setSelectedSeat((prev) =>
+      seat && prev && prev.roomId === seat.roomId && prev.row === seat.row && prev.col === seat.col
+        ? null
+        : seat
+    );
+  }, []);
+
+  const handleUnassignSelected = () => {
+    if (!selectedSeat) return;
+    handleRemoveStudent(selectedSeat.roomId, selectedSeat.row, selectedSeat.col);
+    setSelectedSeat(null);
+  };
+
+  const selectedRoom = selectedSeat ? rooms.find((r) => r.id === selectedSeat.roomId) : undefined;
+  const selectedStudent = selectedSeat
+    ? seats.get(selectedSeat.roomId)?.get(`${selectedSeat.row}-${selectedSeat.col}`)?.student ?? null
+    : null;
+  const selectedSeatKeyOf = (roomId: number) =>
+    selectedSeat?.roomId === roomId ? `${selectedSeat.row}-${selectedSeat.col}` : null;
 
   // 저장
   const handleSave = async () => {
@@ -349,7 +399,7 @@ export default function SeatingEditor({
       ) : (
         <DndContext
           sensors={sensors}
-          collisionDetection={closestCenter}
+          collisionDetection={collisionDetection}
           onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
         >
@@ -363,7 +413,8 @@ export default function SeatingEditor({
                     <RoomGrid
                       room={room}
                       seats={seats.get(room.id) ?? EMPTY_ROOM_SEATS}
-                      onRemoveStudent={handleRemoveStudent}
+                      selectedSeatKey={selectedSeatKeyOf(room.id)}
+                      onSelectSeat={handleSelectSeat}
                       gapAfterRows={GAP_CONFIG[room.name]}
                       hideTeacherDesk
                       compact
@@ -390,7 +441,8 @@ export default function SeatingEditor({
                             key={room.id}
                             room={room}
                             seats={seats.get(room.id) ?? EMPTY_ROOM_SEATS}
-                            onRemoveStudent={handleRemoveStudent}
+                            selectedSeatKey={selectedSeatKeyOf(room.id)}
+                            onSelectSeat={handleSelectSeat}
                             compact
                             preserveSeatWidth
                           />
@@ -406,8 +458,9 @@ export default function SeatingEditor({
                       key={room.id}
                       room={room}
                       seats={seats.get(room.id) ?? EMPTY_ROOM_SEATS}
-                      onRemoveStudent={handleRemoveStudent}
-                    preserveSeatWidth
+                      selectedSeatKey={selectedSeatKeyOf(room.id)}
+                      onSelectSeat={handleSelectSeat}
+                      preserveSeatWidth
                     />
                   ))}
                 </div>
@@ -428,6 +481,40 @@ export default function SeatingEditor({
             ) : null}
           </DragOverlay>
         </DndContext>
+      )}
+
+      {/* 선택 좌석 액션바 — 편집기 마지막 자식의 sticky bottom: 격자가 길어도 엄지 영역에 머물고, 편집기 밖 콘텐츠를 가리지 않는다 */}
+      {selectedSeat && selectedRoom && selectedStudent && (
+        <div
+          role="dialog"
+          aria-label="좌석 배정 해제"
+          onKeyDown={(e) => {
+            if (e.key === "Escape") setSelectedSeat(null);
+          }}
+          className="sticky bottom-2 z-40 mt-4 flex items-center gap-2 rounded-lg border border-blue-300 bg-white p-2 shadow-lg sm:mr-auto sm:w-96"
+        >
+          <span
+            className="min-w-0 flex-1 whitespace-nowrap overflow-hidden text-ellipsis text-sm text-gray-800"
+            title={`${selectedRoom.name} · ${selectedStudent.classNumber}-${selectedStudent.studentNumber} ${selectedStudent.name}`}
+          >
+            {selectedRoom.name} · {selectedStudent.classNumber}-{selectedStudent.studentNumber} {selectedStudent.name}
+          </span>
+          <button
+            type="button"
+            autoFocus
+            onClick={handleUnassignSelected}
+            className="min-h-11 shrink-0 whitespace-nowrap rounded-md bg-red-600 px-3 text-sm font-medium text-white hover:bg-red-700"
+          >
+            배정 해제
+          </button>
+          <button
+            type="button"
+            onClick={() => setSelectedSeat(null)}
+            className="min-h-11 shrink-0 whitespace-nowrap rounded-md border border-gray-300 px-3 text-sm text-gray-700 hover:bg-gray-50"
+          >
+            취소
+          </button>
+        </div>
       )}
     </div>
   );

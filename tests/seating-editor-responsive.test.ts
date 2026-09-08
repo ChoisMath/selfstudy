@@ -44,11 +44,26 @@ assert.match(
   /<span\s+className="[^"]*\bwhitespace-nowrap\b[^"]*\btext-ellipsis\b[^"]*"\s+title=\{cell\.student\.name\}/,
   "좌석 이름 span 에 whitespace-nowrap/text-ellipsis/title 없음 — 5자 이름이 글자 단위로 쪼개짐"
 );
-// 배정 해제 버튼: hover 전용이면 터치 기기에서 보이지도 않고 16px 이라 누를 수도 없다
-const removeButtonClass = roomGrid.match(/<button[\s\S]*?className="([^"]+)"[\s\S]*?title="배정 해제"/)?.[1];
-assert.ok(removeButtonClass, "배정 해제 버튼을 찾지 못함");
-assert.match(removeButtonClass, /(pointer-coarse|\[@media\(hover:none\)\]):opacity-100/, "배정 해제 버튼이 터치 기기에서 보이지 않음 (hover 전용)");
-assert.match(removeButtonClass, /(pointer-coarse|\[@media\(hover:none\)\]):w-7/, "배정 해제 버튼이 터치 기기에서 16px 그대로");
+// 배정 해제: hover 전용 X 버튼(16px/터치 28px) 대신 좌석 탭 → 선택 → 44px 액션바. 데스크탑은 좌석→미배정 패널 드롭.
+assert.doesNotMatch(roomGrid, /group-hover:opacity-100|title="배정 해제"/, "RoomGrid 에 hover 전용 해제 버튼이 남아 있음 (§6 hover 전용 UI 금지)");
+assert.match(roomGrid, /onSelectSeat/, "RoomGrid 에 좌석 선택 콜백(onSelectSeat) 없음");
+assert.match(roomGrid, /ring-2 ring-blue-500/, "선택된 좌석 표시(ring) 없음");
+const roomTitleClass = roomGrid.match(/<h3\s+className=\{`([^`]+)`\}/)?.[1];
+assert.ok(roomTitleClass, "방 이름 h3 을 찾지 못함");
+assert.match(roomTitleClass, /\bwhitespace-nowrap\b/, "방 이름 h3 에 whitespace-nowrap 없음 (§2)");
+const unassignButtonClass = seatingEditor.match(/<button[^>]*className="([^"]+)"[^>]*>\s*배정 해제\s*</)?.[1];
+assert.ok(unassignButtonClass, "SeatingEditor 액션바의 '배정 해제' 버튼을 찾지 못함");
+assert.match(unassignButtonClass, /\bmin-h-11\b/, "'배정 해제' 버튼 터치 타겟이 44px 미만");
+assert.match(seatingEditor, /UNASSIGNED_DROP_ID/, "SeatingEditor 가 미배정 패널 드롭 id 를 쓰지 않음");
+// xl:sticky 패널은 dnd-kit 의 지연 보정 rect 와 어긋나므로 실시간 rect 로 판정해야 함
+assert.match(seatingEditor, /getBoundingClientRect\(\)/, "패널 드롭 판정이 실시간 rect 가 아님 (autoScroll 시 해제 대신 교환 발생)");
+assert.match(unassigned, /export const UNASSIGNED_DROP_ID = "unassigned"/, "UnassignedStudents 가 드롭 id 를 export 하지 않음");
+assert.match(unassigned, /useDroppable\(\{\s*id:\s*UNASSIGNED_DROP_ID/, "UnassignedStudents 패널이 droppable 이 아님");
+assert.match(unassigned, /\bmin-h-11\b/, "미배정 학생 칩이 44px 미만");
+assert.match(unassigned, /isOver && String\(active\?\.id\)\.startsWith\("seat-"\)/, "패널 하이라이트가 학생 칩 드래그에도 켜짐");
+assert.match(seatingEditor, /droppableContainers\.filter\(\(c\) => c\.id !== UNASSIGNED_DROP_ID\)/, "closestCenter 폴백에 패널이 후보로 남아 패널 밖에서도 해제됨");
+assert.match(seatingEditor, /setActiveId\(event\.active\.id as string\);\s*setSelectedSeat\(null\);/, "드래그 시작 시 선택이 해제되지 않음");
+assert.match(seatingEditor, /e\.key === "Escape"\) setSelectedSeat\(null\)/, "액션바 Escape 로 선택 해제 불가");
 
 // 미래홀 도면: minWidth 700px 과 overflow-x-auto 가 같은 요소에 있으면 그 요소가 700px 로 커져 문서가 가로 스크롤된다
 const miraeHall = read("../src/components/seats/MiraeHallLayout.tsx");

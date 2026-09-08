@@ -1093,16 +1093,16 @@ export default function AttendanceGradePage() {
                 type="button"
                 onClick={() => setShowBulkApproveModal(false)}
                 disabled={isBulkApproving}
-                className="w-8 h-8 flex items-center justify-center rounded-md text-[#64748b] hover:bg-[#f1f5f9] disabled:opacity-50"
+                className="w-11 h-11 flex items-center justify-center rounded-md text-[#64748b] hover:bg-[#f1f5f9] disabled:opacity-50"
                 aria-label="닫기"
               >
                 ×
               </button>
             </div>
-            <div className="p-4 overflow-y-auto max-h-[60dvh]">
-              <div className="overflow-x-auto border border-[#e2e8f0] rounded-lg">
+            <div className="p-4">
+              <div className="overflow-auto max-h-[60dvh] border border-[#e2e8f0] rounded-lg">
                 <table className="w-full text-sm">
-                  <thead className="bg-[#f8fafc] border-b border-[#e2e8f0]">
+                  <thead className="sticky top-0 z-20 bg-[#f8fafc] border-b border-[#e2e8f0]">
                     <tr>
                       <th className="px-3 py-2 text-left font-semibold text-[#475569] whitespace-nowrap">학생</th>
                       <th className="px-3 py-2 text-center font-semibold text-[#475569] whitespace-nowrap">날짜</th>
@@ -1143,7 +1143,7 @@ export default function AttendanceGradePage() {
                 type="button"
                 onClick={() => setShowBulkApproveModal(false)}
                 disabled={isBulkApproving}
-                className="px-4 py-2 rounded-md text-sm font-semibold bg-[#f1f5f9] text-[#475569] hover:bg-[#e2e8f0] disabled:opacity-50"
+                className="min-h-11 px-4 py-2 rounded-md text-sm font-semibold bg-[#f1f5f9] text-[#475569] hover:bg-[#e2e8f0] disabled:opacity-50"
               >
                 취소
               </button>
@@ -1151,7 +1151,7 @@ export default function AttendanceGradePage() {
                 type="button"
                 onClick={() => handleBulkApprove(bulkCandidates)}
                 disabled={isBulkApproving || bulkCandidates.length === 0}
-                className="px-4 py-2 rounded-md text-sm font-semibold bg-[#2563eb] text-white hover:bg-[#1d4ed8] disabled:bg-[#cbd5e1] disabled:text-[#64748b] disabled:cursor-not-allowed"
+                className="min-h-11 px-4 py-2 rounded-md text-sm font-semibold bg-[#2563eb] text-white hover:bg-[#1d4ed8] disabled:bg-[#cbd5e1] disabled:text-[#64748b] disabled:cursor-not-allowed"
               >
                 {isBulkApproving ? "승인 중..." : "일괄승인"}
               </button>
@@ -1192,7 +1192,7 @@ export default function AttendanceGradePage() {
               <button
                 type="button"
                 aria-label="닫기"
-                className="absolute top-2 right-2 w-8 h-8 flex items-center justify-center text-gray-600 hover:text-gray-900 text-lg font-bold"
+                className="absolute top-2 right-2 w-11 h-11 flex items-center justify-center text-gray-600 hover:text-gray-900 text-lg font-bold"
                 onClick={() => {
                   setSelectedSeat(null);
                   setWeeklyTotals(null);
@@ -1201,7 +1201,7 @@ export default function AttendanceGradePage() {
               >
                 ✕
               </button>
-              <div className="pr-6">
+              <div className="pr-12">
                 {renderWeeklyContent(foundSeat)}
               </div>
             </div>

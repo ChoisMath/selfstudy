@@ -33,7 +33,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#f9fafb] px-4 text-[#1e293b]">
+    <div className="min-h-dvh flex items-center justify-center bg-[#f9fafb] px-2 sm:px-4 text-[#1e293b]">
       <div className="w-full max-w-sm">
         <div className="flex flex-col items-center mb-8">
           <img src="/posan.svg" alt="포산고등학교" className="w-16 h-16 mb-3" />
@@ -47,7 +47,7 @@ export default function LoginPage() {
           <button
             type="button"
             onClick={() => { setTab("teacher"); setError(""); }}
-            className={`flex-1 py-2 text-sm font-medium rounded-md transition-colors ${
+            className={`flex-1 min-h-11 py-2 text-sm font-medium rounded-md transition-colors ${
               tab === "teacher"
                 ? "bg-white text-[#111827] shadow-sm"
                 : "text-[#6b7280] hover:text-[#374151]"
@@ -58,7 +58,7 @@ export default function LoginPage() {
           <button
             type="button"
             onClick={() => { setTab("student"); setError(""); }}
-            className={`flex-1 py-2 text-sm font-medium rounded-md transition-colors ${
+            className={`flex-1 min-h-11 py-2 text-sm font-medium rounded-md transition-colors ${
               tab === "student"
                 ? "bg-white text-[#111827] shadow-sm"
                 : "text-[#6b7280] hover:text-[#374151]"
@@ -160,7 +160,7 @@ export default function LoginPage() {
         <div className="mt-6 text-center">
           <a
             href="/help"
-            className="text-sm text-[#6b7280] hover:text-blue-600 transition-colors"
+            className="inline-flex min-h-11 items-center px-2 text-sm text-[#6b7280] hover:text-blue-600 transition-colors"
           >
             사용 안내 보기 →
           </a>

@@ -13,7 +13,7 @@ export default function AttendanceLayout({ children }: { children: React.ReactNo
   const primaryGrade = session?.user?.primaryGrade;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-dvh bg-gray-50">
       <header className="bg-white border-b border-gray-200 px-2 sm:px-4 py-2 flex items-center justify-between flex-nowrap">
         <Link
           href={primaryGrade ? `/attendance/${primaryGrade}` : "/attendance"}
@@ -27,7 +27,7 @@ export default function AttendanceLayout({ children }: { children: React.ReactNo
             {roles?.includes("admin") && (
               <Link
                 href="/admin"
-                className="px-1.5 py-1 sm:px-3 sm:py-1.5 text-[11px] sm:text-xs font-medium text-purple-700 bg-purple-50 border border-purple-200 rounded-md hover:bg-purple-100 transition-colors whitespace-nowrap"
+                className="inline-flex min-h-11 items-center px-1.5 sm:px-3 text-[11px] sm:text-xs font-medium text-purple-700 bg-purple-50 border border-purple-200 rounded-md hover:bg-purple-100 transition-colors whitespace-nowrap"
               >
                 관리자
               </Link>
@@ -36,7 +36,7 @@ export default function AttendanceLayout({ children }: { children: React.ReactNo
               <Link
                 key={g}
                 href={`/grade-admin/${g}`}
-                className="px-1.5 py-1 sm:px-3 sm:py-1.5 text-[11px] sm:text-xs font-medium text-green-700 bg-green-50 border border-green-200 rounded-md hover:bg-green-100 transition-colors whitespace-nowrap"
+                className="inline-flex min-h-11 items-center px-1.5 sm:px-3 text-[11px] sm:text-xs font-medium text-green-700 bg-green-50 border border-green-200 rounded-md hover:bg-green-100 transition-colors whitespace-nowrap"
               >
                 {g}학년 관리
               </Link>
@@ -44,7 +44,7 @@ export default function AttendanceLayout({ children }: { children: React.ReactNo
             {isTeacher && (
               <Link
                 href={isHomeroom ? "/homeroom" : "/homeroom/schedule"}
-                className="px-1.5 py-1 sm:px-3 sm:py-1.5 text-[11px] sm:text-xs font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-md hover:bg-blue-100 transition-colors whitespace-nowrap"
+                className="inline-flex min-h-11 items-center px-1.5 sm:px-3 text-[11px] sm:text-xs font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-md hover:bg-blue-100 transition-colors whitespace-nowrap"
               >
                 {isHomeroom ? "담임교사" : "감독일정"}
               </Link>
@@ -53,7 +53,7 @@ export default function AttendanceLayout({ children }: { children: React.ReactNo
             <span className="text-xs sm:text-sm text-gray-600 whitespace-nowrap">{session?.user?.name}</span>
             <button
               onClick={() => signOut({ callbackUrl: "/login" })}
-              className="text-xs sm:text-sm text-gray-600 hover:text-gray-700 whitespace-nowrap"
+              className="min-h-11 px-2 text-xs sm:text-sm text-gray-600 hover:text-gray-700 whitespace-nowrap"
             >
               로그아웃
             </button>

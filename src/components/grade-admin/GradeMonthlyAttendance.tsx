@@ -78,17 +78,17 @@ export default function GradeMonthlyAttendance({ grade }: { grade: number }) {
       {/* Header: month nav + Excel button */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
-          <button onClick={prevMonth} className="px-3 py-2 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50">&larr;</button>
+          <button onClick={prevMonth} className="min-h-11 min-w-11 px-3 py-2 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50">&larr;</button>
           <span className="text-lg font-semibold text-gray-800">{year}.{String(month + 1).padStart(2, "0")}</span>
-          <button onClick={goToday} className="px-3 py-1.5 text-xs bg-blue-50 text-blue-600 border border-blue-200 rounded-md hover:bg-blue-100">Now</button>
-          <button onClick={nextMonth} className="px-3 py-2 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50">&rarr;</button>
+          <button onClick={goToday} className="min-h-11 px-3 py-1.5 text-xs bg-blue-50 text-blue-600 border border-blue-200 rounded-md hover:bg-blue-100">Now</button>
+          <button onClick={nextMonth} className="min-h-11 min-w-11 px-3 py-2 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50">&rarr;</button>
         </div>
-        <button onClick={handleExport} disabled={students.length === 0} className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 disabled:opacity-50">Excel</button>
+        <button onClick={handleExport} disabled={students.length === 0} className="min-h-11 px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 disabled:opacity-50">Excel</button>
       </div>
 
       {/* Legend toggle */}
       <div className="mb-3">
-        <button onClick={() => setLegendOpen((v) => !v)} className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 w-full">
+        <button onClick={() => setLegendOpen((v) => !v)} className="min-h-11 flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 w-full">
           <span className="flex-1 border-t border-gray-200" />
           <span className="text-[10px] select-none">{legendOpen ? "▲" : "▼"}</span>
           <span className="flex-1 border-t border-gray-200" />
@@ -111,13 +111,13 @@ export default function GradeMonthlyAttendance({ grade }: { grade: number }) {
         <div className="text-center py-8 text-sm text-gray-400">학생이 없습니다.</div>
       ) : (
         <div className="bg-white rounded-lg border border-gray-300 overflow-hidden">
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto table-scroll">
             <table className="text-xs whitespace-nowrap">
-              <thead className="sticky top-0 z-10">
+              <thead className="sticky top-0 z-20">
                 <tr className="bg-gray-50 border-b border-gray-300">
-                  <th className="px-2 py-2 text-center font-medium text-gray-600 sticky left-0 bg-gray-50 z-10 min-w-[36px]">반</th>
-                  <th className="px-2 py-2 text-center font-medium text-gray-600 sticky left-[36px] bg-gray-50 z-10 min-w-[36px]">번</th>
-                  <th className="px-3 py-2 text-left font-medium text-gray-600 sticky left-[72px] bg-gray-50 z-10 min-w-[56px]">이름</th>
+                  <th className="px-2 py-2 text-center font-medium text-gray-600 sticky left-0 bg-gray-50 z-30 min-w-[36px]">반</th>
+                  <th className="px-2 py-2 text-center font-medium text-gray-600 sticky left-[36px] bg-gray-50 z-30 min-w-[36px]">번</th>
+                  <th className="px-3 py-2 text-left font-medium text-gray-600 sticky left-[72px] bg-gray-50 z-30 min-w-[56px]">이름</th>
                   {dates.map((date) => {
                     const d = new Date(date);
                     const dayName = ["일", "월", "화", "수", "목", "금", "토"][d.getDay()];
@@ -130,9 +130,9 @@ export default function GradeMonthlyAttendance({ grade }: { grade: number }) {
                   <th className="px-2 py-2 text-center font-medium text-gray-600 border-l border-gray-300 min-w-[48px]">시간</th>
                 </tr>
                 <tr className="bg-gray-50 border-b border-gray-300">
-                  <th className="sticky left-0 bg-gray-50 z-10" />
-                  <th className="sticky left-[36px] bg-gray-50 z-10" />
-                  <th className="sticky left-[72px] bg-gray-50 z-10" />
+                  <th className="sticky left-0 bg-gray-50 z-30" />
+                  <th className="sticky left-[36px] bg-gray-50 z-30" />
+                  <th className="sticky left-[72px] bg-gray-50 z-30" />
                   {dates.map((date) => (
                     <React.Fragment key={date}>
                       {SESSION_TYPES.map((t, i) => (

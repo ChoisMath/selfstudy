@@ -14,7 +14,7 @@ export default function StudentLayout({
 
   if (status === "loading") {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-dvh bg-gray-50 flex items-center justify-center">
         <p className="text-gray-400">로딩 중...</p>
       </div>
     );
@@ -32,7 +32,7 @@ export default function StudentLayout({
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-dvh bg-gray-50 [--header-h:7.625rem]">
       {/* 헤더 */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
         <div className="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
@@ -47,7 +47,7 @@ export default function StudentLayout({
           </div>
           <button
             onClick={() => signOut({ callbackUrl: "/login" })}
-            className="text-sm text-gray-500 hover:text-gray-700 px-3 py-1.5 rounded-md hover:bg-gray-100 transition-colors"
+            className="min-h-11 px-3 text-sm text-gray-500 hover:text-gray-700 rounded-md hover:bg-gray-100 transition-colors"
           >
             로그아웃
           </button>
@@ -65,7 +65,7 @@ export default function StudentLayout({
                 <Link
                   key={tab.href}
                   href={tab.href}
-                  className={`px-4 py-2.5 text-sm font-medium rounded-t-lg transition-colors whitespace-nowrap shrink-0 ${
+                  className={`inline-flex min-h-11 items-center px-4 text-sm font-medium rounded-t-lg transition-colors whitespace-nowrap shrink-0 ${
                     isActive
                       ? "bg-gray-50 text-blue-600 border-b-2 border-blue-600"
                       : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
@@ -80,7 +80,7 @@ export default function StudentLayout({
       </header>
 
       {/* 메인 컨텐츠 */}
-      <main className="max-w-2xl mx-auto px-4 py-6">{children}</main>
+      <main className="max-w-2xl mx-auto px-2 md:px-3 lg:px-4 py-6">{children}</main>
     </div>
   );
 }

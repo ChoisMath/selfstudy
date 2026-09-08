@@ -25,6 +25,8 @@ type Room = {
   rows: number;
 };
 
+export type SeatRef = { roomId: number; row: number; col: number };
+
 // 이름 4자(text-xs, 한글 ≈1em) + 테두리 2px 가 한 줄에 들어가는 폭. 44px 터치 타겟(responsive-ui §6)보다 넓다.
 const MIN_SEAT_WIDTH = 52;
 
@@ -33,13 +35,15 @@ function SeatCell({
   row,
   col,
   cell,
-  onRemove,
+  isSelected,
+  onSelect,
 }: {
   roomId: number;
   row: number;
   col: number;
   cell: CellState;
-  onRemove: () => void;
+  isSelected: boolean;
+  onSelect?: (seat: SeatRef | null) => void;
 }) {
   const seatId = `seat-${roomId}-${row}-${col}`;
 
@@ -57,14 +61,19 @@ function SeatCell({
     disabled: !cell.studentId,
   });
 
+  // 이동 없는 탭은 dnd-kit 활성화(5px) 전이라 click 이 그대로 전달된다. 빈 좌석 탭은 선택 해제.
+  const select = () => onSelect?.(cell.studentId ? { roomId, row, col } : null);
+
   return (
     <div
       ref={setDropRef}
+      onClick={select}
       className={`
         relative border rounded h-14 flex items-center justify-center text-xs transition-colors
         ${isOver ? "bg-blue-50 border-blue-400 border-dashed" : "border-gray-200"}
         ${cell.studentId ? "bg-white" : "bg-gray-50"}
         ${isDragging ? "opacity-40" : ""}
+        ${isSelected ? "ring-2 ring-blue-500 ring-offset-1" : ""}
       `}
     >
       {cell.student ? (
@@ -72,7 +81,14 @@ function SeatCell({
           ref={setDragRef}
           {...attributes}
           {...listeners}
-          className="w-full h-full flex items-center justify-center cursor-grab active:cursor-grabbing group"
+          onKeyDown={(e) => {
+            listeners?.onKeyDown?.(e);
+            if (!isDragging && (e.key === "Delete" || e.key === "Backspace")) {
+              e.preventDefault();
+              select();
+            }
+          }}
+          className="w-full h-full flex items-center justify-center cursor-grab active:cursor-grabbing"
         >
           <span
             className="block min-w-0 max-w-full whitespace-nowrap overflow-hidden text-ellipsis text-center leading-tight font-medium text-gray-800"
@@ -83,17 +99,6 @@ function SeatCell({
             </span>
             {cell.student.name}
           </span>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onRemove();
-            }}
-            onPointerDown={(e) => e.stopPropagation()}
-            className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full text-[10px] leading-none flex items-center justify-center opacity-0 group-hover:opacity-100 pointer-coarse:opacity-100 pointer-coarse:w-7 pointer-coarse:h-7 pointer-coarse:text-xs transition-opacity hover:bg-red-600"
-            title="배정 해제"
-          >
-            x
-          </button>
         </div>
       ) : (
         <span className="text-gray-300 text-[10px]">
@@ -107,26 +112,34 @@ function SeatCell({
 export default memo(function RoomGrid({
   room,
   seats,
-  onRemoveStudent,
   gapAfterRows,
   hideTeacherDesk,
   compact,
   preserveSeatWidth,
+  selectedSeatKey,
+  onSelectSeat,
 }: {
   room: Room;
   seats: RoomSeats;
-  onRemoveStudent: (roomId: number, row: number, col: number) => void;
   gapAfterRows?: number[];
   hideTeacherDesk?: boolean;
   compact?: boolean;
   preserveSeatWidth?: boolean;
+  /** 이 방 안의 선택 좌석 "row-col". 다른 방이면 null 을 넘겨 memo 재렌더를 피한다 */
+  selectedSeatKey?: string | null;
+  onSelectSeat?: (seat: SeatRef | null) => void;
 }) {
   return (
     <div className={`bg-white rounded-lg border ${compact ? "p-2" : "p-4"}`}>
-      <div className="flex items-center justify-between mb-3">
-        <h3 className={`font-semibold text-gray-800 ${compact ? "text-sm" : ""}`}>{room.name}</h3>
+      <div className="flex items-center justify-between gap-2 mb-3">
+        <h3
+          className={`min-w-0 whitespace-nowrap overflow-hidden text-ellipsis font-semibold text-gray-800 ${compact ? "text-sm" : ""}`}
+          title={room.name}
+        >
+          {room.name}
+        </h3>
         {!compact && (
-          <span className="text-xs text-gray-400">
+          <span className="shrink-0 text-xs text-gray-400">
             {room.rows}행 x {room.cols}열
           </span>
         )}
@@ -159,7 +172,8 @@ export default memo(function RoomGrid({
                     row={r}
                     col={c}
                     cell={cell}
-                    onRemove={() => onRemoveStudent(room.id, r, c)}
+                    isSelected={selectedSeatKey === key}
+                    onSelect={onSelectSeat}
                   />
                 );
               })}
