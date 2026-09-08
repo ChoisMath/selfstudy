@@ -132,6 +132,7 @@ public/
 | 메서드 | 경로 | 설명 |
 |--------|------|------|
 | GET | `/api/attendance?date&session&grade` | 좌석+출석 현황 조회 (`session`은 `SessionType`, 좌석/교실은 `seatSessionOf(session)`으로 조회. 학생별 `hasPendingAbsenceRequest` 포함) |
+| GET | `/api/attendance/supervisor?date&grade` | **신규.** 해당 날짜·학년의 감독교사만 조회, 응답 `{ supervisor: { id, name } \| null }`. 감독 배정은 3블록이 같은 교사이므로 `REPRESENTATIVE_SESSION_TYPE` 대표행만 `findUnique`. 세션이 특정되지 않는 불참신청 탭의 감독 칩 전용 |
 | POST | `/api/attendance/toggle` | 출석 상태 순환 토글 (`sessionType`을 `isSessionType`으로 검증) |
 | PUT | `/api/attendance/[id]` | 상태 직접 수정 (`sessionType` 검증 추가) |
 | POST | `/api/attendance/copy-session` | **신규.** `{grade,date,from,to}`(같은 좌석 세션의 서로 다른 블록만) — `from`(보통 오후1) 결과를 `to`(오후2) 미체크·참여·불참신청無 학생에게 복사(`planSessionCopy`). 응답 `{copied,skipped}` |
@@ -283,6 +284,7 @@ SupervisorReminderLog: teacherId, grade, date(@db.Date), sentAt — @@unique([te
 - `일괄승인` 버튼: 오늘 해당 학년 감독으로 배정된 세션의 pending 불참신청만 후보로 표시, 확인 모달에서 학생/날짜/시간/사유/상세 테이블을 가로 스크롤 방식으로 보여준 뒤 승인
 - 일괄승인 성공 시 불참신청 목록, pending 배지, 좌석 데이터 SWR을 갱신
 - 좌석 그리드의 빨간 "*"로 대기 중인 불참신청 학생 시각적 식별
+- 상단 헤더의 "감독" 칩은 이 탭에서만 `/api/attendance/supervisor?date&grade`를 따로 조회 — 세션별 조회 SWR(`/api/attendance?date&session&grade`)의 키가 `tab !== "absence"` 조건부라 불참신청 탭에서는 요청이 나가지 않아 `data?.supervisor`가 undefined. `const supervisor = tab === "absence" ? absenceSupervisorData?.supervisor : data?.supervisor`로 분기
 
 ### 6. 학번 파싱
 - 5자리: A(학년) + BC(반) + DE(번호), 예: 20102 = 2학년 1반 2번
@@ -337,6 +339,14 @@ SupervisorReminderLog: teacherId, grade, date(@db.Date), sentAt — @@unique([te
 - `RoomGrid`에는 X(해제) 버튼이 없음 — 해제는 좌석 탭→선택→`SeatingEditor` 하단 액션바, 또는 좌석→`UnassignedStudents` 패널 드롭(`UNASSIGNED_DROP_ID`). `tests/responsive-tables.test.ts`·`tests/seating-editor-responsive.test.ts`가 클래스/식별자를 src 스캔으로 고정하므로 관련 클래스(`min-h-11`, `z-20`, `table-scroll`, `ring-2 ring-blue-500` 등) 변경 시 테스트도 함께 갱신
 
 ## 수정 이력 (주요 변경)
+
+### 2026-09-08: 불참신청 탭 감독교사 미배정 표시 수정
+- **증상**: `/attendance/[grade]`에서 "불참신청" 탭을 열면 상단 헤더의 "감독" 칩이 실제 배정과 무관하게 항상 "미배정". 원인은 감독교사 이름을 `data?.supervisor`(= `/api/attendance?date&session&grade` SWR 응답)에서만 읽는데, 그 SWR 키가 `tab !== "absence"` 조건부여서 불참신청 탭에서는 요청 자체가 나가지 않아 `data`가 undefined
+- **신규 API**: `GET /api/attendance/supervisor?date&grade`(`src/app/api/attendance/supervisor/route.ts`, `withAuth(["teacher"])`) — 감독 배정은 학년·날짜당 1명이고 `MonthlyCalendar` POST가 3개 블록을 함께 생성/삭제하므로 `REPRESENTATIVE_SESSION_TYPE`(afternoon1) 대표행만 `findUnique`. 응답 `{ supervisor: { id, name } | null }`, date/grade 파라미터 검증 포함
+- **수정**: `src/app/attendance/[grade]/page.tsx` — 불참신청 탭일 때만 위 API를 부르는 SWR 훅 추가 후 `const supervisor = tab === "absence" ? absenceSupervisorData?.supervisor : data?.supervisor`로 분기
+- **테스트**: `tests/attendance-api-wiring.test.ts`(권한/대표행 상수/응답 키), `tests/attendance-page-wiring.test.ts`(조건부 SWR 키, 탭별 감독 소스 분기)에 회귀 단언 추가
+- **동반 반응형 수정**(responsive-ui-reviewer 지적): 상단 파란 바의 날짜 토글·`다른학년` 버튼에 `min-h-11`(§6 44px), `다른학년` 라벨에 `whitespace-nowrap`. `ml-auto` 가 조건부 렌더되는 카운트 블록에 있어 불참신청 탭에서만 우측 정렬이 풀리던 문제는 버튼 클래스를 `tab === "absence" ? "ml-auto" : "ml-2"` 로 분기해 해결. 바가 높아진 만큼 날짜 팝오버 offset `top-[3.25rem]`→`top-[4.75rem]`
+- DB 스키마 변경 없음
 
 ### 2026-09-08: 반응형 위반 정리(핸드오프 §4.2) + 좌석 해제 44px 설계
 - **계획 문서**: `.plans/2026-09-08-responsive-cleanup-final.md`(초안·리뷰·사후검토 문서 동반). DB/API 변경 없음 — src 24파일 수정 + 테스트 1개 신규/1개 갱신

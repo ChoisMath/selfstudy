@@ -224,6 +224,13 @@ export default function AttendanceGradePage() {
     { revalidateOnFocus: false }
   );
 
+  // 불참신청 탭은 세션이 특정되지 않아 /api/attendance 를 부르지 않으므로 감독교사를 따로 조회
+  const { data: absenceSupervisorData } = useSWR(
+    tab === "absence" ? `/api/attendance/supervisor?date=${selectedDate}&grade=${grade}` : null,
+    fetcher,
+    { revalidateOnFocus: false }
+  );
+
   const { data: todayAssignmentsData } = useSWR(
     "/api/supervisor-assignments/my-today",
     fetcher,
@@ -254,7 +261,8 @@ export default function AttendanceGradePage() {
   const rooms: Room[] = data?.rooms || [];
   const attendances: Record<number, AttendanceRecord> = data?.attendances || {};
   attendancesRef.current = attendances;
-  const supervisor = data?.supervisor;
+  const supervisor =
+    tab === "absence" ? absenceSupervisorData?.supervisor : data?.supervisor;
 
   // 출석 카운트
   const allStudents = rooms.flatMap((r) =>
@@ -889,7 +897,7 @@ export default function AttendanceGradePage() {
             <button
               type="button"
               onClick={() => setShowDatePicker((v) => !v)}
-              className="text-[clamp(13px,3.5vw,16px)] font-bold whitespace-nowrap shrink-0 flex items-center gap-1 hover:opacity-90"
+              className="text-[clamp(13px,3.5vw,16px)] font-bold whitespace-nowrap shrink-0 min-h-11 flex items-center gap-1 hover:opacity-90"
             >
               {selectedDateFormatted}
               <span className="text-[11px] leading-none">▾</span>
@@ -933,7 +941,7 @@ export default function AttendanceGradePage() {
           )}
           <button
             onClick={() => setShowGradeModal(true)}
-            className="ml-2 shrink-0 bg-white/20 hover:bg-white/30 text-white text-[clamp(10px,2.4vw,12px)] px-2.5 py-1 rounded-md transition-colors"
+            className={`${tab === "absence" ? "ml-auto" : "ml-2"} shrink-0 min-h-11 flex items-center whitespace-nowrap bg-white/20 hover:bg-white/30 text-white text-[clamp(10px,2.4vw,12px)] px-2.5 rounded-md transition-colors`}
           >
             다른학년
           </button>
@@ -977,7 +985,7 @@ export default function AttendanceGradePage() {
               aria-hidden="true"
               onClick={() => setShowDatePicker(false)}
             />
-            <div className="absolute z-[120] left-3 top-[3.25rem]">
+            <div className="absolute z-[120] left-3 top-[4.75rem]">
               <AttendanceDatePicker value={selectedDate} today={today} onChange={handleDateChange} />
             </div>
           </>

@@ -105,6 +105,21 @@ assert.doesNotMatch(attendanceIndex, /(^|[^\w:-])p-8\b/m, "attendance/page: 학�
 const attendanceGrade = read("../src/app/attendance/[grade]/page.tsx");
 assert.doesNotMatch(attendanceGrade, /\bw-8 h-8\b/, "attendance/[grade]: 32px 닫기 버튼이 남아 있음");
 
+// 상단 파란 바 버튼 (§6 44px, §2 라벨 줄바꿈 금지)
+const gradeSwitchClass = attendanceGrade.match(/setShowGradeModal\(true\)\}\s*\n\s*className=\{`([^`]+)`\}/)?.[1];
+assert.ok(gradeSwitchClass, "attendance/[grade]: '다른학년' 버튼 className 을 찾지 못함");
+assert.match(gradeSwitchClass, /\bmin-h-11\b/, "attendance/[grade]: '다른학년' 버튼이 44px 미만");
+assert.match(gradeSwitchClass, /\bwhitespace-nowrap\b/, "attendance/[grade]: '다른학년' 라벨에 whitespace-nowrap 없음");
+// ml-auto 가 조건부 렌더되는 카운트 블록에 있으면 불참신청 탭에서 우측 정렬이 사라진다
+assert.match(gradeSwitchClass, /tab === "absence" \? "ml-auto" : "ml-2"/, "불참신청 탭에서 '다른학년' 버튼이 우측 정렬되지 않음");
+
+const dateToggleClass = attendanceGrade.match(/setShowDatePicker\(\(v\) => !v\)\}\s*\n\s*className="([^"]+)"/)?.[1];
+assert.ok(dateToggleClass, "attendance/[grade]: 날짜 토글 버튼 className 을 찾지 못함");
+assert.match(dateToggleClass, /\bmin-h-11\b/, "attendance/[grade]: 날짜 토글 버튼이 44px 미만");
+
+// 날짜 팝오버 offset 은 상단 바 높이에 수기로 맞춘 값 — 바 안 버튼이 44px 이 되면 함께 내려야 한다
+assert.match(attendanceGrade, /absolute z-\[120\] left-3 top-\[4\.75rem\]/, "날짜 팝오버가 높아진 상단 바를 가리거나 겹침");
+
 // --- 날짜 팝오버 ---
 const datePicker = read("../src/components/attendance/AttendanceDatePicker.tsx");
 assert.doesNotMatch(datePicker, /\bmin-h-9\b/, "AttendanceDatePicker: 날짜 셀 36px");

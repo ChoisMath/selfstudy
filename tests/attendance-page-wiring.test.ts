@@ -36,4 +36,8 @@ assert.match(page, /SESSION_META\[r\.sessionType\]\.label/, "불참신청 목록
 assert.match(page, /SESSION_META\[request\.sessionType\]\.label/, "일괄승인 모달 라벨이 SESSION_META 가 아님");
 assert.doesNotMatch(page, /"오후자습" : "야간자습"/, "옛 세션 라벨 삼항이 남아 있음");
 
+// 불참신청 탭 감독교사 — 세션별 /api/attendance 를 부르지 않으므로 대표행을 따로 조회
+assert.match(page, /tab === "absence"\s*\?\s*`\/api\/attendance\/supervisor\?date=\$\{selectedDate\}&grade=\$\{grade\}`/, "불참신청 탭에서 감독교사 조회 API 를 부르지 않음");
+assert.match(page, /const supervisor =\s*tab === "absence" \? absenceSupervisorData\?\.supervisor : data\?\.supervisor/, "감독 칩이 탭에 따라 소스를 나누지 않음");
+
 console.log("attendance-page-wiring checks passed");

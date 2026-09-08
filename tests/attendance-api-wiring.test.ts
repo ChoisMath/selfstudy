@@ -19,4 +19,9 @@ assert.match(notes, /isSessionType\(sessionType\)/, "notes PUT 에 sessionType �
 assert.doesNotMatch(notes, /afternoon\?:/, "notes GET 응답이 아직 afternoon/night 키 쌍");
 assert.match(notes, /Partial<Record<SessionType, string>>/, "notes GET 응답이 Record<SessionType,…> 가 아님");
 
+const supervisorRoute = read("../src/app/api/attendance/supervisor/route.ts");
+assert.match(supervisorRoute, /withAuth\(\["teacher"\]/, "감독교사가 조회할 수 없는 권한 설정");
+assert.match(supervisorRoute, /REPRESENTATIVE_SESSION_TYPE/, "학년-날짜 대표 세션 상수를 쓰지 않음");
+assert.match(supervisorRoute, /supervisor: assignment\?\.teacher \?\? null/, "supervisor 키로 응답하지 않음");
+
 console.log("attendance-api-wiring checks passed");
