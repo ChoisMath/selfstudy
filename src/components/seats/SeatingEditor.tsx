@@ -18,6 +18,7 @@ import RoomGrid, { type SeatRef } from "./RoomGrid";
 import UnassignedStudents, { UNASSIGNED_DROP_ID } from "./UnassignedStudents";
 import MiraeHallLayout, { GAP_CONFIG } from "./MiraeHallLayout";
 import ClassroomFrame from "./ClassroomFrame";
+import ClassroomConfigModal from "./ClassroomConfigModal";
 import { buildPrintGroups, type ClassroomMeta } from "@/lib/seats/print-groups";
 import { participatesInSeatSession } from "@/lib/seats/seat-participation";
 import { type SeatSessionType } from "@/lib/sessions";
@@ -87,6 +88,7 @@ export default function SeatingEditor({
   const [saving, setSaving] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [selectedSeat, setSelectedSeat] = useState<SeatRef | null>(null);
+  const [configOpen, setConfigOpen] = useState(false);
 
   // 좌석 데이터
   const {
@@ -378,6 +380,17 @@ export default function SeatingEditor({
       <div className="flex items-center justify-between mb-4">
         <h2 className="whitespace-nowrap text-xl font-bold text-gray-900">좌석 편집</h2>
         <div className="flex items-center gap-2">
+          {sessionType === "afternoon" && (
+            <button
+              onClick={() => {
+                if (dirty.size > 0 && !confirm("저장하지 않은 좌석 변경이 있습니다. 구조 설정을 열면 변경이 사라질 수 있습니다. 계속할까요?")) return;
+                setConfigOpen(true);
+              }}
+              className="min-h-11 whitespace-nowrap rounded-md border border-gray-300 px-4 text-sm text-gray-700 hover:bg-gray-50"
+            >
+              교실 구조 설정
+            </button>
+          )}
           <button
             onClick={handlePrint}
             className="min-h-11 whitespace-nowrap rounded-md border border-gray-300 px-4 text-sm text-gray-700 hover:bg-gray-50"
@@ -539,6 +552,16 @@ export default function SeatingEditor({
             취소
           </button>
         </div>
+      )}
+
+      {configOpen && (
+        <ClassroomConfigModal
+          grade={grade}
+          onClose={() => setConfigOpen(false)}
+          onChanged={() => {
+            layoutMutate();
+          }}
+        />
       )}
     </div>
   );

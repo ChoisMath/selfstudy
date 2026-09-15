@@ -66,4 +66,23 @@ assert.match(
   "출석 페이지 학급 프레임 래퍼에 overflow-x-auto 없음"
 );
 
+// --- ClassroomConfigModal ---
+const modal = read("../src/components/seats/ClassroomConfigModal.tsx");
+assert.match(modal, /\/api\/grade-admin\/\$\{grade\}\/classrooms/, "모달이 classrooms API 를 호출하지 않음");
+assert.match(modal, /isGeometryChanged\(/, "모달이 초기화 여부를 클라이언트에서 판정하지 않음");
+assert.match(modal, /parseClassroomConfig\(/, "모달이 저장 전 검증하지 않음");
+assert.match(modal, /좌석이 초기화됩니다/, "초기화 확인 문구 없음");
+assert.match(modal, /overflow-x-auto/, "학급 목록 표 래퍼에 가로 스크롤 없음");
+assert.match(modal, /max-h-\[90dvh\]/, "모달 높이가 dvh 가 아님");
+assert.doesNotMatch(modal, /100vh|\[90vh\]/, "vh 사용");
+assert.match(modal, /min-h-11/, "버튼 44px 터치 타겟 없음");
+assert.match(modal, /role="dialog"/, "dialog 역할 없음");
+
+// --- SeatingEditor 가 오후 탭에서만 설정 모달을 연다 ---
+const editor = read("../src/components/seats/SeatingEditor.tsx");
+assert.match(editor, /import ClassroomConfigModal from/, "편집기가 모달을 import 하지 않음");
+assert.match(editor, /교실 구조 설정/, "설정 버튼 없음");
+assert.match(editor, /sessionType === "afternoon" && \(/, "설정 버튼이 오후 탭으로 한정되지 않음");
+assert.match(editor, /onChanged=\{[^}]*layoutMutate/, "구조 변경 후 좌석 SWR 을 갱신하지 않음");
+
 console.log("classroom-wiring checks passed");
