@@ -131,7 +131,7 @@ export function corridorLabels(side: CorridorSide): { left: string; right: strin
 // right → { left: "창문", right: "복도" }, left → { left: "복도", right: "창문" }
 ```
 
-`zod` 스키마 `classroomConfigSchema`도 이 파일에서 export 해 API와 모달 폼이 공유한다(`rowsPerDivision`은 정수 배열, 길이·값 범위는 `CLASSROOM_LIMITS`).
+검증기 `parseClassroomConfig(input: unknown): { ok: true; config } | { ok: false; error: string }`도 이 파일에서 export 해 API와 모달 폼이 공유한다(프로젝트에 `zod` 직접 의존성이 없어 손으로 작성. `rowsPerDivision`은 정수 배열, 길이·값 범위는 `CLASSROOM_LIMITS`, 오류 메시지는 한국어).
 
 ---
 
@@ -184,7 +184,7 @@ export type PrintGroup<T> = {
 | PUT | `[id]/route.ts` | `ClassroomConfig` (`classNumber` 변경 허용) | 404/409 검사 후 트랜잭션: 메타 갱신. `isGeometryChanged`가 true면 해당 Room들의 SeatLayout `deleteMany` → Room `deleteMany` → 재생성. false면 `classNumber` 변경 시 Room 이름만 갱신. `classNumber`가 바뀌면 `sortOrder`도 같은 값으로 갱신. 응답 `{ classroom, reset: boolean }` |
 | DELETE | `[id]/route.ts` | — | 트랜잭션: SeatLayout → Room → Classroom 삭제. `{ success: true }` |
 
-- 입력 검증은 `classroomConfigSchema.safeParse`, 실패 시 400 `{ error }`.
+- 입력 검증은 `parseClassroomConfig`, 실패 시 400 `{ error }`.
 - `withGradeAuth`가 학급 소속 세션의 `grade`를 보장하므로 `[id]` 라우트는 `classroom.session.grade === grade`를 추가로 확인해 다른 학년의 id 접근을 404로 막는다.
 
 ---
@@ -245,7 +245,7 @@ type Props = {
 
 ## 7. 에러 처리
 
-- 400: zod 검증 실패(범위 밖 반 번호·분단·행 수, 배열 길이 0).
+- 400: `parseClassroomConfig` 검증 실패(범위 밖 반 번호·분단·행 수, 배열 길이 0).
 - 404: 세션 없음, 다른 학년/없는 classroom id.
 - 409: 같은 세션에 같은 반 번호 존재 → 모달에 "이미 있는 반 번호입니다."
 - 트랜잭션 실패는 500 + `console.error`, 모달은 "저장에 실패했습니다." 표시 후 폼 유지.
@@ -256,10 +256,10 @@ type Props = {
 
 | 파일 | 내용 |
 |---|---|
-| `tests/classroom-config.test.ts` (신규) | `planClassroomRooms`(분단형/단독형 이름·cols·rows·sortOrder), `isGeometryChanged`(동일/행 수 변경/분단 수 변경/유형 변경/순서 무관), `seatCountOf`, `corridorLabels`, zod 경계값 |
+| `tests/classroom-config.test.ts` (신규) | `planClassroomRooms`(분단형/단독형 이름·cols·rows·sortOrder), `isGeometryChanged`(동일/행 수 변경/분단 수 변경/유형 변경/순서 무관), `seatCountOf`, `corridorLabels`, `parseClassroomConfig` 경계값 |
 | `tests/seat-print-groups.test.ts` (갱신) | 학급 그룹(반 번호 순, `classroom` 메타, `divisions-row`) + 미래혜윰 접두사 그룹 혼합, classroom 없는 기존 픽스처 회귀 |
 | `tests/classroom-migration.test.ts` (신규) | 마이그레이션 SQL에 enum·테이블·FK·백필 정규식·UPDATE 존재 |
-| `tests/classroom-wiring.test.ts` (신규) | 편집기·출석·인쇄 3곳이 `ClassroomFrame`을 import 하고 `group.classroom`으로 분기하는지, `ClassroomFrame`이 dnd-kit 비의존인지, API 라우트가 `classroomConfigSchema`·`isGeometryChanged`·`$transaction`을 쓰는지 src 스캔 |
+| `tests/classroom-wiring.test.ts` (신규) | 편집기·출석·인쇄 3곳이 `ClassroomFrame`을 import 하고 `group.classroom`으로 분기하는지, `ClassroomFrame`이 dnd-kit 비의존인지, API 라우트가 `parseClassroomConfig`·`isGeometryChanged`·`$transaction`을 쓰는지 src 스캔 |
 | `tests/session-literal-guard.test.ts` (갱신) | 허용 목록에 `app/api/grade-admin/[grade]/classrooms/route.ts`, `[id]/route.ts` 추가 |
 | `tests/seat-print-wiring.test.ts` (갱신) | `SeatPrintGroup` 교탁 단언을 `ClassroomFrame` 사용으로 조정 |
 
