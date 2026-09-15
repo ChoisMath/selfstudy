@@ -7,7 +7,7 @@ import { useSession } from "next-auth/react";
 import AttendanceDatePicker from "@/components/attendance/AttendanceDatePicker";
 import { getKstTodayString, formatDateLabel } from "@/lib/calendar";
 import MiraeHallLayout, { GAP_CONFIG } from "@/components/seats/MiraeHallLayout";
-import { buildPrintGroups } from "@/lib/seats/print-groups";
+import { buildPrintGroups, type ClassroomMeta } from "@/lib/seats/print-groups";
 import { SESSION_TYPES, SESSION_META, seatSessionOf, sessionTypesOfSeat, type SessionType } from "@/lib/sessions";
 import { reasonLabel } from "@/lib/absence-reasons";
 import { summarizeWeeklyCell, type WeeklyDayRow, type WeeklyCellKind } from "@/lib/attendance/weekly-summary";
@@ -38,6 +38,7 @@ interface Room {
   cols: number;
   rows: number;
   sortOrder: number;
+  classroom?: ClassroomMeta | null;
   seats: Seat[];
 }
 

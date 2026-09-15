@@ -31,7 +31,7 @@ export const GET = withAuth(
     const studySession = await prisma.studySession.findUnique({
       where: { type_grade: { type: seatSessionOf(session), grade: gradeNum } },
       include: {
-        rooms: { orderBy: { sortOrder: "asc" } },
+        rooms: { orderBy: { sortOrder: "asc" }, include: { classroom: true } },
       },
     });
 
@@ -121,6 +121,7 @@ export const GET = withAuth(
         cols: room.cols,
         rows: room.rows,
         sortOrder: room.sortOrder,
+        classroom: room.classroom,
         seats: (seatsByRoom.get(room.id) || []).map((seat) => ({
           rowIndex: seat.rowIndex,
           colIndex: seat.colIndex,

@@ -29,6 +29,7 @@ export async function GET(
         rooms: {
           orderBy: { sortOrder: "asc" },
           include: {
+            classroom: true,
             seatLayouts: {
               include: {
                 student: {

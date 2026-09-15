@@ -17,7 +17,7 @@ import {
 import RoomGrid, { type SeatRef } from "./RoomGrid";
 import UnassignedStudents, { UNASSIGNED_DROP_ID } from "./UnassignedStudents";
 import MiraeHallLayout, { GAP_CONFIG } from "./MiraeHallLayout";
-import { buildPrintGroups } from "@/lib/seats/print-groups";
+import { buildPrintGroups, type ClassroomMeta } from "@/lib/seats/print-groups";
 import { participatesInSeatSession } from "@/lib/seats/seat-participation";
 import { type SeatSessionType } from "@/lib/sessions";
 
@@ -49,6 +49,7 @@ type Room = {
   cols: number;
   rows: number;
   sortOrder: number;
+  classroom?: ClassroomMeta | null;
   seatLayouts: SeatLayoutItem[];
 };
 

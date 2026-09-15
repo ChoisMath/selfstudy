@@ -87,4 +87,41 @@ assert.equal(divisionLabel("2-4반 분단1"), "분단1");
 assert.equal(divisionLabel("오후미래혜윰2 분단3"), "분단3");
 assert.equal(divisionLabel("복도석"), "복도석");
 
+// --- 학급(Classroom) 메타가 있으면 반 번호 순으로 학급 그룹을 만들고, 없는 Room 은 접두사 규칙으로 뒤에 붙인다 ---
+const classroom4 = { id: 11, classNumber: 4, corridorSide: "right" as const, layoutType: "division" as const, sortOrder: 4 };
+const classroom7 = { id: 12, classNumber: 7, corridorSide: "left" as const, layoutType: "single" as const, sortOrder: 7 };
+const mixedRooms: PrintBaseRoom[] = [
+  { ...room(31, "2-7반 1열", 1, 5, 1), classroom: classroom7 },
+  { ...room(32, "2-7반 2열", 1, 5, 2), classroom: classroom7 },
+  { ...room(21, "2-4반 분단1", 2, 6, 1), classroom: classroom4 },
+  { ...room(22, "2-4반 분단2", 2, 6, 2), classroom: classroom4 },
+  { ...room(23, "2-4반 분단3", 2, 5, 3), classroom: classroom4 },
+  { ...room(10, "오후미래혜윰1 분단1", 5, 2, 10), classroom: null },
+  { ...room(11, "오후미래혜윰1 분단2", 5, 2, 11) },
+];
+const mixed = buildPrintGroups(mixedRooms, "afternoon", 2);
+assert.deepEqual(mixed.map((g) => g.key), ["2-4반", "2-7반", "오후미래혜윰1"]);
+assert.deepEqual(mixed.map((g) => g.kind), ["divisions-row", "divisions-row", "divisions-column"]);
+assert.deepEqual(mixed[0].rooms.map((r) => r.id), [21, 22, 23], "학급 안 Room 은 sortOrder 순");
+assert.deepEqual(mixed[1].rooms.map((r) => r.id), [31, 32]);
+assert.equal(mixed[0].title, "2-4반");
+assert.deepEqual(mixed[0].classroom, classroom4);
+assert.deepEqual(mixed[1].classroom, classroom7);
+assert.equal(mixed[2].classroom, undefined, "접두사 그룹에는 classroom 메타가 없다");
+
+// 같은 반 번호라도 Room.sortOrder 가 학급 사이에서 겹칠 수 있다(백필 데이터는 1~9 전역 순번) — 그룹은 classroom.id 로 묶는다
+const backfilled: PrintBaseRoom[] = [
+  { ...room(1, "2-4반 분단1", 2, 3, 1), classroom: classroom4 },
+  { ...room(4, "2-5반 분단1", 2, 3, 4), classroom: { ...classroom4, id: 13, classNumber: 5, sortOrder: 5 } },
+  { ...room(2, "2-4반 분단2", 2, 3, 2), classroom: classroom4 },
+];
+const backfilledGroups = buildPrintGroups(backfilled, "afternoon", 2);
+assert.deepEqual(backfilledGroups.map((g) => g.key), ["2-4반", "2-5반"]);
+assert.deepEqual(backfilledGroups[0].rooms.map((r) => r.id), [1, 2]);
+
+// 야간은 classroom 메타가 있어도 무시한다
+const nightWithMeta = buildPrintGroups([{ ...room(20, "미래201", 3, 2, 1), classroom: classroom4 }], "night", 1);
+assert.equal(nightWithMeta[0].kind, "stack");
+assert.equal(nightWithMeta[0].classroom, undefined);
+
 console.log("seat-print-groups checks passed");
