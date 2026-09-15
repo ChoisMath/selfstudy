@@ -437,7 +437,7 @@ export default function SeatingEditor({
                   )}
                 />
               ) : sessionType === "afternoon" ? (
-                /* 오후 자습: 이름 접두사 기반 그룹 */
+                /* 오후 자습: 학급(Classroom) 그룹 우선, 미분류 Room 은 이름 접두사 그룹 */
                 <div className="space-y-6 overflow-x-auto">
                   {/* preserveSeatWidth: 폭이 부족하면 셀을 줄이지 않고 이 래퍼가 스크롤한다. 미래홀 도면은 자체 minWidth/스크롤이 있어 켜지 않는다. */}
                   {buildPrintGroups(rooms, "afternoon", grade).map((group, gi) => (

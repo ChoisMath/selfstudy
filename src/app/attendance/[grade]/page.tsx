@@ -1018,7 +1018,7 @@ export default function AttendanceGradePage() {
               renderRoom={(room) => renderAttendanceRoom(room, { compact: true, hideTeacherDesk: true, gapAfterRows: GAP_CONFIG[room.name] })}
             />
           ) : seatSession === "afternoon" ? (
-            /* 오후 좌석: 이름 접두사 기반 그룹 */
+            /* 오후 좌석: 학급(Classroom) 그룹 우선, 미분류 Room 은 이름 접두사 그룹 */
             <div className="flex flex-col gap-5">
               {buildPrintGroups(rooms, seatSession, grade).map((group, gi) => (
                   <div key={`${group.key}-${gi}`} className="border border-[#e2e8f0] rounded-[10px] overflow-hidden">

@@ -24,7 +24,7 @@ assert.match(itemRoute, /isGeometryChanged\(/, "PUT 이 isGeometryChanged 로 �
 assert.match(itemRoute, /planClassroomRooms\(/);
 assert.match(itemRoute, /\$transaction/);
 // 삭제 순서: SeatLayout → Room → Classroom (cascade 없음)
-const deleteOrder = /seatLayout\.deleteMany[\s\S]*?room\.deleteMany[\s\S]*?classroom\.delete\(/;
+const deleteOrder = /export async function DELETE[\s\S]*?seatLayout\.deleteMany[\s\S]*?room\.deleteMany[\s\S]*?classroom\.delete\(/;
 assert.match(itemRoute, deleteOrder, "DELETE 의 삭제 순서가 SeatLayout → Room → Classroom 이 아님");
 assert.match(itemRoute, /session\.grade !== grade/, "다른 학년의 classroom id 접근을 막지 않음");
 assert.match(itemRoute, /reset/, "PUT 응답에 reset 없음");
@@ -37,7 +37,7 @@ assert.match(frame, /writingMode: "vertical-rl"/, "복도/창문 라벨이 세�
 assert.match(frame, /whitespace-nowrap/, "라벨에 줄바꿈 금지 클래스 없음");
 assert.match(frame, /PRINT_SIDE_LABEL_WIDTH/, "인쇄 라벨 폭 상수 없음");
 assert.match(frame, /교탁/, "ClassroomFrame 에 교탁 없음");
-assert.doesNotMatch(frame, /gridTemplateColumns:[^\n]*1fr[^\n]*isPrint \?/, "인쇄 variant 에 1fr 사용 의심");
+assert.match(frame, /\$\{PRINT_SIDE_LABEL_WIDTH\}px max-content \$\{PRINT_SIDE_LABEL_WIDTH\}px/, "인쇄 variant 컬럼 템플릿이 고정 px + max-content 가 아님");
 
 // --- 렌더러 3곳이 학급 그룹을 ClassroomFrame 으로 그린다 ---
 for (const [label, rel] of [

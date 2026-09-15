@@ -16,7 +16,7 @@ const dragChipClass = seatingEditor.match(/<DragOverlay>[\s\S]*?className="([^"]
 assert.ok(dragChipClass, "DragOverlay 칩을 찾지 못함");
 assert.match(dragChipClass, /\bwhitespace-nowrap\b/, "드래그 칩 'N반 N번 이름' 이 좁은 좌석에서 두 줄로 깨짐");
 
-const afternoonGroupWrapper = seatingEditor.match(/오후 자습: 이름 접두사 기반 그룹 \*\/\s*<div className="([^"]+)"/)?.[1];
+const afternoonGroupWrapper = seatingEditor.match(/오후 자습: 학급\(Classroom\) 그룹 우선, 미분류 Room 은 이름 접두사 그룹 \*\/\s*<div className="([^"]+)"/)?.[1];
 assert.ok(afternoonGroupWrapper, "오후 그룹 래퍼를 찾지 못함");
 assert.match(afternoonGroupWrapper, /\boverflow-x-auto\b/, "오후 그룹이 N열 고정이라 모바일에서 문서 전체가 가로로 넘침 — 래퍼가 스크롤해야 함");
 

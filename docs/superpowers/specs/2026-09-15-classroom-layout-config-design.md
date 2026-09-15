@@ -261,7 +261,7 @@ type Props = {
 | `tests/classroom-migration.test.ts` (신규) | 마이그레이션 SQL에 enum·테이블·FK·백필 정규식·UPDATE 존재 |
 | `tests/classroom-wiring.test.ts` (신규) | 편집기·출석·인쇄 3곳이 `ClassroomFrame`을 import 하고 `group.classroom`으로 분기하는지, `ClassroomFrame`이 dnd-kit 비의존인지, API 라우트가 `parseClassroomConfig`·`isGeometryChanged`·`$transaction`을 쓰는지 src 스캔 |
 | `tests/session-literal-guard.test.ts` (갱신) | 허용 목록에 `app/api/grade-admin/[grade]/classrooms/route.ts`, `[id]/route.ts` 추가 |
-| `tests/seat-print-wiring.test.ts` (갱신) | `SeatPrintGroup` 교탁 단언을 `ClassroomFrame` 사용으로 조정 |
+| `tests/seat-print-wiring.test.ts` (변경 없음) | 변경 없음 — 기존 `divisions-row \|\| divisions-column` 단언이 `isDivisions` 표현식으로 그대로 성립 |
 
 기존 `seating-editor-responsive.test.ts`·`responsive-tables.test.ts`가 클래스 스캔으로 고정한 식별자는 유지한다.
 
