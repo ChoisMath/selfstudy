@@ -29,4 +29,34 @@ assert.match(itemRoute, deleteOrder, "DELETE 의 삭제 순서가 SeatLayout →
 assert.match(itemRoute, /session\.grade !== grade/, "다른 학년의 classroom id 접근을 막지 않음");
 assert.match(itemRoute, /reset/, "PUT 응답에 reset 없음");
 
+// --- ClassroomFrame: 인쇄에서도 쓰므로 dnd-kit 비의존, 라벨은 corridorLabels 에서만 ---
+const frame = read("../src/components/seats/ClassroomFrame.tsx");
+assert.doesNotMatch(frame, /@dnd-kit/, "ClassroomFrame 이 dnd-kit 에 의존함");
+assert.match(frame, /corridorLabels\(/, "ClassroomFrame 이 corridorLabels 를 쓰지 않음");
+assert.match(frame, /writingMode: "vertical-rl"/, "복도/창문 라벨이 세로 텍스트가 아님");
+assert.match(frame, /whitespace-nowrap/, "라벨에 줄바꿈 금지 클래스 없음");
+assert.match(frame, /PRINT_SIDE_LABEL_WIDTH/, "인쇄 라벨 폭 상수 없음");
+assert.match(frame, /교탁/, "ClassroomFrame 에 교탁 없음");
+assert.doesNotMatch(frame, /gridTemplateColumns:[^\n]*1fr[^\n]*isPrint \?/, "인쇄 variant 에 1fr 사용 의심");
+
+// --- 렌더러 3곳이 학급 그룹을 ClassroomFrame 으로 그린다 ---
+for (const [label, rel] of [
+  ["SeatingEditor", "../src/components/seats/SeatingEditor.tsx"],
+  ["attendance page", "../src/app/attendance/[grade]/page.tsx"],
+  ["SeatPrintGroup", "../src/components/seats/SeatPrintGroup.tsx"],
+] as const) {
+  const src = read(rel);
+  assert.match(src, /import ClassroomFrame from/, `${label} 가 ClassroomFrame 을 import 하지 않음`);
+  assert.match(src, /group\.classroom/, `${label} 가 group.classroom 으로 분기하지 않음`);
+}
+assert.match(read("../src/components/seats/SeatingEditor.tsx"), /variant="screen"/);
+assert.match(read("../src/app/attendance/[grade]/page.tsx"), /variant="screen"/);
+assert.match(read("../src/components/seats/SeatPrintGroup.tsx"), /variant="print"/);
+// 편집기의 학급 그룹은 RoomGrid 자체 교탁을 끄고 프레임 교탁 하나만 남긴다
+assert.match(
+  read("../src/components/seats/SeatingEditor.tsx"),
+  /<ClassroomFrame[\s\S]*?<RoomGrid[\s\S]*?hideTeacherDesk[\s\S]*?<\/ClassroomFrame>/,
+  "편집기 학급 그룹의 RoomGrid 가 hideTeacherDesk 가 아님"
+);
+
 console.log("classroom-wiring checks passed");

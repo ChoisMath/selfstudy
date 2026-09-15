@@ -1,6 +1,7 @@
 "use client";
 
 import MiraeHallLayout, { GAP_CONFIG } from "./MiraeHallLayout";
+import ClassroomFrame from "./ClassroomFrame";
 import PrintRoomGrid, { type PrintRoomSeats } from "./PrintRoomGrid";
 import { divisionLabel, type PrintBaseRoom, type PrintGroup } from "@/lib/seats/print-groups";
 import { SEAT_SESSION_META, type SeatSessionType } from "@/lib/sessions";
@@ -20,7 +21,8 @@ export default function SeatPrintGroup({
   seatsByRoom: Map<number, PrintRoomSeats>;
 }) {
   const sessionLabel = SEAT_SESSION_META[sessionType].label;
-  const showTeacherDesk = group.kind === "divisions-row" || group.kind === "divisions-column";
+  const isDivisions = group.kind === "divisions-row" || group.kind === "divisions-column";
+  const showTeacherDesk = isDivisions && !group.classroom;
 
   return (
     <div className="inline-flex flex-col items-center">
@@ -41,6 +43,25 @@ export default function SeatPrintGroup({
             />
           )}
         />
+      ) : group.classroom ? (
+        <ClassroomFrame corridorSide={group.classroom.corridorSide} variant="print">
+          <div
+            className="grid items-start"
+            style={{
+              gridTemplateColumns: `repeat(${group.rooms.length}, max-content)`,
+              columnGap: `${GROUP_GAP_PX}px`,
+            }}
+          >
+            {group.rooms.map((room) => (
+              <PrintRoomGrid
+                key={room.id}
+                room={room}
+                seats={seatsByRoom.get(room.id) ?? EMPTY_SEATS}
+                label={divisionLabel(room.name)}
+              />
+            ))}
+          </div>
+        </ClassroomFrame>
       ) : (
         <div
           className="grid items-start"

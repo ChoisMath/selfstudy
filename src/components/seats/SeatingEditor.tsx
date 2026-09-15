@@ -17,6 +17,7 @@ import {
 import RoomGrid, { type SeatRef } from "./RoomGrid";
 import UnassignedStudents, { UNASSIGNED_DROP_ID } from "./UnassignedStudents";
 import MiraeHallLayout, { GAP_CONFIG } from "./MiraeHallLayout";
+import ClassroomFrame from "./ClassroomFrame";
 import { buildPrintGroups, type ClassroomMeta } from "@/lib/seats/print-groups";
 import { participatesInSeatSession } from "@/lib/seats/seat-participation";
 import { type SeatSessionType } from "@/lib/sessions";
@@ -429,26 +430,48 @@ export default function SeatingEditor({
                   {buildPrintGroups(rooms, "afternoon", grade).map((group, gi) => (
                     <div key={`${group.key}-${gi}`}>
                       <h3 className="whitespace-nowrap font-semibold text-gray-700 mb-2">{group.title}</h3>
-                      <div
-                        className="grid gap-3"
-                        style={{
-                          gridTemplateColumns: `repeat(${
-                            group.kind === "divisions-column" ? 1 : group.rooms.length
-                          }, 1fr)`,
-                        }}
-                      >
-                        {group.rooms.map((room) => (
-                          <RoomGrid
-                            key={room.id}
-                            room={room}
-                            seats={seats.get(room.id) ?? EMPTY_ROOM_SEATS}
-                            selectedSeatKey={selectedSeatKeyOf(room.id)}
-                            onSelectSeat={handleSelectSeat}
-                            compact
-                            preserveSeatWidth
-                          />
-                        ))}
-                      </div>
+                      {group.classroom ? (
+                        <ClassroomFrame corridorSide={group.classroom.corridorSide} variant="screen">
+                          <div
+                            className="grid gap-3"
+                            style={{ gridTemplateColumns: `repeat(${group.rooms.length}, 1fr)` }}
+                          >
+                            {group.rooms.map((room) => (
+                              <RoomGrid
+                                key={room.id}
+                                room={room}
+                                seats={seats.get(room.id) ?? EMPTY_ROOM_SEATS}
+                                selectedSeatKey={selectedSeatKeyOf(room.id)}
+                                onSelectSeat={handleSelectSeat}
+                                compact
+                                preserveSeatWidth
+                                hideTeacherDesk
+                              />
+                            ))}
+                          </div>
+                        </ClassroomFrame>
+                      ) : (
+                        <div
+                          className="grid gap-3"
+                          style={{
+                            gridTemplateColumns: `repeat(${
+                              group.kind === "divisions-column" ? 1 : group.rooms.length
+                            }, 1fr)`,
+                          }}
+                        >
+                          {group.rooms.map((room) => (
+                            <RoomGrid
+                              key={room.id}
+                              room={room}
+                              seats={seats.get(room.id) ?? EMPTY_ROOM_SEATS}
+                              selectedSeatKey={selectedSeatKeyOf(room.id)}
+                              onSelectSeat={handleSelectSeat}
+                              compact
+                              preserveSeatWidth
+                            />
+                          ))}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>

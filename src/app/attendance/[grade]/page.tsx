@@ -7,6 +7,7 @@ import { useSession } from "next-auth/react";
 import AttendanceDatePicker from "@/components/attendance/AttendanceDatePicker";
 import { getKstTodayString, formatDateLabel } from "@/lib/calendar";
 import MiraeHallLayout, { GAP_CONFIG } from "@/components/seats/MiraeHallLayout";
+import ClassroomFrame from "@/components/seats/ClassroomFrame";
 import { buildPrintGroups, type ClassroomMeta } from "@/lib/seats/print-groups";
 import { SESSION_TYPES, SESSION_META, seatSessionOf, sessionTypesOfSeat, type SessionType } from "@/lib/sessions";
 import { reasonLabel } from "@/lib/absence-reasons";
@@ -1029,16 +1030,30 @@ export default function AttendanceGradePage() {
                         {group.rooms.reduce((sum, r) => sum + r.seats.filter((s) => s.student).length, 0)}석
                       </span>
                     </div>
-                    <div className={`grid gap-1 p-[clamp(6px,1.5vw,12px)]`} style={{ gridTemplateColumns: `repeat(${group.kind === "divisions-column" ? 1 : group.rooms.length}, 1fr)` }}>
-                      {group.rooms.map((room) => (
-                        <div key={room.id}>
-                          {renderAttendanceGrid(room)}
+                    {group.classroom ? (
+                      <div className="p-[clamp(6px,1.5vw,12px)]">
+                        <ClassroomFrame corridorSide={group.classroom.corridorSide} variant="screen">
+                          <div className="grid gap-1" style={{ gridTemplateColumns: `repeat(${group.rooms.length}, 1fr)` }}>
+                            {group.rooms.map((room) => (
+                              <div key={room.id}>{renderAttendanceGrid(room)}</div>
+                            ))}
+                          </div>
+                        </ClassroomFrame>
+                      </div>
+                    ) : (
+                      <>
+                        <div className={`grid gap-1 p-[clamp(6px,1.5vw,12px)]`} style={{ gridTemplateColumns: `repeat(${group.kind === "divisions-column" ? 1 : group.rooms.length}, 1fr)` }}>
+                          {group.rooms.map((room) => (
+                            <div key={room.id}>
+                              {renderAttendanceGrid(room)}
+                            </div>
+                          ))}
                         </div>
-                      ))}
-                    </div>
-                    <div className="text-center py-1.5 bg-[#f9fafb] border-t border-dashed border-[#d1d5db] text-[#9ca3af] text-[clamp(10px,2.5vw,12px)]">
-                      교탁
-                    </div>
+                        <div className="text-center py-1.5 bg-[#f9fafb] border-t border-dashed border-[#d1d5db] text-[#9ca3af] text-[clamp(10px,2.5vw,12px)]">
+                          교탁
+                        </div>
+                      </>
+                    )}
                   </div>
               ))}
             </div>
