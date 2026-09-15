@@ -232,7 +232,7 @@ export default function ClassroomConfigModal({
               ) : (
                 <div className="overflow-x-auto rounded-lg border">
                   <table className="w-full text-sm">
-                    <thead className="bg-gray-50 text-left text-gray-600">
+                    <thead className="sticky top-0 z-[2] bg-gray-50 text-left text-gray-600">
                       <tr>
                         <th className="whitespace-nowrap px-3 py-2">학급</th>
                         <th className="whitespace-nowrap px-3 py-2">유형</th>
@@ -253,7 +253,7 @@ export default function ClassroomConfigModal({
                           <td className="whitespace-nowrap px-3 py-2">{c.seatCount}석</td>
                           <td className="whitespace-nowrap px-3 py-2">{c.assignedCount}명</td>
                           <td className="whitespace-nowrap px-3 py-1">
-                            <div className="flex gap-1">
+                            <div className="flex gap-2">
                               <button
                                 type="button"
                                 onClick={() => openEdit(c)}
