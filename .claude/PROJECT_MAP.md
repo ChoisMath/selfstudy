@@ -1,6 +1,6 @@
 # 자율학습 출석부 시스템 - 프로젝트 지도
 
-> 마지막 업데이트: 2026-09-08
+> 마지막 업데이트: 2026-09-15
 > 이 파일은 새 세션에서 코드베이스를 빠르게 파악하기 위한 참조 문서입니다.
 
 ## 개요
@@ -51,7 +51,7 @@ src/
 │   ├── attendance/             # 감독교사
 │   │   ├── layout.tsx          # 모든 교사에게 이동 버튼 (담임교사/감독일정/학년관리) + NotificationBell
 │   │   ├── page.tsx            # 자동 학년 라우팅 / 학년 선택
-│   │   └── [grade]/page.tsx    # ★ 핵심: 좌석 출석 그리드 (4탭: 오후1/오후2/야간자습/불참신청, 오후 그룹은 buildPrintGroups 공용). 오후2 탭 "오후1 결과 복사" 버튼(`/api/attendance/copy-session`) + 불참신청 관리 UI
+│   │   └── [grade]/page.tsx    # ★ 핵심: 좌석 출석 그리드 (4탭: 오후1/오후2/야간자습/불참신청, 오후 그룹은 buildPrintGroups 공용). 오후2 탭 "오후1 결과 복사" 버튼(`/api/attendance/copy-session`) + 불참신청 관리 UI. 오후 그룹 중 `group.classroom`이 있으면 카드 내부 격자를 `ClassroomFrame`(`overflow-x-auto` 래퍼로 좁은 화면 가로 스크롤)으로 감싸 자체 교탁 박스 대신 프레임 교탁 사용, 없으면(미래혜윰) 기존 렌더 유지
 │   ├── homeroom/               # 담임교사
 │   │   ├── layout.tsx          # 담임 5탭 + 공통 2탭 네비게이션 (세션 로딩 처리) + NotificationBell
 │   │   ├── page.tsx            # 자기반 학생 + 주간출석 (날짜당 3셀: 오후1/오후2/야간)
@@ -85,11 +85,13 @@ src/
 │   ├── homeroom/
 │   │   └── SupervisorSummaryModal.tsx  # 학년도 기준 교사별 월별 감독횟수 집계 모달 (`/api/homeroom/schedule/summary`, 본인 행 sticky 강조)
 │   ├── seats/
-│   │   ├── SeatingEditor.tsx       # DndContext + 저장 + 출력 버튼 (props: grade, sessionType). 미배정 목록은 `participatesInSeatSession` 으로 필터. 좌석 해제: `selectedSeat` 선택 → 루트 마지막 자식 `sticky bottom-2` 액션바(배정 해제/취소/Escape), 또는 좌석→미배정 패널 드롭. 충돌 감지 커스텀(패널은 `getBoundingClientRect()` 실시간, 나머지는 패널 제외 `closestCenter`)
-│   │   ├── RoomGrid.tsx            # 교실 격자 (droppable/draggable 셀). X(해제) 버튼 없음 — props `selectedSeatKey?`/`onSelectSeat?(SeatRef|null)`(`export type SeatRef`)로 좌석 탭 선택(ring), 핸들 Delete/Backspace도 선택. `preserveSeatWidth` prop: 오후 분기 전용 최소 셀 폭(`MIN_SEAT_WIDTH=52`) — 셀을 찌그러뜨리지 않고 래퍼가 가로 스크롤
+│   │   ├── SeatingEditor.tsx       # DndContext + 저장 + 출력 버튼 (props: grade, sessionType). 미배정 목록은 `participatesInSeatSession` 으로 필터. 좌석 해제: `selectedSeat` 선택 → 루트 마지막 자식 `sticky bottom-2` 액션바(배정 해제/취소/Escape), 또는 좌석→미배정 패널 드롭. 충돌 감지 커스텀(패널은 `getBoundingClientRect()` 실시간, 나머지는 패널 제외 `closestCenter`). 오후(`sessionType==="afternoon"`) 헤더에 "교실 구조 설정" 버튼(`min-h-11`, 미저장 변경 있으면 확인창) → `ClassroomConfigModal`. 오후 그룹 중 `group.classroom`이 있으면 `ClassroomFrame variant="screen"`으로 감싸고 각 `RoomGrid`에 `hideTeacherDesk`(프레임이 교탁을 대신 그림), 없으면(미래혜윰) 기존 렌더 유지
+│   │   ├── RoomGrid.tsx            # 교실 격자 (droppable/draggable 셀). X(해제) 버튼 없음 — props `selectedSeatKey?`/`onSelectSeat?(SeatRef|null)`(`export type SeatRef`)로 좌석 탭 선택(ring), 핸들 Delete/Backspace도 선택. `preserveSeatWidth` prop: 오후 분기 전용 최소 셀 폭(`MIN_SEAT_WIDTH=52`) — 셀을 찌그러뜨리지 않고 래퍼가 가로 스크롤. `hideTeacherDesk` prop: true면 자체 교탁 박스를 그리지 않음(학급 그룹은 `ClassroomFrame`이 대신 그림)
+│   │   ├── ClassroomFrame.tsx      # **신규.** 학급 분단 격자를 감싸는 공용 프레임(dnd-kit 비의존, 화면/인쇄 공용). props `{corridorSide, variant:"screen"|"print", showTeacherDesk=true, children}` — 좌우에 `corridorLabels()` 기반 세로("`writing-mode: vertical-rl`") "복도"/"창문" 라벨 + 하단 "교탁". `variant="print"`는 고정 px(라벨 20px=`PRINT_SIDE_LABEL_WIDTH`)만 사용해 `PrintPageFitter` 실측과 맞춤, `variant="screen"`은 `minmax(min-content,1fr)`이라 호출부가 `overflow-x-auto` 래퍼를 제공해야 함
+│   │   ├── ClassroomConfigModal.tsx # **신규.** 학년관리자용 학급 구조 설정 모달 (props `{grade, onClose, onChanged}`). `useSWR`로 `/api/grade-admin/[grade]/classrooms` 목록(반/유형/복도/행 수/좌석 수/배정 수, `overflow-x-auto` + sticky 헤더) + 추가/수정 폼(반 번호·복도 라디오·유형 라디오·분단별 행 수) + `PrintRoomGrid` 미리보기. 기하 변경(`isGeometryChanged`)이고 `assignedCount>0`이면 `confirm()`으로 "좌석이 초기화됩니다" 확인, 삭제도 confirm. 저장/삭제 성공 시 목록 `mutate()` + `onChanged()`(SeatingEditor의 좌석 SWR 갱신)
 │   │   ├── MiraeHallLayout.tsx     # 2학년 야간 미래홀 도면 (fitContent 옵션)
 │   │   ├── PrintRoomGrid.tsx       # 인쇄용 읽기전용 좌석 격자 (dnd 없음, 고정 셀 크기)
-│   │   ├── SeatPrintGroup.tsx      # 인쇄 그룹 1개 (제목 + kind별 배치 + 교탁)
+│   │   ├── SeatPrintGroup.tsx      # 인쇄 그룹 1개 (제목 + kind별 배치 + 교탁). `group.classroom`이 있으면 `ClassroomFrame variant="print"`로 각 `PrintRoomGrid`를 감싸고 자체 교탁 박스는 생략(`showTeacherDesk = isDivisions && !group.classroom`), 없으면(미래혜윰/야간) 기존 교탁 박스 유지
 │   │   ├── PrintPageFitter.tsx     # A4 페이지 박스 + 콘텐츠 실측 후 scale
 │   │   └── UnassignedStudents.tsx  # 미배정 학생 풀 (검색/반별 그룹). `export const UNASSIGNED_DROP_ID = "unassigned"` + `useDroppable` — 좌석을 끌어다 놓으면 해제(좌석 드래그 중에만 isOver 링)
 │   └── students/
@@ -110,7 +112,8 @@ src/
 │   │   ├── send.ts            # web-push 래퍼: sendToTeacher (교사별 발송 + 404/410 만료 구독 정리)
 │   │   └── client.ts          # 브라우저 구독/해제 + VAPID base64 변환 + iOS standalone 감지
 │   ├── seats/
-│   │   ├── print-groups.ts   # 방 목록 → 인쇄 그룹 분해 (화면/인쇄 공용, 타입은 SeatSessionType)
+│   │   ├── print-groups.ts   # 방 목록 → 인쇄 그룹 분해 (화면/인쇄 공용, 타입은 SeatSessionType). `classroom` 메타(`ClassroomMeta`)가 있는 Room은 학급 단위(반 번호=`sortOrder`→`id` 순)로 먼저 묶고(`buildClassroomGroups`, `kind:"divisions-row"`), 없는 Room(미래혜윰 등)은 기존 접두사 규칙(`buildPrefixGroups`)으로 뒤에 붙임. `classroomTitle(grade,classNumber)` = `"{grade}-{classNumber}반"`. 야간 분기는 변경 없음
+│   │   ├── classroom-config.ts  # **신규.** 학급 구조 순수 로직 — `CORRIDOR_SIDES`/`LAYOUT_TYPES`(+라벨), `COLS_BY_LAYOUT`(division=2/single=1), `CLASSROOM_LIMITS`(classNumber 1~20/divisions 1~6/rows 1~10), `planClassroomRooms(grade,config)`(→Room명·cols·rows·sortOrder 목록), `isGeometryChanged(existingRooms,config)`(유형·분단수·행수 중 하나라도 다르면 true, 순서 무관), `seatCountOf`, `corridorLabels(side)`(반대쪽에 "창문"), `parseClassroomConfig(input)`(zod 미사용 손 검증, 한국어 에러)
 │   │   ├── print-layout.ts   # A4 기하 상수 + 방향 추천/배율 계산
 │   │   └── seat-participation.ts  # participatesInSeatSession: 좌석 세션의 블록 중 하나라도 참여(레코드 없으면 기본 참여)면 자리 필요
 │   └── prisma.ts       # PrismaClient 싱글톤 (PrismaPg 어댑터)
@@ -131,7 +134,7 @@ public/
 ### 출석 (`/api/attendance/`)
 | 메서드 | 경로 | 설명 |
 |--------|------|------|
-| GET | `/api/attendance?date&session&grade` | 좌석+출석 현황 조회 (`session`은 `SessionType`, 좌석/교실은 `seatSessionOf(session)`으로 조회. 학생별 `hasPendingAbsenceRequest` 포함) |
+| GET | `/api/attendance?date&session&grade` | 좌석+출석 현황 조회 (`session`은 `SessionType`, 좌석/교실은 `seatSessionOf(session)`으로 조회. 학생별 `hasPendingAbsenceRequest` 포함). `rooms[]`에 `classroom: ClassroomMeta \| null` 포함(`include: { classroom: true }`) |
 | GET | `/api/attendance/supervisor?date&grade` | **신규.** 해당 날짜·학년의 감독교사만 조회, 응답 `{ supervisor: { id, name } \| null }`. 감독 배정은 3블록이 같은 교사이므로 `REPRESENTATIVE_SESSION_TYPE` 대표행만 `findUnique`. 세션이 특정되지 않는 불참신청 탭의 감독 칩 전용 |
 | POST | `/api/attendance/toggle` | 출석 상태 순환 토글 (`sessionType`을 `isSessionType`으로 검증) |
 | PUT | `/api/attendance/[id]` | 상태 직접 수정 (`sessionType` 검증 추가) |
@@ -161,7 +164,9 @@ public/
 | PUT/DELETE | `students/[id]` | 학생 수정/삭제 |
 | POST | `students/bulk-upload` | Excel 일괄업로드 (기존 비활성화 + 새 생성) |
 | GET/PUT | `participation-days` | 참여설정. GET `students[].sessions: Record<SessionType, DaySettings>`(세션 3 × 참가+5요일 = 18열), PUT 검증 `isSessionType` |
-| GET/POST | `seat-layouts` | 좌석 배치 조회/저장(트랜잭션, roomId 기반, `sessionType`은 `SeatSessionType` — `isSeatSessionType` 검증) |
+| GET/POST | `seat-layouts` | 좌석 배치 조회/저장(트랜잭션, roomId 기반, `sessionType`은 `SeatSessionType` — `isSeatSessionType` 검증). GET `rooms[]`에 `classroom: ClassroomMeta \| null` 포함 |
+| GET/POST | `classrooms` | **신규.** 오후 학급 교실 구조 목록/추가(`withGradeAuth`). GET: 오후 세션 없으면 `{classrooms:[]}` 200(있으면 각 항목에 `rowsPerDivision`/`seatCount`/`assignedCount` 계산 포함); POST: `ClassroomConfig`(`parseClassroomConfig`) 검증 400, 같은 반 번호 존재 시 409, 세션 없으면 404, 성공 시 트랜잭션(Classroom 생성→`planClassroomRooms`로 Room 일괄 생성) 201 `{classroom}` |
+| PUT/DELETE | `classrooms/[id]` | **신규.** 학급 구조 수정/삭제(`withGradeAuth`, 다른 학년 id는 404). PUT: `isGeometryChanged`(유형·분단수·행수 변경)면 해당 Room들의 SeatLayout→Room을 지우고 재생성(좌석 초기화), 아니면 반 번호 변경 시 Room 이름만 갱신 — 응답 `{classroom, reset:boolean}`. DELETE: 트랜잭션으로 SeatLayout→Room→Classroom 순서 삭제, `{success:true}` |
 | GET/POST | `supervisor-assignments` | 감독 배정 (POST: `SESSION_TYPES` 3행 동시 upsert, 응답 `{ assignment: 대표행(afternoon1), assignments: [3행] }`) |
 | DELETE | `supervisor-assignments/[id]` | 배정 해제 (3행 동시 삭제) |
 | GET | `today-attendance` | 학년별 오늘 출결 현황. `sessions: Record<SessionType, SessionStats>`(출석/결석/사유결석/방과후 집계) |
@@ -210,7 +215,7 @@ public/
 | POST | `/api/push/unsubscribe` | endpoint 기준 구독 삭제(deleteMany), withAuth(["teacher"]) |
 | POST | `/api/cron/supervisor-reminders` | Bearer CRON_SECRET 보안 cron. KST 오늘 감독배정 조회 → (teacher,grade) dedupe → SupervisorReminderLog로 중복 방지 → web-push 발송. 응답 `{processed, planned, sent}` |
 
-## 데이터 모델 (16개 모델, 6개 enum)
+## 데이터 모델 (17개 모델, 8개 enum)
 
 ```
 Student ──< Attendance (+ durationMinutes?, durationNote?) >── Teacher (checker)
@@ -223,6 +228,10 @@ Student ──< Attendance (+ durationMinutes?, durationNote?) >── Teacher (
   └──< SeatLayout >── Room >── StudySession
          (unique: roomId + rowIndex + colIndex)
          StudySession.type: SeatSessionType (afternoon/night) — 좌석 배치·인쇄 전용, 오후1·오후2 는 같은 "오후" 좌석을 공유
+         Room.classroomId?(nullable) >── Classroom >── StudySession
+           (Classroom: sessionId+classNumber @@unique, corridorSide: CorridorSide, layoutType: ClassroomLayoutType, sortOrder=classNumber)
+           일반 학급 교실(4·5·6반)만 연결. 미래혜윰·야간 Room은 classroomId=null로 불변
+           삭제 순서(SeatLayout→Room→Classroom)는 onDelete:Cascade가 아니라 API 트랜잭션이 보장
 
 Teacher (+ primaryGrade: nullable int) ──< TeacherRole (admin/supervisor/homeroom)
   ├──< HomeroomAssignment (grade, classNumber)
@@ -246,6 +255,8 @@ SupervisorReminderLog: teacherId, grade, date(@db.Date), sentAt — @@unique([te
 - `AttendanceStatus`: unchecked, present, absent
 - `ReasonType`: academy, afterschool, illness, custom
 - `RequestStatus`: pending, approved, rejected
+- `CorridorSide`: left, right — `Classroom.corridorSide`(표시만: 해당 쪽에 "복도", 반대쪽에 "창문"). 진실 공급원은 `src/lib/seats/classroom-config.ts`
+- `ClassroomLayoutType`: division(분단형, 2열 짝책상), single(단독형, 1열) — `Classroom.layoutType`, `COLS_BY_LAYOUT`으로 Room.cols 결정
 
 ## 핵심 비즈니스 로직
 
@@ -337,8 +348,24 @@ SupervisorReminderLog: teacherId, grade, date(@db.Date), sentAt — @@unique([te
 - `react-hooks/set-state-in-effect`는 eslint 오류(빌드 게이트 아님)이며 "이전 값 저장 후 렌더 중 상태 조정" 패턴으로 대응 — `eslint-disable` 금지. 검수(tsc/eslint/build)는 `~/dev/selfstudy` 로컬 클론에서 실행(Google Drive 트리는 I/O로 정지)
 - 표 래퍼는 `overflow-x-auto table-scroll`(`globals.css` `@utility`, `--header-h` 기반 내부 스크롤포트) + thead `sticky top-0 z-20` / thead 안 인덱스 th `z-30` / 본문 인덱스 td `z-10` 관행 — 래퍼에 `overflow-x-auto`만 두면 높이 제한이 없어 sticky thead가 붙지 않음. 새 표는 이 구조를 따르고 `tests/responsive-tables.test.ts`의 `TABLE_FILES`에 추가. 헤더가 다른 레이아웃은 루트에 `[--header-h:…]` 재정의(학생 `7.625rem`)
 - `RoomGrid`에는 X(해제) 버튼이 없음 — 해제는 좌석 탭→선택→`SeatingEditor` 하단 액션바, 또는 좌석→`UnassignedStudents` 패널 드롭(`UNASSIGNED_DROP_ID`). `tests/responsive-tables.test.ts`·`tests/seating-editor-responsive.test.ts`가 클래스/식별자를 src 스캔으로 고정하므로 관련 클래스(`min-h-11`, `z-20`, `table-scroll`, `ring-2 ring-blue-500` 등) 변경 시 테스트도 함께 갱신
+- **학급 구조 변경은 좌석 배정을 초기화함**: 배치 유형·분단 수·분단별 행 수 중 하나라도 바뀌면(`isGeometryChanged`) `PUT /api/grade-admin/[grade]/classrooms/[id]`가 그 학급의 SeatLayout을 전부 삭제하고 Room을 재생성 — 복도 위치(`corridorSide`)만 바꾸면 배정 보존. 클라이언트(`ClassroomConfigModal`)는 `assignedCount>0`이고 기하가 바뀔 때만 `confirm()` 경고
+- 미래혜윰실·야간 Room은 `classroomId=null`로 고정 — `Classroom`은 오후 자율학습의 **일반 학급 교실**(4·5·6반) 전용이며, 담임교사는 구조를 수정할 수 없음(학년관리자/메인관리자만)
 
 ## 수정 이력 (주요 변경)
+
+### 2026-09-15: 학급 교실 구조 설정(분단형/단독형) — feature/classroom-layout
+- **설계/계획**: `docs/superpowers/specs/2026-09-15-classroom-layout-config-design.md`, `docs/superpowers/plans/2026-09-15-classroom-layout-config.md`
+- **목표**: 오후 자율학습 일반 학급 교실(기존 시드 전용 4·5·6반)을 학년관리자가 직접 추가/수정/삭제할 수 있게 함 — 학급 개수, 반마다 복도 위치(왼쪽/오른쪽)·배치 유형(분단형=2열 짝책상/단독형=1열)·분단별 행 수
+- **신규 모델**: `Classroom`(sessionId, classNumber, corridorSide: `CorridorSide`, layoutType: `ClassroomLayoutType`, sortOrder=classNumber, `@@unique([sessionId,classNumber])`) + `Room.classroomId Int?`(FK `onDelete: SetNull`, 삭제 순서는 API 트랜잭션이 보장) + `StudySession.classrooms`. 모델 16→17, enum 6→8
+- **마이그레이션**: `prisma/migrations/20260915000000_add_classrooms/migration.sql`(수기 작성 — 로컬 DB 없음) — enum 2개·`classrooms` 테이블·`rooms.classroom_id` 생성 후, 오후 세션의 기존 `"N-M반 분단K"` Room을 정규식으로 파싱해 학급으로 백필(좌석 배정 보존)
+- **신규 lib**: `src/lib/seats/classroom-config.ts`(순수 로직 + `parseClassroomConfig` 손검증), `src/lib/seats/print-groups.ts` 확장(`ClassroomMeta`, 학급 그룹을 반 번호 순으로 먼저 묶고 접두사 그룹을 뒤에 붙임)
+- **신규 API**: `GET/POST /api/grade-admin/[grade]/classrooms`, `PUT/DELETE /api/grade-admin/[grade]/classrooms/[id]` — 기하 변경 시 좌석 초기화. `GET seat-layouts`/`GET /api/attendance`의 `rooms[]`에 `classroom` 메타 추가
+- **신규 컴포넌트**: `ClassroomFrame`(복도/창문 세로 라벨 + 하단 교탁, 화면/인쇄 공용, dnd-kit 비의존), `ClassroomConfigModal`(학급 목록 표 + 추가/수정/삭제 폼, 기하 변경 시 확인창)
+- **배선**: `SeatingEditor`(오후 탭 "교실 구조 설정" 버튼, 학급 그룹은 `ClassroomFrame`+`RoomGrid hideTeacherDesk`), `SeatPrintGroup`(학급 그룹은 `ClassroomFrame print`), `attendance/[grade]/page.tsx`(학급 그룹 카드를 `overflow-x-auto` 래퍼 + `ClassroomFrame`으로 감쌈)
+- **시드**: 4·5·6반 `Classroom`(분단형, 복도 오른쪽, 분단 3개×3행) 생성 후 기존 9개 Room에 `classroomId` 연결
+- **테스트 신규 3개**: `tests/classroom-migration.test.ts`(마이그레이션 SQL 스캔), `tests/classroom-config.test.ts`(순수 로직), `tests/classroom-wiring.test.ts`(편집기/출석/인쇄 배선 + API가 `parseClassroomConfig`/`isGeometryChanged`/`$transaction` 사용하는지 src 스캔). 갱신: `tests/seat-print-groups.test.ts`(학급 그룹 혼합 케이스), `tests/session-literal-guard.test.ts`(classrooms 라우트 2개를 허용 목록에 추가)
+- **비목표**: 담임교사의 자기 반 구조 수정, 미래혜윰·야간 도면 편집, 분단마다 다른 유형 혼합, 학급 별칭
+- DB 마이그레이션 있음 — Railway `migrate deploy` 적용 필요
 
 ### 2026-09-08: 불참신청 탭 감독교사 미배정 표시 수정
 - **증상**: `/attendance/[grade]`에서 "불참신청" 탭을 열면 상단 헤더의 "감독" 칩이 실제 배정과 무관하게 항상 "미배정". 원인은 감독교사 이름을 `data?.supervisor`(= `/api/attendance?date&session&grade` SWR 응답)에서만 읽는데, 그 SWR 키가 `tab !== "absence"` 조건부여서 불참신청 탭에서는 요청 자체가 나가지 않아 `data`가 undefined
@@ -581,7 +608,7 @@ SupervisorReminderLog: teacherId, grade, date(@db.Date), sentAt — @@unique([te
 
 ## 실제 교실 구조 (시드 기준)
 
-**오후자습** (자율관: 교실, 16:30-18:20):
+**오후자습** (자율관: 교실, 16:30-18:20) — 2026-09-15부터 학년관리자가 `ClassroomConfigModal`(`/grade-admin/[grade]/seats`, `/admin/seats` 오후 탭 "교실 구조 설정")로 학급 추가/수정/삭제 가능. 아래는 시드 기본값(분단형, 복도 오른쪽, 분단 3개×3행=18석):
 - X-4반 교실: 5열×3행 (15석)
 - X-5반 교실: 5열×3행 (15석)
 - X-6반 교실: 4열×3행 (12석)

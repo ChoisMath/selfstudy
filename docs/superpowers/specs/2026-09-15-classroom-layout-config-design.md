@@ -175,7 +175,7 @@ export type PrintGroup<T> = {
 
 ## 4. API (`src/app/api/grade-admin/[grade]/classrooms/`)
 
-모두 `withGradeAuth(grade, …)`. 학년 검증(1–3)은 기존 seat-layouts 라우트와 동일. 대상 세션은 `studySession.findUnique({ type: "afternoon", grade })` — 없으면 404.
+모두 `withGradeAuth(grade, …)`. 학년 검증(1–3)은 기존 seat-layouts 라우트와 동일. 대상 세션은 `studySession.findUnique({ type: "afternoon", grade })` — POST/PUT/DELETE 는 없으면 404, GET 은 빈 목록 `{ classrooms: [] }` 을 200 으로 반환(모달이 그대로 렌더).
 
 | 메서드 | 경로 | 요청 | 응답 / 동작 |
 |---|---|---|---|
