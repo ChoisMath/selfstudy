@@ -1031,7 +1031,7 @@ export default function AttendanceGradePage() {
                       </span>
                     </div>
                     {group.classroom ? (
-                      <div className="p-[clamp(6px,1.5vw,12px)]">
+                      <div className="overflow-x-auto p-[clamp(6px,1.5vw,12px)]">
                         <ClassroomFrame corridorSide={group.classroom.corridorSide} variant="screen">
                           <div className="grid gap-1" style={{ gridTemplateColumns: `repeat(${group.rooms.length}, 1fr)` }}>
                             {group.rooms.map((room) => (

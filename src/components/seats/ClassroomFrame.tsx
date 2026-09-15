@@ -37,7 +37,7 @@ export default function ClassroomFrame({
         className="grid items-stretch"
         style={{
           // 인쇄는 PrintPageFitter 가 자연 크기를 실측하므로 고정 px + max-content 만 쓴다.
-          // 화면은 격자 최소 폭(min-content) 아래로 줄이지 않아 바깥 overflow-x-auto 래퍼가 스크롤한다.
+          // 화면은 격자 최소 폭(min-content) 아래로 줄이지 않는다 — 호출부가 overflow-x-auto 래퍼로 가로 스크롤을 제공해야 한다.
           gridTemplateColumns: isPrint
             ? `${PRINT_SIDE_LABEL_WIDTH}px max-content ${PRINT_SIDE_LABEL_WIDTH}px`
             : "auto minmax(min-content, 1fr) auto",

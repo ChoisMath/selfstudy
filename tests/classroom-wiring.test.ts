@@ -59,4 +59,11 @@ assert.match(
   "편집기 학급 그룹의 RoomGrid 가 hideTeacherDesk 가 아님"
 );
 
+// 출석 카드는 overflow-hidden 이라 학급 프레임 래퍼가 직접 가로 스크롤을 제공해야 한다
+assert.match(
+  read("../src/app/attendance/[grade]/page.tsx"),
+  /<div className="overflow-x-auto p-\[clamp\(6px,1\.5vw,12px\)\]">\s*<ClassroomFrame/,
+  "출석 페이지 학급 프레임 래퍼에 overflow-x-auto 없음"
+);
+
 console.log("classroom-wiring checks passed");
