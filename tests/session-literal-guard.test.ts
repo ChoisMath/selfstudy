@@ -14,6 +14,8 @@ const SEAT_CONTEXT_ALLOWLIST = new Set([
   "app/grade-admin/[grade]/page.tsx",
   "app/admin/seats/page.tsx",
   "app/api/grade-admin/[grade]/seat-layouts/route.ts",
+  "app/api/grade-admin/[grade]/classrooms/route.ts",
+  "app/api/grade-admin/[grade]/classrooms/[id]/route.ts",
   // 좌석 세션 분기(seatSession === "afternoon") 와 "오후 전체" 편의 선택(sessionTypesOfSeat("afternoon"))
   "app/attendance/[grade]/page.tsx",
   "app/student/absence-requests/page.tsx",
