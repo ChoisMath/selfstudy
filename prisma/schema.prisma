@@ -138,6 +138,16 @@ enum SeatSessionType {
   night
 }
 
+enum CorridorSide {
+  left
+  right
+}
+
+enum ClassroomLayoutType {
+  division
+  single
+}
+
 enum SessionType {
   afternoon1
   afternoon2
@@ -154,24 +164,44 @@ model StudySession {
   timeStart String          @db.VarChar(10) @map("time_start")
   timeEnd   String          @db.VarChar(10) @map("time_end")
 
-  rooms Room[]
+  rooms      Room[]
+  classrooms Classroom[]
 
   @@unique([type, grade])
   @@map("study_sessions")
 }
 
+model Classroom {
+  id           Int                 @id @default(autoincrement())
+  sessionId    Int                 @map("session_id")
+  classNumber  Int                 @map("class_number")
+  corridorSide CorridorSide        @default(right) @map("corridor_side")
+  layoutType   ClassroomLayoutType @default(division) @map("layout_type")
+  sortOrder    Int                 @default(0) @map("sort_order")
+
+  session StudySession @relation(fields: [sessionId], references: [id])
+  rooms   Room[]
+
+  @@unique([sessionId, classNumber])
+  @@index([sessionId, sortOrder])
+  @@map("classrooms")
+}
+
 model Room {
-  id        Int    @id @default(autoincrement())
-  sessionId Int    @map("session_id")
-  name      String @db.VarChar(50)
-  cols      Int
-  rows      Int
-  sortOrder Int    @default(0) @map("sort_order")
+  id          Int    @id @default(autoincrement())
+  sessionId   Int    @map("session_id")
+  classroomId Int?   @map("classroom_id")
+  name        String @db.VarChar(50)
+  cols        Int
+  rows        Int
+  sortOrder   Int    @default(0) @map("sort_order")
 
   session     StudySession @relation(fields: [sessionId], references: [id])
+  classroom   Classroom?   @relation(fields: [classroomId], references: [id])
   seatLayouts SeatLayout[]
 
   @@index([sessionId, sortOrder])
+  @@index([classroomId])
   @@map("rooms")
 }
 

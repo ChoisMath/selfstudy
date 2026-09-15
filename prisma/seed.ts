@@ -14,7 +14,7 @@ async function main() {
     TRUNCATE TABLE absence_reasons, attendance, absence_requests,
       participation_days, seat_layouts, supervisor_swap_history,
       supervisor_assignments, homeroom_assignments, sub_admin_assignments,
-      teacher_roles, rooms, study_sessions, students, teachers
+      teacher_roles, rooms, classrooms, study_sessions, students, teachers
     CASCADE
   `);
   console.log("Existing data cleared.");
@@ -136,22 +136,22 @@ async function main() {
     });
 
     // 실제 도면: 각 반에 분단 3개(2열×3행=6석씩), 반당 18석, 총 54석
-    const afternoonRooms = [
-      { name: `${grade}-4반 분단1`, cols: 2, rows: 3, sortOrder: 1 },
-      { name: `${grade}-4반 분단2`, cols: 2, rows: 3, sortOrder: 2 },
-      { name: `${grade}-4반 분단3`, cols: 2, rows: 3, sortOrder: 3 },
-      { name: `${grade}-5반 분단1`, cols: 2, rows: 3, sortOrder: 4 },
-      { name: `${grade}-5반 분단2`, cols: 2, rows: 3, sortOrder: 5 },
-      { name: `${grade}-5반 분단3`, cols: 2, rows: 3, sortOrder: 6 },
-      { name: `${grade}-6반 분단1`, cols: 2, rows: 3, sortOrder: 7 },
-      { name: `${grade}-6반 분단2`, cols: 2, rows: 3, sortOrder: 8 },
-      { name: `${grade}-6반 분단3`, cols: 2, rows: 3, sortOrder: 9 },
-    ];
-
-    for (const room of afternoonRooms) {
-      await prisma.room.create({
-        data: { sessionId: afternoonSession.id, ...room },
+    for (const classNumber of [4, 5, 6]) {
+      const classroom = await prisma.classroom.create({
+        data: { sessionId: afternoonSession.id, classNumber, sortOrder: classNumber },
       });
+      for (let division = 1; division <= 3; division++) {
+        await prisma.room.create({
+          data: {
+            sessionId: afternoonSession.id,
+            classroomId: classroom.id,
+            name: `${grade}-${classNumber}반 분단${division}`,
+            cols: 2,
+            rows: 3,
+            sortOrder: (classNumber - 4) * 3 + division,
+          },
+        });
+      }
     }
 
     // 2학년: 오후 미래혜윰실 추가 (5열×2행 분단)
