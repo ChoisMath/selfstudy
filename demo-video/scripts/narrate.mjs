@@ -15,6 +15,9 @@ import {
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const GUIDES = {
   "setup-check": { module: "src/setup-check/narration.ts", outDir: "public/narration/setup-check", json: "src/setup-check/narration-durations.json", engine: "mlx" },
+  teacher: { module: "src/teacher/narration.ts", outDir: "public/narration/teacher", json: "src/teacher/narration-durations.json", engine: "mlx" },
+  student: { module: "src/student/narration.ts", outDir: "public/narration/student", json: "src/student/narration-durations.json", engine: "mlx" },
+  "grade-admin": { module: "src/grade-admin/narration.ts", outDir: "public/narration/grade-admin", json: "src/grade-admin/narration-durations.json", engine: "mlx" },
 };
 const arg = (name) => {
   const i = process.argv.indexOf(name);
