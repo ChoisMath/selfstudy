@@ -20,7 +20,8 @@ const DAY_LABELS = ["월", "화", "수", "목", "금"];
 const PARTICIPANT_COUNT = 12;
 
 const PAD_X = 16;
-const PAD_TOP = 16;
+// main className="... px-2 md:px-3 lg:px-4 py-6" — py-6 has no responsive prefix → 24px top always.
+const PAD_TOP = 24;
 const SAVING_H = 20;
 const STICKY_NAME_W = 64;
 const CLASS_W = 36;

@@ -12,7 +12,8 @@ const SESSION_SHORT: Record<Session, string> = { afternoon1: "오후1", afternoo
 const DAY_NAMES = ["일", "월", "화", "수", "목", "금", "토"];
 
 const PAD_X = 16;
-const PAD_TOP = 16;
+// main className="... px-2 md:px-3 lg:px-4 py-6" — py-6 has no responsive prefix → 24px top always.
+const PAD_TOP = 24;
 const NAV_H = 30;
 const NAV_MB = 12;
 const EXCEL_W = 60;
