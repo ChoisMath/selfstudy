@@ -8,6 +8,10 @@ import { ENTRIES as homeroomForms } from "./homeroom-forms";
 import { ENTRIES as studentSchedule } from "./student-schedule";
 import { ENTRIES as studentAbsence } from "./student-absence";
 import { ENTRIES as studentBatch } from "./student-batch";
+import { ENTRIES as gradeStudents } from "./grade-students";
+import { ENTRIES as gradeParticipation } from "./grade-participation";
+import { ENTRIES as gradeSeats } from "./grade-seats";
+import { ENTRIES as gradeSupervisor } from "./grade-supervisor";
 
 export const MOCK_GALLERY: GalleryEntry[] = [
   ...login,
@@ -19,4 +23,8 @@ export const MOCK_GALLERY: GalleryEntry[] = [
   ...studentSchedule,
   ...studentAbsence,
   ...studentBatch,
+  ...gradeStudents,
+  ...gradeParticipation,
+  ...gradeSeats,
+  ...gradeSupervisor,
 ];

@@ -11,6 +11,8 @@ import { TEACHER_GUIDE_CONFIG, TeacherVideo } from "./teacher/TeacherVideo";
 import { TEACHER_SCENES } from "./teacher/scenes";
 import { STUDENT_GUIDE_CONFIG, StudentVideo } from "./student/StudentVideo";
 import { STUDENT_SCENES } from "./student/scenes";
+import { GRADE_ADMIN_GUIDE_CONFIG, GradeAdminVideo } from "./grade-admin/GradeAdminVideo";
+import { GRADE_ADMIN_SCENES } from "./grade-admin/scenes";
 import { MOCK_GALLERY } from "./app-mocks/gallery";
 
 // 단일 장면 컴포지션도 본편과 같은 오디오 경로·자막 설정으로 감싼다.
@@ -82,6 +84,19 @@ export const RemotionRoot: React.FC = () => (
     />
     <Folder name="Student">
       <SceneCompositions scenes={STUDENT_SCENES} prefix="Student" config={STUDENT_GUIDE_CONFIG} />
+    </Folder>
+    <Composition
+      id="GradeAdminGuide"
+      component={GradeAdminVideo}
+      durationInFrames={totalFrames(GRADE_ADMIN_SCENES)}
+      fps={FPS}
+      width={WIDTH}
+      height={HEIGHT}
+      schema={demoPropsSchema}
+      defaultProps={defaultDemoProps}
+    />
+    <Folder name="GradeAdmin">
+      <SceneCompositions scenes={GRADE_ADMIN_SCENES} prefix="GradeAdmin" config={GRADE_ADMIN_GUIDE_CONFIG} />
     </Folder>
     <Folder name="Mocks">
       {MOCK_GALLERY.map((entry) => (
