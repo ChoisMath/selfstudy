@@ -53,6 +53,9 @@ assert.match(read(`${GUIDE}/GuideStep.tsx`), /<span title=\{title\}/);
 assert.match(read(`${GUIDE}/GuideNotice.tsx`), /<h2 title=\{title\}/);
 // 폰 스크린샷 3장이 데스크톱 카드 안에 가로 스크롤 없이 들어간다.
 assert.match(read(`${GUIDE}/GuideStep.tsx`), /lg:w-\[290px\]/);
+// 가로 스틸은 폰 폭으로 줄이면 글자를 읽을 수 없어 최소 폭을 주고 가로 스크롤한다.
+assert.match(read(`${GUIDE}/GuideStep.tsx`), /min-w-\[640px\]/);
+assert.match(read(`${GUIDE}/GuideStep.tsx`), /w-\[min\(320px,80vw\)\]/);
 // 태블릿 바깥 여백은 8~12px(§1): sm:px-6 을 쓰지 않는다.
 assert.doesNotMatch(read("src/app/help/layout.tsx"), /sm:px-6/);
 

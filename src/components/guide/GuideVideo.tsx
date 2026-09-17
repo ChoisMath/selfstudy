@@ -14,7 +14,7 @@ export function GuideVideo({ videoKey, start, caption }: { videoKey: GuideVideoK
         allowFullScreen
         className="aspect-video w-full"
       />
-      <figcaption className="break-keep bg-white px-4 py-3 text-sm text-gray-600">{caption}</figcaption>
+      <figcaption className="break-keep bg-white px-2 py-2 sm:px-4 sm:py-3 text-sm text-gray-600">{caption}</figcaption>
     </figure>
   );
 }

@@ -92,7 +92,7 @@ export default function HomeroomLayout({ children }: { children: React.ReactNode
               ))}
             </div>
 
-            <div className="flex items-center gap-1.5 sm:gap-3 shrink-0 ml-2 lg:ml-4">
+            <div className="flex items-center gap-2 sm:gap-3 shrink-0 ml-2 lg:ml-4">
               {assignmentText && (
                 <span className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded whitespace-nowrap">
                   {assignmentText}

@@ -24,7 +24,8 @@ export default function AttendanceLayout({ children }: { children: React.ReactNo
           <span className="text-sm sm:text-base">출석부</span>
         </Link>
         {status !== "loading" && (
-          <div className="flex items-center gap-1.5 sm:gap-3 flex-nowrap min-w-0 overflow-x-auto">
+          <div className="flex items-center gap-2 sm:gap-3 flex-nowrap min-w-0 overflow-x-auto">
+            <GuideHelpButton href="/help/attendance" />
             {roles?.includes("admin") && (
               <Link
                 href="/admin"
@@ -52,7 +53,6 @@ export default function AttendanceLayout({ children }: { children: React.ReactNo
             )}
             <NotificationBell />
             <span className="text-xs sm:text-sm text-gray-600 whitespace-nowrap">{session?.user?.name}</span>
-            <GuideHelpButton href="/help/attendance" />
             <button
               onClick={() => signOut({ callbackUrl: "/login" })}
               className="min-h-11 px-2 text-xs sm:text-sm text-gray-600 hover:text-gray-700 whitespace-nowrap"
