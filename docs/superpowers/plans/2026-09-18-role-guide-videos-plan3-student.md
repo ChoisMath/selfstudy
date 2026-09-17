@@ -77,7 +77,7 @@
 
 ### Task 2: 학생 셸·참여일정·참여시간·좌석 목업 (병렬)
 
-**Files:** Create `demo-video/src/student/mocks/{StudentShellMock,ParticipationCardMock,StudyHoursCardMock,SeatCheckCardMock}.tsx`; Modify `gallery/student.tsx`
+**Files:** Create `demo-video/src/student/mocks/{StudentShellMock,ParticipationCardMock,StudyHoursCardMock,SeatCheckCardMock}.tsx`; Modify `gallery/student-schedule.tsx`
 **Source:** `src/app/student/layout.tsx`(헤더: 로고·이름·`(1-3-07)`·로그아웃, 탭 줄 참여일정/출결기록/불참목록[+일괄신청], 활성 탭 `bg-gray-50 text-blue-600 border-b-2`), `src/app/student/page.tsx`(제목 "내 참여일정", 카드 순서), `src/components/student/ParticipationScheduleCard.tsx`(3행 격자, 파란 참여 칸 `bg-blue-100 text-blue-700`, 미참여 `bg-gray-100 text-gray-300`, 오늘 열 `border-2`, "오늘" 캡션, "다음주" 9px), 참여시간 카드(`student/page.tsx` 87-112: "자율학습 참여시간", 이번 달 `bg-blue-50`, 학년도 누계 `bg-indigo-50`, 순위 `amber-600`), `src/components/student/SeatCheckCard.tsx` + `src/components/seats/StudentSeatGrid.tsx` + `ClassroomFrameMock`(계획 2)
 
 **Interfaces (Produces):**
@@ -104,7 +104,7 @@ export const seatCheckRect: (key: "tabs" | "mySeat" | "title" | "corridor", widt
 
 ### Task 3: 불참 신청·불참목록·출결기록 목업 (병렬)
 
-**Files:** Create `demo-video/src/student/mocks/{AbsenceFormMock,AbsenceListMock,RecordMock}.tsx`; Modify `gallery/student.tsx`
+**Files:** Create `demo-video/src/student/mocks/{AbsenceFormMock,AbsenceListMock,RecordMock}.tsx`; Modify `gallery/student-absence.tsx`
 **Source:** `src/components/student/AbsenceRequestForm.tsx`(제목 "불참 신청하기"·닫기, 날짜 input, 세션 버튼 4개 + [전체] 점선, 도움말 문구, 사유 4열, 상세 사유는 기타일 때만, 버튼 "신청하기"/"신청 중..."), `src/app/student/page.tsx`(성공 배너 "불참 신청이 접수되었습니다." + "불참목록 보기"), `src/app/student/absence-requests/page.tsx`(안내문, 카드, 대기중/승인/반려 배지 색), `src/app/student/attendance/page.tsx`(이번 주/이번 달 토글, 주간 표 O/X/-, 결석 사유 줄, 월간 달력 점·범례)
 
 **Interfaces (Produces):**
@@ -127,7 +127,7 @@ export const recordRect: (key: "toggle_week" | "toggle_month" | "table" | "reaso
 
 ### Task 4: 일괄신청 목업 (병렬)
 
-**Files:** Create `demo-video/src/student/mocks/BatchAbsenceMock.tsx`; Modify `gallery/student.tsx`
+**Files:** Create `demo-video/src/student/mocks/BatchAbsenceMock.tsx`; Modify `gallery/student-batch.tsx`
 **Source:** `src/app/student/batch-absence/page.tsx`(제목 "일괄 불참신청" + 오늘 날짜, 표 헤더 [전체선택]·번호·이름·자습유형·사유, 행 체크박스와 `opacity-50`, 세션 버튼 3개 상태 4종(비활성·신청됨·선택 가능 `sky`·선택됨 `red`), 사유 버튼 3개(학원·방과후·질병)와 상세사유 입력, "일괄신청" 버튼과 alert "N건 신청 완료")
 
 **Interfaces (Produces):**
