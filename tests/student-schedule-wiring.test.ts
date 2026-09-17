@@ -76,4 +76,16 @@ assert.match(studentPage, /href="\/student\/absence-requests"/, "배너에 불�
 assert.match(studentPage, /<SeatCheckCard participationDays=\{participationDays\} \/>/, "좌석 카드가 없음");
 assert.doesNotMatch(studentPage, /renderSession|DAY_KEYS|DAY_LABELS/, "옛 세션별 카드 렌더가 남아 있음");
 
+// --- 불참목록: 탭 라벨, 신청 폼 제거, 참여일정으로 안내 ---
+const studentLayout = read("../src/app/student/layout.tsx");
+assert.match(studentLayout, /label: "불참목록"/, "탭 라벨이 불참목록이 아님");
+assert.doesNotMatch(studentLayout, /불참신청/, "옛 탭 라벨이 남아 있음");
+assert.match(studentLayout, /label: "일괄신청"/, "도우미 일괄신청 탭이 사라짐");
+
+const absenceList = read("../src/app/student/absence-requests/page.tsx");
+assert.match(absenceList, /불참목록/, "페이지 제목이 불참목록이 아님");
+assert.doesNotMatch(absenceList, /불참 신청하기|AbsenceRequestForm|handleSubmit|setShowForm|sessionTypesOfSeat/, "불참목록 페이지에 신청 폼이 남아 있음");
+assert.match(absenceList, /href="\/student"/, "참여일정으로 가는 안내 링크가 없음");
+assert.match(absenceList, /요일을 눌러/, "신청 방법 안내 문구가 없음");
+
 console.log("student-schedule-wiring checks passed");

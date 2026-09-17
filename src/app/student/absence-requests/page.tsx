@@ -1,24 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import Link from "next/link";
 import useSWR from "swr";
-import { SESSION_TYPES, SESSION_META, sessionTypesOfSeat, type SessionType } from "@/lib/sessions";
+import { SESSION_META, type SessionType } from "@/lib/sessions";
 import { reasonLabel } from "@/lib/absence-reasons";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
-
-const REASON_OPTIONS = [
-  { value: "academy", label: "학원" },
-  { value: "afterschool", label: "방과후" },
-  { value: "illness", label: "질병" },
-  { value: "custom", label: "기타" },
-] as const;
 
 const STATUS_LABELS: Record<string, { text: string; className: string }> = {
   pending: { text: "대기중", className: "bg-yellow-100 text-yellow-700" },
   approved: { text: "승인", className: "bg-green-100 text-green-700" },
   rejected: { text: "반려", className: "bg-red-100 text-red-700" },
 };
+
+const DAY_NAMES = ["일", "월", "화", "수", "목", "금", "토"];
 
 type AbsenceRequestItem = {
   id: number;
@@ -31,252 +26,62 @@ type AbsenceRequestItem = {
 };
 
 export default function AbsenceRequestsPage() {
-  const { data, mutate, isLoading } = useSWR<{ requests: AbsenceRequestItem[] }>(
+  const { data, isLoading } = useSWR<{ requests: AbsenceRequestItem[] }>(
     "/api/student/absence-requests",
     fetcher
   );
-
-  // 오늘 날짜 (YYYY-MM-DD, KST)
-  const _kst = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Seoul" }));
-  const today = `${_kst.getFullYear()}-${String(_kst.getMonth() + 1).padStart(2, "0")}-${String(_kst.getDate()).padStart(2, "0")}`;
-
-  const [showForm, setShowForm] = useState(false);
-  const [date, setDate] = useState(today);
-  const [sessionTypes, setSessionTypes] = useState<SessionType[]>(["afternoon1"]);
-  const afternoonBlocks = sessionTypesOfSeat("afternoon");
-  const allAfternoonSelected = afternoonBlocks.every((t) => sessionTypes.includes(t));
-
-  function toggleSessionType(t: SessionType) {
-    setSessionTypes((prev) => (prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t]));
-  }
-  function toggleAllAfternoon() {
-    setSessionTypes((prev) =>
-      allAfternoonSelected
-        ? prev.filter((x) => !afternoonBlocks.includes(x))
-        : [...prev.filter((x) => !afternoonBlocks.includes(x)), ...afternoonBlocks]
-    );
-  }
-  const [reasonType, setReasonType] = useState("academy");
-  const [detail, setDetail] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState("");
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setError("");
-
-    if (!date) {
-      setError("날짜를 선택해주세요.");
-      return;
-    }
-
-    if (sessionTypes.length === 0) {
-      setError("자습 시간을 하나 이상 선택해주세요.");
-      return;
-    }
-
-    setSubmitting(true);
-    try {
-      const res = await fetch("/api/student/absence-requests", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          date,
-          sessionTypes,
-          reasonType,
-          detail: detail.trim() || undefined,
-        }),
-      });
-
-      if (!res.ok) {
-        const body = await res.json();
-        throw new Error(body.error || "신청에 실패했습니다.");
-      }
-
-      // 성공: 폼 초기화 및 목록 갱신
-      setDate(today);
-      setSessionTypes(["afternoon1"]);
-      setReasonType("academy");
-      setDetail("");
-      setShowForm(false);
-      mutate();
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "신청에 실패했습니다.");
-    } finally {
-      setSubmitting(false);
-    }
-  }
-
   const requests = data?.requests ?? [];
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-bold text-gray-900">불참신청</h2>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-            showForm
-              ? "bg-gray-100 text-gray-600 hover:bg-gray-200"
-              : "bg-blue-600 text-white hover:bg-blue-700"
-          }`}
-        >
-          {showForm ? "닫기" : "불참 신청하기"}
-        </button>
-      </div>
+      <h2 className="text-xl font-bold text-gray-900 mb-2">불참목록</h2>
+      <p className="mb-4 flex flex-wrap items-center gap-x-1 text-sm text-gray-500">
+        <span>불참 신청은</span>
+        <Link href="/student" className="inline-flex min-h-11 items-center px-1 font-medium text-blue-600 underline whitespace-nowrap">
+          참여일정
+        </Link>
+        <span>탭에서 요일을 눌러 할 수 있습니다.</span>
+      </p>
 
-      {/* 신청 폼 */}
-      {showForm && (
-        <form
-          onSubmit={handleSubmit}
-          className="bg-white rounded-lg border border-gray-200 p-4 mb-6 space-y-4"
-        >
-          {error && (
-            <div className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">
-              {error}
-            </div>
-          )}
+      {isLoading ? (
+        <div className="text-center py-8 text-gray-400">불러오는 중...</div>
+      ) : requests.length === 0 ? (
+        <div className="text-center py-8 text-gray-400 bg-white rounded-lg border border-gray-200">
+          신청 내역이 없습니다.
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {requests.map((req) => {
+            const statusInfo = STATUS_LABELS[req.status] || {
+              text: req.status,
+              className: "bg-gray-100 text-gray-600",
+            };
+            const d = new Date(req.date + "T00:00:00Z");
+            const dayName = DAY_NAMES[d.getUTCDay()];
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              날짜
-            </label>
-            <input
-              type="date"
-              value={date}
-              min={today}
-              onChange={(e) => setDate(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              세션
-            </label>
-            <div className="flex gap-2 overflow-x-auto">
-              {SESSION_TYPES.map((t) => (
-                <button
-                  key={t}
-                  type="button"
-                  onClick={() => toggleSessionType(t)}
-                  className={`flex-1 min-h-11 px-3 py-2 text-sm font-medium rounded-md border transition-colors whitespace-nowrap ${
-                    sessionTypes.includes(t)
-                      ? "border-blue-600 bg-blue-50 text-blue-700"
-                      : "border-gray-300 bg-white text-gray-600 hover:bg-gray-50"
-                  }`}
-                >
-                  {SESSION_META[t].shortLabel}
-                </button>
-              ))}
-              <button
-                type="button"
-                onClick={toggleAllAfternoon}
-                className={`min-h-11 px-3 py-2 text-sm font-medium rounded-md border transition-colors whitespace-nowrap ${
-                  allAfternoonSelected
-                    ? "border-blue-600 bg-blue-100 text-blue-800"
-                    : "border-dashed border-gray-300 bg-white text-gray-500 hover:bg-gray-50"
-                }`}
+            return (
+              <div
+                key={req.id}
+                className="bg-white rounded-lg border border-gray-200 px-4 py-3 flex items-center justify-between gap-2"
               >
-                오후 전체
-              </button>
-            </div>
-            <p className="mt-1 text-xs text-gray-400">여러 시간을 함께 선택할 수 있습니다.</p>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              사유
-            </label>
-            <div className="grid grid-cols-2 gap-2">
-              {REASON_OPTIONS.map((opt) => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => setReasonType(opt.value)}
-                  className={`px-3 py-2 text-sm font-medium rounded-md border transition-colors ${
-                    reasonType === opt.value
-                      ? "border-blue-600 bg-blue-50 text-blue-700"
-                      : "border-gray-300 bg-white text-gray-600 hover:bg-gray-50"
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              상세 사유 (선택)
-            </label>
-            <textarea
-              value={detail}
-              onChange={(e) => setDetail(e.target.value)}
-              placeholder="상세 사유를 입력해주세요"
-              rows={2}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={submitting}
-            className="w-full py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            {submitting ? "신청 중..." : "신청하기"}
-          </button>
-        </form>
-      )}
-
-      {/* 신청 내역 */}
-      <div>
-        <h3 className="text-sm font-medium text-gray-600 mb-3">신청 내역</h3>
-
-        {isLoading ? (
-          <div className="text-center py-8 text-gray-400">불러오는 중...</div>
-        ) : requests.length === 0 ? (
-          <div className="text-center py-8 text-gray-400 bg-white rounded-lg border border-gray-200">
-            신청 내역이 없습니다.
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {requests.map((req) => {
-              const statusInfo = STATUS_LABELS[req.status] || {
-                text: req.status,
-                className: "bg-gray-100 text-gray-600",
-              };
-              const d = new Date(req.date + "T00:00:00Z");
-              const dayNames = ["일", "월", "화", "수", "목", "금", "토"];
-              const dayName = dayNames[d.getUTCDay()];
-
-              return (
-                <div
-                  key={req.id}
-                  className="bg-white rounded-lg border border-gray-200 px-4 py-3 flex items-center justify-between"
-                >
-                  <div>
-                    <div className="text-sm font-medium text-gray-900">
-                      {d.getUTCMonth() + 1}/{d.getUTCDate()}({dayName}){" "}
-                      {SESSION_META[req.sessionType]?.shortLabel ?? req.sessionType}
-                    </div>
-                    <div className="text-xs text-gray-500 mt-0.5">
-                      {reasonLabel(req.reasonType)}
-                      {req.detail && ` - ${req.detail}`}
-                    </div>
+                <div className="min-w-0">
+                  <div className="text-sm font-medium text-gray-900 whitespace-nowrap">
+                    {d.getUTCMonth() + 1}/{d.getUTCDate()}({dayName}){" "}
+                    {SESSION_META[req.sessionType]?.shortLabel ?? req.sessionType}
                   </div>
-                  <span
-                    className={`px-2.5 py-1 text-xs font-medium rounded-full ${statusInfo.className}`}
-                  >
-                    {statusInfo.text}
-                  </span>
+                  <div className="text-xs text-gray-500 mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis">
+                    {reasonLabel(req.reasonType)}
+                    {req.detail && ` - ${req.detail}`}
+                  </div>
                 </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
+                <span className={`shrink-0 px-2.5 py-1 text-xs font-medium rounded-full whitespace-nowrap ${statusInfo.className}`}>
+                  {statusInfo.text}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

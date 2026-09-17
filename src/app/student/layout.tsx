@@ -27,7 +27,7 @@ export default function StudentLayout({
   const tabs = [
     { href: "/student", label: "참여일정" },
     { href: "/student/attendance", label: "출결기록" },
-    { href: "/student/absence-requests", label: "불참신청" },
+    { href: "/student/absence-requests", label: "불참목록" },
     ...(user.isHelper ? [{ href: "/student/batch-absence", label: "일괄신청" }] : []),
   ];
 
