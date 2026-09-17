@@ -3,6 +3,7 @@
 import { useSession, signOut } from "next-auth/react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
+import { GuideHelpButton } from "@/components/guide/GuideHelpButton";
 
 export default function StudentLayout({
   children,
@@ -45,12 +46,15 @@ export default function StudentLayout({
               </span>
             </h1>
           </div>
-          <button
-            onClick={() => signOut({ callbackUrl: "/login" })}
-            className="min-h-11 px-3 text-sm text-gray-500 hover:text-gray-700 rounded-md hover:bg-gray-100 transition-colors"
-          >
-            로그아웃
-          </button>
+          <div className="flex items-center gap-1 shrink-0">
+            <GuideHelpButton href="/help/student" />
+            <button
+              onClick={() => signOut({ callbackUrl: "/login" })}
+              className="min-h-11 px-3 text-sm text-gray-500 hover:text-gray-700 rounded-md hover:bg-gray-100 transition-colors whitespace-nowrap"
+            >
+              로그아웃
+            </button>
+          </div>
         </div>
 
         {/* 탭 네비게이션 */}

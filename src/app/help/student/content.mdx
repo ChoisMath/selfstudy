@@ -1,0 +1,193 @@
+import { GuideToc } from "@/components/guide/GuideToc";
+import { GuideChapter } from "@/components/guide/GuideChapter";
+import { GuideStep } from "@/components/guide/GuideStep";
+import { GuideNotice } from "@/components/guide/GuideNotice";
+import { GuideVideo } from "@/components/guide/GuideVideo";
+
+# 학생 사용 가이드
+
+자율학습에 참여하는 학생이 보는 화면입니다. 내 참여일정과 참여시간, 좌석을 확인하고 불참 신청을 낼 수 있습니다.
+
+<GuideVideo videoKey="student" caption="학생 사용 안내 영상" />
+
+<GuideToc
+  items={[
+    { id: "check", label: "확인" },
+    { id: "apply", label: "신청" },
+    { id: "helper", label: "도우미" },
+  ]}
+/>
+
+<GuideChapter id="check" title="확인">
+
+<GuideStep
+  number={1}
+  title="로그인"
+  images={[
+    {
+      src: "/guide/student/01-login.webp",
+      alt: "학생 로그인 탭에 이름과 학번을 입력한 로그인 화면",
+      width: 640,
+      height: 1342,
+      tall: true,
+    },
+  ]}
+  tip="브라우저 메뉴에서 홈 화면에 추가해 두면 다음부터 아이콘으로 바로 열립니다."
+>
+
+휴대폰 브라우저에서 self.posan.kr에 접속합니다. 처음에는 교사 로그인 탭이 열려 있으니 학생 로그인 탭을 누르고, 이름과 학번 다섯 자리를 입력합니다. 학번은 학년 한 자리, 반 두 자리, 번호 두 자리로 만들어서 1학년 3반 7번이면 10307입니다. 한 번 로그인하면 로그인 상태가 유지되어 다음부터는 주소만 열면 바로 사용할 수 있습니다.
+
+</GuideStep>
+
+<GuideStep
+  number={2}
+  title="참여일정"
+  images={[
+    {
+      src: "/guide/student/02-schedule.webp",
+      alt: "오후1·오후2·야간 줄과 월요일부터 금요일까지 칸이 있는 참여일정 표",
+      width: 640,
+      height: 1342,
+      tall: true,
+    },
+  ]}
+  tip="왼쪽 이름 아래 주 5일처럼 적힌 숫자는 그 자습에 일주일에 며칠 참여하는지입니다."
+>
+
+로그인하면 위쪽에 내 이름과 학년, 반, 번호가 보이고 그 아래 참여일정, 출결기록, 불참목록 탭으로 이동합니다. 참여일정 탭의 표는 내가 자습에 참여하는 요일을 보여 주는데, 줄은 오후1, 오후2, 야간이고 칸은 월요일부터 금요일까지입니다. 파란 칸은 참여하는 날, 회색 칸은 참여하지 않는 날이고 테두리가 진한 칸이 오늘입니다. 참여 요일은 담임 선생님이 정하므로 잘못되어 있으면 담임 선생님께 말씀드리세요.
+
+</GuideStep>
+
+<GuideStep
+  number={3}
+  title="참여시간"
+  images={[
+    {
+      src: "/guide/student/03-hours.webp",
+      alt: "이번 달과 학년도 누계 참여시간, 학년 순위가 나온 자율학습 참여시간 카드",
+      width: 640,
+      height: 1342,
+      tall: true,
+    },
+  ]}
+  tip="결석이나 미체크로 남은 시간은 더해지지 않습니다."
+>
+
+표 아래 자율학습 참여시간 카드에는 이번 달과 이번 학년도에 출석한 시간이 나옵니다. 오후 자습은 한 번에 50분, 야간 자습은 100분으로 계산하고 출석으로 체크된 시간만 더합니다. 학년도 누계 아래에는 우리 학년 안에서의 순위와 상위 몇 퍼센트인지가 함께 표시됩니다.
+
+</GuideStep>
+
+<GuideStep
+  number={4}
+  title="좌석 확인"
+  images={[
+    {
+      src: "/guide/student/04-seat.webp",
+      alt: "내 자리가 파랗게 표시되고 창문·복도·교탁 위치가 보이는 좌석 확인 카드",
+      width: 640,
+      height: 1342,
+      tall: true,
+    },
+  ]}
+  tip="아직 자리가 없으면 배정된 좌석이 없습니다라고 나옵니다. 학년 선생님이 배정하면 표시됩니다."
+>
+
+맨 아래 좌석 확인 카드에서 배정된 내 자리를 볼 수 있습니다. 오후자습과 야간자습 버튼을 눌러 바꿔 보면 되고, 파랗게 칠해진 칸이 내 자리입니다. 그 위에 몇 행 몇 열인지 적혀 있고, 교실 그림에는 창문과 복도, 교탁 위치도 함께 나옵니다.
+
+</GuideStep>
+
+</GuideChapter>
+
+<GuideChapter id="apply" title="신청">
+
+<GuideStep
+  number={5}
+  title="불참 신청"
+  images={[
+    {
+      src: "/guide/student/05-absence-form.webp",
+      alt: "불참 신청이 접수되었습니다 초록색 알림이 참여일정 위에 뜬 화면",
+      width: 640,
+      height: 1342,
+      tall: true,
+    },
+  ]}
+  tip="칸에 다음주라고 적혀 있으면 다음 주 날짜로 신청되니 신청서의 날짜를 꼭 확인하세요. 신청하지 않으려면 닫기를 누릅니다."
+>
+
+자습에 빠져야 하는 날이 있으면 참여일정 표에서 그 요일의 파란 칸을 누릅니다. 같은 자리가 불참 신청서로 바뀌고, 날짜는 다음에 돌아오는 그 요일로, 시간은 누른 줄로 미리 채워져 있습니다. 빠지는 시간을 더 고르거나 전체를 눌러 그날 참여하는 시간을 모두 선택할 수 있고, 사유는 학원, 방과후, 질병, 기타 중에서 고른 뒤 기타라면 상세 사유를 적습니다. 신청하기를 누르면 위 그림처럼 불참 신청이 접수되었다는 초록색 알림이 나옵니다.
+
+</GuideStep>
+
+<GuideStep
+  number={6}
+  title="출결기록"
+  images={[
+    {
+      src: "/guide/student/06-record.webp",
+      alt: "이번 주 출결이 O와 X, 줄표로 표시되고 아래에 결석 사유가 붙은 출결기록 표",
+      width: 640,
+      height: 1342,
+      tall: true,
+    },
+  ]}
+  tip="이번 주 표에서 O는 초록색, X는 빨간색으로 표시됩니다."
+>
+
+출결기록 탭에서는 지금까지의 출결을 확인합니다. 이번 주 표에서 O는 출석, X는 결석, 줄표는 아직 체크하지 않았거나 그 시간에 자습하지 않는 날이라는 뜻입니다. 결석에 사유가 등록되어 있으면 표 아래 결석 사유에 함께 나옵니다. 이번 달을 누르면 달력으로 바뀌어 초록 점은 출석, 빨간 점은 결석으로 표시되고, 좌우 화살표로 지난주나 지난달 기록도 볼 수 있습니다.
+
+</GuideStep>
+
+<GuideStep
+  number={7}
+  title="불참목록"
+  images={[
+    {
+      src: "/guide/student/07-absence-list.webp",
+      alt: "대기중·승인·반려 배지가 붙은 내 불참 신청 목록",
+      width: 640,
+      height: 1342,
+      tall: true,
+    },
+  ]}
+  tip="여기서는 신청을 취소할 수 없습니다. 잘못 신청했다면 담임 선생님께 말씀드리세요."
+>
+
+불참목록 탭에는 내가 낸 불참 신청이 최근 것부터 나옵니다. 줄마다 날짜와 자습 시간, 사유가 적혀 있고 오른쪽에 처리 상태가 붙습니다. 노란 대기중은 아직 선생님이 확인하기 전, 초록 승인은 승인된 신청, 빨간 반려는 받아들여지지 않은 신청입니다.
+
+</GuideStep>
+
+</GuideChapter>
+
+<GuideChapter id="helper" title="도우미">
+
+<GuideStep
+  number={8}
+  title="일괄신청"
+  images={[
+    {
+      src: "/guide/student/08-batch.webp",
+      alt: "같은 반 친구 목록에서 몇 건이 신청되었는지 알림이 뜬 일괄신청 화면",
+      width: 640,
+      height: 1342,
+      tall: true,
+    },
+  ]}
+  tip="도우미로 지정된 뒤에는 로그아웃하고 다시 로그인해야 일괄신청 탭이 나타납니다."
+>
+
+학급 도우미로 지정된 학생에게만 일괄신청 탭이 하나 더 보입니다. 여기서는 같은 반 친구들의 오늘 불참을 한꺼번에 신청합니다. 신청할 친구를 체크하고 빠지는 시간 버튼과 사유를 고른 뒤 일괄신청을 누르면 위 그림처럼 몇 건이 신청되었는지 알림이 나옵니다. 신청은 친구 이름으로 들어가므로 친구의 불참목록에서도 그대로 보입니다.
+
+</GuideStep>
+
+</GuideChapter>
+
+<GuideNotice
+  tone="yellow"
+  title="알아 둘 점"
+  items={[
+    ["본인 신청", "불참 신청은 되도록 본인이 직접 하고, 어쩔 수 없을 때만 학급 도우미에게 부탁하세요."],
+    ["지난 날짜", "이미 지난 날짜에는 신청할 수 없습니다."],
+    ["취소", "낸 신청은 학생이 취소할 수 없으니 잘못 신청했다면 담임 선생님께 말씀드리세요."],
+  ]}
+/>

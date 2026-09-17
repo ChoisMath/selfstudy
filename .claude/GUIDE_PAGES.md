@@ -96,5 +96,6 @@
 | 환경 점검 | `setup-check` | — | `src/setup-check/` (`SetupCheck`) | — (스틸은 점검용으로 `out/`에만) | `out/setup-check.mp4` (Chois 음성, git 제외) |
 | 출석부 | `attendance` | `/attendance/[grade]` (감독교사) | `src/teacher/` (`Teacher-*` 장면) | `/help/attendance` (스틸 14장) | `videos.ts` `teacher` — id 미등록 |
 | 담임교사 메뉴 | `homeroom` | `/homeroom/*` (담임교사) | `src/teacher/` (`Teacher-Homeroom*`·`AbsenceReason`·`Password`) | `/help/homeroom` (스틸 7장) | `videos.ts` `teacher` — id 미등록 |
+| 학생 | `student` | `/student/*` (학생) | `src/student/` (`Student-*` 장면) | `/help/student` (스틸 8장, 전부 폰) | `videos.ts` `student` — id 미등록 |
 
 새 화면은 `/guide-page <page>`로 추가하면서 이 표에 행을 더한다.
