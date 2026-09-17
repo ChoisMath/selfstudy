@@ -5,7 +5,6 @@ import { Annotation } from "../../components/Annotation";
 import { BrowserFrame } from "../../components/BrowserFrame";
 import { Cursor } from "../../components/Cursor";
 import { GuideScene } from "../../guide/GuideScene";
-import { FONT } from "../../fonts";
 import { APP_HOST, HOMEROOM_MONTH, TODAY, TODAY_LABEL } from "../../app-mocks/data";
 import { PcViewport, pcAbs, pcRectAbs, type Point, type Rect } from "../../app-mocks/layout";
 import { baseVisual, type SeatState } from "../../app-mocks/AttendanceBoardMock";
@@ -14,25 +13,16 @@ import { ParticipationTableMock } from "../../app-mocks/ParticipationTableMock";
 import { tw } from "../../app-mocks/tw";
 import { colors } from "../../theme";
 import { lineAt, lineEnd, lineStart } from "../timing";
-import { AbsenceReasonFormMock, absenceReasonPoint } from "../mocks/AbsenceReasonFormMock";
+import { AbsenceReasonFormMock, absenceReasonPoint, absenceReasonRect } from "../mocks/AbsenceReasonFormMock";
 import { HOMEROOM_BODY, HomeroomShellMock, homeroomTabPoint } from "../mocks/HomeroomShellMock";
-import { PARTICIPATION_END_ROWS, PhoneBoardInset, boardInsetSeat, boardInsetSize } from "./HomeroomParticipationScene";
+import { INSET_HEADER_H, INSET_PAD, InsetCard, PhoneBoardInset, boardInsetSeat, boardInsetSize } from "../mocks/PhoneBoardInset";
+import { PARTICIPATION_END_ROWS } from "./HomeroomParticipationScene";
 import type { DemoProps } from "../../props";
 
 const ID = "AbsenceReason";
 const W = HOMEROOM_BODY.w;
 const EXAMPLE_STUDENT_ID = 205;
 const EXAMPLE_STUDENT_NO = 5;
-
-// AbsenceReasonFormMock 내부 배치(앱 absence-reasons/page.tsx 압축판) — 카드·버튼 묶음은 rect 헬퍼가 없어 장면에서 잡는다.
-const FORM_CARD: Rect = { x: 16, y: 72, w: 512, h: 434 };
-const SESSION_GROUP = { firstW: 100, w: 304, h: 34 };
-const REASON_GROUP = { firstW: 56, w: 264, h: 26 };
-const FIELD_W = 472;
-const MESSAGE_H = 26;
-const DROPDOWN_ROW_H = 24;
-const DROPDOWN_TOP_GAP = 1;
-const SELECT_H = 30;
 
 const tabClick = lineAt(ID, 0, 0.2);
 const pageSwap = tabClick + 3;
@@ -97,8 +87,6 @@ const M_GROUP_W = 90;
 const M_HEAD_H = 41;
 const M_ROW_H = 20;
 const CROP_TOP_MARGIN = 4;
-const INSET_HEADER_H = 46;
-const INSET_PAD = 12;
 
 const monthlyTable = monthlyRect("table", "homeroom", MONTHLY_NARROW_W);
 const monthlyScrollX = monthlyMaxScrollX(MONTHLY_NARROW_W);
@@ -120,48 +108,6 @@ const todayCell: Rect = {
 const monthlyInsetSize = {
   w: monthlyCrop.w * MONTHLY_SCALE + INSET_PAD * 2,
   h: INSET_HEADER_H + monthlyCrop.h * MONTHLY_SCALE + INSET_PAD,
-};
-
-const InsetCard: React.FC<{ x: number; y: number; w: number; h: number; from: number; to: number; title: string; caption: string; children: React.ReactNode }> = ({
-  x,
-  y,
-  w,
-  h,
-  from,
-  to,
-  title,
-  caption,
-  children,
-}) => {
-  const frame = useCurrentFrame();
-  if (frame < from || frame > to) return null;
-  const enter = tween(frame, [from, from + 12], [0, 1]);
-  const exit = tween(frame, [to - 6, to], [1, 0]);
-  return (
-    <div
-      style={{
-        position: "absolute",
-        left: x,
-        top: y,
-        width: w,
-        height: h,
-        background: colors.white,
-        borderRadius: 18,
-        border: `1px solid ${colors.blue100}`,
-        boxShadow: "0 24px 60px rgba(15,23,42,0.22)",
-        overflow: "hidden",
-        fontFamily: FONT,
-        opacity: enter * exit,
-        translate: `0px ${(1 - enter) * 18}px`,
-      }}
-    >
-      <div style={{ position: "absolute", left: INSET_PAD + 4, top: 0, height: INSET_HEADER_H, display: "flex", alignItems: "center", gap: 10, whiteSpace: "nowrap" }}>
-        <span style={{ fontSize: 20, fontWeight: 700, color: colors.gray800 }}>{title}</span>
-        <span style={{ fontSize: 18, fontWeight: 500, color: colors.gray500 }}>{caption}</span>
-      </div>
-      {children}
-    </div>
-  );
 };
 
 const MonthlyInset: React.FC<{ x: number; y: number; from: number; to: number }> = ({ x, y, from, to }) => (
@@ -234,32 +180,17 @@ export const AbsenceReasonScene: React.FC<DemoProps> = () => {
   const tab = pcAbs(homeroomTabPoint("absenceReasons", "homeroom"));
   const point = (key: Parameters<typeof absenceReasonPoint>[0]) => bodyPoint(absenceReasonPoint(key, W));
   const student = point("student");
-  const option = bodyPoint({
-    x: absenceReasonPoint("student", W).x,
-    y: absenceReasonPoint("student", W).y + SELECT_H / 2 + DROPDOWN_TOP_GAP + (EXAMPLE_STUDENT_NO - 0.5) * DROPDOWN_ROW_H,
-  });
+  const optionRow = absenceReasonRect(`option_${EXAMPLE_STUDENT_ID}`, W);
+  const option = bodyPoint({ x: optionRow.x + optionRow.w / 2, y: optionRow.y + optionRow.h / 2 });
   const date = point("date");
   const session = point("session_afternoon1");
   const reason = point("reason_academy");
   const detail = point("detail");
   const submit = point("submit");
 
-  const sessionCenter = absenceReasonPoint("session_afternoon1", W);
-  const sessionGroup = bodyRect({
-    x: sessionCenter.x - SESSION_GROUP.firstW / 2,
-    y: sessionCenter.y - SESSION_GROUP.h / 2,
-    w: SESSION_GROUP.w,
-    h: SESSION_GROUP.h,
-  });
-  const reasonCenter = absenceReasonPoint("reason_academy", W);
-  const reasonGroup = bodyRect({
-    x: reasonCenter.x - REASON_GROUP.firstW / 2,
-    y: reasonCenter.y - REASON_GROUP.h / 2,
-    w: REASON_GROUP.w,
-    h: REASON_GROUP.h,
-  });
-  const successCenter = absenceReasonPoint("success", W);
-  const success = bodyRect({ x: successCenter.x - FIELD_W / 2, y: successCenter.y - MESSAGE_H / 2, w: FIELD_W, h: MESSAGE_H });
+  const sessionGroup = bodyRect(absenceReasonRect("sessionGroup", W));
+  const reasonGroup = bodyRect(absenceReasonRect("reasonGroup", W));
+  const success = bodyRect(absenceReasonRect("message", W));
 
   const monthlyCell = {
     x: MONTHLY_INSET.x + INSET_PAD + (todayCell.x - monthlyCrop.x) * MONTHLY_SCALE,
@@ -276,7 +207,7 @@ export const AbsenceReasonScene: React.FC<DemoProps> = () => {
       <Annotation
         from={pageSwap + 20}
         durationInFrames={lineEnd(ID, 0) - pageSwap - 20}
-        {...box(bodyRect(FORM_CARD))}
+        {...box(bodyRect(absenceReasonRect("card", W)))}
         label="담임이 직접 결석 사유 등록"
         labelPosition="right"
         color={colors.blue600}
@@ -297,11 +228,12 @@ export const AbsenceReasonScene: React.FC<DemoProps> = () => {
         label="학원 · 방과후 · 질병 · 기타"
         labelPosition="right"
       />
+      {/* 앱은 등록에 성공하면 학생·상세 사유 칸을 비운다 — 빈 칸이 실패로 보이지 않게 라벨로 함께 알린다. */}
       <Annotation
         from={successFrom + 6}
         durationInFrames={lineEnd(ID, 2) - successFrom - 6}
         {...box(success, 4)}
-        label="등록 완료"
+        label="등록 완료 · 입력 칸은 비워집니다"
         labelPosition="right"
         color={colors.green600}
       />

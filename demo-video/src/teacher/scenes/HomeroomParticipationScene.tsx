@@ -5,168 +5,16 @@ import { Annotation } from "../../components/Annotation";
 import { BrowserFrame } from "../../components/BrowserFrame";
 import { Cursor } from "../../components/Cursor";
 import { GuideScene } from "../../guide/GuideScene";
-import { FONT } from "../../fonts";
-import {
-  ABSENCE_REQUESTS,
-  APP_HOST,
-  GRADE,
-  HOMEROOM_PARTICIPATION,
-  ME,
-  SUPERVISOR_SEPT,
-  TODAY,
-  TODAY_LABEL,
-  type Session,
-} from "../../app-mocks/data";
-import { PHONE_BODY, PcViewport, pcAbs, pcRectAbs, type Rect } from "../../app-mocks/layout";
-import {
-  AttendanceBoardMock,
-  baseVisual,
-  buildAfternoonGroups,
-  countsOf,
-  groupRect,
-  seatRect,
-  type AttendanceBoardProps,
-  type SeatState,
-} from "../../app-mocks/AttendanceBoardMock";
+import { APP_HOST, HOMEROOM_PARTICIPATION, TODAY_LABEL, type Session } from "../../app-mocks/data";
+import { PcViewport, pcAbs, pcRectAbs, type Rect } from "../../app-mocks/layout";
+import { baseVisual, type SeatState } from "../../app-mocks/AttendanceBoardMock";
 import { MonthlyAttendanceMock, monthlyMaxScrollX } from "../../app-mocks/MonthlyAttendanceMock";
 import { ParticipationTableMock, participationRect, type ParticipationRow } from "../../app-mocks/ParticipationTableMock";
 import { colors } from "../../theme";
 import { lineAt, lineEnd, lineStart } from "../timing";
 import { HOMEROOM_BODY, HomeroomShellMock, homeroomTabPoint } from "../mocks/HomeroomShellMock";
+import { PhoneBoardInset, boardInsetSeat } from "../mocks/PhoneBoardInset";
 import type { DemoProps } from "../../props";
-
-// ── 폰 출석부 인셋: 1-2반 교실 카드만 잘라 확대한다(AbsenceReason 장면도 쓴다) ──────────────────────
-
-const INSET_HEADER_H = 46;
-const INSET_PAD = 12;
-const CROP_MARGIN = 6;
-const HOMEROOM_GROUP_INDEX = 1;
-
-const insetBoardProps = (visualFor: (studentId: number) => SeatState): AttendanceBoardProps => {
-  const groups = buildAfternoonGroups(visualFor);
-  return {
-    width: PHONE_BODY.w,
-    height: PHONE_BODY.h,
-    header: { width: PHONE_BODY.w, role: "homeroom", name: ME.name, showHelp: true },
-    dateLabel: TODAY_LABEL,
-    supervisor: SUPERVISOR_SEPT[TODAY][GRADE],
-    grade: GRADE,
-    counts: countsOf(groups),
-    tab: "afternoon1",
-    pendingBadge: ABSENCE_REQUESTS.filter((r) => r.status === "pending").length,
-    groups,
-  };
-};
-
-const insetCrop = (props: AttendanceBoardProps): Rect => {
-  const card = groupRect(HOMEROOM_GROUP_INDEX, props);
-  return { x: card.x - CROP_MARGIN, y: card.y - CROP_MARGIN, w: card.w + CROP_MARGIN * 2, h: card.h + CROP_MARGIN * 2 };
-};
-
-export const boardInsetSize = (visualFor: (studentId: number) => SeatState, scale: number) => {
-  const crop = insetCrop(insetBoardProps(visualFor));
-  return { w: crop.w * scale + INSET_PAD * 2, h: INSET_HEADER_H + crop.h * scale + INSET_PAD };
-};
-
-// 인셋 왼쪽 위(x, y) 기준 좌석의 화면 좌표.
-export const boardInsetSeat = (
-  visualFor: (studentId: number) => SeatState,
-  scale: number,
-  x: number,
-  y: number,
-  studentId: number,
-) => {
-  const props = insetBoardProps(visualFor);
-  const crop = insetCrop(props);
-  const seat = seatRect(studentId, props);
-  return {
-    x: x + INSET_PAD + (seat.x - crop.x) * scale,
-    y: y + INSET_HEADER_H + (seat.y - crop.y) * scale,
-    width: seat.w * scale,
-    height: seat.h * scale,
-  };
-};
-
-export const PhoneBoardInset: React.FC<{
-  x: number;
-  y: number;
-  scale: number;
-  from: number;
-  to: number;
-  visualFor: (studentId: number) => SeatState;
-  caption: string;
-}> = ({ x, y, scale, from, to, visualFor, caption }) => {
-  const frame = useCurrentFrame();
-  if (frame < from || frame > to) return null;
-  const props = insetBoardProps(visualFor);
-  const crop = insetCrop(props);
-  const size = boardInsetSize(visualFor, scale);
-  const enter = tween(frame, [from, from + 12], [0, 1]);
-  const exit = tween(frame, [to - 6, to], [1, 0]);
-  return (
-    <div
-      style={{
-        position: "absolute",
-        left: x,
-        top: y,
-        width: size.w,
-        height: size.h,
-        background: colors.white,
-        borderRadius: 18,
-        border: `1px solid ${colors.blue100}`,
-        boxShadow: "0 24px 60px rgba(15,23,42,0.22)",
-        overflow: "hidden",
-        fontFamily: FONT,
-        opacity: enter * exit,
-        translate: `0px ${(1 - enter) * 18}px`,
-      }}
-    >
-      <div
-        style={{
-          position: "absolute",
-          left: INSET_PAD + 4,
-          top: 0,
-          height: INSET_HEADER_H,
-          display: "flex",
-          alignItems: "center",
-          gap: 10,
-          whiteSpace: "nowrap",
-        }}
-      >
-        <div style={{ width: 14, height: 22, borderRadius: 4, border: `2px solid ${colors.gray700}`, boxSizing: "border-box" }} />
-        <span style={{ fontSize: 20, fontWeight: 700, color: colors.gray800 }}>휴대폰 출석부</span>
-        <span style={{ fontSize: 18, fontWeight: 500, color: colors.gray500 }}>{caption}</span>
-      </div>
-      <div
-        style={{
-          position: "absolute",
-          left: INSET_PAD,
-          top: INSET_HEADER_H,
-          width: crop.w * scale,
-          height: crop.h * scale,
-          overflow: "hidden",
-          borderRadius: 10,
-        }}
-      >
-        <div
-          style={{
-            position: "absolute",
-            left: 0,
-            top: 0,
-            width: PHONE_BODY.w,
-            height: PHONE_BODY.h,
-            transform: `scale(${scale}) translate(${-crop.x}px, ${-crop.y}px)`,
-            transformOrigin: "top left",
-          }}
-        >
-          <AttendanceBoardMock {...props} />
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// ── 장면 ─────────────────────────────────────────────────────────────────────────────
 
 const ID = "HomeroomParticipation";
 const W = HOMEROOM_BODY.w;
@@ -412,7 +260,7 @@ export const HomeroomParticipationScene: React.FC<DemoProps> = () => {
       <Annotation
         from={saveClick + 2}
         durationInFrames={SAVE_NOTICE_FRAMES + 8}
-        {...box(bodyRect(SAVING_TEXT), 5)}
+        {...box(bodyRect(SAVING_TEXT), 10)}
         label="누르는 즉시 저장"
         labelPosition="right"
         color={colors.green600}
@@ -426,6 +274,7 @@ export const HomeroomParticipationScene: React.FC<DemoProps> = () => {
         color={colors.gray700}
       />
 
+      {/* 방과후 체크 뒤에는 커서를 치운다 — 강조 상자와 인셋을 설명하는 동안 체크박스를 가리지 않게. */}
       <Cursor
         path={[
           { frame: lineStart(ID, 0), x: 1100, y: 640 },
@@ -436,10 +285,17 @@ export const HomeroomParticipationScene: React.FC<DemoProps> = () => {
           { frame: dayClick - 6, x: thursdayPoint.x, y: thursdayPoint.y },
           { frame: dayClick + 8, x: thursdayPoint.x, y: thursdayPoint.y },
           { frame: afterSchoolClick - 6, x: afterSchoolPoint.x, y: afterSchoolPoint.y },
-          { frame: lineEnd(ID, 4) - 10, x: afterSchoolPoint.x, y: afterSchoolPoint.y },
+          { frame: afterSchoolClick + 10, x: afterSchoolPoint.x, y: afterSchoolPoint.y },
+        ]}
+        clicks={[tabClick, offClick, dayClick, afterSchoolClick]}
+        hideAfter={afterSchoolClick + 12}
+      />
+      <Cursor
+        path={[
+          { frame: saveClick - 26, x: secondThursdayPoint.x + 70, y: secondThursdayPoint.y + 90 },
           { frame: saveClick - 6, x: secondThursdayPoint.x, y: secondThursdayPoint.y },
         ]}
-        clicks={[tabClick, offClick, dayClick, afterSchoolClick, saveClick]}
+        clicks={[saveClick]}
         hideAfter={lineEnd(ID, 5)}
       />
     </GuideScene>

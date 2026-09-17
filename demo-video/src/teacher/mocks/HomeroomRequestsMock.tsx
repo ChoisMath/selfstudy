@@ -4,7 +4,7 @@
 import React from "react";
 import { useCurrentFrame } from "remotion";
 import { FONT } from "../../fonts";
-import type { Point } from "../../app-mocks/layout";
+import type { Point, Rect } from "../../app-mocks/layout";
 import { pressScale } from "../../app-mocks/primitives";
 import { tw } from "../../app-mocks/tw";
 import { ABSENCE_REASON_META, ABSENCE_REQUESTS, studentById, type AbsenceRequest, type AbsenceSession } from "../../app-mocks/data";
@@ -51,6 +51,11 @@ const FILTER_ORDER: { key: HomeroomRequestFilter; label: string; w: number }[] =
   { key: "rejected", label: "반려", w: 48 },
 ];
 const FILTER_GAP = 8;
+const FILTER_H = 26;
+
+// 처리 열의 승인/반려 버튼 묶음(176-199행).
+const ACTION = { approveW: 44, rejectW: 40, gap: 4, h: 22 } as const;
+const ACTION_GROUP_W = ACTION.approveW + ACTION.gap + ACTION.rejectW;
 
 const withApproved = (r: AbsenceRequest, approvedIds?: number[]): AbsenceRequest =>
   approvedIds?.includes(r.id) ? { ...r, status: "approved", reviewer: "박지훈" } : r;
@@ -90,6 +95,12 @@ const filterRowLayout = (width: number) => {
 
 const tableY = PAD_TOP + TITLE_H + HEADER_MB;
 
+const rowIndexOf = (id: number, rows: AbsenceRequest[]) => {
+  const index = rows.findIndex((r) => r.id === id);
+  if (index === -1) throw new Error(`request ${id} not visible under the given filter`);
+  return index;
+};
+
 export const homeroomRequestsPoint = (
   key: `filter_${string}` | `approve_${number}` | `reject_${number}` | "table" | "total",
   width: number,
@@ -116,17 +127,50 @@ export const homeroomRequestsPoint = (
   // approve_<id> / reject_<id> — `filter`로 실제 화면에 보이는 행 순서 기준 위치를 반환한다.
   const [, idStr] = key.split("_");
   const id = Number(idStr);
-  const rowIndex = rowsForFilter.findIndex((r) => r.id === id);
-  if (rowIndex === -1) throw new Error(`request ${id} not visible under filter "${filter}"`);
+  const rowIndex = rowIndexOf(id, rowsForFilter);
   const rowY = tableY + HEAD_H + rowIndex * ROW_H;
-  const isApprove = key.startsWith("approve_");
-  const approveW = 44;
-  const rejectW = 40;
-  const btnGap = 4;
-  const groupW = approveW + btnGap + rejectW;
-  const groupX = PAD_X + actionX + (COL.action - groupW) / 2;
-  const x = isApprove ? groupX + approveW / 2 : groupX + approveW + btnGap + rejectW / 2;
+  const groupX = PAD_X + actionX + (COL.action - ACTION_GROUP_W) / 2;
+  const x = key.startsWith("approve_")
+    ? groupX + ACTION.approveW / 2
+    : groupX + ACTION.approveW + ACTION.gap + ACTION.rejectW / 2;
   return { x, y: rowY + ROW_H / 2 };
+};
+
+// 장면이 상자를 그릴 때 쓰는 영역들 — 목업 내부 치수를 장면에서 다시 적지 않게 한다.
+export const homeroomRequestsRect = (
+  key: "table" | "statusColumn" | "actionColumn" | `row_${number}` | `actions_${number}` | `filter_${string}`,
+  width: number,
+  filter: HomeroomRequestFilter = "all",
+): Rect => {
+  const { contentW, statusX, actionX } = columnX(width);
+  const rows = visibleRows(filter);
+  const bodyH = HEAD_H + rows.length * ROW_H;
+  if (key === "table") {
+    return { x: PAD_X, y: tableY, w: contentW, h: bodyH + FOOT_H };
+  }
+  if (key === "statusColumn") {
+    return { x: PAD_X + statusX, y: tableY, w: COL.status, h: bodyH };
+  }
+  if (key === "actionColumn") {
+    return { x: PAD_X + actionX, y: tableY, w: COL.action, h: bodyH };
+  }
+  if (key.startsWith("filter_")) {
+    const p = homeroomRequestsPoint(key as `filter_${string}`, width, filter);
+    const pill = filterRowLayout(width).find((f) => f.key === key.slice(7));
+    if (!pill) throw new Error(`unknown filter: ${key.slice(7)}`);
+    return { x: pill.x, y: p.y - FILTER_H / 2, w: pill.w, h: FILTER_H };
+  }
+  const id = Number(key.split("_")[1]);
+  const rowY = tableY + HEAD_H + rowIndexOf(id, rows) * ROW_H;
+  if (key.startsWith("row_")) {
+    return { x: PAD_X, y: rowY, w: contentW, h: ROW_H };
+  }
+  return {
+    x: PAD_X + actionX + (COL.action - ACTION_GROUP_W) / 2,
+    y: rowY + (ROW_H - ACTION.h) / 2,
+    w: ACTION_GROUP_W,
+    h: ACTION.h,
+  };
 };
 
 const Th: React.FC<{ x: number; w: number; align: "left" | "center"; children: React.ReactNode }> = ({ x, w, align, children }) => (
@@ -187,9 +231,9 @@ export const HomeroomRequestsMock: React.FC<{
             style={{
               position: "absolute",
               left: pill.x,
-              top: PAD_TOP + (TITLE_H - 26) / 2,
+              top: PAD_TOP + (TITLE_H - FILTER_H) / 2,
               width: pill.w,
-              height: 26,
+              height: FILTER_H,
               borderRadius: 6,
               border: `1px solid ${active ? tw.blue[500] : tw.gray[300]}`,
               background: active ? tw.blue[50] : tw.white,
@@ -282,14 +326,19 @@ export const HomeroomRequestsMock: React.FC<{
                 </div>
                 <div style={{ position: "absolute", left: actionX, top: 0, width: COL.action, height: ROW_H, display: "flex", alignItems: "center", justifyContent: "center" }}>
                   {r.status === "pending" ? (
-                    <div style={{ display: "flex", gap: 4 }}>
+                    <div style={{ display: "flex", gap: ACTION.gap }}>
                       <div
                         style={{
-                          padding: "3px 8px",
+                          width: ACTION.approveW,
+                          height: ACTION.h,
                           borderRadius: 4,
                           border: `1px solid ${tw.green[200]}`,
                           background: tw.green[50],
                           color: tw.green[700],
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          boxSizing: "border-box",
                           fontSize: 11,
                           fontWeight: 500,
                           whiteSpace: "nowrap",
@@ -300,11 +349,16 @@ export const HomeroomRequestsMock: React.FC<{
                       </div>
                       <div
                         style={{
-                          padding: "3px 8px",
+                          width: ACTION.rejectW,
+                          height: ACTION.h,
                           borderRadius: 4,
                           border: `1px solid ${tw.red[200]}`,
                           background: tw.red[50],
                           color: tw.red[700],
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          boxSizing: "border-box",
                           fontSize: 11,
                           fontWeight: 500,
                           whiteSpace: "nowrap",

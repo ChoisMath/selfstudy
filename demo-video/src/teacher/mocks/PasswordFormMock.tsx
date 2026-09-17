@@ -3,7 +3,7 @@ import React from "react";
 import { useCurrentFrame } from "remotion";
 import { tween } from "../../anim";
 import { FONT } from "../../fonts";
-import type { Point } from "../../app-mocks/layout";
+import type { Point, Rect } from "../../app-mocks/layout";
 import { Caret, pressScale, typedSlice } from "../../app-mocks/primitives";
 import { tw } from "../../app-mocks/tw";
 
@@ -62,9 +62,30 @@ export const passwordPoint = (key: "current" | "next" | "confirm" | "submit" | "
   return { x: cx, y: L.messageY + MESSAGE_H / 2 };
 };
 
+// 장면이 상자를 그릴 때 쓰는 영역들 — 목업 내부 치수를 장면에서 다시 적지 않게 한다.
+export const passwordRect = (
+  key: "card" | "current" | "next" | "confirm" | "message" | "submit",
+  width: number,
+): Rect => {
+  const L = layout();
+  const cw = cardWidth(width);
+  const fieldX = PAD_X + CARD_PAD;
+  const fieldW = cw - CARD_PAD * 2;
+  if (key === "card") return { x: PAD_X, y: L.cardY, w: cw, h: L.cardH };
+  if (key === "current") return { x: fieldX, y: L.currentY, w: fieldW, h: INPUT_H };
+  if (key === "next") return { x: fieldX, y: L.nextY, w: fieldW, h: INPUT_H };
+  if (key === "confirm") return { x: fieldX, y: L.confirmY, w: fieldW, h: INPUT_H };
+  if (key === "message") return { x: fieldX, y: L.messageY, w: fieldW, h: MESSAGE_H };
+  return { x: fieldX, y: L.buttonY, w: fieldW, h: BUTTON_H };
+};
+
 // TypedText(primitives.tsx)는 마스킹을 지원하지 않아 비밀번호 필드용으로 로컬 복제 — primitives.tsx는 수정하지 않는다.
-const MaskedField: React.FC<{ text: string; from?: number }> = ({ text, from }) => {
+// clearedFrom 이후에는 앱처럼(password/page.tsx 55-57행) 칸이 비워진다.
+const MaskedField: React.FC<{ text: string; from?: number; clearedFrom?: number }> = ({ text, from, clearedFrom }) => {
   const frame = useCurrentFrame();
+  if (clearedFrom !== undefined && frame >= clearedFrom) {
+    return null;
+  }
   const shown = typedSlice(text, frame, from);
   const typing = from !== undefined && frame >= from && shown.length < text.length;
   const caretOn = typing && Math.floor(frame / 8) % 2 === 0;
@@ -152,17 +173,17 @@ export const PasswordFormMock: React.FC<{
 
       <div style={labelBox(L.currentLabelY)}>현재 비밀번호</div>
       <div style={fieldBox(L.currentY)}>
-        <MaskedField text={CURRENT_PASSWORD} from={current.typeFrom} />
+        <MaskedField text={CURRENT_PASSWORD} from={current.typeFrom} clearedFrom={successFrom} />
       </div>
 
       <div style={labelBox(L.nextLabelY)}>새 비밀번호</div>
       <div style={fieldBox(L.nextY)}>
-        <MaskedField text={NEW_PASSWORD} from={next.typeFrom} />
+        <MaskedField text={NEW_PASSWORD} from={next.typeFrom} clearedFrom={successFrom} />
       </div>
 
       <div style={labelBox(L.confirmLabelY)}>새 비밀번호 확인</div>
       <div style={fieldBox(L.confirmY)}>
-        <MaskedField text={CONFIRM_PASSWORD} from={confirm.typeFrom} />
+        <MaskedField text={CONFIRM_PASSWORD} from={confirm.typeFrom} clearedFrom={successFrom} />
       </div>
 
       <div

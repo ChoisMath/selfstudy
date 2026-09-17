@@ -11,13 +11,12 @@ import { colors } from "../../theme";
 import { lineAt, lineEnd, lineStart } from "../timing";
 import { HOMEROOM_BODY, HomeroomShellMock } from "../mocks/HomeroomShellMock";
 import { HomeroomWeeklyMock, homeroomWeeklyRect } from "../mocks/HomeroomWeeklyMock";
+import { WEEKLY_PAGE_SCROLL } from "../mocks/PhoneBoardInset";
 import type { DemoProps } from "../../props";
 
 const ID = "HomeroomWeekly";
 const W = HOMEROOM_BODY.w;
 
-// 표 아래 "총 12명"까지 보이도록 페이지를 내리는 양 — 주간표(약 555px)가 본문 높이(514px)보다 길다.
-export const WEEKLY_PAGE_SCROLL = 66;
 const PAGE_SCROLL = WEEKLY_PAGE_SCROLL;
 const ARROW_W = 30;
 const LEGEND_W = 346;
@@ -185,12 +184,13 @@ export const HomeroomWeeklyScene: React.FC<DemoProps> = () => {
         color={colors.green600}
       />
 
+      {/* 주가 하나뿐이라 화살표를 누르지 않는다 — 커서는 화살표 앞(아래 왼쪽)에서 멈추고 먼저 사라진다. */}
       <Cursor
         path={[
           { frame: lineAt(ID, 1, 0.5), x: 1500, y: 640 },
-          { frame: lineAt(ID, 1, 0.66), x: nextArrowPoint.x, y: nextArrowPoint.y + 4 },
+          { frame: lineAt(ID, 1, 0.64), x: nextArrowPoint.x - 46, y: nextArrowPoint.y + 54 },
         ]}
-        hideAfter={lineEnd(ID, 1)}
+        hideAfter={lineAt(ID, 1, 0.72)}
       />
       <Cursor
         path={[

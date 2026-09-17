@@ -13,29 +13,22 @@ import { colors } from "../../theme";
 import { lineAt, lineEnd, lineStart } from "../timing";
 import { AbsenceReasonFormMock } from "../mocks/AbsenceReasonFormMock";
 import { HOMEROOM_BODY, HomeroomShellMock, homeroomTabPoint } from "../mocks/HomeroomShellMock";
-import { HomeroomRequestsMock, homeroomRequestsPoint, type HomeroomRequestFilter } from "../mocks/HomeroomRequestsMock";
+import {
+  HomeroomRequestsMock,
+  homeroomRequestsPoint,
+  homeroomRequestsRect,
+  type HomeroomRequestFilter,
+} from "../mocks/HomeroomRequestsMock";
 import type { DemoProps } from "../../props";
 
 const ID = "HomeroomRequests";
 const W = HOMEROOM_BODY.w;
 const APPROVE_ID = 4;
 const SUPERVISOR_REVIEWED_ID = 7;
-const ROW_COUNT_ALL = 5;
 // 앞 장면에서 이미 끝난 입력·등록 — 첫 프레임부터 완료된 모습으로 그린다.
 const SETTLED = -1000;
-
-// HomeroomRequestsMock 내부 치수(앱 absence-requests/page.tsx 압축판) — 머리 34, 행 52, 상태 열 96, 처리 열 140.
-const HEAD_H = 34;
-const ROW_H = 52;
-const STATUS_COL_W = 96;
-const ACTION_COL_W = 140;
-const ACTION_GROUP_W = 84;
-const ACTION_BTN_H = 22;
-// homeroomRequestsPoint 는 처리 열을 (열 x + 26)부터 승인 폭 44로 잡는다.
-const POINT_GROUP_INSET = 26;
-const POINT_APPROVE_HALF = 22;
-const FILTER_PENDING_W = 64;
-const FILTER_H = 26;
+// "대기중만 보기" 라벨을 왼쪽 전체 칩 너머 빈 자리까지 밀어내는 거리(화면 px).
+const PENDING_LABEL_GAP = 78;
 
 const tabClick = lineAt(ID, 0, 0.2);
 const pageSwap = tabClick + 3;
@@ -159,27 +152,23 @@ const box = (r: { x: number; y: number; width: number; height: number }, pad = 6
 
 export const HomeroomRequestsScene: React.FC<DemoProps> = () => {
   const tab = pcAbs(homeroomTabPoint("absenceRequests", "homeroom"));
-  const pendingPill = homeroomRequestsPoint("filter_pending", W);
   const allPill = bodyPoint(homeroomRequestsPoint("filter_all", W));
-  const approvePoint = homeroomRequestsPoint(`approve_${APPROVE_ID}`, W, "pending");
-  const approveLogical = { x: approvePoint.x, y: approvePoint.y };
-  const approve = bodyPoint(approveLogical);
+  const pendingPill = bodyPoint(homeroomRequestsPoint("filter_pending", W));
+  const approve = bodyPoint(homeroomRequestsPoint(`approve_${APPROVE_ID}`, W, "pending"));
   const ok = pcAbs(confirmOkPoint);
 
-  const firstRowAll = homeroomRequestsPoint(`approve_${APPROVE_ID}`, W, "all");
-  const tableTop = firstRowAll.y - ROW_H / 2 - HEAD_H;
-  const actionX = firstRowAll.x - POINT_APPROVE_HALF - POINT_GROUP_INSET;
-  const tableRect = bodyRect({ x: 16, y: tableTop, w: W - 32, h: homeroomRequestsPoint("total", W).y + 16 - tableTop });
-  const actionGroup = bodyRect({
-    x: actionX + (ACTION_COL_W - ACTION_GROUP_W) / 2,
-    y: approveLogical.y - ACTION_BTN_H / 2,
-    w: ACTION_GROUP_W,
-    h: ACTION_BTN_H,
+  const tableRect = bodyRect(homeroomRequestsRect("table", W, "all"));
+  const actionGroup = bodyRect(homeroomRequestsRect(`actions_${APPROVE_ID}`, W, "pending"));
+  const reviewerColumn = bodyRect(homeroomRequestsRect("actionColumn", W, "all"));
+  const statusColumn = homeroomRequestsRect("statusColumn", W, "all");
+  const supervisorRow = homeroomRequestsRect(`row_${SUPERVISOR_REVIEWED_ID}`, W, "all");
+  const supervisorCell = bodyRect({
+    x: statusColumn.x,
+    y: supervisorRow.y,
+    w: statusColumn.w + homeroomRequestsRect("actionColumn", W, "all").w,
+    h: supervisorRow.h,
   });
-  const reviewerColumn = bodyRect({ x: actionX, y: tableTop, w: ACTION_COL_W, h: HEAD_H + ROW_H * ROW_COUNT_ALL });
-  const supervisorRowY = homeroomRequestsPoint(`approve_${SUPERVISOR_REVIEWED_ID}`, W, "all").y - ROW_H / 2;
-  const supervisorCell = bodyRect({ x: actionX - STATUS_COL_W, y: supervisorRowY, w: STATUS_COL_W + ACTION_COL_W, h: ROW_H });
-  const pendingPillRect = bodyRect({ x: pendingPill.x - FILTER_PENDING_W / 2, y: pendingPill.y - FILTER_H / 2, w: FILTER_PENDING_W, h: FILTER_H });
+  const pendingPillRect = bodyRect(homeroomRequestsRect("filter_pending", W));
 
   return (
     <GuideScene id={ID} step={18} label="불참신청 관리">
@@ -195,19 +184,23 @@ export const HomeroomRequestsScene: React.FC<DemoProps> = () => {
         color={colors.blue600}
       />
 
+      {/* 필터 칩이 촘촘해 라벨을 왼쪽에 두면 옆 칩(전체)을 덮는다 — 칩 줄 왼쪽 빈 자리로 띄운다. */}
       <Annotation
         from={pendingClick + 4}
         durationInFrames={approveClick - 10 - pendingClick}
         {...box(pendingPillRect, 4)}
         label="대기중만 보기"
         labelPosition="left"
+        labelGap={PENDING_LABEL_GAP}
       />
+      {/* 왼쪽 라벨은 상태 열의 대기중 배지를 덮어, 버튼 묶음 위로 올린다. */}
       <Annotation
         from={lineAt(ID, 1, 0.26)}
         durationInFrames={confirmOpen - lineAt(ID, 1, 0.26)}
         {...box(actionGroup, 5)}
         label="승인 · 반려"
-        labelPosition="left"
+        labelPosition="top"
+        labelAlign="end"
       />
 
       <Annotation
@@ -232,8 +225,8 @@ export const HomeroomRequestsScene: React.FC<DemoProps> = () => {
           { frame: lineStart(ID, 0), x: 1100, y: 640 },
           { frame: tabClick - 6, x: tab.x, y: tab.y },
           { frame: tabClick + 10, x: tab.x, y: tab.y },
-          { frame: pendingClick - 6, x: bodyPoint(pendingPill).x, y: bodyPoint(pendingPill).y },
-          { frame: pendingClick + 8, x: bodyPoint(pendingPill).x, y: bodyPoint(pendingPill).y },
+          { frame: pendingClick - 6, x: pendingPill.x, y: pendingPill.y },
+          { frame: pendingClick + 8, x: pendingPill.x, y: pendingPill.y },
           { frame: approveClick - 6, x: approve.x, y: approve.y },
           { frame: confirmOpen + 6, x: approve.x, y: approve.y },
           { frame: lineAt(ID, 1, 0.72), x: ok.x, y: ok.y },

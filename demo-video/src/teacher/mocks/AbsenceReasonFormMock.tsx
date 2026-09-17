@@ -3,7 +3,7 @@ import React from "react";
 import { useCurrentFrame } from "remotion";
 import { tween } from "../../anim";
 import { FONT } from "../../fonts";
-import type { Point } from "../../app-mocks/layout";
+import type { Point, Rect } from "../../app-mocks/layout";
 import { pressScale, TypedText } from "../../app-mocks/primitives";
 import { tw } from "../../app-mocks/tw";
 import {
@@ -48,6 +48,13 @@ const REASON_ORDER: { key: AbsenceReasonType; w: number }[] = [
   { key: "custom", w: 56 },
 ];
 const REASON_GAP = 8;
+
+// select 팝업 한 줄(89-108행의 option) — 높이를 고정해 장면이 옵션 위치를 정확히 잡을 수 있게 한다.
+const DROPDOWN_ROW_H = 22;
+const DROPDOWN_BORDER = 1;
+
+const DETAIL_PLACEHOLDER = "필요 시 상세 사유를 입력하세요";
+const STUDENT_PLACEHOLDER = "학생을 선택하세요";
 
 const classTwoStudents = STUDENTS.filter((s) => s.classNumber === 2);
 
@@ -138,6 +145,41 @@ export const absenceReasonPoint = (
   return { x: cx, y: L.messageY + MESSAGE_H / 2 };
 };
 
+// 장면이 상자·커서를 맞추는 영역들 — 목업 내부 치수를 장면에서 다시 적지 않게 한다.
+// option_<학생 id>는 selectOpen 으로 열리는 학생 목록의 한 줄이다.
+export const absenceReasonRect = (
+  key: "card" | "student" | "date" | "sessionGroup" | "reasonGroup" | "detail" | "message" | "submit" | `option_${number}`,
+  width: number,
+): Rect => {
+  const L = layout();
+  const cw = cardWidth(width);
+  const fieldX = PAD_X + CARD_PAD;
+  const fieldW = cw - CARD_PAD * 2;
+  if (key === "card") return { x: PAD_X, y: L.cardY, w: cw, h: L.cardH };
+  if (key === "student") return { x: fieldX, y: L.studentY, w: fieldW, h: SELECT_H };
+  if (key === "date") return { x: fieldX, y: L.dateY, w: fieldW, h: DATE_H };
+  if (key === "detail") return { x: fieldX, y: L.detailY, w: fieldW, h: TEXTAREA_H };
+  if (key === "message") return { x: fieldX, y: L.messageY, w: fieldW, h: MESSAGE_H };
+  if (key === "submit") return { x: fieldX, y: L.buttonY, w: fieldW, h: BUTTON_H };
+  if (key === "sessionGroup") {
+    const last = SESSION_ORDER.length - 1;
+    return { x: sessionX(0), y: L.sessionY, w: sessionX(last) + SESSION_ORDER[last].w - sessionX(0), h: SESSION_H };
+  }
+  if (key === "reasonGroup") {
+    const last = REASON_ORDER.length - 1;
+    return { x: reasonX(0), y: L.reasonY, w: reasonX(last) + REASON_ORDER[last].w - reasonX(0), h: REASON_H };
+  }
+  const id = Number(key.split("_")[1]);
+  const index = classTwoStudents.findIndex((s) => s.id === id);
+  if (index === -1) throw new Error(`student ${id} is not in this class list`);
+  return {
+    x: fieldX,
+    y: L.studentY + SELECT_H + DROPDOWN_BORDER + index * DROPDOWN_ROW_H,
+    w: fieldW,
+    h: DROPDOWN_ROW_H,
+  };
+};
+
 export const AbsenceReasonFormMock: React.FC<{
   width: number;
   step: {
@@ -156,7 +198,9 @@ export const AbsenceReasonFormMock: React.FC<{
   const cw = cardWidth(width);
   const fieldW = cw - CARD_PAD * 2;
 
-  const studentPicked = step.student !== undefined && frame >= step.student;
+  // 앱은 등록에 성공하면 학생·상세 사유만 비운다(absence-reasons/page.tsx 72-73행) — 날짜·시간·사유 유형은 그대로 남는다.
+  const cleared = step.successFrom !== undefined && frame >= step.successFrom;
+  const studentPicked = step.student !== undefined && frame >= step.student && !cleared;
   const successOpacity =
     step.successFrom !== undefined ? tween(frame, [step.successFrom, step.successFrom + 8], [0, 1]) : 0;
   const dropdownShown = selectOpen !== undefined && frame >= selectOpen.from && frame < selectOpen.to;
@@ -225,7 +269,7 @@ export const AbsenceReasonFormMock: React.FC<{
         {studentPicked ? (
           <span>{ABSENCE_REASON_EXAMPLE.student}</span>
         ) : (
-          <span style={{ color: tw.gray[400] }}>학생을 선택하세요</span>
+          <span style={{ color: tw.gray[400] }}>{STUDENT_PLACEHOLDER}</span>
         )}
       </div>
       {dropdownShown ? (
@@ -247,7 +291,11 @@ export const AbsenceReasonFormMock: React.FC<{
             <div
               key={s.id}
               style={{
-                padding: "4px 10px",
+                height: DROPDOWN_ROW_H,
+                display: "flex",
+                alignItems: "center",
+                padding: "0 10px",
+                boxSizing: "border-box",
                 fontSize: 11,
                 whiteSpace: "nowrap",
                 background: s.id === 205 ? tw.blue[50] : tw.white,
@@ -330,11 +378,11 @@ export const AbsenceReasonFormMock: React.FC<{
 
       <div style={labelBox(L.detailLabelY)}>상세 사유 (선택)</div>
       <div style={{ ...fieldBox(L.detailY, TEXTAREA_H), alignItems: "flex-start", paddingTop: 6 }}>
-        <TypedText
-          text={ABSENCE_REASON_EXAMPLE.detail}
-          from={step.detailTypeFrom}
-          placeholder="필요 시 상세 사유를 입력하세요"
-        />
+        {cleared ? (
+          <span style={{ color: tw.gray[400], whiteSpace: "nowrap" }}>{DETAIL_PLACEHOLDER}</span>
+        ) : (
+          <TypedText text={ABSENCE_REASON_EXAMPLE.detail} from={step.detailTypeFrom} placeholder={DETAIL_PLACEHOLDER} />
+        )}
       </div>
 
       <div

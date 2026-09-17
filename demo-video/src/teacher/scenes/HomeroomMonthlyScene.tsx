@@ -13,7 +13,7 @@ import { colors } from "../../theme";
 import { lineAt, lineEnd, lineStart } from "../timing";
 import { HOMEROOM_BODY, HomeroomShellMock, homeroomTabPoint } from "../mocks/HomeroomShellMock";
 import { HomeroomWeeklyMock } from "../mocks/HomeroomWeeklyMock";
-import { WEEKLY_PAGE_SCROLL } from "./HomeroomWeeklyScene";
+import { WEEKLY_PAGE_SCROLL } from "../mocks/PhoneBoardInset";
 import type { DemoProps } from "../../props";
 
 const ID = "HomeroomMonthly";
@@ -140,16 +140,22 @@ export const HomeroomMonthlyScene: React.FC<DemoProps> = () => {
         hint="다운로드 완료"
       />
 
+      {/* 표를 설명하는 문장 1 동안에는 커서를 치운다 — 표 한가운데 유휴 커서가 남지 않게. */}
       <Cursor
         path={[
           { frame: lineStart(ID, 0), x: 1100, y: 640 },
           { frame: tabClick - 6, x: tab.x, y: tab.y },
           { frame: tabClick + 10, x: tab.x, y: tab.y },
-          { frame: scrollFrom - 4, x: 1100, y: 640 },
-          { frame: lineAt(ID, 2, 0.3), x: 1300, y: 560 },
+        ]}
+        clicks={[tabClick]}
+        hideAfter={tabClick + 14}
+      />
+      <Cursor
+        path={[
+          { frame: lineAt(ID, 2, 0.24), x: excelPoint.x - 90, y: excelPoint.y + 150 },
           { frame: excelClick - 6, x: excelPoint.x, y: excelPoint.y },
         ]}
-        clicks={[tabClick, excelClick]}
+        clicks={[excelClick]}
         hideAfter={lineEnd(ID, 2)}
       />
     </GuideScene>

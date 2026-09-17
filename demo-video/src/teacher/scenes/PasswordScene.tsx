@@ -6,24 +6,18 @@ import { BrowserFrame } from "../../components/BrowserFrame";
 import { Cursor } from "../../components/Cursor";
 import { GuideScene } from "../../guide/GuideScene";
 import { APP_HOST } from "../../app-mocks/data";
-import { PcViewport, pcAbs, pcRectAbs, type Point } from "../../app-mocks/layout";
+import { PcViewport, pcAbs, pcRectAbs, type Point, type Rect } from "../../app-mocks/layout";
 import { colors } from "../../theme";
 import { lineAt, lineEnd, lineStart } from "../timing";
 import { HOMEROOM_BODY, HomeroomShellMock, homeroomTabPoint } from "../mocks/HomeroomShellMock";
 import { HomeroomRequestsMock } from "../mocks/HomeroomRequestsMock";
-import { PasswordFormMock, passwordPoint } from "../mocks/PasswordFormMock";
+import { PasswordFormMock, passwordPoint, passwordRect } from "../mocks/PasswordFormMock";
 import type { DemoProps } from "../../props";
 
 const ID = "Password";
 const W = HOMEROOM_BODY.w;
 // 앞 장면(HomeroomRequests)에서 승인한 신청.
 const APPROVED_REQUEST_ID = 4;
-
-// PasswordFormMock 내부 치수(앱 password/page.tsx 압축판) — 입력칸 폭 400(max-w-md 448 − 좌우 p-6), 높이 34, 알림 28, 버튼 34.
-const FIELD_W = 400;
-const INPUT_H = 34;
-const MESSAGE_H = 28;
-const BUTTON_H = 34;
 
 const tabClick = lineAt(ID, 0, 0.3);
 const pageSwap = tabClick + 3;
@@ -66,8 +60,7 @@ const Stage: React.FC = () => {
 };
 
 const bodyPoint = (p: Point) => pcAbs({ x: HOMEROOM_BODY.x + p.x, y: HOMEROOM_BODY.y + p.y });
-const centeredRect = (p: Point, w: number, h: number) =>
-  pcRectAbs({ x: HOMEROOM_BODY.x + p.x - w / 2, y: HOMEROOM_BODY.y + p.y - h / 2, w, h });
+const bodyRect = (r: Rect) => pcRectAbs({ x: HOMEROOM_BODY.x + r.x, y: HOMEROOM_BODY.y + r.y, w: r.w, h: r.h });
 
 const box = (r: { x: number; y: number; width: number; height: number }, pad = 6) => ({
   x: r.x - pad,
@@ -84,9 +77,9 @@ export const PasswordScene: React.FC<DemoProps> = () => {
   const confirm = bodyPoint(point("confirm"));
   const submit = bodyPoint(point("submit"));
 
-  const submitButton = centeredRect(point("submit"), FIELD_W, BUTTON_H);
-  const nextField = centeredRect(point("next"), FIELD_W, INPUT_H);
-  const success = centeredRect(point("success"), FIELD_W, MESSAGE_H);
+  const submitButton = bodyRect(passwordRect("submit", W));
+  const nextField = bodyRect(passwordRect("next", W));
+  const success = bodyRect(passwordRect("message", W));
 
   return (
     <GuideScene id={ID} step={19} label="비밀번호">
