@@ -48,9 +48,12 @@ const layout = () => {
   return { cardY, cardH, currentLabelY, currentY, nextLabelY, nextY, confirmLabelY, confirmY, messageY, buttonY };
 };
 
-export const passwordPoint = (key: "current" | "next" | "confirm" | "submit" | "success"): Point => {
+// 카드가 화면 왼쪽에 고정된 offset(PAD_X)로 붙어 있어 width는 카드가 줄어드는 경우에만
+// x축에 영향을 준다(컴포넌트의 cardWidth(width)와 동일 계산) — 그래도 시그니처는 다른
+// point 함수들과 맞춰 width를 받는다.
+export const passwordPoint = (key: "current" | "next" | "confirm" | "submit" | "success", width: number): Point => {
   const L = layout();
-  const fieldW = CARD_W - CARD_PAD * 2;
+  const fieldW = cardWidth(width) - CARD_PAD * 2;
   const cx = PAD_X + CARD_PAD + fieldW / 2;
   if (key === "current") return { x: cx, y: L.currentY + INPUT_H / 2 };
   if (key === "next") return { x: cx, y: L.nextY + INPUT_H / 2 };

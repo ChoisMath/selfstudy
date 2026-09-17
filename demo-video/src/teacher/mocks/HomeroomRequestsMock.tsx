@@ -90,13 +90,19 @@ const tableY = PAD_TOP + TITLE_H + HEADER_MB;
 export const homeroomRequestsPoint = (
   key: `filter_${string}` | `approve_${number}` | `reject_${number}` | "table" | "total",
   width: number,
+  filter: HomeroomRequestFilter = "all",
 ): Point => {
   const { contentW, actionX } = columnX(width);
+  // table/total/approve/reject는 모두 `filter`가 골라내는 행 순서·행수를 기준으로 계산한다 —
+  // 컴포넌트의 visibleRows()와 같은 필터링. approvedIds는 이 함수가 받지 않으므로 반영되지 않는다:
+  // 장면이 approvedIds도 함께 넘길 때는 그 프레임에 대상 행의 실제 상태·필터 조합이
+  // 이 계산과 일치하는지(예: 승인 처리 후에는 "pending" 필터에서 더 이상 보이지 않음) 스스로 맞춰야 한다.
+  const rowsForFilter = visibleRows(filter);
   if (key === "table") {
-    return { x: PAD_X + contentW / 2, y: tableY + (HEAD_H + REQUESTS.length * ROW_H + FOOT_H) / 2 };
+    return { x: PAD_X + contentW / 2, y: tableY + (HEAD_H + rowsForFilter.length * ROW_H + FOOT_H) / 2 };
   }
   if (key === "total") {
-    return { x: PAD_X + 40, y: tableY + HEAD_H + REQUESTS.length * ROW_H + FOOT_H / 2 };
+    return { x: PAD_X + 40, y: tableY + HEAD_H + rowsForFilter.length * ROW_H + FOOT_H / 2 };
   }
   if (key.startsWith("filter_")) {
     const f = key.slice(7);
@@ -104,13 +110,11 @@ export const homeroomRequestsPoint = (
     if (!pill) throw new Error(`unknown filter: ${f}`);
     return { x: pill.x + pill.w / 2, y: PAD_TOP + TITLE_H / 2 };
   }
-  // approve_<id> / reject_<id> — 필터가 "all"인 정식 순서(REQUESTS) 기준 행 위치를 반환한다.
-  // approvedIds에 따라 실제로 보이는 목록은 재배치될 수 있으니, 호출하는 장면은 그 프레임에
-  // 해당 행이 이 위치에 실제로 보이는 필터·상태 조합을 스스로 맞춰야 한다.
+  // approve_<id> / reject_<id> — `filter`로 실제 화면에 보이는 행 순서 기준 위치를 반환한다.
   const [, idStr] = key.split("_");
   const id = Number(idStr);
-  const rowIndex = REQUESTS.findIndex((r) => r.id === id);
-  if (rowIndex === -1) throw new Error(`unknown request id: ${id}`);
+  const rowIndex = rowsForFilter.findIndex((r) => r.id === id);
+  if (rowIndex === -1) throw new Error(`request ${id} not visible under filter "${filter}"`);
   const rowY = tableY + HEAD_H + rowIndex * ROW_H;
   const isApprove = key.startsWith("approve_");
   const approveW = 44;
