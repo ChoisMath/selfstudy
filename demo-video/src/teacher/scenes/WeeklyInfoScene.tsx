@@ -18,6 +18,7 @@ import {
   between,
   BOARD_URL,
   CARRIED_SEATS,
+  countsScrollX,
   leftLabeled,
   phoneBoardProps,
   phoneBox,
@@ -61,6 +62,15 @@ const blurPoint = { x: table.x + table.w / 2, y: table.y - 16 };
 
 const INFO_LABELS = [{ at: 0, title: "좌석 오른쪽 위 i 버튼", sub: "그 학생의 이번 주 출석 현황", color: colors.blue600 }];
 
+// 카운트("방과후 N"까지)가 다 보이도록 날짜 바를 미리 민다 — 폰 장면 공통.
+const DATE_BAR_SCROLL = countsScrollX(
+  phoneBoardProps({
+    tab: "afternoon1",
+    groups: buildAfternoonGroups(afternoon1Visual(CARRIED_SEATS)),
+    counts: afternoon1Counts(afternoon1Visual(CARRIED_SEATS)),
+  }),
+);
+
 const weeklyModal = (frame: number) => (
   <WeeklyInfoModalMock
     width={PHONE_BODY.w}
@@ -81,6 +91,7 @@ const propsAt = (frame: number) => {
     tab: "afternoon1",
     groups: buildAfternoonGroups(visualFor),
     counts: afternoon1Counts(afternoon1Visual(CARRIED_SEATS)),
+    dateBarScrollX: DATE_BAR_SCROLL,
     overlay: weeklyModal(frame),
   });
 };

@@ -21,12 +21,15 @@ import { vwClamp } from "../../app-mocks/SeatCellMock";
 import { GRADE, TODAY_LABEL } from "../../app-mocks/data";
 import { PHONE_BODY, type Point, type Rect } from "../../app-mocks/layout";
 import type { DemoProps } from "../../props";
-import { BOARD_URL, ClipTo, between, dateBarBand, phoneBoardProps, phoneBox } from "./phone-helpers";
+import { BOARD_URL, ClipTo, between, countsScrollX, dateBarBand, phoneBoardProps, phoneBox } from "./phone-helpers";
 
 const ID = "AttendanceTour";
 
-const BASE = phoneBoardProps({ tab: "afternoon1", groups: buildAfternoonGroups((id) => baseVisual(id)) });
+// 이 장면만 날짜 바를 직접 움직인다 — 날짜·감독·학년을 가리키는 동안은 스크롤 0, 카운트·다른학년을 가리킬 때
+// 끝까지 밀었다가, 마지막에는 카운트가 다 보이는 자리(COUNTS_SCROLL)에 멈춘다. 뒤 폰 장면들이 그 자리에서 이어진다.
+const BASE = phoneBoardProps({ tab: "afternoon1", groups: buildAfternoonGroups((id) => baseVisual(id)), dateBarScrollX: 0 });
 const MAX_SCROLL_X = boardDateBarMaxScrollX(BASE);
+const COUNTS_SCROLL = countsScrollX(BASE);
 const SCROLLED = { ...BASE, dateBarScrollX: MAX_SCROLL_X };
 const SCROLL_FRAMES = 12;
 
@@ -117,7 +120,7 @@ const Stage: React.FC = () => {
   const scrollX =
     frame < scrollBackFrom
       ? tween(frame, [scrollFrom, scrollFrom + SCROLL_FRAMES], [0, MAX_SCROLL_X], easeInOut)
-      : tween(frame, [scrollBackFrom, scrollBackFrom + SCROLL_FRAMES], [MAX_SCROLL_X, 0], easeInOut);
+      : tween(frame, [scrollBackFrom, scrollBackFrom + SCROLL_FRAMES], [MAX_SCROLL_X, COUNTS_SCROLL], easeInOut);
   return (
     <PhoneFrame x={PHONE_X} y={PHONE_Y} url={BOARD_URL}>
       <AttendanceBoardMock {...BASE} dateBarScrollX={scrollX} />

@@ -18,7 +18,7 @@ import {
   type AttendanceBoardProps,
   type SeatState,
 } from "../../app-mocks/AttendanceBoardMock";
-import { PHONE_BODY, type Rect } from "../../app-mocks/layout";
+import { PHONE_BODY } from "../../app-mocks/layout";
 import { NativeDialogMock, nativeDialogPoint } from "../mocks/NativeDialogMock";
 import type { DemoProps } from "../../props";
 import {
@@ -32,6 +32,7 @@ import {
   SeatZoomCard,
   afternoon1ResultVisual,
   between,
+  countsScrollX,
   dateBarBand,
   phoneBoardProps,
   phoneBox,
@@ -72,8 +73,14 @@ const fixTapAt = lineAt(ID, 2, 0.75);
 const copied = COPIED_TO_AFTERNOON2;
 const skippedCount = COPY_SKIPPED_COUNT;
 
-const afternoon2Props = (visualFor: (id: number) => SeatState) =>
-  phoneBoardProps({ tab: "afternoon2", groups: buildAfternoonGroups(visualFor), copyButton: { visible: true } });
+const afternoon2At = (visualFor: (id: number) => SeatState, dateBarScrollX = 0) =>
+  phoneBoardProps({ tab: "afternoon2", groups: buildAfternoonGroups(visualFor), copyButton: { visible: true }, dateBarScrollX });
+
+// 카운트("방과후 N"까지)가 다 보이도록 날짜 바를 미리 민다 — 폰 장면 공통. 복사 중 숫자 자릿수가 바뀌어도
+// 막대가 흔들리지 않게 복사 전 상태에서 한 번만 구한다.
+const DATE_BAR_SCROLL = countsScrollX(afternoon2At((id) => baseVisual(id, AFTERNOON2_BASE)));
+
+const afternoon2Props = (visualFor: (id: number) => SeatState) => afternoon2At(visualFor, DATE_BAR_SCROLL);
 
 const AFTERNOON2 = afternoon2Props((id) => baseVisual(id, AFTERNOON2_BASE));
 
@@ -124,7 +131,11 @@ const busyFrom = confirmOkAt + DIALOG_CLOSE_DELAY;
 
 const boardPropsAt = (frame: number): AttendanceBoardProps =>
   frame < tabTapAt + COLOR_DELAY
-    ? phoneBoardProps({ tab: "afternoon1", groups: buildAfternoonGroups(afternoon1ResultVisual) })
+    ? phoneBoardProps({
+        tab: "afternoon1",
+        groups: buildAfternoonGroups(afternoon1ResultVisual),
+        dateBarScrollX: DATE_BAR_SCROLL,
+      })
     : {
         ...afternoon2Props(afternoon2VisualAt(frame)),
         copyButton: { visible: true, pressAt: copyPressAt, busy: frame >= busyFrom && frame < fillFrom },
@@ -148,12 +159,7 @@ const Stage: React.FC = () => {
 const seatBox = (id: number) => seatRect(id, FILLED);
 // 좌석 사이 간격은 2.3px 뿐이라 상자를 1px 만 띄운다 — 더 띄우면 옆 좌석과 그 "i" 버튼을 덮는다.
 const SEAT_BOX_PAD = 1;
-// 날짜 바가 폰 폭에서 잘리므로 카운트 상자는 막대 안쪽에서 끝낸다.
-const countsRect: Rect = (() => {
-  const counts = boardRect("counts", FILLED);
-  const bar = boardRect("dateBar", FILLED);
-  return { ...counts, w: bar.x + bar.w - 2 - counts.x };
-})();
+const countsRect = boardRect("counts", FILLED);
 const fixSeat = seatBox(COPY_FIX_SEAT_ID);
 
 const SKIPPED_NOTES: { id: number; label: string; side: "left" | "right" }[] = [

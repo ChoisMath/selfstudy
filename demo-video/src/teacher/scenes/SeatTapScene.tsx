@@ -24,6 +24,7 @@ import {
   PhoneTap,
   SeatZoomCard,
   between,
+  countsScrollX,
   dateBarBand,
   phoneBoardProps,
   phoneBox,
@@ -64,22 +65,23 @@ const seatStateAt = (frame: number): SeatState => {
   };
 };
 
-const propsAt = (frame: number) =>
+const boardAt = (frame: number, dateBarScrollX = 0) =>
   phoneBoardProps({
     tab: "afternoon1",
     groups: buildAfternoonGroups((id) => (id === SEAT_ID ? { ...baseVisual(id), ...seatStateAt(frame) } : baseVisual(id))),
+    dateBarScrollX,
   });
+
+// 카운트("방과후 N"까지)가 다 보이도록 날짜 바를 미리 민다 — 폰 장면 공통.
+const DATE_BAR_SCROLL = countsScrollX(boardAt(0));
+
+const propsAt = (frame: number) => boardAt(frame, DATE_BAR_SCROLL);
 
 const BASE = propsAt(0);
 const seat = seatRect(SEAT_ID, BASE);
 const seatCenter = { x: seat.x + seat.w / 2, y: seat.y + seat.h / 2 };
 const classroom = groupRect(0, BASE);
-// 날짜 바가 폰 폭에서 잘리므로(방과후 숫자 앞에서 끊김) 카운트 상자도 막대 안쪽에서 끝낸다.
-const countsRect: Rect = (() => {
-  const counts = boardRect("counts", BASE);
-  const bar = boardRect("dateBar", BASE);
-  return { ...counts, w: bar.x + bar.w - 2 - counts.x };
-})();
+const countsRect = boardRect("counts", BASE);
 // 탭 세 칸(오후1·오후2·야간)의 보이는 모양 — 탭 칸 위쪽 8px 아래, 4px 간격.
 const sessionTabsRect: Rect = (() => {
   const tabs = boardRect("tabs", BASE);

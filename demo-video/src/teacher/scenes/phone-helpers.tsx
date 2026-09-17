@@ -9,6 +9,7 @@ import { FONT } from "../../fonts";
 import { colors, WIDTH } from "../../theme";
 import {
   baseVisual,
+  boardDateBarMaxScrollX,
   boardPoint,
   boardRect,
   buildAfternoonGroups,
@@ -227,6 +228,19 @@ export const ClipTo: React.FC<{ rect: { x: number; y: number; width: number; hei
     <div style={{ position: "absolute", left: -rect.x, top: -rect.y, width: WIDTH, height: 0 }}>{children}</div>
   </div>
 );
+
+// 날짜 바는 폰 폭(390)에서 넘쳐 "방과후 N" 이 오른쪽에서 잘린다(앱 overflow-x-auto).
+// 카운트 묶음이 다 보이는 **최소** 스크롤 — 감독 칩과 학년은 그대로 두고 날짜의 연도만 왼쪽으로 넘어간다.
+// 장면마다 프레임 단위로 다시 계산하면 숫자 자릿수가 바뀔 때 막대가 2px 씩 흔들리므로, 장면이 한 번 계산해 상수로 쓴다.
+const BAR_PAD_X = 14;
+
+export const countsScrollX = (props: AttendanceBoardProps): number => {
+  const unscrolled = { ...props, dateBarScrollX: 0 };
+  const bar = boardRect("dateBar", unscrolled);
+  const counts = boardRect("counts", unscrolled);
+  const needed = counts.x + counts.w - (bar.x + bar.w - BAR_PAD_X);
+  return Math.min(boardDateBarMaxScrollX(unscrolled), Math.max(0, needed));
+};
 
 // 날짜 바 안 항목 상자의 글로우가 파란 막대 밖으로 번지지 않게 자를 영역.
 // 라벨은 막대 세로 가운데에 놓이므로 좌우는 화면 끝까지 열어 둔다.

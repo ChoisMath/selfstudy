@@ -11,7 +11,6 @@ import { GuideScene } from "../../guide/GuideScene";
 import {
   AttendanceBoardMock,
   baseVisual,
-  boardDateBarMaxScrollX,
   boardMaxScrollY,
   boardRect,
   buildAfternoonGroups,
@@ -31,6 +30,7 @@ import {
   afternoon1Counts,
   afternoon1Visual,
   between,
+  countsScrollX,
   leftLabeled,
   phoneBoardProps,
   phoneBox,
@@ -75,14 +75,8 @@ const boardAt = (frame: number, scrollY = 0, dateBarScrollX = 0) => {
   });
 };
 
-// 날짜 바가 폰 폭에서 넘쳐 "방과후" 숫자가 잘린다(앱 overflow-x-auto) — 카운트가 다 보이는 만큼만 미리 밀어 둔다.
-const BAR_PAD_X = 14;
-const DATE_BAR_SCROLL = (() => {
-  const props = boardAt(afterSchoolPresent);
-  const bar = boardRect("dateBar", props);
-  const counts = boardRect("counts", props);
-  return Math.min(boardDateBarMaxScrollX(props), Math.max(0, counts.x + counts.w - (bar.x + bar.w - BAR_PAD_X)));
-})();
+// 카운트("방과후 N"까지)가 다 보이도록 날짜 바를 미리 민다 — 폰 장면 공통.
+const DATE_BAR_SCROLL = countsScrollX(boardAt(afterSchoolPresent));
 
 const propsAt = (frame: number, scrollY = 0) => boardAt(frame, scrollY, DATE_BAR_SCROLL);
 

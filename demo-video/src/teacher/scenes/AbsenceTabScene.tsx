@@ -27,6 +27,7 @@ import {
   boardTabRect,
   CARRIED_SEATS,
   cardButtonRect,
+  countsScrollX,
   cardRect,
   leftLabeled,
   panelPoint,
@@ -66,6 +67,15 @@ const afternoon1At = afternoon1Tap + 3;
 const absenceAgainTap = lineStart(ID, 5) - 4;
 const absenceAgainAt = absenceAgainTap + 3;
 
+// 카운트("방과후 N"까지)가 다 보이도록 날짜 바를 미리 민다 — 폰 장면 공통(불참신청 탭은 카운트가 없어 0으로 걸린다).
+const DATE_BAR_SCROLL = countsScrollX(
+  phoneBoardProps({
+    tab: "afternoon1",
+    groups: buildAfternoonGroups(afternoon1Visual(CARRIED_SEATS)),
+    counts: afternoon1Counts(afternoon1Visual(CARRIED_SEATS)),
+  }),
+);
+
 const APPROVED = approveRequests(ABSENCE_REQUESTS, [REQUEST_ID]);
 const requestsAt = (frame: number) => (frame >= approvedAt ? APPROVED : ABSENCE_REQUESTS);
 
@@ -94,6 +104,7 @@ const afternoon1Props = (frame: number) => {
     groups: buildAfternoonGroups(visualFor),
     counts: afternoon1Counts(visualFor),
     pendingBadge: pendingCountOf(requests),
+    dateBarScrollX: DATE_BAR_SCROLL,
   });
 };
 

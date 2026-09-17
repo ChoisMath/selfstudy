@@ -20,6 +20,7 @@ import {
   afternoon2SettledVisual,
   between,
   BOARD_URL,
+  countsScrollX,
   phoneBoardProps,
   phoneBox,
   phoneCenter,
@@ -56,7 +57,7 @@ const seatAt = (frame: number): SeatState => {
   return { visual: "inactive", ...press };
 };
 
-const afternoon1PropsAt = (frame: number) => {
+const afternoon1At_ = (frame: number, dateBarScrollX = 0) => {
   // 탭을 옮겨 돌아오면 활성화는 풀리지만 출석 기록이 있어 초록으로 보인다.
   const seat: SeatState = frame >= afternoon1At ? { visual: "present" } : seatAt(frame);
   const visualFor = afternoon1Visual({ [SEAT]: seat });
@@ -65,8 +66,14 @@ const afternoon1PropsAt = (frame: number) => {
     tabPressAt: frame >= afternoon1At ? { tab: "afternoon1", at: afternoon1Tap } : undefined,
     groups: buildAfternoonGroups(visualFor),
     counts: afternoon1Counts(visualFor),
+    dateBarScrollX,
   });
 };
+
+// 카운트("방과후 N"까지)가 다 보이도록 날짜 바를 미리 민다 — 폰 장면 공통.
+const DATE_BAR_SCROLL = countsScrollX(afternoon1At_(0));
+
+const afternoon1PropsAt = (frame: number) => afternoon1At_(frame, DATE_BAR_SCROLL);
 
 // CopySession 에서 복사를 마친 오후2(106 결석 수정 포함). 비참여 111은 복사 대상이 아니라 회색이다.
 const afternoon2Groups = buildAfternoonGroups(afternoon2SettledVisual);
@@ -76,6 +83,7 @@ const afternoon2Props = phoneBoardProps({
   groups: afternoon2Groups,
   counts: countsOf(afternoon2Groups),
   copyButton: { visible: true },
+  dateBarScrollX: DATE_BAR_SCROLL,
 });
 
 const propsAt = (frame: number) =>
