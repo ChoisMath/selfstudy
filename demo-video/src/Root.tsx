@@ -7,6 +7,9 @@ import { FPS, HEIGHT, WIDTH } from "./theme";
 import { GuideContext, type GuideConfig } from "./guide/GuideContext";
 import { SETUP_CHECK_CONFIG, SetupCheckVideo } from "./setup-check/SetupCheckVideo";
 import { SETUP_CHECK_SCENES } from "./setup-check/scenes";
+import { TEACHER_GUIDE_CONFIG, TeacherVideo } from "./teacher/TeacherVideo";
+import { TEACHER_SCENES } from "./teacher/scenes";
+import { MOCK_GALLERY } from "./app-mocks/gallery";
 
 // 단일 장면 컴포지션도 본편과 같은 오디오 경로·자막 설정으로 감싼다.
 const withConfig = (Component: React.FC<DemoProps>, config: GuideConfig): React.FC<DemoProps> => {
@@ -51,6 +54,32 @@ export const RemotionRoot: React.FC = () => (
     />
     <Folder name="SetupCheck">
       <SceneCompositions scenes={SETUP_CHECK_SCENES} prefix="SetupCheck" config={SETUP_CHECK_CONFIG} />
+    </Folder>
+    <Composition
+      id="TeacherGuide"
+      component={TeacherVideo}
+      durationInFrames={totalFrames(TEACHER_SCENES)}
+      fps={FPS}
+      width={WIDTH}
+      height={HEIGHT}
+      schema={demoPropsSchema}
+      defaultProps={defaultDemoProps}
+    />
+    <Folder name="Teacher">
+      <SceneCompositions scenes={TEACHER_SCENES} prefix="Teacher" config={TEACHER_GUIDE_CONFIG} />
+    </Folder>
+    <Folder name="Mocks">
+      {MOCK_GALLERY.map((entry) => (
+        <Composition
+          key={entry.id}
+          id={`Mock-${entry.id}`}
+          component={entry.component}
+          durationInFrames={entry.durationInFrames ?? 90}
+          fps={FPS}
+          width={entry.width}
+          height={entry.height}
+        />
+      ))}
     </Folder>
   </>
 );
