@@ -52,7 +52,7 @@
 
 `frame`은 장면 컴포지션 기준이며 `lineAt(scene, line, ratio)`로 정의해 원고가 바뀌어도 위치가 유지되게 한다. 스틸을 만든 뒤 반드시 눈으로 확인하고 비율을 보정한다. 학생 화면처럼 주로 휴대폰에서 쓰는 화면은 폰 목업 장면 + `resize: 640`을 기본으로 한다.
 
-폰 프레임은 아직 이 프로젝트에 없다. 첫 폰 장면 때 `/Volumes/Chois_SD2/dev/school_cowork/demo-video/src/guide/mocks/PhoneFrame.tsx`(`PHONE` 390×844, `fonts`·`theme`·`anim`·`LockIcon` 의존 — 모두 이식됨)와 `src/classroom/phone.ts`(`PHONE_CROP`·`phoneAbs`)를 `demo-video/src/components/`로 옮기고 이 문단을 그 경로로 고친다. 가이드 페이지의 이미지 항목은 가로 브라우저 크롭(1280×657)과 세로 폰 크롭(640폭)을 구분할 수 있어야 한다(원본 `_step`의 `tall`).
+폰 프레임은 `src/components/PhoneFrame.tsx`(`PHONE` 390×844, 화면 본문 390×752)와 `src/components/phone.ts`(`PHONE_X`·`PHONE_Y`·`PHONE_CROP`·`phoneAbs`·`phoneRectAbs`·`phoneLeftLabelGap`)에 있다(school_cowork 이식). 폰 장면은 모두 `PHONE_X`·`PHONE_Y`에 폰을 두고, 커서·주석 좌표는 `phoneAbs`로 화면 좌표로 바꾼다. 폰 스틸은 `crop: PHONE_CROP, resize: 640`이고, 안내 페이지에서는 `GuideStep` 이미지에 `tall: true`를 준다(가로 브라우저 크롭 1280×657과 구분).
 
 ## 4. 새 페이지 추가 절차 (`/guide-page <page>`)
 
