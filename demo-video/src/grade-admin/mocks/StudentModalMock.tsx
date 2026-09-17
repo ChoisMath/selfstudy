@@ -5,7 +5,7 @@ import React from "react";
 import { useCurrentFrame } from "remotion";
 import { tween } from "../../anim";
 import type { Point, Rect } from "../../app-mocks/layout";
-import { pressScale, TypedText } from "../../app-mocks/primitives";
+import { pressScale, typedSlice, TypedText } from "../../app-mocks/primitives";
 import { tw } from "../../app-mocks/tw";
 import { FONT, MONO } from "../../fonts";
 
@@ -119,10 +119,8 @@ export const StudentModalMock: React.FC<{
   if (openAt !== undefined && frame < openAt) return null;
   const enter = openAt !== undefined ? tween(frame, [openAt, openAt + 10], [0, 1]) : 1;
 
-  const classNumberShown =
-    openAt === undefined || classNumber.typeFrom === undefined ? classNumber.text : classNumber.text.slice(0, Math.max(0, Math.floor((frame - classNumber.typeFrom) / 2)));
-  const studentNumberShown =
-    openAt === undefined || studentNumber.typeFrom === undefined ? studentNumber.text : studentNumber.text.slice(0, Math.max(0, Math.floor((frame - studentNumber.typeFrom) / 2)));
+  const classNumberShown = typedSlice(classNumber.text, frame, classNumber.typeFrom);
+  const studentNumberShown = typedSlice(studentNumber.text, frame, studentNumber.typeFrom);
   const classNumberInt = parseInt(classNumberShown, 10);
   const studentNumberInt = parseInt(studentNumberShown, 10);
   const previewId =

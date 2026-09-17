@@ -210,15 +210,15 @@ export const ExcelUploadMock: React.FC<{
             width: contentW,
             height: UPLOAD_BTN_H,
             borderRadius: 6,
-            background: !hasFile ? tw.gray[300] : tw.green[600],
-            color: !hasFile ? tw.gray[500] : tw.white,
+            background: tw.green[600], // ExcelUploadModal.tsx:211 bg-green-600(비활성 포함, disabled:opacity-50 만 적용)
+            color: tw.white,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             fontSize: 13,
             whiteSpace: "nowrap",
             boxSizing: "border-box",
-            opacity: uploading ? 0.7 : 1,
+            opacity: !hasFile || uploading ? 0.5 : 1,
             scale: String(pressScale(frame, uploadPressAt)),
           }}
         >

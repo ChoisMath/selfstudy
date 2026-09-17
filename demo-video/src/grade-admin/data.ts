@@ -97,10 +97,12 @@ const HELPER_STUDENT_ID = 307; // 1-3 7번 하준서 — 학생 편 ME_STUDENT�
 // 삭제(비활성) 예시 — 실제 36명 명단 밖의 가상 전출 학생. STUDENTS에 없으므로 참여 설정·좌석·월간출결에는 나오지 않는다.
 const INACTIVE_EXAMPLE_STUDENT: Student = { id: 9999, grade: 1, classNumber: 1, number: 13, name: "박서준" };
 
+// 앱 API 는 orderBy classNumber asc, studentNumber asc 로 내려준다(src/app/api/grade-admin/[grade]/students/route.ts) —
+// 비활성 학생도 이 정렬에 섞여 1-1 13번 자리(1-1 12번 다음, 1-2 시작 전)에 온다. 맨 끝에 붙이지 않는다.
 export const STUDENT_ROWS: StudentRow[] = [
   ...STUDENTS.map((s) => ({ student: s, code: studentCode(s), status: "active" as const, isHelper: s.id === HELPER_STUDENT_ID })),
   { student: INACTIVE_EXAMPLE_STUDENT, code: studentCode(INACTIVE_EXAMPLE_STUDENT), status: "inactive" as const, isHelper: false },
-];
+].sort((a, b) => a.student.classNumber - b.student.classNumber || a.student.number - b.student.number);
 
 // ---------------------------------------------------------------------------
 // 학생 추가(StudentAdd)
