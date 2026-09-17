@@ -63,4 +63,17 @@ assert.match(requestForm, /불참 신청하기/, "폼 제목이 없음");
 assert.match(requestForm, /onClick=\{onClose\}/, "닫기 버튼이 onClose 를 부르지 않음");
 assert.match(requestForm, /onSubmitted\(\)/, "성공 시 onSubmitted 를 부르지 않음");
 
+// --- 학생 페이지: 세 컴포넌트 조립, draft 로 폼 전환, 완료 배너 + 불참목록 링크 ---
+const studentPage = read("../src/app/student/page.tsx");
+assert.match(studentPage, /import AbsenceRequestForm from "@\/components\/student\/AbsenceRequestForm"/);
+assert.match(studentPage, /import ParticipationScheduleCard from "@\/components\/student\/ParticipationScheduleCard"/);
+assert.match(studentPage, /import SeatCheckCard from "@\/components\/student\/SeatCheckCard"/);
+assert.match(studentPage, /useState<Draft \| null>\(null\)/, "draft 상태가 없음");
+assert.match(studentPage, /onSelectDay=\{openForm\}/, "요일 셀 클릭이 폼을 열지 않음");
+assert.match(studentPage, /window\.scrollTo\(\{ top: 0 \}\)/, "폼 열 때 상단으로 스크롤하지 않음");
+assert.match(studentPage, /불참 신청이 접수되었습니다\./, "완료 배너 문구가 없음");
+assert.match(studentPage, /href="\/student\/absence-requests"/, "배너에 불참목록 링크가 없음");
+assert.match(studentPage, /<SeatCheckCard participationDays=\{participationDays\} \/>/, "좌석 카드가 없음");
+assert.doesNotMatch(studentPage, /renderSession|DAY_KEYS|DAY_LABELS/, "옛 세션별 카드 렌더가 남아 있음");
+
 console.log("student-schedule-wiring checks passed");

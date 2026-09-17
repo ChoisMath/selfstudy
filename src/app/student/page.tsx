@@ -1,21 +1,16 @@
 "use client";
 
+import { useState } from "react";
+import Link from "next/link";
 import useSWR from "swr";
-import { SESSION_TYPES, SESSION_META } from "@/lib/sessions";
+import AbsenceRequestForm from "@/components/student/AbsenceRequestForm";
+import ParticipationScheduleCard from "@/components/student/ParticipationScheduleCard";
+import SeatCheckCard from "@/components/student/SeatCheckCard";
+import { getKstTodayString } from "@/lib/calendar";
+import type { ParticipationDaysMap } from "@/lib/participation-days";
+import { SESSION_TYPES, type SessionType } from "@/lib/sessions";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
-
-const DAY_KEYS = ["mon", "tue", "wed", "thu", "fri"] as const;
-const DAY_LABELS = ["월", "화", "수", "목", "금"] as const;
-
-type DaySettings = {
-  isParticipating: boolean;
-  mon: boolean;
-  tue: boolean;
-  wed: boolean;
-  thu: boolean;
-  fri: boolean;
-};
 
 type Ranking = {
   rank: number;
@@ -24,74 +19,64 @@ type Ranking = {
 };
 
 type ParticipationData = {
-  participationDays: Record<string, DaySettings>;
+  participationDays: ParticipationDaysMap;
   monthlyStudyHours: number;
   yearlyStudyHours: number;
   ranking: Ranking | null;
 };
 
+type Draft = { date: string; sessionTypes: SessionType[] };
+
 export default function StudentParticipationPage() {
-  const { data, isLoading } = useSWR<ParticipationData>(
-    "/api/student/participation-days",
-    fetcher
-  );
+  const { data, isLoading } = useSWR<ParticipationData>("/api/student/participation-days", fetcher);
+  const [draft, setDraft] = useState<Draft | null>(null);
+  const [notice, setNotice] = useState("");
+  const today = getKstTodayString();
+  const participationDays = data?.participationDays ?? {};
 
-  function renderSession(
-    label: string,
-    settings: DaySettings | undefined
-  ) {
-    if (!settings || !settings.isParticipating) {
-      return (
-        <div key={label} className="bg-white rounded-lg border border-gray-200 p-4">
-          <h3 className="text-sm font-medium text-gray-600 mb-3">{label}</h3>
-          <p className="text-sm text-gray-400">미참가</p>
-        </div>
-      );
-    }
-
-    const activeDays = DAY_KEYS.filter((key) => settings[key]);
-
-    return (
-      <div key={label} className="bg-white rounded-lg border border-gray-200 p-4">
-        <h3 className="text-sm font-medium text-gray-600 mb-3">{label}</h3>
-        <div className="flex gap-2">
-          {DAY_KEYS.map((key, i) => {
-            const active = settings[key];
-            return (
-              <div
-                key={key}
-                className={`w-10 h-10 rounded-lg flex items-center justify-center text-sm font-medium ${
-                  active
-                    ? "bg-blue-100 text-blue-700"
-                    : "bg-gray-100 text-gray-300"
-                }`}
-              >
-                {DAY_LABELS[i]}
-              </div>
-            );
-          })}
-        </div>
-        {activeDays.length > 0 && (
-          <p className="mt-2 text-xs text-gray-400">
-            주 {activeDays.length}일 참가
-          </p>
-        )}
-      </div>
-    );
+  function openForm(sessionType: SessionType, date: string) {
+    setNotice("");
+    setDraft({ date, sessionTypes: [sessionType] });
+    window.scrollTo({ top: 0 });
   }
 
   if (isLoading) {
+    return <div className="text-center py-12 text-gray-400">불러오는 중...</div>;
+  }
+
+  if (draft) {
     return (
-      <div className="text-center py-12 text-gray-400">불러오는 중...</div>
+      <AbsenceRequestForm
+        initialDate={draft.date}
+        initialSessionTypes={draft.sessionTypes}
+        today={today}
+        participationDays={participationDays}
+        onClose={() => setDraft(null)}
+        onSubmitted={() => {
+          setDraft(null);
+          setNotice("불참 신청이 접수되었습니다.");
+        }}
+      />
     );
   }
 
   return (
     <div>
       <h2 className="text-xl font-bold text-gray-900 mb-4">내 참여일정</h2>
-      <div className="space-y-4">
-        {SESSION_TYPES.map((t) => renderSession(SESSION_META[t].label, data?.participationDays?.[t]))}
-      </div>
+
+      {notice && (
+        <div className="mb-4 flex items-center justify-between gap-2 rounded-lg bg-green-50 px-3 py-2 text-sm text-green-700">
+          <span>{notice}</span>
+          <Link
+            href="/student/absence-requests"
+            className="inline-flex min-h-11 items-center font-medium underline whitespace-nowrap"
+          >
+            불참목록 보기
+          </Link>
+        </div>
+      )}
+
+      <ParticipationScheduleCard participationDays={participationDays} today={today} onSelectDay={openForm} />
 
       {data && (
         <div className="mt-6 bg-white rounded-lg border border-gray-200 p-4">
@@ -120,7 +105,9 @@ export default function StudentParticipationPage() {
         </div>
       )}
 
-      {SESSION_TYPES.every((t) => !data?.participationDays?.[t]) && (
+      <SeatCheckCard participationDays={participationDays} />
+
+      {SESSION_TYPES.every((sessionType) => !participationDays[sessionType]) && (
         <p className="mt-4 text-sm text-gray-400">
           참여일정이 설정되지 않았습니다. 담당 선생님에게 문의하세요.
         </p>
