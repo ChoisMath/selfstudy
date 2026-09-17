@@ -40,7 +40,7 @@ export default function StudentSeatGrid({
                 key={col}
                 aria-current={isMine ? "true" : undefined}
                 title={student.name}
-                className={`min-h-11 rounded border px-1 flex flex-col items-center justify-center text-xs leading-tight whitespace-nowrap ${
+                className={`min-h-11 rounded border flex flex-col items-center justify-center text-xs leading-tight whitespace-nowrap ${
                   isMine ? "bg-blue-600 border-blue-700 text-white font-bold" : "bg-white border-gray-200 text-gray-800"
                 }`}
               >

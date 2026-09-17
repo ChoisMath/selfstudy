@@ -16,7 +16,7 @@ export function getKstTodayString(): string {
 
 export function formatDateLabel(date: string): string {
   const { year, month, day } = parseDateValue(date);
-  const weekday = new Date(year, month - 1, day).getDay();
+  const weekday = weekdayOf(date);
   return `${year}.${month}.${day} (${WEEKDAYS[weekday]})`;
 }
 
@@ -37,9 +37,7 @@ export function buildMonthCells(year: number, month: number): (string | null)[] 
 }
 
 export function formatDateWithWeekday(date: string): string {
-  const { year, month, day } = parseDateValue(date);
-  const weekday = new Date(year, month - 1, day).getDay();
-  return `${date}(${WEEKDAYS[weekday]})`;
+  return `${date}(${WEEKDAYS[weekdayOf(date)]})`;
 }
 
 export function weekdayOf(date: string): number {
@@ -56,4 +54,9 @@ export function addDays(date: string, days: number): string {
 export function nextDateForWeekday(fromDate: string, weekday: number): string {
   const delta = (weekday - weekdayOf(fromDate) + 7) % 7;
   return addDays(fromDate, delta);
+}
+
+// 주말(토=6, 일=0)에도 지난 월요일을 "이번 주" 의 시작으로 본다
+export function mondayOf(date: string): string {
+  return addDays(date, -((weekdayOf(date) + 6) % 7));
 }

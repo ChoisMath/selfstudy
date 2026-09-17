@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment } from "react";
-import { addDays, nextDateForWeekday, weekdayOf } from "@/lib/calendar";
+import { addDays, mondayOf, nextDateForWeekday } from "@/lib/calendar";
 import {
   WEEKDAY_KEYS,
   WEEKDAY_LABELS,
@@ -27,8 +27,7 @@ export default function ParticipationScheduleCard({
   onSelectDay: (sessionType: SessionType, date: string) => void;
 }) {
   const todayKey = weekdayKeyOf(today);
-  // 주말(토=6, 일=0)에도 "이번 주" 는 지난 월요일부터 센다
-  const thisMonday = addDays(today, -((weekdayOf(today) + 6) % 7));
+  const thisMonday = mondayOf(today);
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-4">

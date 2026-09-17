@@ -47,6 +47,7 @@ assert.match(scheduleCard, /미참가/, "미참가 세션 캡션이 없음");
 assert.match(scheduleCard, /"오늘"/, "오늘 캡션이 없음");
 assert.match(scheduleCard, /min-h-11/, "요일 셀 높이가 44px 미만");
 assert.doesNotMatch(scheduleCard, /participationDays\?\.afternoon/, "옛 afternoon 키 접근이 남아 있음");
+assert.match(scheduleCard, /const thisMonday = mondayOf\(today\)/, "이번 주 월요일을 calendar 헬퍼로 계산하지 않음");
 
 // --- 신청 폼: 날짜 요일의 활성 세션만 선택 가능, [전체], 사유 4열 한 행, 기타일 때만 상세 사유 ---
 const requestForm = read("../src/components/student/AbsenceRequestForm.tsx");
@@ -75,6 +76,7 @@ assert.match(studentPage, /불참 신청이 접수되었습니다\./, "완료 �
 assert.match(studentPage, /href="\/student\/absence-requests"/, "배너에 불참목록 링크가 없음");
 assert.match(studentPage, /<SeatCheckCard participationDays=\{participationDays\} \/>/, "좌석 카드가 없음");
 assert.doesNotMatch(studentPage, /renderSession|DAY_KEYS|DAY_LABELS/, "옛 세션별 카드 렌더가 남아 있음");
+assert.match(studentPage, /setNotice\(""\)/, "폼을 열 때 완료 배너를 지우지 않음");
 
 // --- 불참목록: 탭 라벨, 신청 폼 제거, 참여일정으로 안내 ---
 const studentLayout = read("../src/app/student/layout.tsx");

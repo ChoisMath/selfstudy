@@ -78,6 +78,12 @@ export default function StudentParticipationPage() {
 
       <ParticipationScheduleCard participationDays={participationDays} today={today} onSelectDay={openForm} />
 
+      {SESSION_TYPES.every((sessionType) => !participationDays[sessionType]) && (
+        <p className="mt-2 text-sm text-gray-400">
+          참여일정이 설정되지 않았습니다. 담당 선생님에게 문의하세요.
+        </p>
+      )}
+
       {data && (
         <div className="mt-6 bg-white rounded-lg border border-gray-200 p-4">
           <h3 className="text-sm font-medium text-gray-600 mb-3">자율학습 참여시간</h3>
@@ -106,12 +112,6 @@ export default function StudentParticipationPage() {
       )}
 
       <SeatCheckCard participationDays={participationDays} />
-
-      {SESSION_TYPES.every((sessionType) => !participationDays[sessionType]) && (
-        <p className="mt-4 text-sm text-gray-400">
-          참여일정이 설정되지 않았습니다. 담당 선생님에게 문의하세요.
-        </p>
-      )}
     </div>
   );
 }

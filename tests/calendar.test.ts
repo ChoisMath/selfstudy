@@ -9,6 +9,7 @@ import {
   weekdayOf,
   addDays,
   nextDateForWeekday,
+  mondayOf,
 } from "../src/lib/calendar";
 
 // formatDateValue: 1-base month/day, zero-padded
@@ -54,5 +55,11 @@ assert.equal(nextDateForWeekday("2026-09-17", 5), "2026-09-18"); // 아직 안 �
 assert.equal(nextDateForWeekday("2026-09-17", 1), "2026-09-21"); // 지난 월 → 다음 주
 assert.equal(nextDateForWeekday("2026-09-19", 1), "2026-09-21"); // 토요일 → 다음 주 월
 assert.equal(nextDateForWeekday("2026-09-20", 5), "2026-09-25"); // 일요일 → 다음 주 금
+
+// mondayOf: 2026-09-14 은 월요일. 목·토·일 모두 같은 주의 월요일로
+assert.equal(mondayOf("2026-09-14"), "2026-09-14");
+assert.equal(mondayOf("2026-09-17"), "2026-09-14");
+assert.equal(mondayOf("2026-09-19"), "2026-09-14");
+assert.equal(mondayOf("2026-09-20"), "2026-09-14");
 
 console.log("calendar util checks passed");
