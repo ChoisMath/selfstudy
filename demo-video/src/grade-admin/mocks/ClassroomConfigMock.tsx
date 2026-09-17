@@ -16,10 +16,6 @@ const PANEL_X = (PC_VIEWPORT.w - PANEL_W) / 2;
 const HEADER_H = 56; // px-4 py-3 + border-b
 const BODY_PAD = 16; // p-4
 
-const CORRIDOR_LABEL: Record<CorridorSide, { left: string; right: string }> = {
-  left: { left: "복도", right: "창문" },
-  right: { left: "창문", right: "복도" },
-};
 const LAYOUT_LABEL: Record<ClassroomLayoutType, string> = { division: "분단형", single: "단독형" };
 const CORRIDOR_SIDE_LABEL: Record<CorridorSide, string> = { left: "왼쪽", right: "오른쪽" };
 const COLS_BY_LAYOUT: Record<ClassroomLayoutType, number> = { division: 2, single: 1 };
@@ -28,7 +24,7 @@ const COLS_BY_LAYOUT: Record<ClassroomLayoutType, number> = { division: 2, singl
 const TOP_ROW_H = 44;
 const TOP_ROW_MB = 12;
 const TABLE_HEAD_H = 36;
-const TABLE_ROW_H = 40;
+const TABLE_ROW_H = 44; // 수정/삭제 버튼 min-h-11(44) 이 행 높이를 넘지 않도록(M2)
 const COL_W = { class: 84, type: 64, corridor: 64, rows: 108, seats: 64, assigned: 64, actions: 160 };
 const TABLE_W = Object.values(COL_W).reduce((a, b) => a + b, 0);
 const TABLE_Y = HEADER_H + BODY_PAD + TOP_ROW_H + TOP_ROW_MB;
@@ -47,10 +43,9 @@ const LIST_PANEL_H = TABLE_Y + TABLE_HEAD_H + TABLE_ROW_H * EXISTING_CLASSROOMS.
 // --- 편집 모드 ---------------------------------------------------------------------
 const LABEL_W = 96; // w-24
 const FIELD_X = PANEL_X + BODY_PAD + LABEL_W + 12;
-const FIELD_W = PANEL_W - BODY_PAD * 2 - LABEL_W - 12;
 const ROW_H = 44;
 const ROW_GAP = 16; // gap-4
-const PREVIEW_H = 118;
+const PREVIEW_H = 76; // p-3(12*2) + 캡션 줄(16) + mb-1(4) + 격자(최대 3행 ≈ 28)
 
 const classNumRowY = HEADER_H + BODY_PAD;
 const corridorRowY = classNumRowY + ROW_H + ROW_GAP;
@@ -66,7 +61,13 @@ const CELL_W = 12;
 const CELL_H = 8;
 const CELL_GAP = 2;
 const DIV_GAP = 8;
-const PREVIEW_SIDE_W = 20;
+
+// "분단별 행 수" 각 항목 = 라벨("분단1" 등, ≈34px) + gap-1(4) + input(44) + 항목 사이 gap-2(8).
+const ROW_LABEL_W = 34;
+const ROW_INPUT_GAP = 4;
+const ROW_INPUT_W = 44;
+const ROW_ITEM_GAP = 8;
+const ROW_ITEM_PITCH = ROW_LABEL_W + ROW_INPUT_GAP + ROW_INPUT_W + ROW_ITEM_GAP;
 
 export type EditingClassroomConfig = {
   classNumberText: string;
@@ -94,44 +95,52 @@ export type ClassroomConfigKey =
   | "cancelButton"
   | "saveButton";
 
-export const classroomConfigRect = (key: ClassroomConfigKey): Rect => {
-  if (key === "panel") return { x: PANEL_X, y: 0, w: PANEL_W, h: Math.max(LIST_PANEL_H, EDIT_PANEL_H) };
-  if (key === "closeButton") return { x: PANEL_X + PANEL_W - 16 - 60, y: 6, w: 60, h: HEADER_H - 12 };
-  if (key === "addButton") return { x: PANEL_X + PANEL_W - BODY_PAD - 112, y: HEADER_H + BODY_PAD, w: 112, h: TOP_ROW_H };
-  if (key === "table") return { x: PANEL_X + BODY_PAD, y: TABLE_Y, w: TABLE_W, h: TABLE_HEAD_H + TABLE_ROW_H * EXISTING_CLASSROOMS.length };
+const FOOTER_BTN_W = 60; // "취소"/"저장" — px-4(32) + text-sm 2자(≈28)
+
+// 패널은 항상 (PC_VIEWPORT.h - panelH(mode))/2 로 세로 중앙정렬된다(list/edit 높이가 다르다) — BLOCKER-2.
+export const classroomConfigRect = (key: ClassroomConfigKey, mode: "list" | "edit"): Rect => {
+  const panelH = mode === "list" ? LIST_PANEL_H : EDIT_PANEL_H;
+  const panelTop = (PC_VIEWPORT.h - panelH) / 2;
+  const y = (localY: number) => panelTop + localY;
+
+  if (key === "panel") return { x: PANEL_X, y: panelTop, w: PANEL_W, h: panelH };
+  if (key === "closeButton") return { x: PANEL_X + PANEL_W - 16 - 60, y: y(6), w: 60, h: HEADER_H - 12 };
+  if (key === "addButton") return { x: PANEL_X + PANEL_W - BODY_PAD - 112, y: y(HEADER_H + BODY_PAD), w: 112, h: TOP_ROW_H };
+  if (key === "table") return { x: PANEL_X + BODY_PAD, y: y(TABLE_Y), w: TABLE_W, h: TABLE_HEAD_H + TABLE_ROW_H * EXISTING_CLASSROOMS.length };
 
   if (key.startsWith("tableRow_") || key.startsWith("editButton_") || key.startsWith("deleteButton_")) {
     const classNumber = Number(key.split("_")[1]);
     const rowIndex = EXISTING_CLASSROOMS.findIndex((c) => c.classNumber === classNumber);
     const rowY = TABLE_Y + TABLE_HEAD_H + rowIndex * TABLE_ROW_H;
     const actionsX = PANEL_X + BODY_PAD + TABLE_W - COL_W.actions;
-    if (key.startsWith("tableRow_")) return { x: PANEL_X + BODY_PAD, y: rowY, w: TABLE_W, h: TABLE_ROW_H };
-    if (key.startsWith("editButton_")) return { x: actionsX + 8, y: rowY, w: 60, h: TABLE_ROW_H };
-    return { x: actionsX + 8 + 60 + 8, y: rowY, w: 60, h: TABLE_ROW_H };
+    if (key.startsWith("tableRow_")) return { x: PANEL_X + BODY_PAD, y: y(rowY), w: TABLE_W, h: TABLE_ROW_H };
+    if (key.startsWith("editButton_")) return { x: actionsX + 8, y: y(rowY), w: 60, h: TABLE_ROW_H };
+    return { x: actionsX + 8 + 60 + 8, y: y(rowY), w: 60, h: TABLE_ROW_H };
   }
 
   switch (key) {
     case "classNumberInput":
-      return { x: FIELD_X, y: classNumRowY, w: 96, h: ROW_H };
+      return { x: FIELD_X, y: y(classNumRowY), w: 96, h: ROW_H };
     case "corridorLeft":
-      return { x: FIELD_X + 4, y: corridorRowY + 4, w: 88, h: ROW_H - 8 };
+      return { x: FIELD_X + 4, y: y(corridorRowY + 4), w: 88, h: ROW_H - 8 };
     case "corridorRight":
-      return { x: FIELD_X + 4 + 88, y: corridorRowY + 4, w: 88, h: ROW_H - 8 };
+      return { x: FIELD_X + 4 + 88, y: y(corridorRowY + 4), w: 88, h: ROW_H - 8 };
     case "layoutDivision":
-      return { x: FIELD_X + 4, y: layoutRowY + 4, w: 96, h: ROW_H - 8 };
+      return { x: FIELD_X + 4, y: y(layoutRowY + 4), w: 96, h: ROW_H - 8 };
     case "layoutSingle":
-      return { x: FIELD_X + 4 + 96, y: layoutRowY + 4, w: 96, h: ROW_H - 8 };
+      return { x: FIELD_X + 4 + 96, y: y(layoutRowY + 4), w: 96, h: ROW_H - 8 };
     case "divisionsInput":
-      return { x: FIELD_X, y: divisionsRowY, w: 96, h: ROW_H };
+      return { x: FIELD_X, y: y(divisionsRowY), w: 96, h: ROW_H };
     case "preview":
-      return { x: FIELD_X, y: previewRowY, w: FIELD_W, h: PREVIEW_H };
+      // 앱(:375행)에서 미리보기는 라벨 열 없이 폼 전체 폭을 채운다(BLOCKER-3) — FIELD_X 가 아니라 BODY_PAD 부터.
+      return { x: PANEL_X + BODY_PAD, y: y(previewRowY), w: PANEL_W - BODY_PAD * 2, h: PREVIEW_H };
     case "cancelButton":
-      return { x: PANEL_X + PANEL_W - BODY_PAD - 64 - 8 - 96, y: footerRowY, w: 64, h: ROW_H };
+      return { x: PANEL_X + PANEL_W - BODY_PAD - FOOTER_BTN_W * 2 - 8, y: y(footerRowY), w: FOOTER_BTN_W, h: ROW_H };
     case "saveButton":
-      return { x: PANEL_X + PANEL_W - BODY_PAD - 96, y: footerRowY, w: 96, h: ROW_H };
+      return { x: PANEL_X + PANEL_W - BODY_PAD - FOOTER_BTN_W, y: y(footerRowY), w: FOOTER_BTN_W, h: ROW_H };
     default: {
       const division = Number(key.split("_")[1]);
-      return { x: FIELD_X + (division - 1) * 76, y: rowsRowY, w: 68, h: ROW_H };
+      return { x: FIELD_X + ROW_LABEL_W + ROW_INPUT_GAP + (division - 1) * ROW_ITEM_PITCH, y: y(rowsRowY), w: ROW_INPUT_W, h: ROW_H };
     }
   }
 };
@@ -170,7 +179,6 @@ export const ClassroomConfigMock: React.FC<{
   const seatCount = cfg.rowsPerDivision.reduce((sum, r) => sum + r, 0) * cols;
   const previewMaxRows = Math.max(...cfg.rowsPerDivision, 1);
   const previewGridH = previewMaxRows * CELL_H + (previewMaxRows - 1) * CELL_GAP;
-  const corridorLabels = CORRIDOR_LABEL[cfg.corridorSide];
   const divisionWord = cfg.layoutType === "division" ? "분단" : "열";
 
   return (
@@ -355,37 +363,26 @@ export const ClassroomConfigMock: React.FC<{
               </div>
             </div>
 
-            {/* 미리보기 — 복도/창문 라벨 + 총 좌석 수 + 아래쪽 칠판 라벨: 앱의 작은 캡션("아래가 칠판")을
-                가이드 영상에서 또렷이 보이도록 좌우 라벨과 칠판 바를 추가했다(브리프 지시, 앱 원본엔 없음). */}
-            <div style={{ position: "absolute", left: 0, top: classNumRowY + (ROW_H + ROW_GAP) * 5, height: PREVIEW_H, borderRadius: 8, background: tw.gray[50], border: `1px solid ${tw.gray[200]}`, boxSizing: "border-box", padding: 12 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+            {/* 미리보기 — 앱(ClassroomConfigModal.tsx:375-383)은 캡션 문구뿐, 복도/칠판을 따로 그리지 않는다(SF-5).
+                폼 라벨 열 없이 패널 전체 폭을 채운다(BLOCKER-3). */}
+            <div style={{ position: "absolute", left: 0, top: classNumRowY + (ROW_H + ROW_GAP) * 5, width: PANEL_W - BODY_PAD * 2, height: PREVIEW_H, borderRadius: 8, background: tw.gray[50], border: `1px solid ${tw.gray[200]}`, boxSizing: "border-box", padding: 12 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
                 <span style={{ fontSize: 12, color: tw.gray[500], whiteSpace: "nowrap" }}>미리보기 (아래가 칠판)</span>
                 <span style={{ fontSize: 12, fontWeight: 600, color: tw.gray[700], whiteSpace: "nowrap" }}>총 {seatCount}석</span>
               </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <div style={{ width: PREVIEW_SIDE_W, textAlign: "center", writingMode: "vertical-rl", fontSize: 10, color: tw.slate[400], whiteSpace: "nowrap" }}>
-                  {corridorLabels.left}
-                </div>
-                <div style={{ display: "flex", alignItems: "flex-end", gap: DIV_GAP, height: previewGridH }}>
-                  {cfg.rowsPerDivision.map((rows, di) => (
-                    <div key={di} style={{ display: "grid", gridTemplateColumns: `repeat(${cols}, ${CELL_W}px)`, gap: CELL_GAP }}>
-                      {Array.from({ length: rows * cols }, (_, i) => (
-                        <div key={i} style={{ width: CELL_W, height: CELL_H, borderRadius: 2, border: `1px solid ${tw.gray[400]}`, background: tw.white, boxSizing: "border-box" }} />
-                      ))}
-                    </div>
-                  ))}
-                </div>
-                <div style={{ width: PREVIEW_SIDE_W, textAlign: "center", writingMode: "vertical-rl", fontSize: 10, color: tw.slate[400], whiteSpace: "nowrap" }}>
-                  {corridorLabels.right}
-                </div>
-              </div>
-              <div style={{ marginTop: 8, textAlign: "center", fontSize: 10, color: tw.gray[400], borderTop: `1px dashed ${tw.gray[300]}`, paddingTop: 4, whiteSpace: "nowrap" }}>
-                칠판
+              <div style={{ display: "flex", alignItems: "flex-end", gap: DIV_GAP, height: previewGridH, overflowX: "auto" }}>
+                {cfg.rowsPerDivision.map((rows, di) => (
+                  <div key={di} style={{ display: "grid", gridTemplateColumns: `repeat(${cols}, ${CELL_W}px)`, gap: CELL_GAP }}>
+                    {Array.from({ length: rows * cols }, (_, i) => (
+                      <div key={i} style={{ width: CELL_W, height: CELL_H, borderRadius: 2, border: `1px solid ${tw.gray[400]}`, background: tw.white, boxSizing: "border-box" }} />
+                    ))}
+                  </div>
+                ))}
               </div>
             </div>
 
-            {/* 취소 / 저장 */}
-            <div style={{ position: "absolute", left: 0, top: classNumRowY + (ROW_H + ROW_GAP) * 5 + PREVIEW_H + ROW_GAP, height: ROW_H, display: "flex", justifyContent: "flex-end", gap: 8 }}>
+            {/* 취소 / 저장 — 앱(:387행) flex justify-end 로 패널 오른쪽에 붙는다(BLOCKER-3: 래퍼 width 누락 수정) */}
+            <div style={{ position: "absolute", left: 0, top: classNumRowY + (ROW_H + ROW_GAP) * 5 + PREVIEW_H + ROW_GAP, width: PANEL_W - BODY_PAD * 2, height: ROW_H, display: "flex", justifyContent: "flex-end", gap: 8 }}>
               <div style={{ minHeight: 44, padding: "0 16px", borderRadius: 6, border: `1px solid ${tw.gray[300]}`, color: tw.gray[700], fontSize: 14, display: "flex", alignItems: "center", whiteSpace: "nowrap", scale: String(pressScale(frame, cancelPressAt ?? null)) }}>
                 취소
               </div>

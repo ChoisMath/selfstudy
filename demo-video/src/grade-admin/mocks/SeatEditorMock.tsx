@@ -1,6 +1,7 @@
-// src/components/seats/SeatingEditor.tsx + RoomGrid.tsx + UnassignedStudents.tsx 이식.
-// src/app/grade-admin/[grade]/seats/page.tsx(세션 토글) 포함. 셸 본문 안이지만 화면을 가득 쓰므로
-// width·height 를 받아 독립적으로 그린다 — 컨트롤러 재정(mock-notes.md).
+// src/app/grade-admin/[grade]/page.tsx(78-101행, activeTab==="seats" 탭 패널: 세션 버튼 2개)
+// + src/components/seats/SeatingEditor.tsx + RoomGrid.tsx + UnassignedStudents.tsx 이식.
+// 탭은 라우트가 아니라 GradeAdminShellMock(T2) 의 학년관리 6탭 셸 본문(GRADE_ADMIN_BODY) 안에
+// 들어가는 화면이므로, 셸의 x:0/w:PC_VIEWPORT.w 를 그대로 받아 lg:px-4(16px) 만 스스로 그린다.
 import React from "react";
 import { useCurrentFrame } from "remotion";
 import { type Rect } from "../../app-mocks/layout";
@@ -10,6 +11,7 @@ import { FONT } from "../../fonts";
 import { GRADE, SEAT_EDITOR, type AfternoonSeatAssignment, type NightSeatAssignment } from "../data";
 
 type StudentLike = { id: number; classNumber: number; number: number; name: string };
+type CorridorSide = "left" | "right";
 
 // --- roomId 스킴(이 목업 전용, 앱 DB의 room.id 대신 씀) --------------------------------
 // 오후: "afternoon:{classNumber}:{division}" (division 1~3). 야간: "night:{room.name}".
@@ -22,27 +24,30 @@ export type SeatDragSource =
   | { type: "seat"; roomId: string; row: number; col: number }
   | { type: "student"; studentId: number };
 
+// classroom-config.ts corridorLabels() 그대로.
+const corridorLabels = (side: CorridorSide): { left: string; right: string } =>
+  side === "left" ? { left: "복도", right: "창문" } : { left: "창문", right: "복도" };
+
 // --- 레이아웃 상수 ---------------------------------------------------------------------
-// grade-admin/[grade]/layout.tsx: max-w-7xl mx-auto px-2 md:px-3 lg:px-4 py-3 (lg 기준 px-4/py-3).
+// grade-admin/[grade]/layout.tsx: max-w-7xl mx-auto px-2 md:px-3 lg:px-4 py-3.
+// GRADE_ADMIN_BODY.y 가 이미 헤더+6탭+탭 밑 mb-3 를 소비했으므로(GradeAdminShellMock.tsx 관례,
+// SupervisorCalendarMock/GradeMonthlyMock 과 동일) 본문 목업은 위쪽 패딩 없이 y=0 에서 시작한다.
 const PAD_X = 16;
-const PAD_TOP = 12;
+const PAD_TOP = 0;
 const CONTENT_W = 1216; // PC_VIEWPORT.w(1248) - PAD_X*2 — seatCellRect 는 이 고정폭을 가정한다.
 
-const TITLE_H = 32; // h1 text-2xl(24px) leading-8
-const TITLE_MB = 24; // mb-6
-
-const TOGGLE_BTN_H = 36; // px-4 py-2 text-sm(20 line) + py-2(16)
-const TOGGLE_PAD = 4; // bg-gray-100 rounded-lg p-1
-const TOGGLE_H = TOGGLE_BTN_H + TOGGLE_PAD * 2;
-const TOGGLE_BTN_W = 88; // "오후자습"/"야간자습" 4자 + px-4(32)
-const TOGGLE_GAP = 0;
-const TOGGLE_W = TOGGLE_PAD * 2 + TOGGLE_BTN_W * 2 + TOGGLE_GAP;
-const TOGGLE_MB = 24; // mb-6
+// page.tsx 82-99행: 세션 버튼 2개(피임 X, 독립 버튼) — "오후 자율학습"/"야간 자율학습".
+const SESSION_BTN_H = 36; // px-4 py-2(16) + text-sm 줄높이(20)
+const SESSION_BTN_W = 132; // "오후 자율학습"/"야간 자율학습" 7자 근사 + px-4(32)
+const SESSION_BTN_GAP = 8; // gap-2
+const SESSION_ROW_MB = 16; // mb-4
 
 const HEADER_ROW_H = 44; // min-h-11 버튼 기준
 const HEADER_MB = 16; // mb-4
 
-const GRID_Y = PAD_TOP + TITLE_H + TITLE_MB + TOGGLE_H + TOGGLE_MB + HEADER_ROW_H + HEADER_MB;
+const SESSION_Y = PAD_TOP;
+const HEADER_Y = SESSION_Y + SESSION_BTN_H + SESSION_ROW_MB;
+const GRID_Y = HEADER_Y + HEADER_ROW_H + HEADER_MB;
 
 const PANEL_W = 280; // xl:grid-cols-[1fr_280px]
 const PANEL_GAP = 24; // gap-6
@@ -66,7 +71,7 @@ const AF_ROOM_PAD = 8; // compact: p-2
 const AF_CELL_GAP = 4; // gap-1
 const AF_CELL_W = (AF_DIV_W - AF_ROOM_PAD * 2 - AF_CELL_GAP * (AF_COLS - 1)) / AF_COLS;
 const CELL_H = 56; // h-14
-const AF_DIV_HEADER_H = 32; // compact 이름(text-sm) + mb-3
+const AF_DIV_HEADER_H = 32; // compact 이름(text-sm) + mb-3 — 박스 자체 padding(AF_ROOM_PAD)은 별도로 더한다
 const AF_DIV_CONTENT_H = AF_ROWS * CELL_H + (AF_ROWS - 1) * AF_CELL_GAP;
 const AF_DIV_BOX_H = AF_ROOM_PAD * 2 + AF_DIV_HEADER_H + AF_DIV_CONTENT_H;
 const AF_DESK_H = 34; // ClassroomFrame mt-2 + 교탁 배지
@@ -77,7 +82,7 @@ const AF_CLASS_GAP = 24; // space-y-6
 
 // 야간: ClassroomFrame 없이 RoomGrid만(옆에 나란히 아님, 위아래로 쌓임). NIGHT_ROOMS: 3행 x 4열.
 const NI_ROOM_PAD = 16; // p-4(!compact)
-const NI_HEADER_H = 36; // 이름 + "N행 x M열"
+const NI_HEADER_H = 36; // 이름 + "N행 x M열" 줄 — 박스 자체 padding(NI_ROOM_PAD)은 별도로 더한다
 const NI_ROWS = 3;
 const NI_COLS = 4;
 const NI_CELL_GAP = 4;
@@ -87,15 +92,16 @@ const NI_DESK_H = 40; // mt-3 + 교탁 배지(!hideTeacherDesk)
 const NI_BOX_H = NI_ROOM_PAD * 2 + NI_HEADER_H + NI_CONTENT_H + NI_DESK_H;
 const NI_GAP = 24; // space-y-6
 
+const PANEL_PAD = 16; // p-4
 const PANEL_HEADER_H = 24; // "미배정 학생 (N명)"
-const PANEL_HELPER_H = 30; // 안내문 2줄 근사 + mb-2
+const PANEL_HELPER_H = 30; // 안내문 1줄 + mb-2
 const PANEL_SEARCH_H = 26;
 const PANEL_SEARCH_MB = 12; // mb-3
 const PANEL_LIST_ROW_H = 44; // min-h-11
 const PANEL_GROUP_LABEL_H = 18;
 const PANEL_ROW_GAP = 8; // space-y-2
 const PANEL_GROUP_GAP = 12; // space-y-3
-const PANEL_H = 340;
+const PANEL_EMPTY_H = 48; // "모든 학생이 배정되었습니다" padding 16 0 + 줄높이
 
 const ACTION_BAR_W = 384; // sm:w-96
 const ACTION_BAR_H = 60;
@@ -111,10 +117,34 @@ const nightAssignmentAt = (roomName: string, row: number, col: number) => {
   return room?.assignments.find((a) => a.seat.row === row && a.seat.col === col) ?? null;
 };
 
+const unassignedOf = (session: "afternoon" | "night"): StudentLike[] =>
+  session === "afternoon" ? SEAT_EDITOR.afternoon.unassigned : SEAT_EDITOR.night.unassigned;
+
+// 미배정 패널의 실제 내용 높이 — UnassignedStudents.tsx 는 패널 자체가 내용만큼 늘어난다(SF-1).
+const unassignedPanelHeight = (students: StudentLike[]): number => {
+  if (students.length === 0) {
+    return PANEL_PAD + PANEL_HEADER_H + PANEL_HELPER_H + PANEL_SEARCH_H + PANEL_SEARCH_MB + PANEL_EMPTY_H + PANEL_PAD;
+  }
+  const counts = new Map<number, number>();
+  students.forEach((s) => counts.set(s.classNumber, (counts.get(s.classNumber) ?? 0) + 1));
+  const groupsH = [...counts.values()].reduce(
+    (sum, count) => sum + PANEL_GROUP_LABEL_H + count * PANEL_LIST_ROW_H + (count - 1) * PANEL_ROW_GAP + PANEL_GROUP_GAP,
+    0,
+  );
+  return (
+    PANEL_PAD +
+    PANEL_HEADER_H +
+    PANEL_HELPER_H +
+    PANEL_SEARCH_H +
+    PANEL_SEARCH_MB +
+    groupsH -
+    PANEL_GROUP_GAP + // 마지막 그룹 뒤엔 간격 없음
+    PANEL_PAD
+  );
+};
+
 // --- rect 함수 ----------------------------------------------------------------------
 export type SeatEditorKey =
-  | "title"
-  | "sessionToggle"
   | "sessionAfternoon"
   | "sessionNight"
   | "editorHeader"
@@ -127,42 +157,49 @@ export type SeatEditorKey =
   | "actionBarUnassign"
   | "actionBarCancel";
 
-export const seatEditorRect = (key: SeatEditorKey): Rect => {
-  const toggleY = PAD_TOP + TITLE_H + TITLE_MB;
-  const headerY = toggleY + TOGGLE_H + TOGGLE_MB;
+export type SeatEditorRectOptions = {
+  /** actionBar 계열 rect 의 y 계산에 필요(호출부의 height prop 과 동일한 값을 넘긴다). */
+  height?: number;
+  /** unassignedPanel/unassignedSearch 높이 계산에 쓰인다. 생략하면 "afternoon"(4명) 기준. */
+  session?: "afternoon" | "night";
+};
+
+export const seatEditorRect = (key: SeatEditorKey, opts: SeatEditorRectOptions = {}): Rect => {
   const headerRight = PAD_X + CONTENT_W;
   const saveX = headerRight - SAVE_BTN_W;
   const printX = saveX - BTN_GAP - PRINT_BTN_W;
   const configX = printX - BTN_GAP - CONFIG_BTN_W;
   const panelX = PAD_X + MAIN_W + PANEL_GAP;
 
+  if (key === "actionBar" || key === "actionBarUnassign" || key === "actionBarCancel") {
+    if (opts.height === undefined) {
+      throw new Error(`seatEditorRect("${key}") requires opts.height (same value passed to <SeatEditorMock height>)`);
+    }
+    const barY = opts.height - 8 - ACTION_BAR_H;
+    if (key === "actionBar") return { x: PAD_X, y: barY, w: ACTION_BAR_W, h: ACTION_BAR_H };
+    if (key === "actionBarUnassign") return { x: PAD_X + ACTION_BAR_W - 8 - 84 - 8 - 60, y: barY + 8, w: 84, h: 44 };
+    return { x: PAD_X + ACTION_BAR_W - 8 - 60, y: barY + 8, w: 60, h: 44 };
+  }
+
   switch (key) {
-    case "title":
-      return { x: PAD_X, y: PAD_TOP, w: CONTENT_W, h: TITLE_H };
-    case "sessionToggle":
-      return { x: PAD_X, y: toggleY, w: TOGGLE_W, h: TOGGLE_H };
     case "sessionAfternoon":
-      return { x: PAD_X + TOGGLE_PAD, y: toggleY + TOGGLE_PAD, w: TOGGLE_BTN_W, h: TOGGLE_BTN_H };
+      return { x: PAD_X, y: SESSION_Y, w: SESSION_BTN_W, h: SESSION_BTN_H };
     case "sessionNight":
-      return { x: PAD_X + TOGGLE_PAD + TOGGLE_BTN_W, y: toggleY + TOGGLE_PAD, w: TOGGLE_BTN_W, h: TOGGLE_BTN_H };
+      return { x: PAD_X + SESSION_BTN_W + SESSION_BTN_GAP, y: SESSION_Y, w: SESSION_BTN_W, h: SESSION_BTN_H };
     case "editorHeader":
-      return { x: PAD_X, y: headerY, w: CONTENT_W, h: HEADER_ROW_H };
+      return { x: PAD_X, y: HEADER_Y, w: CONTENT_W, h: HEADER_ROW_H };
     case "configButton":
-      return { x: configX, y: headerY, w: CONFIG_BTN_W, h: HEADER_ROW_H };
+      return { x: configX, y: HEADER_Y, w: CONFIG_BTN_W, h: HEADER_ROW_H };
     case "printButton":
-      return { x: printX, y: headerY, w: PRINT_BTN_W, h: HEADER_ROW_H };
+      return { x: printX, y: HEADER_Y, w: PRINT_BTN_W, h: HEADER_ROW_H };
     case "saveButton":
-      return { x: saveX, y: headerY, w: SAVE_BTN_W, h: HEADER_ROW_H };
+      return { x: saveX, y: HEADER_Y, w: SAVE_BTN_W, h: HEADER_ROW_H };
     case "unassignedPanel":
-      return { x: panelX, y: GRID_Y, w: PANEL_W, h: PANEL_H };
-    case "unassignedSearch":
-      return { x: panelX + 16, y: GRID_Y + 16 + PANEL_HEADER_H + PANEL_HELPER_H, w: PANEL_W - 32, h: PANEL_SEARCH_H };
-    case "actionBar":
-      return { x: PAD_X, y: 0, w: ACTION_BAR_W, h: ACTION_BAR_H };
-    case "actionBarUnassign":
-      return { x: PAD_X + ACTION_BAR_W - 8 - 84 - 8 - 60, y: 0, w: 84, h: 44 };
-    default:
-      return { x: PAD_X + ACTION_BAR_W - 8 - 60, y: 0, w: 60, h: 44 };
+      return { x: panelX, y: GRID_Y, w: PANEL_W, h: unassignedPanelHeight(unassignedOf(opts.session ?? "afternoon")) };
+    default: {
+      // unassignedSearch
+      return { x: panelX + PANEL_PAD, y: GRID_Y + PANEL_PAD + PANEL_HEADER_H + PANEL_HELPER_H, w: PANEL_W - PANEL_PAD * 2, h: PANEL_SEARCH_H };
+    }
   }
 };
 
@@ -174,13 +211,14 @@ export const seatCellRect = (roomId: string, row: number, col: number): Rect => 
     const division = Number(divisionStr);
     const classes = SEAT_EDITOR.afternoon.classes.map((c) => c.classNumber).sort((a, b) => a - b);
     const classIndex = classes.indexOf(classNumber);
-    const classY = GRID_Y + classIndex * (AF_CLASS_BLOCK_H + AF_CLASS_GAP) + AF_CLASS_TITLE_H;
+    const frameY = GRID_Y + classIndex * (AF_CLASS_BLOCK_H + AF_CLASS_GAP) + AF_CLASS_TITLE_H;
     const frameX = PAD_X + FRAME_SIDE_W + FRAME_SIDE_GAP;
     const divX = frameX + (division - 1) * (AF_DIV_W + AF_DIV_GAP);
-    const divContentY = classY + AF_ROOM_PAD + AF_DIV_HEADER_H;
+    // 렌더의 SeatCellView 와 동일: 분단 박스 padding(AF_ROOM_PAD) + 헤더(AF_DIV_HEADER_H) 이후부터 좌석.
+    const contentY = frameY + AF_ROOM_PAD + AF_DIV_HEADER_H;
     return {
       x: divX + AF_ROOM_PAD + (col - 1) * (AF_CELL_W + AF_CELL_GAP),
-      y: divContentY + (row - 1) * (CELL_H + AF_CELL_GAP),
+      y: contentY + (row - 1) * (CELL_H + AF_CELL_GAP),
       w: AF_CELL_W,
       h: CELL_H,
     };
@@ -225,7 +263,7 @@ const SeatCellView: React.FC<{
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
-      boxShadow: isSelected ? `0 0 0 2px ${tw.white}, 0 0 0 4px ${tw.blue[500]}` : undefined,
+      boxShadow: isSelected ? `0 0 0 1px ${tw.white}, 0 0 0 3px ${tw.blue[500]}` : undefined,
     }}
   >
     {student ? (
@@ -298,8 +336,6 @@ export const SeatEditorMock: React.FC<SeatEditorMockProps> = ({
   saving = false,
 }) => {
   const frame = useCurrentFrame();
-  const toggleY = PAD_TOP + TITLE_H + TITLE_MB;
-  const headerY = toggleY + TOGGLE_H + TOGGLE_MB;
   const headerRight = PAD_X + CONTENT_W;
   const saveX = headerRight - SAVE_BTN_W;
   const printX = saveX - BTN_GAP - PRINT_BTN_W;
@@ -315,7 +351,8 @@ export const SeatEditorMock: React.FC<SeatEditorMockProps> = ({
 
   const saveLabel = saving ? "저장 중..." : dirtyCount > 0 ? `저장 (${dirtyCount}개 교실 변경)` : "저장";
 
-  const unassigned = session === "afternoon" ? SEAT_EDITOR.afternoon.unassigned : SEAT_EDITOR.night.unassigned;
+  const unassigned = unassignedOf(session);
+  const panelH = unassignedPanelHeight(unassigned);
   const grouped = new Map<number, StudentLike[]>();
   [...unassigned]
     .sort((a, b) => a.classNumber - b.classNumber || a.number - b.number)
@@ -340,44 +377,39 @@ export const SeatEditorMock: React.FC<SeatEditorMockProps> = ({
 
   return (
     <div style={{ position: "absolute", left: 0, top: 0, width, height, background: tw.gray[50], fontFamily: FONT, overflow: "hidden" }}>
-      <div style={{ position: "absolute", left: PAD_X, top: PAD_TOP, width: CONTENT_W, height: TITLE_H, fontSize: 24, fontWeight: 700, color: tw.gray[900], whiteSpace: "nowrap" }}>
-        좌석 배치
-      </div>
-
-      {/* 세션 토글 */}
-      <div style={{ position: "absolute", left: PAD_X, top: toggleY, width: TOGGLE_W, height: TOGGLE_H, background: tw.gray[100], borderRadius: 8, boxSizing: "border-box", padding: TOGGLE_PAD }}>
-        {(["afternoon", "night"] as const).map((s, i) => {
-          const pressing = sessionPressAt && sessionPressAt.session === s ? sessionPressAt.at : null;
-          return (
-            <div
-              key={s}
-              style={{
-                position: "absolute",
-                left: TOGGLE_PAD + i * TOGGLE_BTN_W,
-                top: TOGGLE_PAD,
-                width: TOGGLE_BTN_W,
-                height: TOGGLE_BTN_H,
-                borderRadius: 6,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: 14,
-                fontWeight: s === session ? 500 : 400,
-                background: s === session ? tw.white : "transparent",
-                color: s === session ? tw.blue[700] : tw.gray[600],
-                boxShadow: s === session ? "0 1px 2px rgba(0,0,0,0.08)" : undefined,
-                whiteSpace: "nowrap",
-                scale: String(pressScale(frame, pressing)),
-              }}
-            >
-              {s === "afternoon" ? "오후자습" : "야간자습"}
-            </div>
-          );
-        })}
-      </div>
+      {/* 세션 버튼 2개(page.tsx 82-99행) — 회색 pill 이 아니라 독립 버튼 */}
+      {(["afternoon", "night"] as const).map((s, i) => {
+        const active = s === session;
+        const pressing = sessionPressAt && sessionPressAt.session === s ? sessionPressAt.at : null;
+        return (
+          <div
+            key={s}
+            style={{
+              position: "absolute",
+              left: PAD_X + i * (SESSION_BTN_W + SESSION_BTN_GAP),
+              top: SESSION_Y,
+              width: SESSION_BTN_W,
+              height: SESSION_BTN_H,
+              borderRadius: 6,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: 14,
+              fontWeight: 500,
+              background: active ? tw.blue[600] : tw.gray[100],
+              color: active ? tw.white : tw.gray[600],
+              whiteSpace: "nowrap",
+              boxSizing: "border-box",
+              scale: String(pressScale(frame, pressing)),
+            }}
+          >
+            {s === "afternoon" ? "오후 자율학습" : "야간 자율학습"}
+          </div>
+        );
+      })}
 
       {/* 좌석 편집 헤더 */}
-      <div style={{ position: "absolute", left: PAD_X, top: headerY, width: CONTENT_W, height: HEADER_ROW_H, fontSize: 20, fontWeight: 700, color: tw.gray[900], display: "flex", alignItems: "center", whiteSpace: "nowrap" }}>
+      <div style={{ position: "absolute", left: PAD_X, top: HEADER_Y, width: CONTENT_W, height: HEADER_ROW_H, fontSize: 20, fontWeight: 700, color: tw.gray[900], display: "flex", alignItems: "center", whiteSpace: "nowrap" }}>
         좌석 편집
       </div>
       {session === "afternoon" ? (
@@ -385,7 +417,7 @@ export const SeatEditorMock: React.FC<SeatEditorMockProps> = ({
           style={{
             position: "absolute",
             left: configX,
-            top: headerY,
+            top: HEADER_Y,
             width: CONFIG_BTN_W,
             height: HEADER_ROW_H,
             borderRadius: 6,
@@ -407,7 +439,7 @@ export const SeatEditorMock: React.FC<SeatEditorMockProps> = ({
         style={{
           position: "absolute",
           left: printX,
-          top: headerY,
+          top: HEADER_Y,
           width: PRINT_BTN_W,
           height: HEADER_ROW_H,
           borderRadius: 6,
@@ -428,7 +460,7 @@ export const SeatEditorMock: React.FC<SeatEditorMockProps> = ({
         style={{
           position: "absolute",
           left: saveX,
-          top: headerY,
+          top: HEADER_Y,
           width: SAVE_BTN_W,
           height: HEADER_ROW_H,
           borderRadius: 6,
@@ -453,20 +485,21 @@ export const SeatEditorMock: React.FC<SeatEditorMockProps> = ({
             const classY = GRID_Y + classIndex * (AF_CLASS_BLOCK_H + AF_CLASS_GAP);
             const frameY = classY + AF_CLASS_TITLE_H;
             const frameX = PAD_X + FRAME_SIDE_W + FRAME_SIDE_GAP;
+            const labels = corridorLabels(cls.config.corridorSide);
             return (
               <React.Fragment key={cls.classNumber}>
                 <div style={{ position: "absolute", left: PAD_X, top: classY, width: MAIN_W, height: AF_CLASS_TITLE_H, fontSize: 16, fontWeight: 600, color: tw.gray[700], display: "flex", alignItems: "center", whiteSpace: "nowrap" }}>
                   {GRADE}-{cls.classNumber}반
                 </div>
-                <CorridorLabel x={PAD_X} y={frameY} h={AF_DIV_BOX_H} text="창문" />
-                <CorridorLabel x={PAD_X + FRAME_SIDE_W + FRAME_SIDE_GAP + AF_FRAME_CONTENT_W + FRAME_SIDE_GAP} y={frameY} h={AF_DIV_BOX_H} text="복도" />
+                <CorridorLabel x={PAD_X} y={frameY} h={AF_DIV_BOX_H} text={labels.left} />
+                <CorridorLabel x={PAD_X + FRAME_SIDE_W + FRAME_SIDE_GAP + AF_FRAME_CONTENT_W + FRAME_SIDE_GAP} y={frameY} h={AF_DIV_BOX_H} text={labels.right} />
                 {Array.from({ length: AF_DIVISIONS }, (_, di) => {
                   const division = di + 1;
                   const roomId = afternoonRoomId(cls.classNumber, division);
                   const divX = frameX + di * (AF_DIV_W + AF_DIV_GAP);
                   return (
-                    <div key={roomId} style={{ position: "absolute", left: divX, top: frameY, width: AF_DIV_W, height: AF_DIV_BOX_H, background: tw.white, borderRadius: 8, border: `1px solid ${tw.gray[200]}`, boxSizing: "border-box", padding: AF_ROOM_PAD }}>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: tw.gray[800], marginBottom: AF_DIV_HEADER_H - 16, whiteSpace: "nowrap" }}>분단{division}</div>
+                    <div key={roomId} style={{ position: "absolute", left: divX, top: frameY, width: AF_DIV_W, height: AF_DIV_BOX_H, background: tw.white, borderRadius: 8, border: `1px solid ${tw.gray[200]}`, boxSizing: "border-box" }}>
+                      <div style={{ position: "absolute", left: AF_ROOM_PAD, top: AF_ROOM_PAD, fontSize: 13, fontWeight: 600, color: tw.gray[800], whiteSpace: "nowrap" }}>분단{division}</div>
                       {Array.from({ length: AF_ROWS }, (_, ri) =>
                         Array.from({ length: AF_COLS }, (_, ci) => {
                           const row = ri + 1;
@@ -476,7 +509,7 @@ export const SeatEditorMock: React.FC<SeatEditorMockProps> = ({
                             <SeatCellView
                               key={`${row}-${col}`}
                               x={AF_ROOM_PAD + ci * (AF_CELL_W + AF_CELL_GAP)}
-                              y={AF_DIV_HEADER_H + ri * (CELL_H + AF_CELL_GAP)}
+                              y={AF_ROOM_PAD + AF_DIV_HEADER_H + ri * (CELL_H + AF_CELL_GAP)}
                               w={AF_CELL_W}
                               student={assignment?.student ?? null}
                               row={row}
@@ -515,8 +548,8 @@ export const SeatEditorMock: React.FC<SeatEditorMockProps> = ({
             const roomY = GRID_Y + roomIndex * (NI_BOX_H + NI_GAP);
             const roomId = nightRoomId(room.name);
             return (
-              <div key={room.name} style={{ position: "absolute", left: PAD_X, top: roomY, width: MAIN_W, height: NI_BOX_H, background: tw.white, borderRadius: 8, border: `1px solid ${tw.gray[200]}`, boxSizing: "border-box", padding: NI_ROOM_PAD }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+              <div key={room.name} style={{ position: "absolute", left: PAD_X, top: roomY, width: MAIN_W, height: NI_BOX_H, background: tw.white, borderRadius: 8, border: `1px solid ${tw.gray[200]}`, boxSizing: "border-box" }}>
+                <div style={{ position: "absolute", left: NI_ROOM_PAD, top: NI_ROOM_PAD, width: MAIN_W - NI_ROOM_PAD * 2, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                   <span style={{ fontSize: 16, fontWeight: 600, color: tw.gray[800], whiteSpace: "nowrap" }}>{room.name}</span>
                   <span style={{ fontSize: 12, color: tw.gray[400], whiteSpace: "nowrap" }}>
                     {room.config.rows}행 x {room.config.cols}열
@@ -531,7 +564,7 @@ export const SeatEditorMock: React.FC<SeatEditorMockProps> = ({
                       <SeatCellView
                         key={`${row}-${col}`}
                         x={NI_ROOM_PAD + ci * (NI_CELL_W + NI_CELL_GAP)}
-                        y={NI_HEADER_H + ri * (CELL_H + NI_CELL_GAP)}
+                        y={NI_ROOM_PAD + NI_HEADER_H + ri * (CELL_H + NI_CELL_GAP)}
                         w={NI_CELL_W}
                         student={assignment?.student ?? null}
                         row={row}
@@ -552,21 +585,20 @@ export const SeatEditorMock: React.FC<SeatEditorMockProps> = ({
             );
           })}
 
-      {/* 미배정 학생 패널 */}
+      {/* 미배정 학생 패널 — 내용만큼 늘어난다(SF-1) */}
       <div
         style={{
           position: "absolute",
           left: panelX,
           top: GRID_Y,
           width: PANEL_W,
-          height: PANEL_H,
+          height: panelH,
           borderRadius: 8,
           boxSizing: "border-box",
-          padding: 16,
+          padding: PANEL_PAD,
           background: unassignedHover ? tw.red[50] : tw.white,
           border: `1px solid ${unassignedHover ? tw.red[300] : tw.gray[200]}`,
           boxShadow: unassignedHover ? `0 0 0 2px ${tw.red[200]}` : undefined,
-          overflow: "hidden",
         }}
       >
         <div style={{ fontSize: 15, fontWeight: 600, color: tw.gray[800], whiteSpace: "nowrap" }}>
@@ -588,7 +620,7 @@ export const SeatEditorMock: React.FC<SeatEditorMockProps> = ({
               return sum + PANEL_GROUP_LABEL_H + prevRows.length * PANEL_LIST_ROW_H + (prevRows.length - 1) * PANEL_ROW_GAP + PANEL_GROUP_GAP;
             }, 0);
             return (
-              <div key={cn} style={{ position: "absolute", left: 16, top: 16 + PANEL_HEADER_H + PANEL_HELPER_H + PANEL_SEARCH_H + PANEL_SEARCH_MB + groupY, width: PANEL_W - 32 }}>
+              <div key={cn} style={{ position: "absolute", left: PANEL_PAD, top: PANEL_PAD + PANEL_HEADER_H + PANEL_HELPER_H + PANEL_SEARCH_H + PANEL_SEARCH_MB + groupY, width: PANEL_W - PANEL_PAD * 2 }}>
                 <div style={{ fontSize: 10, fontWeight: 500, color: tw.gray[400], marginBottom: 4, whiteSpace: "nowrap" }}>{cn}반</div>
                 {rows.map((s, ri) => {
                   const isDim = dragging?.type === "student" && dragging.studentId === s.id;
@@ -599,7 +631,7 @@ export const SeatEditorMock: React.FC<SeatEditorMockProps> = ({
                         position: "absolute",
                         left: 0,
                         top: PANEL_GROUP_LABEL_H + ri * (PANEL_LIST_ROW_H + PANEL_ROW_GAP),
-                        width: PANEL_W - 32,
+                        width: PANEL_W - PANEL_PAD * 2,
                         height: PANEL_LIST_ROW_H,
                         display: "flex",
                         alignItems: "center",

@@ -1,14 +1,14 @@
 // src/app/grade-admin/[grade]/seats/print/page.tsx + SeatPrintGroup.tsx + ClassroomFrame.tsx(print)
-// + PrintRoomGrid.tsx 이식. 별도 페이지(새 탭)라 학년관리 셸이 없다 — width·height 를 받아
-// 독립적으로 그린다(컨트롤러 재정). 페이지 물리 크기는 src/lib/seats/print-layout.ts 상수를
-// 그대로 복제해 mm→px 변환한다(해당 파일은 읽기 전용, 수정하지 않음).
+// + PrintRoomGrid.tsx 이식. `/grade-admin/[grade]/layout.tsx` 의 AdminNav 는 print.css 가
+// @media print 에서만 숨기므로 브라우저 화면(이 목업이 보여주는 상태)에는 그대로 보인다(SF-7) —
+// GradeAdminShellMock.tsx(수정 금지)의 AdminNav 부분을 이 파일 안에 다시 그린다.
 import React from "react";
-import { useCurrentFrame } from "remotion";
+import { Img, staticFile, useCurrentFrame } from "remotion";
 import { type Rect } from "../../app-mocks/layout";
 import { pressScale } from "../../app-mocks/primitives";
 import { tw } from "../../app-mocks/tw";
 import { FONT } from "../../fonts";
-import { GRADE, SEAT_EDITOR, type PrintOrientation } from "../data";
+import { GRADE, ME, SEAT_EDITOR, type PrintOrientation } from "../data";
 
 // --- print-layout.ts 상수 복제 -------------------------------------------------------
 const MM_TO_PX = 96 / 25.4;
@@ -55,9 +55,17 @@ const afternoonAssignmentAt = (classNumber: number, division: number, row: numbe
   return cls?.assignments.find((a) => a.seat.division === division && a.seat.row === row && a.seat.col === col) ?? null;
 };
 
+// --- AdminNav(56px) — GradeAdminShellMock.tsx 의 헤더 부분(로고+제목+학년 칩+이름+로그아웃)만 재현 ----
+const ADMIN_NAV_H = 56; // AdminNav.tsx h-14
+const NAV_PAD_X = 16;
+const LOGO_IMG = 32;
+const LOGO_GAP = 8;
+const GRADE_LABEL = `${GRADE}학년 데이터관리`;
+const GRADE_CHIP_H = 44;
+
 // --- 툴바 ---------------------------------------------------------------------------
 const PAD_X = 16;
-const PAD_TOP = 12;
+const TOOLBAR_PAD_TOP = 12;
 const TOOLBAR_ROW_H = 44; // min-h-11
 const TOOLBAR_BOX_H = TOOLBAR_ROW_H + 16; // p-2
 const TOOLBAR_CAPTION_H = 20;
@@ -66,8 +74,11 @@ const CHIP_W = 184;
 const CHIP_GAP = 12; // gap-3
 const ACTION_W = 72;
 const ACTION_GAP = 8; // gap-2
-const PAGE_TOP = PAD_TOP + TOOLBAR_H + 16; // mb-4
 const PAGE_GAP = 24; // mb-6
+
+const navOffset = (showAdminNav: boolean) => (showAdminNav ? ADMIN_NAV_H : 0);
+const toolbarYOf = (showAdminNav: boolean) => navOffset(showAdminNav) + TOOLBAR_PAD_TOP;
+const pageTopOf = (showAdminNav: boolean) => toolbarYOf(showAdminNav) + TOOLBAR_H + 16; // mb-4
 
 export type SeatPrintGroupState = { classNumber: number; checked: boolean; orientation: PrintOrientation };
 
@@ -87,8 +98,8 @@ const chipX = (groups: SeatPrintGroupState[], classNumber: number) => {
   return PAD_X + idx * (CHIP_W + CHIP_GAP);
 };
 
-const pageY = (groups: SeatPrintGroupState[], classNumber: number) => {
-  let y = PAGE_TOP;
+const pageY = (groups: SeatPrintGroupState[], classNumber: number, showAdminNav: boolean) => {
+  let y = pageTopOf(showAdminNav);
   for (const g of groups) {
     if (!g.checked) continue;
     if (g.classNumber === classNumber) return y;
@@ -97,8 +108,8 @@ const pageY = (groups: SeatPrintGroupState[], classNumber: number) => {
   return y;
 };
 
-export const seatPrintRect = (key: SeatPrintKey, width: number, groups: SeatPrintGroupState[]): Rect => {
-  const toolbarY = PAD_TOP;
+export const seatPrintRect = (key: SeatPrintKey, width: number, groups: SeatPrintGroupState[], showAdminNav = true): Rect => {
+  const toolbarY = toolbarYOf(showAdminNav);
   if (key === "toolbar") return { x: PAD_X, y: toolbarY, w: width - PAD_X * 2, h: TOOLBAR_BOX_H };
   if (key === "printButton" || key === "closeButton") {
     const closeX = width - PAD_X - 8 - ACTION_W;
@@ -119,7 +130,7 @@ export const seatPrintRect = (key: SeatPrintKey, width: number, groups: SeatPrin
   const group = groups.find((g) => g.classNumber === classNumber);
   const orientation = group?.orientation ?? "landscape";
   const page = pageSizePx(orientation);
-  const y = pageY(groups, classNumber);
+  const y = pageY(groups, classNumber, showAdminNav);
   const x = (width - page.w) / 2;
   if (key.startsWith("page_")) return { x, y, w: page.w, h: page.h };
 
@@ -218,20 +229,66 @@ export const SeatPrintMock: React.FC<{
   width: number;
   height: number;
   groups: SeatPrintGroupState[];
+  /** 브라우저 화면에는 AdminNav 가 보인다(print.css 는 @media print 에서만 숨김, SF-7). 기본 true. */
+  showAdminNav?: boolean;
   checkboxPressAt?: { classNumber: number; at: number };
   orientationPressAt?: { classNumber: number; orientation: PrintOrientation; at: number };
   printPressAt?: number;
   closePressAt?: number;
-}> = ({ width, height, groups, checkboxPressAt, orientationPressAt, printPressAt, closePressAt }) => {
+}> = ({ width, height, groups, showAdminNav = true, checkboxPressAt, orientationPressAt, printPressAt, closePressAt }) => {
   const frame = useCurrentFrame();
   const visible = groups.filter((g) => g.checked);
   const closeX = width - PAD_X - 8 - ACTION_W;
   const printX = closeX - ACTION_GAP - ACTION_W;
+  const toolbarY = toolbarYOf(showAdminNav);
+  const pageTop = pageTopOf(showAdminNav);
 
   return (
     <div style={{ position: "absolute", left: 0, top: 0, width, height, background: tw.gray[100], fontFamily: FONT, overflow: "hidden" }}>
+      {/* AdminNav — grade-admin/[grade]/layout.tsx 가 항상 화면에 보여준다(SF-7) */}
+      {showAdminNav ? (
+        <div style={{ position: "absolute", left: 0, top: 0, width, height: ADMIN_NAV_H, background: tw.white, borderBottom: `1px solid ${tw.gray[200]}`, boxSizing: "border-box" }}>
+          <Img
+            src={staticFile("posan.svg")}
+            alt=""
+            width={LOGO_IMG}
+            height={LOGO_IMG}
+            style={{ position: "absolute", left: NAV_PAD_X, top: (ADMIN_NAV_H - LOGO_IMG) / 2, width: LOGO_IMG, height: LOGO_IMG }}
+          />
+          <span style={{ position: "absolute", left: NAV_PAD_X + LOGO_IMG + LOGO_GAP, top: 0, height: ADMIN_NAV_H, display: "flex", alignItems: "center", fontSize: 18, fontWeight: 700, color: tw.gray[900], whiteSpace: "nowrap" }}>
+            출석부
+          </span>
+          <div
+            style={{
+              position: "absolute",
+              left: NAV_PAD_X + LOGO_IMG + LOGO_GAP + 46 + 16,
+              top: (ADMIN_NAV_H - GRADE_CHIP_H) / 2,
+              height: GRADE_CHIP_H,
+              padding: "0 12px",
+              borderRadius: 6,
+              background: tw.green[50],
+              color: tw.green[700],
+              display: "flex",
+              alignItems: "center",
+              fontSize: 14,
+              fontWeight: 500,
+              whiteSpace: "nowrap",
+              boxSizing: "border-box",
+            }}
+          >
+            {GRADE_LABEL}
+          </div>
+          <span style={{ position: "absolute", right: NAV_PAD_X + 70, top: 0, height: ADMIN_NAV_H, display: "flex", alignItems: "center", fontSize: 14, color: tw.gray[500], whiteSpace: "nowrap" }}>
+            {ME.name}
+          </span>
+          <span style={{ position: "absolute", right: NAV_PAD_X, top: 0, height: ADMIN_NAV_H, display: "flex", alignItems: "center", fontSize: 14, color: tw.gray[500], whiteSpace: "nowrap" }}>
+            로그아웃
+          </span>
+        </div>
+      ) : null}
+
       {/* 툴바 */}
-      <div style={{ position: "absolute", left: PAD_X, top: PAD_TOP, width: width - PAD_X * 2, height: TOOLBAR_BOX_H, background: tw.white, border: `1px solid ${tw.gray[200]}`, borderRadius: 8, boxSizing: "border-box", padding: 8 }}>
+      <div style={{ position: "absolute", left: PAD_X, top: toolbarY, width: width - PAD_X * 2, height: TOOLBAR_BOX_H, background: tw.white, border: `1px solid ${tw.gray[200]}`, borderRadius: 8, boxSizing: "border-box", padding: 8 }}>
         {groups.map((g) => {
           const x = chipX(groups, g.classNumber) - PAD_X;
           const checkboxPress = checkboxPressAt && checkboxPressAt.classNumber === g.classNumber ? checkboxPressAt.at : null;
@@ -304,18 +361,18 @@ export const SeatPrintMock: React.FC<{
           닫기
         </div>
       </div>
-      <div style={{ position: "absolute", left: PAD_X, top: PAD_TOP + TOOLBAR_BOX_H + 4, fontSize: 12, color: tw.gray[400], whiteSpace: "nowrap" }}>
+      <div style={{ position: "absolute", left: PAD_X, top: toolbarY + TOOLBAR_BOX_H + 4, fontSize: 12, color: tw.gray[400], whiteSpace: "nowrap" }}>
         가로·세로 혼합 인쇄는 Chrome·Edge에서 정확히 동작합니다.
       </div>
 
       {/* A4 페이지들 */}
       {visible.length === 0 ? (
-        <div style={{ position: "absolute", left: 0, top: PAGE_TOP, width, textAlign: "center", fontSize: 14, color: tw.gray[400] }}>인쇄할 좌석 배치가 없습니다.</div>
+        <div style={{ position: "absolute", left: 0, top: pageTop, width, textAlign: "center", fontSize: 14, color: tw.gray[400] }}>인쇄할 좌석 배치가 없습니다.</div>
       ) : (
         visible.map((g) => {
           const page = pageSizePx(g.orientation);
           const x = (width - page.w) / 2;
-          const y = pageY(groups, g.classNumber);
+          const y = pageY(groups, g.classNumber, showAdminNav);
           const scale = computeFitScale(GROUP_CONTENT_W, GROUP_CONTENT_H, g.orientation);
           return (
             <div key={g.classNumber} style={{ position: "absolute", left: x, top: y, width: page.w, height: page.h, background: tw.white, boxShadow: "0 4px 16px rgba(0,0,0,0.18)", overflow: "hidden" }}>
