@@ -41,3 +41,19 @@ export function formatDateWithWeekday(date: string): string {
   const weekday = new Date(year, month - 1, day).getDay();
   return `${date}(${WEEKDAYS[weekday]})`;
 }
+
+export function weekdayOf(date: string): number {
+  const { year, month, day } = parseDateValue(date);
+  return new Date(year, month - 1, day).getDay();
+}
+
+export function addDays(date: string, days: number): string {
+  const { year, month, day } = parseDateValue(date);
+  const shifted = new Date(year, month - 1, day + days);
+  return formatDateValue(shifted.getFullYear(), shifted.getMonth() + 1, shifted.getDate());
+}
+
+export function nextDateForWeekday(fromDate: string, weekday: number): string {
+  const delta = (weekday - weekdayOf(fromDate) + 7) % 7;
+  return addDays(fromDate, delta);
+}

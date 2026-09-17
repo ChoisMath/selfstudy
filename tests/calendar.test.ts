@@ -6,6 +6,9 @@ import {
   formatDateLabel,
   shiftMonth,
   buildMonthCells,
+  weekdayOf,
+  addDays,
+  nextDateForWeekday,
 } from "../src/lib/calendar";
 
 // formatDateValue: 1-base month/day, zero-padded
@@ -34,5 +37,22 @@ assert.equal(cells[cells.length - 1], "2026-06-30");
 
 // getKstTodayString: YYYY-MM-DD 형식
 assert.match(getKstTodayString(), /^\d{4}-\d{2}-\d{2}$/);
+
+// weekdayOf: 2026-09-17 은 목요일(4), 2026-09-20 은 일요일(0)
+assert.equal(weekdayOf("2026-09-17"), 4);
+assert.equal(weekdayOf("2026-09-20"), 0);
+
+// addDays: 월/연 경계
+assert.equal(addDays("2026-09-30", 1), "2026-10-01");
+assert.equal(addDays("2026-12-31", 1), "2027-01-01");
+assert.equal(addDays("2026-03-01", -1), "2026-02-28");
+assert.equal(addDays("2026-09-17", 0), "2026-09-17");
+
+// nextDateForWeekday: 당일 포함 가장 가까운 해당 요일 (getDay 기준 월=1 … 금=5)
+assert.equal(nextDateForWeekday("2026-09-17", 4), "2026-09-17"); // 목요일에 목 → 당일
+assert.equal(nextDateForWeekday("2026-09-17", 5), "2026-09-18"); // 아직 안 지난 금 → 이번 주
+assert.equal(nextDateForWeekday("2026-09-17", 1), "2026-09-21"); // 지난 월 → 다음 주
+assert.equal(nextDateForWeekday("2026-09-19", 1), "2026-09-21"); // 토요일 → 다음 주 월
+assert.equal(nextDateForWeekday("2026-09-20", 5), "2026-09-25"); // 일요일 → 다음 주 금
 
 console.log("calendar util checks passed");
