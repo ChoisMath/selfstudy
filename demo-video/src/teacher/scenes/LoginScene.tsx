@@ -3,8 +3,8 @@ import { useCurrentFrame } from "remotion";
 import { Annotation } from "../../components/Annotation";
 import { FlashNotice } from "../../components/FlashNotice";
 import { PHONE, PhoneFrame } from "../../components/PhoneFrame";
-import { PHONE_X, PHONE_Y } from "../../components/phone";
-import { colors } from "../../theme";
+import { PHONE_CROP, PHONE_X, PHONE_Y } from "../../components/phone";
+import { WIDTH, colors } from "../../theme";
 import { tween } from "../../anim";
 import { GuideScene } from "../../guide/GuideScene";
 import { lineAt, lineEnd, lineStart } from "../timing";
@@ -39,6 +39,11 @@ const boardAt = lineEnd(ID, 2) + 6;
 const W = PHONE_BODY.w;
 // PhoneFrame 주소창(가로 여백 14px, 높이 32px 알약)의 폰 본문 기준 위치 — 본문 위 urlH 안에서 세로 가운데.
 const URL_PILL: Rect = { x: 14, y: -PHONE.urlH + (PHONE.urlH - 32) / 2, w: PHONE.w - 28, h: 32 };
+
+// FlashNotice 는 화면 맨 위(top 16)에 가운데 정렬로 그려져 폰 상태 표시줄을 가린다 — 폰 오른쪽 빈 칸 안에서 가운데 오도록 감싼다.
+const NOTICE_GAP = 24;
+const NOTICE_COLUMN = { x: PHONE_CROP.x + PHONE_CROP.w + NOTICE_GAP, y: 420 };
+const NOTICE_COLUMN_W = WIDTH - NOTICE_COLUMN.x - NOTICE_GAP;
 
 const BOARD = boardProps({ tab: "afternoon1", groups: buildAfternoonGroups((id) => baseVisual(id)) });
 
@@ -88,11 +93,13 @@ export const LoginScene: React.FC<DemoProps> = () => (
     <TapCursor at={passwordTapAt} target={loginPoint("field_second", W)} />
     <TapCursor at={submitAt} target={loginPoint("submit", W)} />
 
-    <FlashNotice
-      from={lineStart(ID, 3)}
-      durationInFrames={lineEnd(ID, 3) - lineStart(ID, 3) + 10}
-      text="처음 로그인한 뒤 비밀번호 1111을 꼭 바꿔 주세요"
-      hint="변경 방법은 영상 마지막 · 화면의 ? 도움말"
-    />
+    <div style={{ position: "absolute", left: NOTICE_COLUMN.x, top: NOTICE_COLUMN.y, width: NOTICE_COLUMN_W }}>
+      <FlashNotice
+        from={lineStart(ID, 3)}
+        durationInFrames={lineEnd(ID, 3) - lineStart(ID, 3) + 10}
+        text="비밀번호 1111은 꼭 바꿔 주세요"
+        hint="방법은 영상 마지막에 안내"
+      />
+    </div>
   </GuideScene>
 );
