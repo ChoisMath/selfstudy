@@ -34,10 +34,12 @@ const ClassroomConfigGallery: React.FC = () => (
 );
 
 // 좌석배치도 인쇄 미리보기 — 기본 PRINT_GROUPS(1·2반 가로 체크, 3반 세로 미체크).
-const SeatPrintGallery: React.FC = () => <SeatPrintMock width={WIDTH} height={1700} groups={PRINT_GROUPS} />;
+// AdminNav(56px) 가 추가돼 세로 A4 페이지 2장(각 793.7px)이 다 들어가려면 1700 으론 76px 모자라다(N2).
+const SEAT_PRINT_HEIGHT = 1800;
+const SeatPrintGallery: React.FC = () => <SeatPrintMock width={WIDTH} height={SEAT_PRINT_HEIGHT} groups={PRINT_GROUPS} />;
 
 export const ENTRIES: GalleryEntry[] = [
   { id: "GradeAdmin-Seats", component: SeatEditorGallery, width: WIDTH, height: 960 },
   { id: "GradeAdmin-ClassroomConfig", component: ClassroomConfigGallery, width: WIDTH, height: 570 },
-  { id: "GradeAdmin-SeatPrint", component: SeatPrintGallery, width: WIDTH, height: 1700 },
+  { id: "GradeAdmin-SeatPrint", component: SeatPrintGallery, width: WIDTH, height: SEAT_PRINT_HEIGHT },
 ];

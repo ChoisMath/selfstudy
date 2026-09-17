@@ -6,7 +6,7 @@ import { PC_VIEWPORT, type Rect } from "../../app-mocks/layout";
 import { pressScale } from "../../app-mocks/primitives";
 import { tw } from "../../app-mocks/tw";
 import { FONT } from "../../fonts";
-import { GRADE, SEAT_EDITOR } from "../data";
+import { CLASSROOM_CONFIG_EXAMPLE, GRADE, SEAT_EDITOR } from "../data";
 
 export type CorridorSide = "left" | "right";
 export type ClassroomLayoutType = "division" | "single";
@@ -45,7 +45,20 @@ const LABEL_W = 96; // w-24
 const FIELD_X = PANEL_X + BODY_PAD + LABEL_W + 12;
 const ROW_H = 44;
 const ROW_GAP = 16; // gap-4
-const PREVIEW_H = 76; // p-3(12*2) + 캡션 줄(16) + mb-1(4) + 격자(최대 3행 ≈ 28)
+
+// LayoutPreview: 12x8 셀, gap 2px(gap-0.5), 분단 사이 gap 8px(gap-2).
+const CELL_W = 12;
+const CELL_H = 8;
+const CELL_GAP = 2;
+const DIV_GAP = 8;
+
+// PREVIEW_H 는 화면에 쓰는 예시(CLASSROOM_CONFIG_EXAMPLE)의 최대 행 수로 계산한다 — 매직 넘버(N3)
+// 대신 실제 데이터에서 유도해, 예시의 행 수가 바뀌어도 격자가 박스 밖으로 나가지 않게 한다.
+// (rect 함수는 여전히 정적이라 runtime `editing` prop 의 행 수가 이 예시와 다르면 다시 어긋난다 —
+// 이 편의 모든 화면이 CLASSROOM_CONFIG_EXAMPLE 하나만 쓴다는 브리프 전제 위에서만 유효하다.)
+const PREVIEW_MAX_ROWS = Math.max(...CLASSROOM_CONFIG_EXAMPLE.rowsPerDivision);
+const PREVIEW_GRID_MAX_H = PREVIEW_MAX_ROWS * CELL_H + (PREVIEW_MAX_ROWS - 1) * CELL_GAP;
+const PREVIEW_H = 12 * 2 + 16 + 4 + PREVIEW_GRID_MAX_H; // p-3(24) + 캡션 줄(16) + mb-1(4) + 격자
 
 const classNumRowY = HEADER_H + BODY_PAD;
 const corridorRowY = classNumRowY + ROW_H + ROW_GAP;
@@ -55,12 +68,6 @@ const rowsRowY = divisionsRowY + ROW_H + ROW_GAP;
 const previewRowY = rowsRowY + ROW_H + ROW_GAP;
 const footerRowY = previewRowY + PREVIEW_H + ROW_GAP;
 const EDIT_PANEL_H = footerRowY + ROW_H + BODY_PAD;
-
-// LayoutPreview: 12x8 셀, gap 2px(gap-0.5), 분단 사이 gap 8px(gap-2).
-const CELL_W = 12;
-const CELL_H = 8;
-const CELL_GAP = 2;
-const DIV_GAP = 8;
 
 // "분단별 행 수" 각 항목 = 라벨("분단1" 등, ≈34px) + gap-1(4) + input(44) + 항목 사이 gap-2(8).
 const ROW_LABEL_W = 34;

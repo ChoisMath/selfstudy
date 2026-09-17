@@ -55,13 +55,50 @@ const afternoonAssignmentAt = (classNumber: number, division: number, row: numbe
   return cls?.assignments.find((a) => a.seat.division === division && a.seat.row === row && a.seat.col === col) ?? null;
 };
 
-// --- AdminNav(56px) — GradeAdminShellMock.tsx 의 헤더 부분(로고+제목+학년 칩+이름+로그아웃)만 재현 ----
+// --- AdminNav(56px) — GradeAdminShellMock.tsx(수정 금지, 별도 export 없음)의 헤더를 픽셀 단위로
+// 그대로 복제한다. 같은 영상 안에서 이 화면과 6탭 셸이 다른 헤더로 보이면 안 된다(N1).
 const ADMIN_NAV_H = 56; // AdminNav.tsx h-14
-const NAV_PAD_X = 16;
+const NAV_PAD_X = 16; // AdminNav.tsx "max-w-7xl mx-auto px-4"
 const LOGO_IMG = 32;
 const LOGO_GAP = 8;
+const LOGO_TEXT_W = 46; // "출석부" text-lg font-bold 근사
+const LOGO_BLOCK_W = LOGO_IMG + LOGO_GAP + LOGO_TEXT_W;
+const LOGO_MR = 16;
+const NAV_ITEM_GAP = 4;
 const GRADE_LABEL = `${GRADE}학년 데이터관리`;
+const GRADE_CHIP_X = NAV_PAD_X + LOGO_BLOCK_W + LOGO_MR + NAV_ITEM_GAP;
+const GRADE_CHIP_W = 24 + GRADE_LABEL.length * 14;
 const GRADE_CHIP_H = 44;
+const HOMEROOM_CHIP_LABEL = "담임교사";
+const HOMEROOM_CHIP_W = 24 + HOMEROOM_CHIP_LABEL.length * 12;
+const BELL_W = 96;
+const NAME_W = ME.name.length * 14;
+const HELP_HIT = 44;
+const HELP_DOT = 28;
+const LOGOUT_W = 16 + "로그아웃".length * 13;
+const GAP_RIGHT = 12;
+
+type NavRightBlock = { key: string; x: number; w: number };
+
+// GradeAdminShellMock.tsx 의 rightLayout() 과 동일 — 항상 showHelp(GradeAdmin-Shell-Today 스틸 기준).
+const navRightLayout = (width: number): NavRightBlock[] => {
+  const blocks = [
+    { key: "homeroom", w: HOMEROOM_CHIP_W },
+    { key: "bell", w: BELL_W },
+    { key: "name", w: NAME_W },
+    { key: "help", w: HELP_HIT },
+    { key: "logout", w: LOGOUT_W },
+  ];
+  let right = width - NAV_PAD_X;
+  const placed: NavRightBlock[] = [];
+  for (let i = blocks.length - 1; i >= 0; i -= 1) {
+    const b = blocks[i];
+    const x = right - b.w;
+    placed.unshift({ key: b.key, x, w: b.w });
+    right = x - GAP_RIGHT;
+  }
+  return placed;
+};
 
 // --- 툴바 ---------------------------------------------------------------------------
 const PAD_X = 16;
@@ -245,7 +282,8 @@ export const SeatPrintMock: React.FC<{
 
   return (
     <div style={{ position: "absolute", left: 0, top: 0, width, height, background: tw.gray[100], fontFamily: FONT, overflow: "hidden" }}>
-      {/* AdminNav — grade-admin/[grade]/layout.tsx 가 항상 화면에 보여준다(SF-7) */}
+      {/* AdminNav — grade-admin/[grade]/layout.tsx 가 항상 화면에 보여준다(SF-7). GradeAdminShellMock.tsx
+          의 헤더와 칩 순서·간격·폭이 픽셀 단위로 같아야 한다(N1) — rightLayout() 그대로 복제. */}
       {showAdminNav ? (
         <div style={{ position: "absolute", left: 0, top: 0, width, height: ADMIN_NAV_H, background: tw.white, borderBottom: `1px solid ${tw.gray[200]}`, boxSizing: "border-box" }}>
           <Img
@@ -261,15 +299,16 @@ export const SeatPrintMock: React.FC<{
           <div
             style={{
               position: "absolute",
-              left: NAV_PAD_X + LOGO_IMG + LOGO_GAP + 46 + 16,
+              left: GRADE_CHIP_X,
               top: (ADMIN_NAV_H - GRADE_CHIP_H) / 2,
+              width: GRADE_CHIP_W,
               height: GRADE_CHIP_H,
-              padding: "0 12px",
               borderRadius: 6,
               background: tw.green[50],
               color: tw.green[700],
               display: "flex",
               alignItems: "center",
+              justifyContent: "center",
               fontSize: 14,
               fontWeight: 500,
               whiteSpace: "nowrap",
@@ -278,12 +317,64 @@ export const SeatPrintMock: React.FC<{
           >
             {GRADE_LABEL}
           </div>
-          <span style={{ position: "absolute", right: NAV_PAD_X + 70, top: 0, height: ADMIN_NAV_H, display: "flex", alignItems: "center", fontSize: 14, color: tw.gray[500], whiteSpace: "nowrap" }}>
-            {ME.name}
-          </span>
-          <span style={{ position: "absolute", right: NAV_PAD_X, top: 0, height: ADMIN_NAV_H, display: "flex", alignItems: "center", fontSize: 14, color: tw.gray[500], whiteSpace: "nowrap" }}>
-            로그아웃
-          </span>
+          {navRightLayout(width).map((b) => {
+            if (b.key === "homeroom") {
+              return (
+                <div
+                  key={b.key}
+                  style={{
+                    position: "absolute",
+                    left: b.x,
+                    top: (ADMIN_NAV_H - 44) / 2,
+                    width: b.w,
+                    height: 44,
+                    borderRadius: 6,
+                    background: tw.blue[50],
+                    color: tw.blue[700],
+                    border: `1px solid ${tw.blue[200]}`,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: 12,
+                    fontWeight: 500,
+                    whiteSpace: "nowrap",
+                    boxSizing: "border-box",
+                  }}
+                >
+                  {HOMEROOM_CHIP_LABEL}
+                </div>
+              );
+            }
+            if (b.key === "bell") {
+              return (
+                <div key={b.key} style={{ position: "absolute", left: b.x, top: 0, width: b.w, height: ADMIN_NAV_H, display: "flex", alignItems: "center", justifyContent: "center", gap: 4, fontSize: 14, color: tw.gray[600], whiteSpace: "nowrap" }}>
+                  <span>🔕</span>
+                  <span>알림 켜기</span>
+                </div>
+              );
+            }
+            if (b.key === "name") {
+              return (
+                <div key={b.key} style={{ position: "absolute", left: b.x, top: 0, width: b.w, height: ADMIN_NAV_H, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, color: tw.gray[500], whiteSpace: "nowrap" }}>
+                  {ME.name}
+                </div>
+              );
+            }
+            if (b.key === "help") {
+              return (
+                <div key={b.key} style={{ position: "absolute", left: b.x, top: (ADMIN_NAV_H - HELP_HIT) / 2, width: HELP_HIT, height: HELP_HIT, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <div style={{ width: HELP_DOT, height: HELP_DOT, borderRadius: HELP_DOT / 2, border: `2px solid ${tw.gray[500]}`, color: tw.gray[500], display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 700, whiteSpace: "nowrap", boxSizing: "border-box" }}>
+                    ?
+                  </div>
+                </div>
+              );
+            }
+            return (
+              <div key={b.key} style={{ position: "absolute", left: b.x, top: 0, width: b.w, height: ADMIN_NAV_H, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, color: tw.gray[500], whiteSpace: "nowrap" }}>
+                로그아웃
+              </div>
+            );
+          })}
         </div>
       ) : null}
 
