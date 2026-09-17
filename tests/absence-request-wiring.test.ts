@@ -9,11 +9,11 @@ assert.match(studentApi, /skipDuplicates: true/, "중복 신청을 skipDuplicate
 assert.match(studentApi, /isSessionType/, "sessionTypes 원소 검증이 없음");
 assert.doesNotMatch(studentApi, /\["afternoon", "night"\]/, "옛 세션 리스트가 남아 있음");
 
-const studentPage = read("../src/app/student/absence-requests/page.tsx");
-assert.match(studentPage, /SESSION_TYPES\.map/, "세션 버튼을 SESSION_TYPES 로 그리지 않음");
-assert.match(studentPage, /오후 전체/, "오후 전체 편의 버튼이 없음");
-assert.match(studentPage, /sessionTypesOfSeat\("afternoon"\)/, "오후 전체가 좌석 세션의 블록 목록을 쓰지 않음");
-assert.match(studentPage, /sessionTypes,/, "전송 바디가 sessionTypes 가 아님");
+const studentForm = read("../src/components/student/AbsenceRequestForm.tsx");
+assert.match(studentForm, /SESSION_TYPES\.map/, "세션 버튼을 SESSION_TYPES 로 그리지 않음");
+assert.match(studentForm, /activeSessionTypesOn\(participationDays, date\)/, "[전체] 가 그 날짜의 활성 세션 목록을 쓰지 않음");
+assert.doesNotMatch(studentForm, /오후 전체|sessionTypesOfSeat/, "옛 오후 전체 편의 버튼이 남아 있음");
+assert.match(studentForm, /sessionTypes,/, "전송 바디가 sessionTypes 가 아님");
 
 const batchApi = read("../src/app/api/student/batch-absence/route.ts");
 assert.match(batchApi, /participating: emptySessionRecord/, "도우미 GET 이 Record<SessionType,boolean> 을 만들지 않음");

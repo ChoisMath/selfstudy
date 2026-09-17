@@ -48,4 +48,19 @@ assert.match(scheduleCard, /"오늘"/, "오늘 캡션이 없음");
 assert.match(scheduleCard, /min-h-11/, "요일 셀 높이가 44px 미만");
 assert.doesNotMatch(scheduleCard, /participationDays\?\.afternoon/, "옛 afternoon 키 접근이 남아 있음");
 
+// --- 신청 폼: 날짜 요일의 활성 세션만 선택 가능, [전체], 사유 4열 한 행, 기타일 때만 상세 사유 ---
+const requestForm = read("../src/components/student/AbsenceRequestForm.tsx");
+assert.match(requestForm, /const activeTypes = activeSessionTypesOn\(participationDays, date\)/, "활성 세션을 날짜 요일로 계산하지 않음");
+assert.match(requestForm, /disabled=\{disabled\}/, "비활성 세션 버튼이 disabled 가 아님");
+assert.match(requestForm, />\s*전체\s*</, "[전체] 버튼이 없음");
+assert.doesNotMatch(requestForm, /오후 전체|sessionTypesOfSeat/, "옛 오후 전체 편의 버튼이 남아 있음");
+assert.match(requestForm, /grid grid-cols-4 gap-2/, "사유 4개가 한 행이 아님");
+assert.match(requestForm, /REASON_TYPES\.map/, "사유 버튼을 REASON_TYPES 로 그리지 않음");
+assert.match(requestForm, /\{reasonType === "custom" && \(/, "상세 사유가 기타일 때만 렌더되지 않음");
+assert.match(requestForm, /detail: reasonType === "custom" && detail\.trim\(\) \? detail\.trim\(\) : undefined/, "상세 사유를 기타일 때만 보내지 않음");
+assert.match(requestForm, /해당 날짜에는 참여 일정이 없습니다\./, "활성 세션 없음 안내가 없음");
+assert.match(requestForm, /불참 신청하기/, "폼 제목이 없음");
+assert.match(requestForm, /onClick=\{onClose\}/, "닫기 버튼이 onClose 를 부르지 않음");
+assert.match(requestForm, /onSubmitted\(\)/, "성공 시 onSubmitted 를 부르지 않음");
+
 console.log("student-schedule-wiring checks passed");
