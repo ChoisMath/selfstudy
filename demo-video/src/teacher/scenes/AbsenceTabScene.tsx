@@ -45,9 +45,8 @@ import type { DemoProps } from "../../props";
 
 // ── AbsenceTab·BulkApprove 가 함께 쓰는 불참신청 탭 도우미 ──
 
-// 앞 장면(SeatColors·LongPress)에서 누른 좌석은 출석으로 남아 있다.
+// 오후1 결과(107 방과후 출석 포함) 위에 LongPress 에서 꾹 눌러 체크한 비참여 111 만 덮어쓴다.
 export const CARRIED_SEATS: Record<number, SeatState> = {
-  107: { visual: "afterschool", afterSchoolStatus: "present" },
   111: { visual: "present" },
 };
 
@@ -175,14 +174,16 @@ const tabPressAt = (frame: number): AttendanceBoardProps["tabPressAt"] => {
 
 const afternoon1Props = (frame: number) => {
   const requests = requestsAt(frame);
+  const approved = frame >= approvedAt;
   // 승인된 좌석은 불참승인(노랑)으로, 대기 표시 * 는 사라진다.
-  const seat: SeatState = frame >= approvedAt ? { visual: "approved" } : { visual: "unchecked", pending: true };
-  const visualFor = afternoon1Visual({ ...CARRIED_SEATS, [SEAT]: seat });
+  const visualFor = afternoon1Visual(approved ? { ...CARRIED_SEATS, [SEAT]: { visual: "approved" } } : CARRIED_SEATS);
+  // 승인 API 는 그 교시 출결을 결석으로 저장한다(api/homeroom/absence-requests/[id]) — 카운트에서는 출석 −1, 결석 +1.
+  const countedAs = approved ? afternoon1Visual({ ...CARRIED_SEATS, [SEAT]: { visual: "absent" } }) : visualFor;
   return phoneBoardProps({
     tab: "afternoon1",
     tabPressAt: tabPressAt(frame),
     groups: buildAfternoonGroups(visualFor),
-    counts: afternoon1Counts(visualFor),
+    counts: afternoon1Counts(countedAs),
     pendingBadge: pendingCountOf(requests),
   });
 };

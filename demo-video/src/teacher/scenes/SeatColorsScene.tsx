@@ -35,27 +35,18 @@ import {
 } from "../../app-mocks/data";
 import { PHONE_BODY, type Point, type Rect } from "../../app-mocks/layout";
 import { lineAt, lineEnd } from "../timing";
+import { afternoon1Visual as afternoon1ResultVisual } from "./CopySessionScene";
 import type { DemoProps } from "../../props";
 
 // ── SeatColors·LongPress·WeeklyInfo·AbsenceTab·BulkApprove 가 함께 쓰는 폰 출석부 도우미 ──
 
-// 오후1 체크가 진행 중인 모습(갤러리 Board-Afternoon1 과 같은 상태). 뒤 장면은 앞 장면에서 바뀐 좌석만 덮어쓴다.
-const AFTERNOON1_PRESENT = [101, 103, 105, 106, 108, 110, 112];
-const AFTERNOON1_ABSENT = [102];
-
 export type SeatOverrides = Record<number, SeatState>;
 
+// CopySession 이 끝난 오후1(AFTERNOON1_RESULT 로 체크 완료) 그대로. 뒤 장면은 앞 장면에서 바뀐 좌석만 덮어쓴다.
 export const afternoon1Visual =
   (overrides: SeatOverrides = {}) =>
-  (studentId: number): SeatState => {
-    const override = overrides[studentId];
-    if (override) return override;
-    const base = baseVisual(studentId);
-    if (base.visual !== "unchecked") return base;
-    if (AFTERNOON1_PRESENT.includes(studentId)) return { ...base, visual: "present" };
-    if (AFTERNOON1_ABSENT.includes(studentId)) return { ...base, visual: "absent" };
-    return base;
-  };
+  (studentId: number): SeatState =>
+    overrides[studentId] ?? afternoon1ResultVisual(studentId);
 
 // 앱 카운트는 참여 학생만 센다 — 꾹 눌러 체크한 비참여 좌석이 초록이 되어도 숫자는 그대로다.
 export const afternoon1Counts = (visualFor: (studentId: number) => SeatState) =>
@@ -221,6 +212,7 @@ const afterSchoolPresent = afterSchoolTap + 3;
 const scrollFrom = lineAt(ID, 5, 0.08);
 const scrollTo = scrollFrom + 20;
 
+// 방과후 좌석을 눌러 테두리가 초록으로 바뀌는 모습을 보이려고, 체크가 끝난 오후1 에서 107만 아직 미체크로 둔다.
 const visualAt = (frame: number) =>
   afternoon1Visual({
     [AFTER_SCHOOL_SEAT]:

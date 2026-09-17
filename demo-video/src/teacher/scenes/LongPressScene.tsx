@@ -7,15 +7,14 @@ import { colors } from "../../theme";
 import { GuideScene } from "../../guide/GuideScene";
 import {
   AttendanceBoardMock,
-  baseVisual,
   boardPoint,
   buildAfternoonGroups,
   countsOf,
   seatRect,
   type SeatState,
 } from "../../app-mocks/AttendanceBoardMock";
-import { ABSENCE_REQUESTS, AFTERNOON1_BASE, TODAY, type SeatBase } from "../../app-mocks/data";
-import { lineAt, lineEnd, lineStart } from "../timing";
+import { lineAt, lineEnd, lineStart, sceneFrames } from "../timing";
+import { afternoon2VisualAt } from "./CopySessionScene";
 import {
   afternoon1Counts,
   afternoon1Visual,
@@ -32,8 +31,6 @@ import type { DemoProps } from "../../props";
 const ID = "LongPress";
 
 const SEAT = 111;
-// SeatColors 에서 누른 방과후 좌석은 출석(초록 테두리)으로 남아 있다.
-const AFTER_SCHOOL_PRESENT: SeatState = { visual: "afterschool", afterSchoolStatus: "present" };
 // 앱 길게 누르기 타이머 500ms.
 const LONG_PRESS_FRAMES = 15;
 // 진행 링(좌석 밖 3px)이 주석 테두리에 가리지 않게 상자를 넉넉히 띄운다.
@@ -59,7 +56,7 @@ const seatAt = (frame: number): SeatState => {
 const afternoon1PropsAt = (frame: number) => {
   // 탭을 옮겨 돌아오면 활성화는 풀리지만 출석 기록이 있어 초록으로 보인다.
   const seat: SeatState = frame >= afternoon1At ? { visual: "present" } : seatAt(frame);
-  const visualFor = afternoon1Visual({ 107: AFTER_SCHOOL_PRESENT, [SEAT]: seat });
+  const visualFor = afternoon1Visual({ [SEAT]: seat });
   return phoneBoardProps({
     tab: "afternoon1",
     tabPressAt: frame >= afternoon1At ? { tab: "afternoon1", at: afternoon1Tap } : undefined,
@@ -68,24 +65,11 @@ const afternoon1PropsAt = (frame: number) => {
   });
 };
 
-// 불참승인·신청 표시는 교시별이다 — 오후2 는 ABSENCE_REQUESTS 의 오늘 오후2 신청으로 다시 고른다(갤러리 Board-Afternoon2 와 같은 방식).
-const afternoon2RequestIds = (status: "approved" | "pending") =>
-  ABSENCE_REQUESTS.filter((r) => r.date === TODAY && r.session === "afternoon2" && r.status === status).map(
-    (r) => r.studentId,
-  );
-
-const AFTERNOON2_BASE: Record<number, SeatBase> = Object.fromEntries(
-  Object.entries(AFTERNOON1_BASE).map(([id, base]) => [
-    id,
-    {
-      ...base,
-      approvedAbsence: afternoon2RequestIds("approved").includes(Number(id)),
-      pendingRequest: afternoon2RequestIds("pending").includes(Number(id)),
-    },
-  ]),
-);
-
-const afternoon2Groups = buildAfternoonGroups((id) => baseVisual(id, AFTERNOON2_BASE));
+// CopySession 에서 복사를 마친 오후2(106 결석 수정 포함). 그 장면의 누름 효과는 떼어 낸다. 비참여 111은 복사 대상이 아니라 회색이다.
+const afternoon2Groups = buildAfternoonGroups((id) => ({
+  ...afternoon2VisualAt(sceneFrames("CopySession"))(id),
+  pressAt: undefined,
+}));
 const afternoon2Props = phoneBoardProps({
   tab: "afternoon2",
   tabPressAt: { tab: "afternoon2", at: afternoon2Tap },

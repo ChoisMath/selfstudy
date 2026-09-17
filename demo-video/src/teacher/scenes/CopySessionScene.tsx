@@ -83,7 +83,8 @@ const AFTERNOON2_BASE: Record<number, SeatBase> = Object.fromEntries(
 const withStatus = (state: SeatState, status: AttendanceStatus): SeatState =>
   state.visual === "afterschool" ? { ...state, afterSchoolStatus: status } : { ...state, visual: status };
 
-const afternoon1Visual = (id: number): SeatState => {
+// SeatColors 이후 장면들이 이 오후1 결과와 복사가 끝난 오후2 를 그대로 이어 쓴다.
+export const afternoon1Visual = (id: number): SeatState => {
   const result = AFTERNOON1_RESULT[id];
   return result ? withStatus(baseVisual(id), result.status) : baseVisual(id);
 };
@@ -118,7 +119,7 @@ const fillEnd = fillFrom + copied.length * FILL_STAGGER;
 const resultNoteFrom = fillEnd + 6;
 const alertOpenAt = lineStart(ID, 2) - 2;
 
-const afternoon2VisualAt = (frame: number) => (id: number): SeatState => {
+export const afternoon2VisualAt = (frame: number) => (id: number): SeatState => {
   const base = baseVisual(id, AFTERNOON2_BASE);
   const fill = fillAtById.get(id);
   const filled = fill && frame >= fill.at + COLOR_DELAY ? withStatus(base, fill.status) : base;

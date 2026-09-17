@@ -28,9 +28,8 @@ import type { DemoProps } from "../../props";
 const ID = "WeeklyInfo";
 
 const SEAT = WEEKLY_INFO.studentId;
-// 앞 장면(SeatColors·LongPress)에서 누른 좌석은 출석으로 남아 있다.
+// 오후1 결과(107 방과후 출석 포함) 위에 LongPress 에서 꾹 눌러 체크한 비참여 111 만 덮어쓴다.
 const CARRIED: Record<number, SeatState> = {
-  107: { visual: "afterschool", afterSchoolStatus: "present" },
   111: { visual: "present" },
 };
 const NOTE_DAY_INDEX = WEEKLY_INFO.todayIndex;
