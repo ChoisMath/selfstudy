@@ -34,8 +34,6 @@ const ACTION_BTN_H = 22;
 // homeroomRequestsPoint 는 처리 열을 (열 x + 26)부터 승인 폭 44로 잡는다.
 const POINT_GROUP_INSET = 26;
 const POINT_APPROVE_HALF = 22;
-// 목업 버그 우회: 표 안 칸들이 PAD_X(16)를 한 번 더 더해 그려져, 점 함수 x보다 16px 오른쪽에 보인다.
-const CELL_OFFSET_X = 16;
 const FILTER_PENDING_W = 64;
 const FILTER_H = 26;
 
@@ -164,13 +162,13 @@ export const HomeroomRequestsScene: React.FC<DemoProps> = () => {
   const pendingPill = homeroomRequestsPoint("filter_pending", W);
   const allPill = bodyPoint(homeroomRequestsPoint("filter_all", W));
   const approvePoint = homeroomRequestsPoint(`approve_${APPROVE_ID}`, W, "pending");
-  const approveLogical = { x: approvePoint.x + CELL_OFFSET_X, y: approvePoint.y };
+  const approveLogical = { x: approvePoint.x, y: approvePoint.y };
   const approve = bodyPoint(approveLogical);
   const ok = pcAbs(confirmOkPoint);
 
   const firstRowAll = homeroomRequestsPoint(`approve_${APPROVE_ID}`, W, "all");
   const tableTop = firstRowAll.y - ROW_H / 2 - HEAD_H;
-  const actionX = firstRowAll.x - POINT_APPROVE_HALF - POINT_GROUP_INSET + CELL_OFFSET_X;
+  const actionX = firstRowAll.x - POINT_APPROVE_HALF - POINT_GROUP_INSET;
   const tableRect = bodyRect({ x: 16, y: tableTop, w: W - 32, h: homeroomRequestsPoint("total", W).y + 16 - tableTop });
   const actionGroup = bodyRect({
     x: actionX + (ACTION_COL_W - ACTION_GROUP_W) / 2,
@@ -178,9 +176,9 @@ export const HomeroomRequestsScene: React.FC<DemoProps> = () => {
     w: ACTION_GROUP_W,
     h: ACTION_BTN_H,
   });
-  const reviewerColumn = bodyRect({ x: actionX, y: tableTop, w: ACTION_COL_W - CELL_OFFSET_X, h: HEAD_H + ROW_H * ROW_COUNT_ALL });
+  const reviewerColumn = bodyRect({ x: actionX, y: tableTop, w: ACTION_COL_W, h: HEAD_H + ROW_H * ROW_COUNT_ALL });
   const supervisorRowY = homeroomRequestsPoint(`approve_${SUPERVISOR_REVIEWED_ID}`, W, "all").y - ROW_H / 2;
-  const supervisorCell = bodyRect({ x: actionX - STATUS_COL_W, y: supervisorRowY, w: STATUS_COL_W + ACTION_COL_W - CELL_OFFSET_X, h: ROW_H });
+  const supervisorCell = bodyRect({ x: actionX - STATUS_COL_W, y: supervisorRowY, w: STATUS_COL_W + ACTION_COL_W, h: ROW_H });
   const pendingPillRect = bodyRect({ x: pendingPill.x - FILTER_PENDING_W / 2, y: pendingPill.y - FILTER_H / 2, w: FILTER_PENDING_W, h: FILTER_H });
 
   return (

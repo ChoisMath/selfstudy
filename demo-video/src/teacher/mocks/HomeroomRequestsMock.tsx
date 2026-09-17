@@ -62,10 +62,13 @@ const visibleRows = (filter: HomeroomRequestFilter, approvedIds?: number[]) => {
   return filter === "all" ? eff : eff.filter((r) => r.status === filter);
 };
 
+// 표 컨테이너(래핑 div)가 이미 left: PAD_X에 있으므로, 여기서 반환하는 x들은 그 컨테이너 기준
+// "상대" 오프셋이다(학생 열은 0부터 시작) — 렌더링(Th/행 셀)은 그대로 쓰면 되고, 페이지 절대
+// 좌표가 필요한 곳(homeroomRequestsPoint)에서만 PAD_X를 더한다.
 const columnX = (width: number) => {
   const contentW = width - PAD_X * 2;
   const detailW = contentW - (COL.student + COL.date + COL.session + COL.reason + COL.status + COL.action);
-  const studentX = PAD_X;
+  const studentX = 0;
   const dateX = studentX + COL.student;
   const sessionX = dateX + COL.date;
   const reasonX = sessionX + COL.session;
@@ -121,7 +124,7 @@ export const homeroomRequestsPoint = (
   const rejectW = 40;
   const btnGap = 4;
   const groupW = approveW + btnGap + rejectW;
-  const groupX = actionX + (COL.action - groupW) / 2;
+  const groupX = PAD_X + actionX + (COL.action - groupW) / 2;
   const x = isApprove ? groupX + approveW / 2 : groupX + approveW + btnGap + rejectW / 2;
   return { x, y: rowY + ROW_H / 2 };
 };
