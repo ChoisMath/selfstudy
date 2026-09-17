@@ -69,7 +69,8 @@ const scrollDownTo = lineStart(ID, 4) + 8;
 const submitTap = lineAt(ID, 4, 0.25);
 const busyFrom = submitTap + 3;
 const alertOpen = submitTap + 12;
-const okTap = lineAt(ID, 4, 0.82);
+// 도움말 스틸(문장 4, 비율 0.6)에 커서가 남지 않도록 확인 누름을 늦춘다 — 커서는 누름 24프레임 전부터 나타난다.
+const okTap = lineAt(ID, 4, 0.88);
 const alertClose = okTap + 4;
 const scrollUpFrom = alertClose + 2;
 const scrollUpTo = lineStart(ID, 5) + 10;
