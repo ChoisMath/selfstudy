@@ -21,12 +21,12 @@ const TAB_ROW_Y = HEADER_H + MAIN_PAD_TOP; // 68
 const TAB_H = 42; // page.tsx 65행 px-5 py-2.5(20) + text-sm 줄높이(20) + border-b-2(2)
 const TAB_MB = 12; // page.tsx 61행 mb-3
 
-// 헤더 + main 패딩 + 6탭 아래, 실제 탭 콘텐츠가 시작되는 사각형. 다른 태스크의 본문 목업이
-// `width={GRADE_ADMIN_BODY.w}` 를 받아 이 자리에 얹힌다(HomeroomShellMock.HOMEROOM_BODY 관례와 동일).
+// 헤더 + 6탭 아래, 실제 탭 콘텐츠가 시작되는 사각형 — 전체 폭을 주고, main 의 lg:px-4 는
+// 이 셸이 아니라 각 본문 목업이 스스로 그린다(teacher/mocks/HomeroomShellMock.tsx 의 HOMEROOM_BODY 와 같은 관례).
 export const GRADE_ADMIN_BODY: Rect = {
-  x: MAIN_PAD_X,
+  x: 0,
   y: TAB_ROW_Y + TAB_H + TAB_MB,
-  w: PC_VIEWPORT.w - MAIN_PAD_X * 2,
+  w: PC_VIEWPORT.w,
   h: PC_VIEWPORT.h - (TAB_ROW_Y + TAB_H + TAB_MB),
 };
 
@@ -328,7 +328,7 @@ export const GradeAdminShellMock: React.FC<GradeAdminShellMockProps> = ({
           position: "absolute",
           left: MAIN_PAD_X,
           top: TAB_ROW_Y + TAB_H - 1,
-          width: GRADE_ADMIN_BODY.w,
+          width: PC_VIEWPORT.w - MAIN_PAD_X * 2,
           height: 1,
           background: tw.gray[200],
         }}

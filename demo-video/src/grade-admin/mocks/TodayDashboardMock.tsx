@@ -1,5 +1,6 @@
 // src/components/grade-admin/TodayAttendanceDashboard.tsx 이식 — 셸 없이 본문만 그린다.
-// GradeAdminShellMock 의 GRADE_ADMIN_BODY 안에 children 으로 얹히며, 스크롤은 셸의 scrollY 가 담당한다.
+// GradeAdminShellMock 의 GRADE_ADMIN_BODY(전체 폭) 안에 children 으로 얹히며, 스크롤은 셸의 scrollY 가 담당한다.
+// main 의 lg:px-4 는 셸이 아니라 이 목업이 스스로 그린다(HOMEROOM_BODY 관례 — StudentTableMock.tsx 의 PAD_X 와 동일).
 import React from "react";
 import type { Rect } from "../../app-mocks/layout";
 import { tw } from "../../app-mocks/tw";
@@ -42,6 +43,7 @@ const [Y, M, D] = TODAY.split("-").map(Number);
 // TodayAttendanceDashboard.tsx 89행 dateDisplay 포맷 — TODAY=2026-09-17 은 목요일로 고정.
 const DATE_DISPLAY = `${Y}년 ${M}월 ${D}일 (목)`;
 
+const PAGE_PAD_X = 16; // [grade]/layout.tsx main lg:px-4(PC 폭이라 lg 적용)
 const DATE_H = 28; // text-lg(줄높이 28)
 const DATE_MB = 20; // mb-5
 const CARD_GAP = 16; // space-y-4
@@ -59,28 +61,34 @@ const cardY = (index: number) => DATE_H + DATE_MB + index * (CARD_H + CARD_GAP);
 const statColW = (width: number) => (width - CARD_PAD * 2 - STAT_GAP * 3) / 4;
 
 export const todayRect = (key: TodayRectKey, width: number): Rect => {
-  if (key === "date") return { x: 0, y: 0, w: width, h: DATE_H };
+  const contentW = width - PAGE_PAD_X * 2;
+  if (key === "date") return { x: PAGE_PAD_X, y: 0, w: contentW, h: DATE_H };
 
   const [sessionKey, sub] = key.split("_") as [TodaySession, string | undefined];
   const index = SESSIONS.findIndex((s) => s.key === sessionKey);
   const y = cardY(index);
 
-  if (!sub) return { x: 0, y, w: width, h: CARD_H };
+  if (!sub) return { x: PAGE_PAD_X, y, w: contentW, h: CARD_H };
 
   if (sub === "supervisor") {
     const label = `감독: ${TODAY_STATS[sessionKey].supervisor}`;
     const w = 24 + label.length * 12; // px-3(24) + text-xs(12px/자)
-    return { x: width - CARD_PAD - w, y: y + CARD_PAD, w, h: HEADER_ROW_H };
+    return { x: PAGE_PAD_X + contentW - CARD_PAD - w, y: y + CARD_PAD, w, h: HEADER_ROW_H };
   }
 
   if (sub === "total") {
-    return { x: CARD_PAD, y: y + CARD_PAD + HEADER_ROW_H + HEADER_MB + STAT_ROW_H + FOOTER_MT, w: width - CARD_PAD * 2, h: FOOTER_H };
+    return {
+      x: PAGE_PAD_X + CARD_PAD,
+      y: y + CARD_PAD + HEADER_ROW_H + HEADER_MB + STAT_ROW_H + FOOTER_MT,
+      w: contentW - CARD_PAD * 2,
+      h: FOOTER_H,
+    };
   }
 
   const statIndex = STAT_ORDER.findIndex((s) => s.key === sub);
-  const colW = statColW(width);
+  const colW = statColW(contentW);
   return {
-    x: CARD_PAD + statIndex * (colW + STAT_GAP),
+    x: PAGE_PAD_X + CARD_PAD + statIndex * (colW + STAT_GAP),
     y: y + CARD_PAD + HEADER_ROW_H + HEADER_MB,
     w: colW,
     h: STAT_ROW_H,
@@ -88,10 +96,26 @@ export const todayRect = (key: TodayRectKey, width: number): Rect => {
 };
 
 export const TodayDashboardMock: React.FC<{ width: number }> = ({ width }) => {
-  const colW = statColW(width);
+  const contentW = width - PAGE_PAD_X * 2;
+  const colW = statColW(contentW);
   return (
     <div style={{ position: "relative", width, fontFamily: FONT }}>
-      <div style={{ position: "absolute", left: 0, top: 0, width, height: DATE_H, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, fontWeight: 600, color: tw.gray[800], whiteSpace: "nowrap" }}>
+      <div
+        style={{
+          position: "absolute",
+          left: PAGE_PAD_X,
+          top: 0,
+          width: contentW,
+          height: DATE_H,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontSize: 18,
+          fontWeight: 600,
+          color: tw.gray[800],
+          whiteSpace: "nowrap",
+        }}
+      >
         {DATE_DISPLAY}
       </div>
 
@@ -103,9 +127,9 @@ export const TodayDashboardMock: React.FC<{ width: number }> = ({ width }) => {
             key={session.key}
             style={{
               position: "absolute",
-              left: 0,
+              left: PAGE_PAD_X,
               top: y,
-              width,
+              width: contentW,
               height: CARD_H,
               background: tw.white,
               border: `1px solid ${tw.gray[200]}`,
@@ -168,7 +192,7 @@ export const TodayDashboardMock: React.FC<{ width: number }> = ({ width }) => {
                 position: "absolute",
                 left: CARD_PAD,
                 top: CARD_PAD + HEADER_ROW_H + HEADER_MB + STAT_ROW_H + FOOTER_MT,
-                width: width - CARD_PAD * 2,
+                width: contentW - CARD_PAD * 2,
                 height: FOOTER_H,
                 textAlign: "right",
                 fontSize: 14,
