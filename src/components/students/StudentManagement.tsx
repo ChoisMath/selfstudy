@@ -346,7 +346,7 @@ export default function StudentManagement({ grade }: { grade: number }) {
       <ExcelUploadModal
         isOpen={showExcelModal}
         onClose={() => setShowExcelModal(false)}
-        templateUrl="/api/admin/students/template"
+        templateUrl={`/api/grade-admin/${grade}/students/template`}
         templateFilename="student_template.xlsx"
         uploadUrl={`/api/grade-admin/${grade}/students/bulk-upload`}
         onUploaded={() => mutate()}
