@@ -204,15 +204,34 @@ export const SWAP_EXAMPLE = { date: "2026-09-24", grade: 1, from: "박지훈", t
 
 export type SupervisorSummaryRow = { name: string; primaryGrade: number; counts: number[]; total: number };
 
+// SUPERVISOR_SEPT의 1학년 열에서 교사별 9월 평일 배정 수를 세고, SWAP_EXAMPLE 교체를 반영한다.
+const septSupervisorCounts = (): Record<string, number> => {
+  const counts: Record<string, number> = {};
+  Object.entries(SUPERVISOR_SEPT).forEach(([date, day]) => {
+    const assigned = day[SWAP_EXAMPLE.grade];
+    const name = date === SWAP_EXAMPLE.date && assigned === SWAP_EXAMPLE.from ? SWAP_EXAMPLE.to : assigned;
+    counts[name] = (counts[name] ?? 0) + 1;
+  });
+  return counts;
+};
+
+const SUPERVISOR_SEPT_COUNTS = septSupervisorCounts();
+
+// 3~7월 값은 고정, 9월과 total만 SUPERVISOR_SEPT_COUNTS에서 계산.
+const SUPERVISOR_SUMMARY_MAR_JUL: { name: string; primaryGrade: number; counts: number[] }[] = [
+  { name: "박지훈", primaryGrade: 1, counts: [2, 2, 3, 2, 1] },
+  { name: "이수민", primaryGrade: 1, counts: [2, 2, 2, 2, 2] },
+  { name: "김하늘", primaryGrade: 1, counts: [2, 2, 3, 2, 2] },
+  { name: "최영호", primaryGrade: 1, counts: [1, 2, 2, 2, 2] },
+  { name: "윤서진", primaryGrade: 1, counts: [2, 3, 2, 2, 2] },
+];
+
 export const SUPERVISOR_SUMMARY: { months: string[]; rows: SupervisorSummaryRow[] } = {
   months: ["3월", "4월", "5월", "6월", "7월", "9월"],
-  rows: [
-    { name: "박지훈", primaryGrade: 1, counts: [2, 2, 3, 2, 1, 3], total: 13 },
-    { name: "이수민", primaryGrade: 1, counts: [2, 2, 2, 2, 2, 3], total: 13 },
-    { name: "김하늘", primaryGrade: 1, counts: [2, 2, 3, 2, 2, 2], total: 13 },
-    { name: "최영호", primaryGrade: 1, counts: [1, 2, 2, 2, 2, 2], total: 11 },
-    { name: "윤서진", primaryGrade: 1, counts: [2, 3, 2, 2, 2, 3], total: 14 },
-  ],
+  rows: SUPERVISOR_SUMMARY_MAR_JUL.map(({ name, primaryGrade, counts }) => {
+    const fullCounts = [...counts, SUPERVISOR_SEPT_COUNTS[name] ?? 0];
+    return { name, primaryGrade, counts: fullCounts, total: fullCounts.reduce((a, b) => a + b, 0) };
+  }),
 };
 
 export const WEEKLY_INFO = {
@@ -221,7 +240,7 @@ export const WEEKLY_INFO = {
   days: ["월", "화", "수", "목", "금"],
   todayIndex: 3,
   afternoon1: ["출석", "출석", "방과후", "출석", "-"],
-  afternoon2: ["출석", "결석", "방과후", "-", "-"],
+  afternoon2: ["출석", "결석", "방과후", "출석", "-"],
   remarks: { 화: "조퇴 후 복귀" } as Partial<Record<string, string>>,
   monthlyHours: "12.5h",
   yearHours: "86.7h",
