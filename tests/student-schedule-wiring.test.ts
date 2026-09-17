@@ -34,4 +34,18 @@ assert.match(seatCard, /내 자리: /, "내 자리 위치 문구가 없음");
 assert.match(seatCard, /배정된 좌석이 없습니다\./, "좌석 없음 문구가 없음");
 assert.match(seatCard, /sessionTypesOfSeat\(tab\)\.some/, "미참가 판정을 좌석 세션의 블록으로 하지 않음");
 
+// --- 참여일정 카드: 인덱스 + 5요일 격자, 오늘 강조, 다음 돌아오는 요일로 신청 진입 ---
+const scheduleCard = read("../src/components/student/ParticipationScheduleCard.tsx");
+assert.match(scheduleCard, /grid-cols-\[auto_repeat\(5,1fr\)\] gap-2/, "3행 격자(인덱스+5요일, 8px 간격)가 아님");
+assert.match(scheduleCard, /SESSION_TYPES\.map\(\(sessionType\) =>/, "행을 SESSION_TYPES 로 그리지 않음");
+assert.match(scheduleCard, /WEEKDAY_KEYS\.map\(\(key, index\) =>/, "요일 셀을 WEEKDAY_KEYS 로 그리지 않음");
+assert.match(scheduleCard, /nextDateForWeekday\(today, index \+ 1\)/, "셀 날짜가 다음 돌아오는 요일이 아님");
+assert.match(scheduleCard, /onSelectDay\(sessionType, date\)/, "셀 클릭이 세션+날짜를 넘기지 않음");
+assert.match(scheduleCard, /border-blue-700/, "오늘 열 진한 테두리가 없음");
+assert.match(scheduleCard, /다음주/, "다음 주로 넘어간 셀 표시가 없음");
+assert.match(scheduleCard, /미참가/, "미참가 세션 캡션이 없음");
+assert.match(scheduleCard, /"오늘"/, "오늘 캡션이 없음");
+assert.match(scheduleCard, /min-h-11/, "요일 셀 높이가 44px 미만");
+assert.doesNotMatch(scheduleCard, /participationDays\?\.afternoon/, "옛 afternoon 키 접근이 남아 있음");
+
 console.log("student-schedule-wiring checks passed");

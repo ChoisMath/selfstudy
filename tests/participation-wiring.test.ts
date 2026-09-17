@@ -27,8 +27,8 @@ for (const rel of [
   assert.match(src, /colSpan=\{21\}/, `${rel}: 로딩/빈 행 colSpan 이 21(3+18) 이 아님`);
 }
 
-const studentPage = read("../src/app/student/page.tsx");
-assert.match(studentPage, /SESSION_TYPES\.map\(\(t\) => renderSession/, "학생 참여일정이 3세션을 그리지 않음");
-assert.doesNotMatch(studentPage, /participationDays\?\.afternoon/, "옛 afternoon 키 접근이 남아 있음");
+const scheduleCard = read("../src/components/student/ParticipationScheduleCard.tsx");
+assert.match(scheduleCard, /SESSION_TYPES\.map\(\(sessionType\) =>/, "학생 참여일정이 3세션을 그리지 않음");
+assert.doesNotMatch(scheduleCard, /participationDays\?\.afternoon/, "옛 afternoon 키 접근이 남아 있음");
 
 console.log("participation-wiring checks passed");
