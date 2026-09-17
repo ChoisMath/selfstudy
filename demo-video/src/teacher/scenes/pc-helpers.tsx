@@ -70,6 +70,12 @@ const pcSeatState = (studentId: number): SeatState => {
 
 const PC_GROUPS = buildAfternoonGroups(pcSeatState);
 
+// 앱 카운트는 그날 참여하는 학생만 센다(page.tsx 270-272) — 꾹 눌러 체크한 비참여 좌석은
+// 초록으로 그려져도 숫자에는 들어가지 않는다(활성화는 클라이언트 상태). 폰 장면과 같은 규칙.
+const PC_COUNT_GROUPS = buildAfternoonGroups((id) =>
+  AFTERNOON1_BASE[id].participating ? pcSeatState(id) : { visual: "inactive" },
+);
+
 export const PC_BOARD_PROPS: AttendanceBoardProps = {
   width: PC_VIEWPORT.w,
   height: PC_VIEWPORT.h,
@@ -77,7 +83,7 @@ export const PC_BOARD_PROPS: AttendanceBoardProps = {
   dateLabel: TODAY_LABEL,
   supervisor: SUPERVISOR_SEPT[TODAY][GRADE],
   grade: GRADE,
-  counts: countsOf(PC_GROUPS),
+  counts: countsOf(PC_COUNT_GROUPS),
   tab: "afternoon1",
   pendingBadge: 1,
   groups: PC_GROUPS,

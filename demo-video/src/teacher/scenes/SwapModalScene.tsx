@@ -43,6 +43,9 @@ const pickClick = lineAt(ID, 2, 0.36);
 const pickAt = pickClick + 2;
 const reasonClick = lineAt(ID, 2, 0.5);
 const reasonTypeFrom = lineAt(ID, 2, 0.56);
+// 사유 입력이 끝나는 지점에 커서가 화면 밖으로 빠지고, 교체를 누르러 다음 문장에서 돌아온다.
+const cursorLeavesAt = lineAt(ID, 2, 0.75);
+const cursorReturnsAt = lineStart(ID, 3);
 const confirmClick = lineAt(ID, 3, 0.1);
 const busyFrom = confirmClick + 4;
 const modalCloseAt = confirmClick + 16;
@@ -197,6 +200,7 @@ export const SwapModalScene: React.FC<DemoProps> = () => {
         text="교체 기록은 관리자에게 남습니다"
         hint="바꾸기 전에 상대 선생님과 먼저 이야기해 주세요"
       />
+      {/* 입력이 끝나면 커서를 치운다 — 도움말 스틸(문장 2 @0.9)에 유휴 포인터가 남지 않게. */}
       <Cursor
         path={[
           { frame: lineStart(ID, 0) + 10, x: 1560, y: 800 },
@@ -208,14 +212,20 @@ export const SwapModalScene: React.FC<DemoProps> = () => {
           { frame: pickClick + 4, x: option.x, y: option.y },
           { frame: reasonClick - 2, x: reason.x, y: reason.y },
           { frame: reasonTypeFrom + 4, x: reason.x + 140, y: reason.y + 70 },
-          { frame: lineEnd(ID, 2), x: reason.x + 140, y: reason.y + 70 },
+        ]}
+        clicks={[rowClick, searchClick, pickClick, reasonClick]}
+        hideAfter={cursorLeavesAt}
+      />
+      <Cursor
+        path={[
+          { frame: cursorReturnsAt, x: confirmCursor.x + 260, y: confirmCursor.y + 90 },
           { frame: confirmClick - 2, x: confirmCursor.x, y: confirmCursor.y },
           { frame: modalCloseAt, x: confirmCursor.x, y: confirmCursor.y },
           { frame: changedFrom + 10, x: row.x + row.width + 120, y: row.y + 150 },
           { frame: insetFirstPress - 2, x: insetConfirmPoint.x, y: insetConfirmPoint.y },
           { frame: insetSecondPress + 6, x: insetConfirmPoint.x, y: insetConfirmPoint.y },
         ]}
-        clicks={[rowClick, searchClick, pickClick, reasonClick, confirmClick, insetFirstPress, insetSecondPress]}
+        clicks={[confirmClick, insetFirstPress, insetSecondPress]}
         hideAfter={insetOut}
       />
     </GuideScene>
