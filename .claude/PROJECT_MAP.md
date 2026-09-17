@@ -134,6 +134,34 @@ scripts/
 
 public/
 └── sw.js               # 서비스워커 (CACHE_NAME=selfstudy-v2, install/activate/fetch + push/notificationclick 핸들러)
+                        # (예정) guide/<page>/NN-slug.webp — demo-video 의 guide-stills.mjs 출력 위치, 아직 없음
+
+demo-video/             # **신규.** 안내 영상·가이드 페이지 이미지용 별도 Node 프로젝트 (Remotion 4.0.518, 자체 package.json/tsconfig/eslint). 루트 tsc·eslint·Tailwind 스캔에서 제외, Railway 빌드와 무관
+├── README.md           # 설치·명령·음성(Qwen3-TTS 클론) 규칙 — 영상 도구 사용법의 기준
+├── src/
+│   ├── Root.tsx        # 컴포지션 등록: 본편 `SetupCheck` + `Folder` 안 장면별 `SetupCheck-Intro`/`SetupCheck-Check` (장면 컴포지션도 `GuideContext` 로 감쌈)
+│   ├── guide/          # 공용: timing.ts `createTiming`(sceneFrames/lineStart/`lineAt`/captionsFor, LEAD/TAIL 15프레임), `GuideScene`(배경·STEP 배지·장면 mp3·자막), `GuideContext`(GuideConfig), GuideVideo.tsx `createGuideVideo`(장면 사이 페이드), `GuideCaption`
+│   ├── components/     # BrowserFrame·Cursor·Annotation·FlashNotice·StepBadge·Toggle·icons (school_cowork 에서 이식한 공용 코드)
+│   ├── setup-check/    # 환경 점검용 최소 가이드(장면 Intro/Check, 문장 3개): narration.ts·narration-durations.json·timing.ts·scenes.tsx·SetupCheckVideo.tsx
+│   ├── stills/<page>.ts # 가이드 페이지 스틸 목록 `{composition, file, frame, crop?, resize?}` + `DEFAULT_CROP`(theme `BROWSER`). 현재 setup-check.ts 1개
+│   └── anim.ts·theme.ts·fonts.ts·props.ts·scenes.ts·index.ts·index.css
+├── scripts/
+│   ├── narrate.mjs     # `--guide <key>` 원고 → Chois 클론 음성 mp3(로컬 mlx-audio 0.5.3 + Qwen3-TTS 0.6B, `tts_mlx.py`) + narration-durations.json + Whisper 검수(`stt_check.py`) → review.tsv. `GUIDES` 에 가이드 등록. `--only`/`--estimate`/`--measure`/`--no-check`
+│   ├── guide-stills.mjs # `--page <page>` 장면 프레임 → cwebp 1280px WebP, 기본 출력 `../public/guide/<page>/`
+│   ├── doctor.mjs      # 환경 점검 (`npm run doctor`: ffmpeg/ffprobe/cwebp·모델 캐시·Voicebox 프로필·Whisper 토크나이저)
+│   ├── lib/narration-core.mjs (+ .test.mjs) # 순수 로직(캐시 키·발화속도 검사·SPOKEN 치환 등)
+│   └── tests/          # tts_mlx/stt_check unittest (`npm test`)
+├── public/narration/<guide>/ # 장면 mp3 + review.tsv + .lines/(문장 mp3·manifest.json 캐시 — 추적)
+├── requirements-tts.txt / requirements-tts.lock.txt # .venv-tts(python3.12) 재현용
+└── (git 제외) node_modules/ · .venv-tts/ · out/ · public/narration/**/.lines/raw/ 등 작업 파일 — demo-video/.gitignore
+
+.claude/
+├── PROJECT_MAP.md
+├── GUIDE_PAGES.md      # **신규.** 안내 페이지·안내 영상 기준 문서 — 원고→음성→장면→스틸→페이지→영상 순서, 계획 라우트 `/help/<page>` + `src/components/guide/*` 빌딩 블록(아직 없음), 이미지 규격, 진행 현황 표(7절)
+└── skills/
+    ├── guide-page/SKILL.md   # **신규.** `/guide-page <page>` — GUIDE_PAGES.md 절차 실행
+    ├── remotion-*/           # **신규.** remotion-dev/skills 12종(best-practices·captions·create·docs·interactivity·maps·markup·multimedia·render·saas·studio·upgrade, 루트 `skills-lock.json` 에 해시 기록)
+    └── remotion-motion-graphics/ # **신규.** haidrrrry/claude-remotion-skill @1dcbe5e (MIT, 폴더에 LICENSE). skills-lock.json 밖 — 갱신은 폴더 재복사
 ```
 
 ## API 라우트 요약
@@ -358,8 +386,18 @@ SupervisorReminderLog: teacherId, grade, date(@db.Date), sentAt — @@unique([te
 - `RoomGrid`에는 X(해제) 버튼이 없음 — 해제는 좌석 탭→선택→`SeatingEditor` 하단 액션바, 또는 좌석→`UnassignedStudents` 패널 드롭(`UNASSIGNED_DROP_ID`). `tests/responsive-tables.test.ts`·`tests/seating-editor-responsive.test.ts`가 클래스/식별자를 src 스캔으로 고정하므로 관련 클래스(`min-h-11`, `z-20`, `table-scroll`, `ring-2 ring-blue-500` 등) 변경 시 테스트도 함께 갱신
 - **학급 구조 변경은 좌석 배정을 초기화함**: 배치 유형·분단 수·분단별 행 수 중 하나라도 바뀌면(`isGeometryChanged`) `PUT /api/grade-admin/[grade]/classrooms/[id]`가 그 학급의 SeatLayout을 전부 삭제하고 Room을 재생성 — 복도 위치(`corridorSide`)만 바꾸면 배정 보존. 클라이언트(`ClassroomConfigModal`)는 `assignedCount>0`이고 기하가 바뀔 때만 `confirm()` 경고
 - 미래혜윰실·야간 Room은 `classroomId=null`로 고정 — `Classroom`은 오후 자율학습의 **일반 학급 교실**(4·5·6반) 전용이며, 담임교사는 구조를 수정할 수 없음(학년관리자/메인관리자만)
+- **`demo-video/`는 루트 tsc/eslint/Tailwind에서 반드시 제외 유지**: 루트 `tsconfig.json` `exclude: ["node_modules", "demo-video"]`(include가 `**/*.ts`라 `demo-video/node_modules`까지 잡힘 — 제외 전 루트 tsc가 약 660개 파일을 읽음), `eslint.config.mjs` `globalIgnores`에 `"demo-video/**"`·`".claude/**"`(flat config는 dot 폴더를 기본 무시하지 않아 `.claude/skills`의 서드파티 예제 .ts/.tsx가 `npm run lint`를 92개 오류로 깨뜨림), `src/app/globals.css`에 `@source not "../../demo-video";`·`@source not "../../.claude";`. 새 도구 폴더를 루트에 추가할 때도 같은 3곳을 확인
+- **`HF_HUB_CACHE`는 Whisper STT 캐시 전용**: `narrate.mjs`가 TTS 워커(`tts_mlx.py`) 환경에서는 이 변수를 지우고 STT 워커에만 넘김 — TTS 모델은 `~/.cache/huggingface/hub`(Voicebox 앱이 받아 둔 캐시, `HF_HUB_OFFLINE=1`)를 써야 하므로 셸에서 `export` 하지 말 것
+- **내레이션 무음 트림은 앞 -40dB / 뒤 -45dB**(`narrate.mjs` ffmpeg `silenceremove`, 끝에 0.5초 무음 추가) — 앞은 Qwen3-TTS가 첫 음절 앞에 내는 -44~-50dB 잡음 때문에 -40dB, 뒤는 약하게 끝나는 음절 보존용 -45dB. 트림 설정은 캐시 키에 없으므로 바꾸면 `--only`로 문장을 다시 생성
 
 ## 수정 이력 (주요 변경)
+
+### 2026-09-17: 안내 영상 · 가이드 페이지 도구(demo-video) 도입
+- **신규 폴더 `demo-video/`**: school_cowork(ChoisNote 안내 영상)에서 이식한 Remotion 4.0.518 파이프라인. 소스만 git 추적(node_modules·.venv-tts·out·`.lines/raw` 등 제외). 공용 `src/guide/`·`src/components/`, 점검용 최소 가이드 `src/setup-check/`(컴포지션 `SetupCheck`·`SetupCheck-Intro`·`SetupCheck-Check`), `src/stills/<page>.ts`, 스크립트 `narrate.mjs`(Chois 클론 음성 + Whisper 검수)·`guide-stills.mjs`(WebP → `../public/guide/<page>/`)·`doctor.mjs`
+- **신규 문서/스킬**: `.claude/GUIDE_PAGES.md`(기준 문서), `.claude/skills/guide-page/SKILL.md`(`/guide-page <page>`), `.claude/skills/remotion-*` 12종(remotion-dev/skills, 루트 `skills-lock.json`), `.claude/skills/remotion-motion-graphics`(haidrrrry/claude-remotion-skill @1dcbe5e, MIT)
+- **루트 설정**: `tsconfig.json` exclude `"demo-video"`, `eslint.config.mjs` globalIgnores `"demo-video/**"`·`".claude/**"`, `src/app/globals.css` `@source not` 2줄, `CLAUDE.md` "안내 영상 · 가이드 페이지" 절
+- **아직 없음**: `/help/<page>` 라우트, `src/components/guide/*` 빌딩 블록, `public/guide/` — 첫 `/guide-page` 작업 때 생성 예정(GUIDE_PAGES.md 1절 `기본안`)
+- DB 스키마·API·Railway 환경변수 변경 없음. 커밋 전 상태
 
 ### 2026-09-17: 학생 참여일정 3행 격자 + 요일 클릭 불참 신청 + 좌석 확인 카드
 
@@ -616,6 +654,21 @@ SupervisorReminderLog: teacherId, grade, date(@db.Date), sentAt — @@unique([te
 - **환경변수**: DATABASE_URL (reference: ${{Postgres.DATABASE_URL}}), NEXTAUTH_SECRET, NEXTAUTH_URL, AUTH_URL, AUTH_TRUST_HOST, NODE_ENV
 - **푸시 알림 환경변수**: VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT(mailto:), NEXT_PUBLIC_VAPID_PUBLIC_KEY, CRON_SECRET
 - **Cron 서비스** (감독 알림): 스케줄 `0 22 * * *` (UTC=07:00 KST), Start Command `node scripts/trigger-supervisor-reminders.mjs`, env `APP_URL` + `CRON_SECRET`
+
+## 외부 의존성 — 로컬 전용 (demo-video, Railway 미사용)
+
+안내 영상·가이드 이미지 생성은 이 Mac에서만 실행한다. 점검은 `cd demo-video && npm run doctor`.
+
+| 의존성 | 위치 | 용도 |
+|--------|------|------|
+| Voicebox 앱 DB | `~/Library/Application Support/sh.voicebox.app/voicebox.db` (**읽기 전용**, `profiles.name='Chois'` 첫 샘플) | 클론 참조 음성·참조 문장. 앱 서버 API는 쓰지 않음(MLX 스레드 문제로 멈춤) |
+| HF 캐시 (TTS) | `~/.cache/huggingface/hub` — `mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16` | mlx-audio 0.5.3 음성 생성 |
+| HF 캐시 (STT) | `/Volumes/Chois_SD2/dev/hf-cache` (`HF_HUB_CACHE`) — `mlx-community/whisper-large-v3-turbo` + openai 토크나이저 파일 복사 | Whisper 검수 |
+| Homebrew 도구 | `ffmpeg`·`ffprobe`·`cwebp` | 무음 트림·길이 측정·WebP 스틸 |
+| Python venv | `demo-video/.venv-tts` (Homebrew python3.12, `requirements-tts.lock.txt`) | `tts_mlx.py`·`stt_check.py` 워커 |
+| Google Fonts | 네트워크 (Inter, Noto Sans KR) | Remotion 렌더 — 오프라인이면 실패 |
+
+환경변수(모두 로컬 선택값): `TTS_PROFILE`(기본 `Chois`)·`TTS_MODEL`·`TTS_PYTHON`·`VOICEBOX_DB`·`HF_HUB_CACHE`(STT 전용)
 
 ## 시드 데이터 (테스트 계정)
 

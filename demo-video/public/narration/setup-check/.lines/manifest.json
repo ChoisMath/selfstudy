@@ -1,0 +1,35 @@
+{
+  "Intro-0": {
+    "textHash": "e883a7110eba4edc26cf758eb0b5a36c7f3732d9",
+    "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
+    "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
+    "trailing": 0.5,
+    "speech": 3.375,
+    "cps": 5.63,
+    "attempts": 1,
+    "transcript": "포상고 자율학습 안내 영상환경점검입니다.",
+    "similarity": 0.944
+  },
+  "Check-0": {
+    "textHash": "ed7888f85f4e9b437566176b78a0c5162bcfb5f3",
+    "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
+    "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
+    "trailing": 0.5,
+    "speech": 3.894,
+    "cps": 5.91,
+    "attempts": 1,
+    "transcript": "오후 1 출석 화면에서 좌석을 눌러 출석을 표시합니다.",
+    "similarity": 0.955
+  },
+  "Check-1": {
+    "textHash": "2b353b0637a51731ec5b8ef7ad1d5e0095b43211",
+    "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
+    "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
+    "trailing": 0.5,
+    "speech": 3.366,
+    "cps": 7.13,
+    "attempts": 1,
+    "transcript": "이 목소리와 자막이 함께 맞게 나오면 준비가 끝났습니다.",
+    "similarity": 1
+  }
+}

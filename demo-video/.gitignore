@@ -1,0 +1,22 @@
+node_modules
+dist
+# remotion bundle 기본 출력
+build
+.DS_Store
+.env
+__pycache__/
+
+# 렌더 결과·스틸 PNG
+out
+
+# TTS 가상환경 (requirements-tts.lock.txt 로 재현)
+.venv-tts
+
+# narrate.mjs 작업 파일 — 원본 wav·concat 목록(절대경로)·작업 JSON. 문장 mp3 와 manifest.json 은 캐시라 추적한다.
+public/narration/**/.lines/raw/
+public/narration/**/.lines/*.txt
+public/narration/**/.lines/job.json
+public/narration/**/.lines/stt.json
+# ffmpeg 가 중간에 실패하면 남는 장면 PCM·say 엔진 aiff
+public/narration/**/.lines/*.wav
+public/narration/**/.lines/*.aiff

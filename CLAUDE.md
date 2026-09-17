@@ -18,6 +18,12 @@
 - NextAuth v5 (JWT, trustHost: true)
 - SWR, @dnd-kit, ExcelJS
 
+## 안내 영상 · 가이드 페이지
+
+- `/guide-page <page>` 스킬 → 기준 문서 `.claude/GUIDE_PAGES.md`
+- `demo-video/`: Remotion 4.0.518 별도 프로젝트 (루트 tsconfig·eslint·Tailwind 스캔에서 제외, `.claude/`도 eslint·Tailwind 제외). 음성은 로컬 mlx-audio 0.5.3 + Qwen3-TTS 0.6B `Chois` 클론. 점검 `cd demo-video && npm run doctor`
+- demo-video 장면을 고칠 때 `remotion-motion-graphics` 규칙은 `.claude/GUIDE_PAGES.md` 6절 범위로만 적용한다 (UI 목업 장면에 그레인·비네트·색 보정·배경 메시·Ken Burns 금지, 이식한 공용 코드 일괄 리팩터링 금지)
+
 ## 테스트 계정
 
 - 관리자: admin / admin1234

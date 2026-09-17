@@ -1,4 +1,6 @@
 @import "tailwindcss";
+@source not "../../demo-video";
+@source not "../../.claude";
 
 :root {
   --background: #ffffff;
