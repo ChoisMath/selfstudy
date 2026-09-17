@@ -9,6 +9,8 @@ import { SETUP_CHECK_CONFIG, SetupCheckVideo } from "./setup-check/SetupCheckVid
 import { SETUP_CHECK_SCENES } from "./setup-check/scenes";
 import { TEACHER_GUIDE_CONFIG, TeacherVideo } from "./teacher/TeacherVideo";
 import { TEACHER_SCENES } from "./teacher/scenes";
+import { STUDENT_GUIDE_CONFIG, StudentVideo } from "./student/StudentVideo";
+import { STUDENT_SCENES } from "./student/scenes";
 import { MOCK_GALLERY } from "./app-mocks/gallery";
 
 // 단일 장면 컴포지션도 본편과 같은 오디오 경로·자막 설정으로 감싼다.
@@ -67,6 +69,19 @@ export const RemotionRoot: React.FC = () => (
     />
     <Folder name="Teacher">
       <SceneCompositions scenes={TEACHER_SCENES} prefix="Teacher" config={TEACHER_GUIDE_CONFIG} />
+    </Folder>
+    <Composition
+      id="StudentGuide"
+      component={StudentVideo}
+      durationInFrames={totalFrames(STUDENT_SCENES)}
+      fps={FPS}
+      width={WIDTH}
+      height={HEIGHT}
+      schema={demoPropsSchema}
+      defaultProps={defaultDemoProps}
+    />
+    <Folder name="Student">
+      <SceneCompositions scenes={STUDENT_SCENES} prefix="Student" config={STUDENT_GUIDE_CONFIG} />
     </Folder>
     <Folder name="Mocks">
       {MOCK_GALLERY.map((entry) => (
