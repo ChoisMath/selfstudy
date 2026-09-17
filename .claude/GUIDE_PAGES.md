@@ -28,7 +28,7 @@
 | 이미지 | `public/guide/<page>/NN-slug.webp` → `/guide/<page>/NN-slug.webp`. `GuideStep`이 `width`·`height`를 지정해 레이아웃이 흔들리지 않게 한다 |
 | 영상 | YouTube(일부 공개) id를 `src/components/guide/videos.ts`에 키로 등록하고 `GuideVideo`로 카드 표시. 한 영상의 일부만 가리키는 페이지는 `start` prop(초)으로 시작 지점을 준다. mp4를 Railway Volume·`public/`에 올리지 않는다(용량·대역폭 비용). id가 빈 키는 렌더하지 않으므로 업로드 전에도 본문에 그대로 둔다 |
 | 도움말 허브 | `/help`(`src/app/help/content.mdx`)의 해당 역할 절에서 `/help/<page>`로 링크 |
-| 화면에서 열기 | 해당 화면 헤더의 `?` 버튼(`GuideHelpButton`, `aria-label="사용 가이드"`, 44×44 터치 영역) → `/help/<page>`를 **새 탭**으로 연다(`target="_blank" rel="noopener"`). 감독 중인 출석부나 저장 전 편집 상태를 잃지 않기 위해 모달·인터셉팅 라우트 대신 새 탭으로 확정. 헤더 오른쪽 묶음의 로그아웃 바로 앞에 둔다 |
+| 화면에서 열기 | 해당 화면 헤더의 `?` 버튼(`GuideHelpButton`, `aria-label="사용 가이드"`, 44×44 터치 영역) → `/help/<page>`를 **새 탭**으로 연다(`target="_blank" rel="noopener"`). 감독 중인 출석부나 저장 전 편집 상태를 잃지 않기 위해 모달·인터셉팅 라우트 대신 새 탭으로 확정. 스크롤 없이 손이 닿는 자리에 둔다 — 헤더 오른쪽 묶음이 가로 스크롤 컨테이너(`overflow-x-auto`)면 그 묶음의 **맨 앞**(예: 출석부 헤더), 아니면 로그아웃 바로 앞(예: 담임교사 헤더) |
 | 스틸 목록 | `demo-video/src/stills/<page>.ts` (`{ composition, file, frame, crop?, resize? }`, `DEFAULT_CROP`) |
 | 스틸 생성 | `cd demo-video && node scripts/guide-stills.mjs --page <page> [--only NN-slug]` → `public/guide/<page>/`. 가이드 페이지에는 `--scale`·`--max-kb`를 쓰지 않는다(3절 규격 1280px·150KB, `--max-kb`는 초과 경고 기준일 뿐이다) |
 | 테스트 | `tests/guide-<page>.test.ts` — `tests/help-mdx.test.ts`와 같은 `node:assert` 계약 검사: `page.tsx`가 서버 컴포넌트이고 `content.mdx`를 렌더, MDX가 빌딩 블록을 import, MDX가 참조하는 이미지 파일이 모두 존재, `?` 버튼이 `/help/<page>`를 가리킴. 실행 `npx tsx tests/guide-<page>.test.ts` |

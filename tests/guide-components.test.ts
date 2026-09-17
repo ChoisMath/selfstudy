@@ -56,6 +56,10 @@ assert.match(read(`${GUIDE}/GuideStep.tsx`), /lg:w-\[290px\]/);
 // 가로 스틸은 폰 폭으로 줄이면 글자를 읽을 수 없어 최소 폭을 주고 가로 스크롤한다.
 assert.match(read(`${GUIDE}/GuideStep.tsx`), /min-w-\[640px\]/);
 assert.match(read(`${GUIDE}/GuideStep.tsx`), /w-\[min\(320px,80vw\)\]/);
+// 가로 스틸 여러 장은 데스크톱에서는 카드 폭에 맞춰 세로로 쌓고, 모바일에서만 가로로 스크롤한다.
+assert.match(read(`${GUIDE}/GuideStep.tsx`), /lg:flex-col/);
+assert.match(read(`${GUIDE}/GuideStep.tsx`), /lg:overflow-visible/);
+assert.match(read(`${GUIDE}/GuideStep.tsx`), /lg:min-w-0/);
 // 태블릿 바깥 여백은 8~12px(§1): sm:px-6 을 쓰지 않는다.
 assert.doesNotMatch(read("src/app/help/layout.tsx"), /sm:px-6/);
 
