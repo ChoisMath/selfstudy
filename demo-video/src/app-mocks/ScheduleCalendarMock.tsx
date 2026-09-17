@@ -9,9 +9,9 @@ import { tw } from "./tw";
 import { SWAP_EXAMPLE, type SUPERVISOR_SEPT } from "./data";
 
 // homeroom/layout.tsx 132행 <main className="... px-4 py-6"> 패딩 — HomeroomShellMock은 헤더만 그리므로
-// 본문 목업이 각자 이 패딩을 갖는다(Task 6 HomeroomWeeklyMock 등과 동일 컨벤션, py-6(24)는 16으로 축약).
+// 본문 목업이 각자 이 패딩을 갖는다(px-4=16, py-6=24 그대로).
 const PAD_X = 16;
-const PAD_TOP = 16;
+const PAD_TOP = 24;
 
 const NAV_H = 36; // 149-169행: 월 네비게이션 행
 const GAP_NAV_LEGEND = 10; // mb-4(16행 원본) 축약
@@ -252,24 +252,41 @@ export const ScheduleCalendarMock: React.FC<ScheduleCalendarMockProps> = ({
           const isToday = date === today;
           const dow = dateInfo(date).dow;
           return (
-            <div key={date} style={{ position: "absolute", left: cell.x - PAD_X, top: cell.y - GRID_Y - DAY_HEADER_H, width: cell.w, height: cell.h, borderTop: `1px solid ${tw.gray[100]}`, borderRight: `1px solid ${tw.gray[100]}`, boxSizing: "border-box", padding: "3px 3px 0" }}>
-              <div
-                style={{
-                  width: isToday ? 18 : "auto",
-                  height: isToday ? 18 : DATE_ROW_H,
-                  borderRadius: isToday ? 9 : 0,
-                  background: isToday ? tw.blue[600] : "transparent",
-                  color: isToday ? tw.white : dow === 0 ? tw.red[400] : dow === 6 ? tw.blue[400] : tw.gray[700],
-                  fontSize: 11,
-                  fontWeight: 600,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {Number(date.slice(8, 10))}
-              </div>
+            <div key={date} style={{ position: "absolute", left: cell.x - PAD_X, top: cell.y - GRID_Y, width: cell.w, height: cell.h, borderTop: `1px solid ${tw.gray[100]}`, borderRight: `1px solid ${tw.gray[100]}`, boxSizing: "border-box", padding: "3px 3px 0" }}>
+              {isToday ? (
+                <div
+                  style={{
+                    width: 18,
+                    height: 18,
+                    borderRadius: 9,
+                    background: tw.blue[600],
+                    color: tw.white,
+                    fontSize: 11,
+                    fontWeight: 600,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {Number(date.slice(8, 10))}
+                </div>
+              ) : (
+                // 226-238행: 날짜 숫자는 원 없이 좌측 정렬된 일반 텍스트.
+                <div
+                  style={{
+                    height: DATE_ROW_H,
+                    lineHeight: `${DATE_ROW_H}px`,
+                    textAlign: "left",
+                    color: dow === 0 ? tw.red[400] : dow === 6 ? tw.blue[400] : tw.gray[700],
+                    fontSize: 11,
+                    fontWeight: 600,
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {Number(date.slice(8, 10))}
+                </div>
+              )}
               {(([1, 2, 3] as const)).map((grade) => {
                 const newName = assignments[date]?.[grade] ?? "-";
                 const isMine = newName === highlightTeacher;

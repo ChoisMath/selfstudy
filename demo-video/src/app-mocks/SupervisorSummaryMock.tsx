@@ -50,7 +50,8 @@ export const SupervisorSummaryMock: React.FC<SupervisorSummaryMockProps> = ({ mo
   const myRow = rows.find((r) => r.name === me);
   const otherRows = rows.filter((r) => r.name !== me).sort((a, b) => a.name.localeCompare(b.name, "ko"));
   const monthW = monthColW(months.length);
-  const nameColX = PANEL_X + TABLE_PAD_X;
+  // 패널 div가 이미 left:PANEL_X 로 배치돼 있으므로(자식의 position:absolute 기준점), 자식 left는 패널 기준 상대좌표여야 한다.
+  const nameColX = TABLE_PAD_X;
   const monthsX = nameColX + NAME_COL_W;
   const totalColX = monthsX + monthW * months.length;
 

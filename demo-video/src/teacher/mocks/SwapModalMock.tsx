@@ -3,7 +3,7 @@ import React from "react";
 import { useCurrentFrame } from "remotion";
 import { TEACHERS } from "../../app-mocks/data";
 import { PC_VIEWPORT, type Point } from "../../app-mocks/layout";
-import { pressScale, TypedText } from "../../app-mocks/primitives";
+import { pressScale, typedSlice, TypedText } from "../../app-mocks/primitives";
 import { tw } from "../../app-mocks/tw";
 import { FONT } from "../../fonts";
 
@@ -67,12 +67,27 @@ const DROP_ROW_H = 30;
 const DROP_MAX_H = 186; // max-h-48(192px) 근사, overflow hidden
 const DROP_TOP = SEARCH_Y + SEARCH_H + 4; // mt-1(457행)
 
-// 386-394행: primaryGrade===grade 그룹 먼저, 나머지 뒤. TEACHERS는 이미 학년 오름차순이라
-// grade=1(이 프로젝트의 유일한 교체 시나리오, SWAP_EXAMPLE.grade)일 때 그룹핑 결과가 원본 순서와 같다.
-const OPTION_ORDER = TEACHERS.map((t) => t.name);
-const PRIMARY_COUNT = TEACHERS.filter((t) => t.primaryGrade === 1).length;
+// 386-394행: query로 거른 뒤 primaryGrade===grade 그룹 먼저, 나머지 뒤(구분선은 둘 다 있을 때만).
+// 실제 앱: const filtered = query ? teachers.filter(t=>t.name.includes(query)) : teachers; ... 그룹핑.
+type OptionRow = { id: number; name: string; primaryGrade: 1 | 2 | 3; dividerBefore: boolean };
 
-export const swapModalPoint = (key: "search" | `option_${string}` | "reason" | "confirm" | "cancel"): Point => {
+const groupOptions = (grade: number, query: string): OptionRow[] => {
+  const filtered = TEACHERS.filter((t) => t.name.includes(query));
+  const primary = filtered.filter((t) => t.primaryGrade === grade);
+  const others = filtered.filter((t) => t.primaryGrade !== grade);
+  const showDivider = primary.length > 0 && others.length > 0;
+  return [
+    ...primary.map((t) => ({ ...t, dividerBefore: false })),
+    ...others.map((t, i) => ({ ...t, dividerBefore: i === 0 && showDivider })),
+  ];
+};
+
+export const swapModalPoint = (
+  key: "search" | `option_${string}` | "reason" | "confirm" | "cancel",
+  // option_<name> 전용: 현재 검색어로 걸러진 목록에서의 위치를 구한다. grade=1 고정 가정
+  // (이 프로젝트의 유일한 교체 시나리오, SWAP_EXAMPLE.grade) — 다른 값을 쓰면 위치가 어긋난다.
+  filterText = "",
+): Point => {
   if (key === "search") {
     return { x: FIELD_X + FIELD_W / 2, y: SEARCH_Y + SEARCH_H / 2 };
   }
@@ -86,8 +101,10 @@ export const swapModalPoint = (key: "search" | `option_${string}` | "reason" | "
     return { x: CANCEL_X + CANCEL_W / 2, y: FOOTER_Y + FOOTER_H / 2 };
   }
   const name = key.slice("option_".length);
-  const idx = Math.max(0, OPTION_ORDER.indexOf(name));
-  const dividerOffset = idx >= PRIMARY_COUNT ? 6 : 0;
+  const rows = groupOptions(1, filterText);
+  const idx = Math.max(0, rows.findIndex((t) => t.name === name));
+  const dividerAt = rows.findIndex((t) => t.dividerBefore);
+  const dividerOffset = dividerAt >= 0 && idx >= dividerAt ? 6 : 0;
   return { x: FIELD_X + FIELD_W / 2, y: DROP_TOP + idx * DROP_ROW_H + dividerOffset + DROP_ROW_H / 2 };
 };
 
@@ -121,9 +138,9 @@ export const SwapModalMock: React.FC<SwapModalMockProps> = ({
   const dropdownOpen = dropdownOpenAt !== undefined && frame >= dropdownOpenAt && !isPicked;
   const disabled = !isPicked || Boolean(busy);
 
-  const primary = TEACHERS.filter((t) => t.primaryGrade === grade);
-  const others = TEACHERS.filter((t) => t.primaryGrade !== grade);
-  const optionRows = [...primary.map((t) => ({ ...t, dividerBefore: false })), ...others.map((t, i) => ({ ...t, dividerBefore: i === 0 && primary.length > 0 }))];
+  // 442-456행: 입력한 글자로 목록을 거른다(TeacherSearchSelect 386행 filtered).
+  const query = isPicked ? "" : typedSlice(search.text, frame, search.typeFrom);
+  const optionRows = groupOptions(grade, query);
 
   return (
     <div style={{ position: "absolute", left: 0, top: 0, width: PC_VIEWPORT.w, height: PC_VIEWPORT.h, background: "rgba(0,0,0,0.4)", fontFamily: FONT }}>
@@ -179,28 +196,40 @@ export const SwapModalMock: React.FC<SwapModalMockProps> = ({
               zIndex: 2,
             }}
           >
-            {optionRows.map((t) => (
-              <div
-                key={t.id}
-                style={{
-                  height: DROP_ROW_H,
-                  marginTop: t.dividerBefore ? 6 : 0,
-                  borderTop: t.dividerBefore ? `1px solid ${tw.gray[300]}` : "none",
-                  display: "flex",
-                  alignItems: "center",
-                  padding: "0 12px",
-                  gap: 6,
-                  fontSize: 13,
-                  color: t.name === picked ? tw.blue[700] : tw.gray[700],
-                  fontWeight: t.name === picked ? 600 : 400,
-                  whiteSpace: "nowrap",
-                  boxSizing: "border-box",
-                }}
-              >
-                <span>{t.name}</span>
-                <span style={{ fontSize: 11, color: tw.gray[400] }}>{t.primaryGrade}학년</span>
+            {optionRows.length === 0 && query ? (
+              <div style={{ height: DROP_ROW_H, display: "flex", alignItems: "center", padding: "0 12px", fontSize: 13, color: tw.gray[400], whiteSpace: "nowrap" }}>
+                검색 결과가 없습니다
               </div>
-            ))}
+            ) : (
+              optionRows.map((t, idx) => {
+                const isPickedRow = t.name === picked;
+                // TeacherSearchSelect highlightIdx: 목록이 바뀔 때마다 0으로 리셋되어 맨 위 행이 파란 강조.
+                const isHighlighted = idx === 0 && !isPickedRow;
+                return (
+                  <div
+                    key={t.id}
+                    style={{
+                      height: DROP_ROW_H,
+                      marginTop: t.dividerBefore ? 6 : 0,
+                      borderTop: t.dividerBefore ? `1px solid ${tw.gray[300]}` : "none",
+                      display: "flex",
+                      alignItems: "center",
+                      padding: "0 12px",
+                      gap: 6,
+                      fontSize: 13,
+                      background: isHighlighted ? tw.blue[50] : "transparent",
+                      color: isPickedRow || isHighlighted ? tw.blue[700] : tw.gray[700],
+                      fontWeight: isPickedRow ? 600 : 400,
+                      whiteSpace: "nowrap",
+                      boxSizing: "border-box",
+                    }}
+                  >
+                    <span>{t.name}</span>
+                    <span style={{ fontSize: 11, color: tw.gray[400] }}>{t.primaryGrade}학년</span>
+                  </div>
+                );
+              })
+            )}
           </div>
         ) : null}
 
@@ -251,7 +280,7 @@ export const SwapModalMock: React.FC<SwapModalMockProps> = ({
         <div
           style={{
             position: "absolute",
-            left: CANCEL_X,
+            left: CANCEL_X - PANEL_X,
             top: FOOTER_Y - PANEL_Y,
             width: CANCEL_W,
             height: FOOTER_H,
@@ -271,7 +300,7 @@ export const SwapModalMock: React.FC<SwapModalMockProps> = ({
         <div
           style={{
             position: "absolute",
-            left: CONFIRM_X,
+            left: CONFIRM_X - PANEL_X,
             top: FOOTER_Y - PANEL_Y,
             width: CONFIRM_W,
             height: FOOTER_H,

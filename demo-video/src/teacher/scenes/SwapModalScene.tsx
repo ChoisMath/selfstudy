@@ -3,7 +3,6 @@ import { useCurrentFrame } from "remotion";
 import { tween } from "../../anim";
 import { APP_URL, SUPERVISOR_SEPT, SWAP_EXAMPLE, TEACHERS } from "../../app-mocks/data";
 import { PC_SCALE, PC_VIEWPORT, PcViewport, pcAbs, pcRectAbs, type Point } from "../../app-mocks/layout";
-import { tw } from "../../app-mocks/tw";
 import { Annotation } from "../../components/Annotation";
 import { BrowserFrame } from "../../components/BrowserFrame";
 import { Cursor } from "../../components/Cursor";
@@ -63,60 +62,7 @@ const FIELD_W = PANEL_W - PANEL_PAD * 2;
 const SEARCH_H = 38;
 const REASON_H = 54;
 
-// 앱 TeacherSearchSelect 는 입력한 글자로 목록을 거른다. 목업 드롭다운은 거르지 않아 입력 뒤 목록은 장면에서 그린다.
-const DROP_ROW_H = 30;
 const searchPoint = swapModalPoint("search");
-const filteredDrop = { x: searchPoint.x - FIELD_W / 2, y: searchPoint.y + SEARCH_H / 2 + 4, w: FIELD_W, h: DROP_ROW_H + 2 };
-const filteredTeachers = TEACHERS.filter((t) => t.name.includes(SEARCH_TEXT));
-
-// SwapModalMock 우회: 취소·교체 버튼 left 에 뷰포트 x(CANCEL_X·CONFIRM_X)를 패널 안에서 그대로 써서 패널 x 만큼 오른쪽
-// 바깥에 그려진다. 마지막 두 자식(취소·교체)만 되돌려 swapModalPoint 위치에 맞춘다. 목업이 고쳐지면 이 스타일을 지울 것.
-const SWAP_FOOTER_FIX_CSS = `[data-swap-footer-fix] > div > div > div:nth-last-child(-n+2) { translate: ${-PANEL.x}px 0px; }`;
-
-const SwapModal: React.FC<React.ComponentProps<typeof SwapModalMock>> = (props) => (
-  <div data-swap-footer-fix="" style={{ position: "absolute", inset: 0 }}>
-    <style>{SWAP_FOOTER_FIX_CSS}</style>
-    <SwapModalMock {...props} />
-  </div>
-);
-
-const FilteredDropdown: React.FC = () => (
-  <div
-    style={{
-      position: "absolute",
-      left: filteredDrop.x,
-      top: filteredDrop.y,
-      width: filteredDrop.w,
-      background: tw.white,
-      border: `1px solid ${tw.gray[200]}`,
-      borderRadius: 6,
-      boxShadow: "0 4px 12px rgba(0,0,0,0.12)",
-      boxSizing: "border-box",
-      overflow: "hidden",
-      fontFamily: FONT,
-    }}
-  >
-    {filteredTeachers.map((t, idx) => (
-      <div
-        key={t.id}
-        style={{
-          height: DROP_ROW_H,
-          display: "flex",
-          alignItems: "center",
-          padding: "0 12px",
-          gap: 6,
-          fontSize: 13,
-          background: idx === 0 ? tw.blue[50] : tw.white,
-          color: idx === 0 ? tw.blue[700] : tw.gray[700],
-          whiteSpace: "nowrap",
-        }}
-      >
-        <span>{t.name}</span>
-        <span style={{ fontSize: 11, color: tw.gray[400] }}>{t.primaryGrade}학년</span>
-      </div>
-    ))}
-  </div>
-);
 
 const Stage: React.FC = () => {
   const frame = useCurrentFrame();
@@ -125,7 +71,6 @@ const Stage: React.FC = () => {
     tween(frame, [modalOpenAt, modalOpenAt + MODAL_FADE_IN], [0, 1]) *
     tween(frame, [modalCloseAt, modalCloseAt + MODAL_FADE_OUT], [1, 0]);
   const modalVisible = frame >= modalOpenAt && frame < modalCloseAt + MODAL_FADE_OUT;
-  const filtering = frame >= typeFrom && frame < pickAt;
   return (
     <BrowserFrame url={`${APP_URL}/homeroom/schedule`} tabTitle={TAB_TITLE}>
       <PcViewport>
@@ -138,17 +83,16 @@ const Stage: React.FC = () => {
         </HomeroomShellMock>
         {modalVisible ? (
           <div style={{ position: "absolute", inset: 0, opacity: modalOpacity }}>
-            <SwapModal
+            <SwapModalMock
               date={SWAP_EXAMPLE.date}
               grade={SWAP_GRADE}
               search={{ text: SEARCH_TEXT, typeFrom }}
-              dropdownOpenAt={frame < typeFrom ? searchClick + 2 : undefined}
+              dropdownOpenAt={searchClick + 2}
               picked={frame >= pickAt ? SWAP_EXAMPLE.to : undefined}
               reason={{ text: SWAP_EXAMPLE.reason, typeFrom: reasonTypeFrom }}
               confirmPressAt={confirmClick}
               busy={frame >= busyFrom}
             />
-            {filtering ? <FilteredDropdown /> : null}
           </div>
         ) : null}
       </PcViewport>
@@ -231,7 +175,7 @@ const OtherGradeInset: React.FC = () => {
             transformOrigin: "top left",
           }}
         >
-          <SwapModal
+          <SwapModalMock
             date={OTHER_GRADE_DATE}
             grade={SWAP_GRADE}
             search={{ text: "" }}
@@ -251,7 +195,8 @@ export const SwapModalScene: React.FC<DemoProps> = () => {
   const row = pcRectAbs(calendarRowRect(SWAP_EXAMPLE.date, SWAP_GRADE));
   const rowPoint = { x: row.x + row.width * 0.72, y: row.y + row.height / 2 };
   const search = pcAbs(searchPoint);
-  const option = pcAbs({ x: filteredDrop.x + 60, y: filteredDrop.y + DROP_ROW_H / 2 });
+  // pickClick 시점엔 "이수"까지 다 입력돼 목록이 이수민 한 명으로 걸러져 있다.
+  const option = pcAbs(swapModalPoint(`option_${SWAP_EXAMPLE.to}`, SEARCH_TEXT));
   const reason = pcAbs(swapModalPoint("reason"));
   const confirm = pcAbs(confirmPoint);
   const searchBox = pcRectAbs({ x: searchPoint.x - FIELD_W / 2, y: searchPoint.y - SEARCH_H / 2, w: FIELD_W, h: SEARCH_H });

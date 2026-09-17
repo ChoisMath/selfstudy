@@ -70,10 +70,6 @@ export const AttendancePcPage: React.FC<{ chipPressAt?: number }> = ({ chipPress
   />
 );
 
-// ScheduleCalendarMock 우회: 날짜 칸을 그리드 기준 row*ROW_H 에 두어 요일 헤더 높이(26)만큼 위로 올라가 첫 주 날짜가
-// 헤더에 가려진다. 칸만 26 내려 scheduleRect 위치에 맞춘다. 목업이 고쳐지면 이 스타일과 CALENDAR_ROW_NUDGE 를 지울 것.
-const CALENDAR_DAY_HEADER_H = 26;
-const CALENDAR_FIX_CSS = `[data-calendar-fix] > div > div:nth-child(3) > div:nth-child(n+2) { translate: 0px ${CALENDAR_DAY_HEADER_H}px; }`;
 // 칸 padding-top 3px 은 scheduleRect 에 빠져 있다. 오늘 칸은 날짜가 20px 줄 대신 18px 원이라 2px 위에 그려진다.
 const CALENDAR_ROW_NUDGE = 3;
 const TODAY_CIRCLE_NUDGE = -2;
@@ -85,8 +81,7 @@ export const SchedulePage: React.FC<{
   totalsPressAt?: number;
   changedCell?: { date: string; grade: 1 | 2 | 3; from: number };
 }> = ({ assignments = SUPERVISOR_SEPT, rowPressAt, totalsPressAt, changedCell }) => (
-  <div data-calendar-fix="" style={{ position: "absolute", inset: 0 }}>
-    <style>{CALENDAR_FIX_CSS}</style>
+  <div style={{ position: "absolute", inset: 0 }}>
     <ScheduleCalendarMock
       width={HOMEROOM_BODY.w}
       month="2026-09"
