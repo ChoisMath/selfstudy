@@ -18,6 +18,8 @@ const SEAT_CONTEXT_ALLOWLIST = new Set([
   "app/api/grade-admin/[grade]/classrooms/[id]/route.ts",
   // 좌석 세션 분기(seatSession === "afternoon") 와 "오후 전체" 편의 선택(sessionTypesOfSeat("afternoon"))
   "app/attendance/[grade]/page.tsx",
+  // 좌석 확인 카드: 기본 탭 폴백과 교탁 표시(오후만) 분기
+  "components/student/SeatCheckCard.tsx",
   "app/student/absence-requests/page.tsx",
 ]);
 

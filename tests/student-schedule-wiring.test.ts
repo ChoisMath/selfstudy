@@ -19,4 +19,19 @@ assert.match(seatGrid, /aria-current=\{isMine \? "true" : undefined\}/, "내 자
 assert.match(seatGrid, /min-h-11/, "좌석 셀 높이가 44px 미만");
 assert.match(seatGrid, /whitespace-nowrap/, "이름 줄바꿈 방지가 없음");
 
+// --- 좌석 확인 카드: 오후/야간 탭, 기본 탭은 렌더 파생, ClassroomFrame 재사용, 가로 스크롤 래퍼 ---
+const seatCard = read("../src/components/student/SeatCheckCard.tsx");
+assert.match(seatCard, /useSWR<StudentSeatsResponse>\("\/api\/student\/seats"/, "좌석 API 를 SWR 로 조회하지 않음");
+assert.match(seatCard, /SEAT_SESSION_TYPES\.map/, "탭을 SEAT_SESSION_TYPES 로 그리지 않음");
+assert.match(seatCard, /useState<SeatSessionType \| null>\(null\)/, "탭 선택 상태가 없음");
+assert.match(seatCard, /picked \?\? firstWithGroup \?\? "afternoon"/, "기본 탭을 렌더에서 파생하지 않음");
+assert.doesNotMatch(seatCard, /useEffect/, "effect 안 setState 금지 — 파생값으로 계산");
+assert.match(seatCard, /import ClassroomFrame from/, "학급 그룹을 ClassroomFrame 으로 그리지 않음");
+assert.match(seatCard, /variant="screen"/, "ClassroomFrame 화면 variant 가 아님");
+assert.match(seatCard, /<div className="overflow-x-auto">/, "격자 래퍼에 가로 스크롤이 없음");
+assert.match(seatCard, /GAP_CONFIG\[room\.name\]/, "야간 미래혜윰실 블록 간격을 재사용하지 않음");
+assert.match(seatCard, /내 자리: /, "내 자리 위치 문구가 없음");
+assert.match(seatCard, /배정된 좌석이 없습니다\./, "좌석 없음 문구가 없음");
+assert.match(seatCard, /sessionTypesOfSeat\(tab\)\.some/, "미참가 판정을 좌석 세션의 블록으로 하지 않음");
+
 console.log("student-schedule-wiring checks passed");
