@@ -1072,7 +1072,7 @@ export default function AttendanceGradePage() {
             rooms.map((room) => renderAttendanceRoom(room, {}))
           )}
 
-          {rooms.length === 0 && (
+          {tab !== "absence" && rooms.length === 0 && (
             <div className="text-center text-gray-500 py-12">
               좌석 배치가 설정되지 않았습니다.
             </div>

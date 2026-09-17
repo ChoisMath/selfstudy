@@ -40,4 +40,7 @@ assert.doesNotMatch(page, /"오후자습" : "야간자습"/, "옛 세션 라벨 
 assert.match(page, /tab === "absence"\s*\?\s*`\/api\/attendance\/supervisor\?date=\$\{selectedDate\}&grade=\$\{grade\}`/, "불참신청 탭에서 감독교사 조회 API 를 부르지 않음");
 assert.match(page, /const supervisor =\s*tab === "absence" \? absenceSupervisorData\?\.supervisor : data\?\.supervisor/, "감독 칩이 탭에 따라 소스를 나누지 않음");
 
+// 불참신청 탭은 좌석 데이터를 불러오지 않아 rooms 가 비므로, 빈 배치 안내는 좌석 탭에서만 보여야 한다.
+assert.match(page, /\{tab !== "absence" && rooms\.length === 0 && \(/, "불참신청 탭에서 '좌석 배치가 설정되지 않았습니다.' 가 함께 보임");
+
 console.log("attendance-page-wiring checks passed");
