@@ -1,6 +1,7 @@
 // src/app/attendance/[grade]/page.tsx 불참신청 일괄승인 모달(1107-1195행) 이식. 폰 폭(390) 기준으로 좁혀 그린다.
 import React from "react";
 import { useCurrentFrame } from "remotion";
+import { tween } from "../../anim";
 import type { Point } from "../../app-mocks/layout";
 import { pressScale } from "../../app-mocks/primitives";
 import { FONT } from "../../fonts";
@@ -60,7 +61,7 @@ export const BulkApproveModalMock: React.FC<{
   if (openAt !== undefined && frame < openAt) {
     return null;
   }
-  const enter = openAt !== undefined ? Math.min(1, Math.max(0, (frame - openAt) / 10)) : 1;
+  const enter = openAt !== undefined ? tween(frame, [openAt, openAt + 10], [0, 1]) : 1;
   const dialog = dialogGeometry(width, height, rows.length);
   const tableW = dialog.w - BODY_PAD * 2;
   const disabled = Boolean(busy) || rows.length === 0;

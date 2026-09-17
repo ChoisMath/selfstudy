@@ -1,6 +1,7 @@
 // src/app/attendance/[grade]/page.tsx renderAbsenceRequests (789-884행) 이식. 폰 본문 폭(390) 기준, 세로는 내용에 맞춰 자란다.
 import React from "react";
 import { useCurrentFrame } from "remotion";
+import { tween } from "../../anim";
 import type { Point, Rect } from "../../app-mocks/layout";
 import { pressScale } from "../../app-mocks/primitives";
 import { FONT } from "../../fonts";
@@ -33,6 +34,7 @@ const CARD_DETAIL_GAP = 2; // mt-0.5
 const CARD_DETAIL_H = 14;
 const CARD_REVIEWER_GAP = 4; // mt-1
 const CARD_REVIEWER_H = 14;
+const REMOVE_FRAMES = 8; // 모달 등장(10프레임)보다 퇴장이 빨라야 한다.
 
 // px-3(양쪽 12) + 글자당 대략 폭. 커서 좌표용 근사치 — 픽셀 완전 일치 불필요.
 const pillWidth = (label: string) => label.length * 8 + 24;
@@ -157,8 +159,8 @@ const AbsenceCard: React.FC<{
   const frame = useCurrentFrame();
   const student = studentById(request.studentId);
   const reason = ABSENCE_REASON_META[request.reason];
-  const opacity = removeFrom === undefined ? 1 : Math.max(0, 1 - (frame - removeFrom) / 16);
-  if (removeFrom !== undefined && frame >= removeFrom + 16) {
+  const opacity = removeFrom === undefined ? 1 : tween(frame, [removeFrom, removeFrom + REMOVE_FRAMES], [1, 0]);
+  if (removeFrom !== undefined && frame >= removeFrom + REMOVE_FRAMES) {
     return null;
   }
   return (

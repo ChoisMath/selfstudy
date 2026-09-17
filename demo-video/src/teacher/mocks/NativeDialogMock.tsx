@@ -2,6 +2,7 @@
 // 앱 CSS가 그리지 않는 OS 수준 UI라 tw 팔레트 대신 중립 회색/파랑을 쓴다 — 브랜드 표기 없이 Android/iOS 공통 인상만 낸다.
 import React from "react";
 import { useCurrentFrame } from "remotion";
+import { tween } from "../../anim";
 import type { Point } from "../../app-mocks/layout";
 import { pressScale } from "../../app-mocks/primitives";
 import { FONT } from "../../fonts";
@@ -42,7 +43,7 @@ export const NativeDialogMock: React.FC<{
   if (openAt !== undefined && frame < openAt) {
     return null;
   }
-  const enter = openAt !== undefined ? Math.min(1, Math.max(0, (frame - openAt) / 8)) : 1;
+  const enter = openAt !== undefined ? tween(frame, [openAt, openAt + 8], [0, 1]) : 1;
   const w = Math.min(280, width - 64);
 
   return (

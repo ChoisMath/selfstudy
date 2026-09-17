@@ -2,6 +2,7 @@
 // 1024px 미만 = 모달 변형만 그린다(데스크톱 인라인 팝업은 대상 아님).
 import React from "react";
 import { useCurrentFrame } from "remotion";
+import { tween } from "../../anim";
 import type { Rect } from "../../app-mocks/layout";
 import { TypedText } from "../../app-mocks/primitives";
 import { tw } from "../../app-mocks/tw";
@@ -93,7 +94,7 @@ export const WeeklyInfoModalMock: React.FC<{
   if (openAt !== undefined && frame < openAt) {
     return null;
   }
-  const enter = openAt !== undefined ? Math.min(1, Math.max(0, (frame - openAt) / 10)) : 1;
+  const enter = openAt !== undefined ? tween(frame, [openAt, openAt + 10], [0, 1]) : 1;
   const dialog = dialogGeometry(width, height);
   const content = contentGeometry(width, height);
 
