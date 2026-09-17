@@ -34,6 +34,11 @@ const reasonClick = lineAt(ID, 2, 0.3);
 const detailClick = lineAt(ID, 2, 0.42);
 const submitClick = lineAt(ID, 2, 0.7);
 const successFrom = submitClick + 8;
+// 앱은 성공과 동시에 학생·상세 칸을 비우지만, 채워진 폼과 성공 메시지가 함께 보이는 구간을 문장 2 끝까지 두고
+// (안내 페이지 스틸이 이 구간에서 뽑힌다) 비우는 모습은 문장 3 시작에 보여 준다.
+const clearedFrom = lineStart(ID, 3);
+
+const CLEARED_NOTE_FRAMES = 40;
 
 const monthlyInsetFrom = lineAt(ID, 3, 0.03);
 const boardInsetFrom = lineAt(ID, 3, 0.48);
@@ -62,6 +67,7 @@ const Stage: React.FC = () => {
                   detailTypeFrom: detailClick + 4,
                   submitPressAt: submitClick,
                   successFrom,
+                  clearedFrom,
                 }}
                 selectOpen={{ from: studentClick + 2, to: optionClick + 4 }}
               />
@@ -188,6 +194,7 @@ export const AbsenceReasonScene: React.FC<DemoProps> = () => {
   const detail = point("detail");
   const submit = point("submit");
 
+  const studentField = bodyRect(absenceReasonRect("student", W));
   const sessionGroup = bodyRect(absenceReasonRect("sessionGroup", W));
   const reasonGroup = bodyRect(absenceReasonRect("reasonGroup", W));
   const success = bodyRect(absenceReasonRect("message", W));
@@ -228,14 +235,22 @@ export const AbsenceReasonScene: React.FC<DemoProps> = () => {
         label="학원 · 방과후 · 질병 · 기타"
         labelPosition="right"
       />
-      {/* 앱은 등록에 성공하면 학생·상세 사유 칸을 비운다 — 빈 칸이 실패로 보이지 않게 라벨로 함께 알린다. */}
       <Annotation
         from={successFrom + 6}
         durationInFrames={lineEnd(ID, 2) - successFrom - 6}
         {...box(success, 4)}
-        label="등록 완료 · 입력 칸은 비워집니다"
+        label="등록 완료"
         labelPosition="right"
         color={colors.green600}
+      />
+      {/* 칸이 비는 순간을 따로 짚어, 빈 폼이 실패로 보이지 않게 한다. */}
+      <Annotation
+        from={clearedFrom + 2}
+        durationInFrames={CLEARED_NOTE_FRAMES}
+        {...box(studentField, 4)}
+        label="입력 칸은 비워집니다"
+        labelPosition="right"
+        color={colors.gray700}
       />
 
       <MonthlyInset x={MONTHLY_INSET.x} y={MONTHLY_INSET.y} from={monthlyInsetFrom} to={insetTo} />
@@ -244,7 +259,8 @@ export const AbsenceReasonScene: React.FC<DemoProps> = () => {
         durationInFrames={insetTo - monthlyInsetFrom - 14}
         {...box(monthlyCell, 4)}
         label="△ 사유결석"
-        labelPosition="left"
+        labelPosition="bottom"
+        labelAlign="end"
       />
       <PhoneBoardInset
         x={BOARD_INSET.x}

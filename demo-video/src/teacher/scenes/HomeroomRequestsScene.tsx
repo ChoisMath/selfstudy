@@ -131,7 +131,10 @@ const Stage: React.FC = () => {
             </div>
           ) : (
             // 앞 장면(AbsenceReason)이 끝난 모습 — 등록을 마친 폼.
-            <AbsenceReasonFormMock width={W} step={{ student: SETTLED, detailTypeFrom: SETTLED, successFrom: SETTLED }} />
+            <AbsenceReasonFormMock
+              width={W}
+              step={{ student: SETTLED, detailTypeFrom: SETTLED, successFrom: SETTLED, clearedFrom: SETTLED }}
+            />
           )}
         </HomeroomShellMock>
         <BrowserConfirm message="이 신청을 승인하시겠습니까?" openAt={confirmOpen} closeAt={confirmClose} okPressAt={okClick} />

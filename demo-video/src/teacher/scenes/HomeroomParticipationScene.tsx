@@ -233,12 +233,14 @@ export const HomeroomParticipationScene: React.FC<DemoProps> = () => {
         labelPosition="top"
       />
 
+      {/* 라벨을 왼쪽에 두면 같은 줄의 화·수 요일 버튼을 덮는다 — 아래 줄 쪽 빈 자리로 내린다. */}
       <Annotation
         from={afterSchoolClick + 6}
         durationInFrames={lineEnd(ID, 4) - afterSchoolClick - 6}
         {...box(afterSchool, 4)}
         label="방과후 체크"
-        labelPosition="left"
+        labelPosition="bottom"
+        labelAlign="end"
       />
       <PhoneBoardInset
         x={INSET_X}

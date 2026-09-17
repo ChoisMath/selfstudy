@@ -190,6 +190,9 @@ export const AbsenceReasonFormMock: React.FC<{
     detailTypeFrom?: number;
     submitPressAt?: number;
     successFrom?: number;
+    // 앱은 등록 성공과 동시에 칸을 비우지만, 장면은 채워진 폼과 성공 메시지를 함께 보여준 뒤
+    // 비우는 순간을 따로 잡을 수 있어야 해서 성공 프레임과 분리한다.
+    clearedFrom?: number;
   };
   selectOpen?: { from: number; to: number };
 }> = ({ width, step, selectOpen }) => {
@@ -199,7 +202,7 @@ export const AbsenceReasonFormMock: React.FC<{
   const fieldW = cw - CARD_PAD * 2;
 
   // 앱은 등록에 성공하면 학생·상세 사유만 비운다(absence-reasons/page.tsx 72-73행) — 날짜·시간·사유 유형은 그대로 남는다.
-  const cleared = step.successFrom !== undefined && frame >= step.successFrom;
+  const cleared = step.clearedFrom !== undefined && frame >= step.clearedFrom;
   const studentPicked = step.student !== undefined && frame >= step.student && !cleared;
   const successOpacity =
     step.successFrom !== undefined ? tween(frame, [step.successFrom, step.successFrom + 8], [0, 1]) : 0;
