@@ -15,7 +15,7 @@ export function GuideNotice({
 }) {
   return (
     <aside className={`mt-12 rounded-lg border px-4 py-4 sm:px-6 ${TONES[tone]}`}>
-      <h2 className="overflow-hidden text-ellipsis whitespace-nowrap text-lg font-bold">{title}</h2>
+      <h2 title={title} className="overflow-hidden text-ellipsis whitespace-nowrap text-lg font-bold">{title}</h2>
       <ul className="mt-3 flex flex-col gap-2">
         {items.map(([emphasis, body]) => (
           <li key={emphasis} className="break-keep leading-7">

@@ -47,4 +47,13 @@ const hub = read("src/app/help/page.tsx");
 assert.doesNotMatch(hub, /<header/, "헤더는 help/layout.tsx 로 이동");
 assert.match(hub, /<HelpContent\s*\/>/);
 
+// 말줄임 제목은 잘린 원문을 title 로 보여준다(반응형 규칙 §2).
+assert.match(read(`${GUIDE}/GuideChapter.tsx`), /<h2 title=\{title\}/);
+assert.match(read(`${GUIDE}/GuideStep.tsx`), /<span title=\{title\}/);
+assert.match(read(`${GUIDE}/GuideNotice.tsx`), /<h2 title=\{title\}/);
+// 폰 스크린샷 3장이 데스크톱 카드 안에 가로 스크롤 없이 들어간다.
+assert.match(read(`${GUIDE}/GuideStep.tsx`), /lg:w-\[290px\]/);
+// 태블릿 바깥 여백은 8~12px(§1): sm:px-6 을 쓰지 않는다.
+assert.doesNotMatch(read("src/app/help/layout.tsx"), /sm:px-6/);
+
 console.log("guide-components checks passed");

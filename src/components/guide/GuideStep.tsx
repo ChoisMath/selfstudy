@@ -23,7 +23,7 @@ export function GuideStep({
         <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-600 text-sm font-bold text-white">
           {number}
         </span>
-        <span className="overflow-hidden text-ellipsis whitespace-nowrap text-lg font-semibold text-gray-900">{title}</span>
+        <span title={title} className="overflow-hidden text-ellipsis whitespace-nowrap text-lg font-semibold text-gray-900">{title}</span>
       </h3>
       <div className={hasTall ? "flex gap-3 overflow-x-auto pb-1" : "flex flex-col gap-3"}>
         {images.map((image) => (
@@ -36,7 +36,7 @@ export function GuideStep({
             unoptimized
             className={
               image.tall
-                ? "h-auto w-[min(320px,80vw)] shrink-0 rounded-2xl border border-gray-200"
+                ? "h-auto w-[min(320px,80vw)] shrink-0 rounded-2xl border border-gray-200 lg:w-[290px]"
                 : "h-auto w-full rounded-lg border border-gray-200"
             }
           />
