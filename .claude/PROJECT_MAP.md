@@ -346,7 +346,7 @@ SupervisorReminderLog: teacherId, grade, date(@db.Date), sentAt — @@unique([te
 ## 주의사항 / 특이 패턴
 
 - `react-hooks/set-state-in-effect`는 eslint 오류(빌드 게이트 아님)이며 "이전 값 저장 후 렌더 중 상태 조정" 패턴으로 대응 — `eslint-disable` 금지. 검수(tsc/eslint/build)는 `~/dev/selfstudy` 로컬 클론에서 실행(Google Drive 트리는 I/O로 정지)
-- 표 래퍼는 `overflow-x-auto table-scroll`(`globals.css` `@utility`, `--header-h` 기반 내부 스크롤포트) + thead `sticky top-0 z-20` / thead 안 인덱스 th `z-30` / 본문 인덱스 td `z-10` 관행 — 래퍼에 `overflow-x-auto`만 두면 높이 제한이 없어 sticky thead가 붙지 않음. 새 표는 이 구조를 따르고 `tests/responsive-tables.test.ts`의 `TABLE_FILES`에 추가. 헤더가 다른 레이아웃은 루트에 `[--header-h:…]` 재정의(학생 `7.625rem`)
+- 표 래퍼는 `overflow-x-auto table-scroll`(`globals.css` `@utility`, `--header-h` 기반 내부 스크롤포트) + thead `sticky top-0 z-20` / thead 안 인덱스 th `z-30` / 본문 인덱스 td `z-10` 관행 — 래퍼에 `overflow-x-auto`만 두면 높이 제한이 없어 sticky thead가 붙지 않음. 새 표는 이 구조를 따르고 `tests/responsive-tables.test.ts`의 `TABLE_FILES`에 추가. 헤더가 다른 레이아웃은 루트에 `[--header-h:…]` 재정의(학생 `7.625rem`, 담임 `6.25rem` + `lg:[--header-h:3.5rem]` — lg 미만에서 탭이 2행째로 내려감)
 - `RoomGrid`에는 X(해제) 버튼이 없음 — 해제는 좌석 탭→선택→`SeatingEditor` 하단 액션바, 또는 좌석→`UnassignedStudents` 패널 드롭(`UNASSIGNED_DROP_ID`). `tests/responsive-tables.test.ts`·`tests/seating-editor-responsive.test.ts`가 클래스/식별자를 src 스캔으로 고정하므로 관련 클래스(`min-h-11`, `z-20`, `table-scroll`, `ring-2 ring-blue-500` 등) 변경 시 테스트도 함께 갱신
 - **학급 구조 변경은 좌석 배정을 초기화함**: 배치 유형·분단 수·분단별 행 수 중 하나라도 바뀌면(`isGeometryChanged`) `PUT /api/grade-admin/[grade]/classrooms/[id]`가 그 학급의 SeatLayout을 전부 삭제하고 Room을 재생성 — 복도 위치(`corridorSide`)만 바꾸면 배정 보존. 클라이언트(`ClassroomConfigModal`)는 `assignedCount>0`이고 기하가 바뀔 때만 `confirm()` 경고
 - 미래혜윰실·야간 Room은 `classroomId=null`로 고정 — `Classroom`은 오후 자율학습의 **일반 학급 교실**(4·5·6반) 전용이며, 담임교사는 구조를 수정할 수 없음(학년관리자/메인관리자만)
