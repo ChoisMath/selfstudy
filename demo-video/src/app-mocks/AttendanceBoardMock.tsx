@@ -506,10 +506,13 @@ export const buildNightGroups = (
 const allSeats = (groups: SeatGroupView[]): SeatView[] =>
   groups.flatMap((g) => [...(g.classroom?.divisions.flat(2) ?? []), ...(g.rooms ?? []).flatMap((r) => r.rows.flat())]);
 
-// 앱 출석 카운트(269-283행): 참여 학생만 세고, 불참승인·선택 칸은 기록이 없으면 미체크에 들어간다.
+// 앱 출석 카운트(269-283행): 참여 학생만 세고, 출결 기록의 status 로 센다.
+// 불참승인 좌석은 노란색이지만 승인 API 가 그 교시 출결을 결석으로 남기므로(api/homeroom/absence-requests/[id],
+// lib/absence-request-bulk-approval.ts) 결석으로 센다.
 export const countsOf = (groups: SeatGroupView[]): BoardCounts => {
   const participating = allSeats(groups).filter((s) => s.visual !== "inactive" && s.visual !== "activated");
-  const statusOf = (s: SeatView) => (s.visual === "afterschool" ? s.afterSchoolStatus ?? "unchecked" : s.visual);
+  const statusOf = (s: SeatView) =>
+    s.visual === "afterschool" ? s.afterSchoolStatus ?? "unchecked" : s.visual === "approved" ? "absent" : s.visual;
   const present = participating.filter((s) => statusOf(s) === "present").length;
   const absent = participating.filter((s) => statusOf(s) === "absent").length;
   const afterSchool = participating.filter((s) => s.visual === "afterschool" && statusOf(s) === "unchecked").length;

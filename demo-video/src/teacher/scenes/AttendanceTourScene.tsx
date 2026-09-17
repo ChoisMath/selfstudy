@@ -3,7 +3,7 @@ import { useCurrentFrame } from "remotion";
 import { Annotation } from "../../components/Annotation";
 import { Cursor } from "../../components/Cursor";
 import { PhoneFrame } from "../../components/PhoneFrame";
-import { PHONE_CROP, PHONE_X, PHONE_Y, phoneAbs, phoneLeftLabelGap, phoneRectAbs } from "../../components/phone";
+import { PHONE_X, PHONE_Y, phoneAbs } from "../../components/phone";
 import { colors } from "../../theme";
 import { easeInOut, tween } from "../../anim";
 import { GuideScene } from "../../guide/GuideScene";
@@ -15,63 +15,17 @@ import {
   boardPoint,
   boardRect,
   buildAfternoonGroups,
-  countsOf,
-  type AttendanceBoardProps,
 } from "../../app-mocks/AttendanceBoardMock";
 import { textWidth } from "../../app-mocks/AttendanceHeaderMock";
 import { vwClamp } from "../../app-mocks/SeatCellMock";
-import { ABSENCE_REQUESTS, APP_HOST, GRADE, ME, SUPERVISOR_SEPT, TODAY, TODAY_LABEL } from "../../app-mocks/data";
+import { GRADE, TODAY_LABEL } from "../../app-mocks/data";
 import { PHONE_BODY, type Point, type Rect } from "../../app-mocks/layout";
 import type { DemoProps } from "../../props";
-
-// 교사 폰 장면(Login·AttendanceTour·SeatTap·CopySession)이 함께 쓰는 출석부 기본값과 주석 도우미.
-export const BOARD_URL = `${APP_HOST}/attendance/${GRADE}`;
-
-export const boardProps = (
-  overrides: Partial<AttendanceBoardProps> & Pick<AttendanceBoardProps, "tab" | "groups">,
-): AttendanceBoardProps => ({
-  width: PHONE_BODY.w,
-  height: PHONE_BODY.h,
-  header: { width: PHONE_BODY.w, role: "homeroom", name: ME.name, showHelp: true },
-  dateLabel: TODAY_LABEL,
-  supervisor: SUPERVISOR_SEPT[TODAY][GRADE],
-  grade: GRADE,
-  counts: countsOf(overrides.groups),
-  pendingBadge: ABSENCE_REQUESTS.filter((r) => r.status === "pending").length,
-  ...overrides,
-});
-
-export const between = (from: number, to: number) => ({ from, durationInFrames: to - from });
-
-const RIGHT_LABEL_EDGE = PHONE_CROP.x + PHONE_CROP.w + 4;
-
-// 폰 안 요소 상자. 가이드 스틸은 폰만 잘라 쓰므로 라벨은 가까운 쪽 폰 바깥에 둔다.
-export const phoneBox = (r: Rect, pad: number, side: "left" | "right") => {
-  const a = phoneRectAbs(r);
-  const box = { x: a.x - pad, y: a.y - pad, width: a.width + pad * 2, height: a.height + pad * 2 };
-  return side === "left"
-    ? { ...box, labelPosition: "left" as const, labelGap: phoneLeftLabelGap(box.x) }
-    : { ...box, labelPosition: "right" as const, labelGap: RIGHT_LABEL_EDGE - (box.x + box.width) };
-};
-
-// 폰 화면을 손가락으로 누르듯 누를 때만 커서가 잠깐 나타났다 사라진다 — 스틸에 커서가 남지 않게.
-export const TapCursor: React.FC<{ at: number; target: Point }> = ({ at, target }) => {
-  const p = phoneAbs(target);
-  return (
-    <Cursor
-      path={[
-        { frame: at - 14, x: p.x + 40, y: p.y + 48 },
-        { frame: at - 3, x: p.x, y: p.y },
-      ]}
-      clicks={[at]}
-      hideAfter={at + 8}
-    />
-  );
-};
+import { BOARD_URL, ClipTo, between, dateBarBand, phoneBoardProps, phoneBox } from "./phone-helpers";
 
 const ID = "AttendanceTour";
 
-const BASE = boardProps({ tab: "afternoon1", groups: buildAfternoonGroups((id) => baseVisual(id)) });
+const BASE = phoneBoardProps({ tab: "afternoon1", groups: buildAfternoonGroups((id) => baseVisual(id)) });
 const MAX_SCROLL_X = boardDateBarMaxScrollX(BASE);
 const SCROLLED = { ...BASE, dateBarScrollX: MAX_SCROLL_X };
 const SCROLL_FRAMES = 12;
@@ -109,10 +63,12 @@ const supervisorRect = (() => {
   const left = chip.x - chipW / 2 - labelW;
   return { x: left, y: chip.y - BAR_TEXT_H / 2, w: right - left, h: BAR_TEXT_H };
 })();
+// 글자 폭 추정이 ±2px 이라 상자가 "1학년"에 닿지 않게 좌우로 2px 씩 넓힌다.
+const GRADE_SLACK = 2;
 const gradeRect = (() => {
   const counts = boardRect("counts", BASE);
   const w = textWidth(`${GRADE}학년`, supervisorFont, 700);
-  return { x: counts.x + 4 - BAR_GAP - w, y: dateRect.y, w, h: BAR_TEXT_H };
+  return { x: counts.x + 4 - BAR_GAP - w - GRADE_SLACK, y: dateRect.y, w: w + GRADE_SLACK * 2, h: BAR_TEXT_H };
 })();
 const countsRect = boardRect("counts", SCROLLED);
 const otherGradePoint = boardPoint("otherGrade", SCROLLED);
@@ -128,27 +84,33 @@ const TAB_GAP = 4;
 const tabW = (tabsRect.w - TAB_GAP * 3) / 4;
 const tabShapeY = tabsRect.y + TAB_TOP_PAD;
 const tabShapeH = tabsRect.h - TAB_TOP_PAD;
-// 두 상자가 가운데 간격 4px 을 나눠 갖는다. 불참신청 상자는 탭 오른쪽 위로 튀어나온 배지가 테두리 안쪽에 오도록 더 키운다.
+// 두 상자가 탭 모양 바깥 2px 을 나눠 갖는다(가운데 간격 4px).
+const TAB_BOX_PAD = 2;
 const sessionTabsRect: Rect = {
-  x: tabsRect.x - 2,
-  y: tabShapeY - 2,
-  w: tabW * 3 + TAB_GAP * 2 + 4,
-  h: tabShapeH + 4,
+  x: tabsRect.x - TAB_BOX_PAD,
+  y: tabShapeY - TAB_BOX_PAD,
+  w: tabW * 3 + TAB_GAP * 2 + TAB_BOX_PAD * 2,
+  h: tabShapeH + TAB_BOX_PAD * 2,
 };
-const ABSENCE_BOX_EXTRA = 5;
+// 불참신청 상자는 네 번째 탭에 맞추고, 위로만 배지(-top-1, 18px)가 테두리 안에 들어오게 넓힌다.
+const BADGE_OVERHANG = 4;
 const absenceTabRect: Rect = {
-  x: sessionTabsRect.x + sessionTabsRect.w,
-  y: tabsRect.y - ABSENCE_BOX_EXTRA,
-  w: tabW + TAB_GAP + ABSENCE_BOX_EXTRA,
-  h: tabShapeH + TAB_TOP_PAD + ABSENCE_BOX_EXTRA + 2,
+  x: tabsRect.x + (tabW + TAB_GAP) * 3 - TAB_BOX_PAD,
+  y: tabShapeY - BADGE_OVERHANG - TAB_BOX_PAD,
+  w: tabW + TAB_BOX_PAD * 2,
+  h: tabShapeH + BADGE_OVERHANG + TAB_BOX_PAD * 2,
 };
 const dateBarRect = boardRect("dateBar", BASE);
+// 상자 글로우가 상자 밖 12px 까지 번지므로, 폰 화면(390×752) 안에서 끝나도록 좌우·아래를 그만큼 들여놓는다.
+const GLOW = 12;
 const boardAreaRect: Rect = {
-  x: dateBarRect.x - 4,
+  x: dateBarRect.x,
   y: dateBarRect.y - 4,
-  w: dateBarRect.w + 8,
-  h: PHONE_BODY.h - dateBarRect.y,
+  w: dateBarRect.w,
+  h: PHONE_BODY.h - dateBarRect.y - GLOW,
 };
+
+const BAR_BAND = dateBarBand(BASE);
 
 const Stage: React.FC = () => {
   const frame = useCurrentFrame();
@@ -172,12 +134,16 @@ export const AttendanceTourScene: React.FC<DemoProps> = () => {
       <Annotation {...between(boardFrom, lineStart(ID, 1))} {...phoneBox(boardAreaRect, 0, "left")} label="담당 학년 출석부" color={colors.blue600} />
 
       <Annotation {...between(barFrom, dateFrom + 4)} {...phoneBox(dateBarRect, 4, "left")} label="파란 막대" color={colors.blue600} />
-      <Annotation {...between(dateFrom, supervisorFrom + 4)} {...phoneBox(dateRect, 4, "left")} label="오늘 날짜" color={colors.red600} />
-      <Annotation {...between(supervisorFrom, gradeFrom + 4)} {...phoneBox(supervisorRect, 4, "left")} label="감독교사" color={colors.red600} />
-      <Annotation {...between(gradeFrom, scrollFrom)} {...phoneBox(gradeRect, 5, "left")} label="학년" color={colors.red600} />
-      <Annotation {...between(countsFrom, lineEnd(ID, 1))} {...phoneBox(countsRect, 2, "right")} label="출석 · 결석 · 미체크 · 방과후" color={colors.red600} />
+      <ClipTo rect={BAR_BAND}>
+        <Annotation {...between(dateFrom, supervisorFrom + 4)} {...phoneBox(dateRect, 4, "left")} label="오늘 날짜" color={colors.red600} />
+        <Annotation {...between(supervisorFrom, gradeFrom + 4)} {...phoneBox(supervisorRect, 4, "left")} label="감독교사" color={colors.red600} />
+        <Annotation {...between(gradeFrom, scrollFrom)} {...phoneBox(gradeRect, 4, "left")} label="학년" color={colors.red600} />
+        <Annotation {...between(countsFrom, lineEnd(ID, 1))} {...phoneBox(countsRect, 2, "right")} label="출석 · 결석 · 미체크 · 방과후" color={colors.red600} />
+      </ClipTo>
 
-      <Annotation {...between(otherGradeFrom, lineEnd(ID, 2))} {...phoneBox(otherGradeRect, 5, "right")} label="다른학년" color={colors.purple600} />
+      <ClipTo rect={BAR_BAND}>
+        <Annotation {...between(otherGradeFrom, lineEnd(ID, 2))} {...phoneBox(otherGradeRect, 4, "right")} label="다른학년" color={colors.purple600} />
+      </ClipTo>
       <Cursor
         path={[
           { frame: pointFrom - 12, x: otherGrade.x - 30, y: otherGrade.y + 90 },

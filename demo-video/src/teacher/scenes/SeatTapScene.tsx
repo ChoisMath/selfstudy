@@ -18,7 +18,18 @@ import {
 import type { SeatVisual } from "../../app-mocks/SeatCellMock";
 import type { Rect } from "../../app-mocks/layout";
 import type { DemoProps } from "../../props";
-import { BOARD_URL, TapCursor, between, boardProps, phoneBox } from "./AttendanceTourScene";
+import {
+  BOARD_URL,
+  ClipTo,
+  PhoneTap,
+  SeatZoomCard,
+  between,
+  dateBarBand,
+  phoneBoardProps,
+  phoneBox,
+  phoneCenter,
+  zoomTextWidth,
+} from "./phone-helpers";
 
 const ID = "SeatTap";
 
@@ -54,7 +65,7 @@ const seatStateAt = (frame: number): SeatState => {
 };
 
 const propsAt = (frame: number) =>
-  boardProps({
+  phoneBoardProps({
     tab: "afternoon1",
     groups: buildAfternoonGroups((id) => (id === SEAT_ID ? { ...baseVisual(id), ...seatStateAt(frame) } : baseVisual(id))),
   });
@@ -76,6 +87,16 @@ const sessionTabsRect: Rect = (() => {
   return { x: tabs.x, y: tabs.y + 8, w: tabW * 3 + 4 * 2, h: tabs.h - 8 };
 })();
 
+// 폰 안 좌석 글자는 7~9px 이라 영상에서 읽히지 않는다 — 같은 좌석을 키운 카드로 상태를 설명한다(SeatColors 와 같은 장치).
+const ZOOM_LABELS = [
+  { at: uncheckedNoteFrom, title: "파란 좌석 = 미체크", sub: "아직 체크하지 않은 학생", color: colors.blue600 },
+  { at: presentTapAt + COLOR_DELAY, title: "출석", sub: "한 번 누르면 초록 출석", color: colors.green600 },
+  { at: absentTapAt + COLOR_DELAY, title: "결석", sub: "한 번 더 누르면 빨강 결석", color: colors.red600 },
+  { at: uncheckTapAt + COLOR_DELAY, title: "다시 미체크", sub: "세 번째로 누르면 파랑 미체크", color: colors.blue600 },
+  { at: saveTapAt + COLOR_DELAY, title: "누르는 순간 자동 저장", sub: "따로 저장 버튼이 없습니다", color: colors.green600 },
+];
+const ZOOM_TEXT_W = zoomTextWidth(ZOOM_LABELS);
+
 const Stage: React.FC = () => {
   const frame = useCurrentFrame();
   return (
@@ -85,31 +106,46 @@ const Stage: React.FC = () => {
   );
 };
 
-const SeatNote: React.FC<{ from: number; to: number; label: string; color: string }> = ({ from, to, label, color }) => (
-  <Annotation {...between(from, to)} {...phoneBox(seat, 4, "left")} label={label} color={color} />
+// 좌석 사이 간격은 2.3px 뿐이라 상자를 1px 만 띄운다 — 더 띄우면 옆 좌석과 그 "i" 버튼을 덮는다.
+const SEAT_BOX_PAD = 1;
+
+const SeatBox: React.FC<{ from: number; to: number; color: string }> = ({ from, to, color }) => (
+  <Annotation {...between(from, to)} {...phoneBox(seat, SEAT_BOX_PAD)} color={color} />
 );
 
 export const SeatTapScene: React.FC<DemoProps> = () => (
   <GuideScene id={ID} step={3} label="출석 체크">
     <Stage />
 
-    <Annotation {...between(cardFrom, uncheckedNoteFrom + NOTE_TAIL)} {...phoneBox(classroom, 2, "left")} label="교실 모양 그대로" color={colors.blue600} />
-    <SeatNote from={uncheckedNoteFrom} to={lineEnd(ID, 0) + NOTE_TAIL} label="파란 좌석 = 미체크" color={colors.blue600} />
+    <Annotation {...between(cardFrom, uncheckedNoteFrom)} {...phoneBox(classroom, 2, "left")} label="교실 모양 그대로" color={colors.blue600} />
 
-    <SeatNote from={presentTapAt + NOTE_DELAY} to={lineEnd(ID, 1) + NOTE_TAIL} label="출석" color={colors.green600} />
-    <Annotation
-      {...between(presentTapAt + NOTE_DELAY + 4, lineEnd(ID, 1) + NOTE_TAIL)}
-      {...phoneBox(countsRect, 2, "right")}
-      label="출석 +1 · 미체크 −1"
-      color={colors.green600}
+    <SeatBox from={uncheckedNoteFrom} to={lineEnd(ID, 0) + NOTE_TAIL} color={colors.blue600} />
+    <SeatBox from={presentTapAt + NOTE_DELAY} to={lineEnd(ID, 1) + NOTE_TAIL} color={colors.green600} />
+    <SeatBox from={absentTapAt + NOTE_DELAY} to={lineEnd(ID, 2) + NOTE_TAIL} color={colors.red600} />
+    <SeatBox from={uncheckTapAt + NOTE_DELAY} to={lineEnd(ID, 3) + NOTE_TAIL} color={colors.blue600} />
+    <SeatBox from={saveTapAt + NOTE_DELAY} to={lineEnd(ID, 4) + NOTE_TAIL} color={colors.green600} />
+    <SeatZoomCard
+      from={uncheckedNoteFrom}
+      to={lineEnd(ID, 4) + NOTE_TAIL}
+      studentId={SEAT_ID}
+      propsAt={propsAt}
+      centerY={phoneCenter(seat).y}
+      labels={ZOOM_LABELS}
+      textWidth={ZOOM_TEXT_W}
     />
-    <SeatNote from={absentTapAt + NOTE_DELAY} to={lineEnd(ID, 2) + NOTE_TAIL} label="결석" color={colors.red600} />
-    <SeatNote from={uncheckTapAt + NOTE_DELAY} to={lineEnd(ID, 3) + NOTE_TAIL} label="다시 미체크" color={colors.blue600} />
-    <SeatNote from={saveTapAt + NOTE_DELAY} to={lineEnd(ID, 4) + NOTE_TAIL} label="누르는 순간 자동 저장" color={colors.green600} />
+
+    <ClipTo rect={dateBarBand(BASE)}>
+      <Annotation
+        {...between(presentTapAt + NOTE_DELAY + 4, lineEnd(ID, 1) + NOTE_TAIL)}
+        {...phoneBox(countsRect, 2, "right")}
+        label="출석 +1 · 미체크 −1"
+        color={colors.green600}
+      />
+    </ClipTo>
     <Annotation {...between(tabsFrom, lineEnd(ID, 5) + 10)} {...phoneBox(sessionTabsRect, 3, "left")} label="탭마다 따로 체크" color={colors.blue600} />
 
     {TAPS.map((tap) => (
-      <TapCursor key={tap.at} at={tap.at} target={seatCenter} />
+      <PhoneTap key={tap.at} at={tap.at} target={seatCenter} />
     ))}
   </GuideScene>
 );

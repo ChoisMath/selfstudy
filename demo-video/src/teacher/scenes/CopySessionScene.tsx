@@ -18,19 +18,27 @@ import {
   type AttendanceBoardProps,
   type SeatState,
 } from "../../app-mocks/AttendanceBoardMock";
-import {
-  ABSENCE_REQUESTS,
-  AFTERNOON1_BASE,
-  AFTERNOON1_RESULT,
-  STUDENTS,
-  TODAY,
-  type AttendanceStatus,
-  type SeatBase,
-} from "../../app-mocks/data";
 import { PHONE_BODY, type Rect } from "../../app-mocks/layout";
 import { NativeDialogMock, nativeDialogPoint } from "../mocks/NativeDialogMock";
 import type { DemoProps } from "../../props";
-import { BOARD_URL, TapCursor, between, boardProps, phoneBox } from "./AttendanceTourScene";
+import {
+  AFTERNOON2_BASE,
+  BOARD_URL,
+  COPIED_TO_AFTERNOON2,
+  COPY_FIX_SEAT_ID,
+  COPY_SKIPPED_COUNT,
+  ClipTo,
+  PhoneTap,
+  SeatZoomCard,
+  afternoon1ResultVisual,
+  between,
+  dateBarBand,
+  phoneBoardProps,
+  phoneBox,
+  phoneCenter,
+  withAttendance,
+  zoomTextWidth,
+} from "./phone-helpers";
 
 const ID = "CopySession";
 
@@ -39,8 +47,6 @@ const CONFIRM_MESSAGE = "오후1 출석 결과를 오후2 미체크 학생에게
 const resultMessage = (copied: number, skipped: number) =>
   `${copied}명 복사, ${skipped}명은 오후1 미체크·사유결석이라 건너뜀`;
 
-// 1-1반 6번 강민재 — 복사 뒤 오후2에만 빠진 학생을 한 번 눌러 결석으로 고친다.
-const FIX_SEAT_ID = 106;
 const APPROVED_IN_AFTERNOON1_ID = 104;
 const REASONED_ABSENCE_ID = 205;
 const PENDING_REQUEST_ID = 302;
@@ -61,50 +67,13 @@ const fillFrom = lineAt(ID, 1, 0.38);
 const alertOkAt = lineAt(ID, 2, 0.3);
 const skippedNotesFrom = lineAt(ID, 2, 0.33);
 const skippedNotesTo = lineAt(ID, 2, 0.68);
-const fixTapAt = lineAt(ID, 2, 0.72);
+const fixTapAt = lineAt(ID, 2, 0.75);
 
-// 불참승인·불참신청 표시는 교시별이다 — 오후2 좌석은 오후2 신청으로 다시 고른다(Board-Afternoon2 갤러리와 같은 방식).
-const afternoon2RequestIds = (status: "approved" | "pending") =>
-  ABSENCE_REQUESTS.filter((r) => r.date === TODAY && r.session === "afternoon2" && r.status === status).map(
-    (r) => r.studentId,
-  );
-
-const AFTERNOON2_BASE: Record<number, SeatBase> = Object.fromEntries(
-  Object.entries(AFTERNOON1_BASE).map(([id, base]) => [
-    id,
-    {
-      ...base,
-      approvedAbsence: afternoon2RequestIds("approved").includes(Number(id)),
-      pendingRequest: afternoon2RequestIds("pending").includes(Number(id)),
-    },
-  ]),
-);
-
-const withStatus = (state: SeatState, status: AttendanceStatus): SeatState =>
-  state.visual === "afterschool" ? { ...state, afterSchoolStatus: status } : { ...state, visual: status };
-
-// SeatColors 이후 장면들이 이 오후1 결과와 복사가 끝난 오후2 를 그대로 이어 쓴다.
-export const afternoon1Visual = (id: number): SeatState => {
-  const result = AFTERNOON1_RESULT[id];
-  return result ? withStatus(baseVisual(id), result.status) : baseVisual(id);
-};
-
-// 앱 lib/attendance/copy-session.ts planSessionCopy: 오후2 에 참여하고 불참신청이 없는 미체크 학생에게 오후1 출석과 사유 없는 결석만 옮긴다.
-const copyTargets = STUDENTS.filter((s) => {
-  const target = AFTERNOON2_BASE[s.id];
-  return target.participating && !target.approvedAbsence && !target.pendingRequest;
-});
-const copied = copyTargets.flatMap((s) => {
-  const source = AFTERNOON1_RESULT[s.id];
-  if (source?.status === "present" || (source?.status === "absent" && !source.reasonLabel)) {
-    return [{ studentId: s.id, status: source.status }];
-  }
-  return [];
-});
-const skippedCount = copyTargets.length - copied.length;
+const copied = COPIED_TO_AFTERNOON2;
+const skippedCount = COPY_SKIPPED_COUNT;
 
 const afternoon2Props = (visualFor: (id: number) => SeatState) =>
-  boardProps({ tab: "afternoon2", groups: buildAfternoonGroups(visualFor), copyButton: { visible: true } });
+  phoneBoardProps({ tab: "afternoon2", groups: buildAfternoonGroups(visualFor), copyButton: { visible: true } });
 
 const AFTERNOON2 = afternoon2Props((id) => baseVisual(id, AFTERNOON2_BASE));
 
@@ -119,12 +88,12 @@ const fillEnd = fillFrom + copied.length * FILL_STAGGER;
 const resultNoteFrom = fillEnd + 6;
 const alertOpenAt = lineStart(ID, 2) - 2;
 
-export const afternoon2VisualAt = (frame: number) => (id: number): SeatState => {
+const afternoon2VisualAt = (frame: number) => (id: number): SeatState => {
   const base = baseVisual(id, AFTERNOON2_BASE);
   const fill = fillAtById.get(id);
-  const filled = fill && frame >= fill.at + COLOR_DELAY ? withStatus(base, fill.status) : base;
-  if (id === FIX_SEAT_ID && frame >= fixTapAt) {
-    return { ...(frame >= fixTapAt + COLOR_DELAY ? withStatus(filled, "absent") : filled), pressAt: fixTapAt };
+  const filled = fill && frame >= fill.at + COLOR_DELAY ? withAttendance(base, fill.status) : base;
+  if (id === COPY_FIX_SEAT_ID && frame >= fixTapAt) {
+    return { ...(frame >= fixTapAt + COLOR_DELAY ? withAttendance(filled, "absent") : filled), pressAt: fixTapAt };
   }
   return fill && frame >= fill.at ? { ...filled, pressAt: fill.at } : filled;
 };
@@ -153,6 +122,14 @@ const Dialog: React.FC<{ kind: "confirm" | "alert"; message: string; openAt: num
 const confirmOpenAt = copyPressAt + DIALOG_OPEN_DELAY;
 const busyFrom = confirmOkAt + DIALOG_CLOSE_DELAY;
 
+const boardPropsAt = (frame: number): AttendanceBoardProps =>
+  frame < tabTapAt + COLOR_DELAY
+    ? phoneBoardProps({ tab: "afternoon1", groups: buildAfternoonGroups(afternoon1ResultVisual) })
+    : {
+        ...afternoon2Props(afternoon2VisualAt(frame)),
+        copyButton: { visible: true, pressAt: copyPressAt, busy: frame >= busyFrom && frame < fillFrom },
+      };
+
 const Stage: React.FC = () => {
   const frame = useCurrentFrame();
   const overlay = (
@@ -161,28 +138,23 @@ const Stage: React.FC = () => {
       <Dialog kind="alert" message={resultMessage(copied.length, skippedCount)} openAt={alertOpenAt} okAt={alertOkAt} />
     </>
   );
-  const props: AttendanceBoardProps =
-    frame < tabTapAt + COLOR_DELAY
-      ? boardProps({ tab: "afternoon1", groups: buildAfternoonGroups(afternoon1Visual) })
-      : {
-          ...afternoon2Props(afternoon2VisualAt(frame)),
-          copyButton: { visible: true, pressAt: copyPressAt, busy: frame >= busyFrom && frame < fillFrom },
-        };
   return (
     <PhoneFrame x={PHONE_X} y={PHONE_Y} url={BOARD_URL}>
-      <AttendanceBoardMock {...props} tabPressAt={{ tab: "afternoon2", at: tabTapAt }} overlay={overlay} />
+      <AttendanceBoardMock {...boardPropsAt(frame)} tabPressAt={{ tab: "afternoon2", at: tabTapAt }} overlay={overlay} />
     </PhoneFrame>
   );
 };
 
 const seatBox = (id: number) => seatRect(id, FILLED);
+// 좌석 사이 간격은 2.3px 뿐이라 상자를 1px 만 띄운다 — 더 띄우면 옆 좌석과 그 "i" 버튼을 덮는다.
+const SEAT_BOX_PAD = 1;
 // 날짜 바가 폰 폭에서 잘리므로 카운트 상자는 막대 안쪽에서 끝낸다.
 const countsRect: Rect = (() => {
   const counts = boardRect("counts", FILLED);
   const bar = boardRect("dateBar", FILLED);
   return { ...counts, w: bar.x + bar.w - 2 - counts.x };
 })();
-const fixSeat = seatBox(FIX_SEAT_ID);
+const fixSeat = seatBox(COPY_FIX_SEAT_ID);
 
 const SKIPPED_NOTES: { id: number; label: string; side: "left" | "right" }[] = [
   { id: APPROVED_IN_AFTERNOON1_ID, label: "오후1 불참승인", side: "left" },
@@ -192,32 +164,68 @@ const SKIPPED_NOTES: { id: number; label: string; side: "left" | "right" }[] = [
 ];
 const SKIPPED_STAGGER = 5;
 
+// 폰 안 좌석 글자는 7~9px 이라 영상에서 읽히지 않는다 — 복사로 바뀌는 좌석 두 개를 키운 카드로 보여 준다.
+// 1-1반 1번 김도현: 오후1 출석이 그대로 복사된다.
+const COPY_SAMPLE_SEAT_ID = 101;
+const sampleFillAt = fillAtById.get(COPY_SAMPLE_SEAT_ID)?.at ?? fillFrom;
+const SAMPLE_LABELS = [
+  { at: 0, title: "복사 전 오후2", sub: "아직 미체크라 파란 좌석", color: colors.blue600 },
+  { at: sampleFillAt + COLOR_DELAY, title: "오후1 결과가 복사됨", sub: "오후1 출석 → 오후2 출석", color: colors.green600 },
+];
+const SAMPLE_TEXT_W = zoomTextWidth(SAMPLE_LABELS);
+
+const FIX_LABELS = [
+  { at: 0, title: "복사된 출석", sub: "오후2에는 나오지 않은 학생", color: colors.green600 },
+  { at: fixTapAt + COLOR_DELAY, title: "달라진 학생만 고치기", sub: "한 번 눌러 결석으로", color: colors.red600 },
+];
+const FIX_TEXT_W = zoomTextWidth(FIX_LABELS);
+
 export const CopySessionScene: React.FC<DemoProps> = () => (
   <GuideScene id={ID} step={4} label="오후1 복사">
     <Stage />
 
     <Annotation {...between(copyNoteFrom, copyPressAt)} {...phoneBox(boardRect("copy", AFTERNOON2), 4, "right")} label="오후1 결과 복사" color={colors.blue600} />
-    <Annotation
-      {...between(resultNoteFrom, alertOpenAt)}
-      {...phoneBox(countsRect, 2, "right")}
-      label={`출석 ${finalCounts.present} · 결석 ${finalCounts.absent} 채워짐`}
-      color={colors.green600}
-    />
+    <ClipTo rect={dateBarBand(FILLED)}>
+      <Annotation
+        {...between(resultNoteFrom, alertOpenAt)}
+        {...phoneBox(countsRect, 2, "right")}
+        label={`출석 ${finalCounts.present} · 결석 ${finalCounts.absent} 채워짐`}
+        color={colors.green600}
+      />
+    </ClipTo>
     {SKIPPED_NOTES.map((note, i) => (
       <Annotation
         key={note.id}
         {...between(skippedNotesFrom + i * SKIPPED_STAGGER, skippedNotesTo)}
-        {...phoneBox(seatBox(note.id), 4, note.side)}
+        {...phoneBox(seatBox(note.id), SEAT_BOX_PAD, note.side)}
         label={note.label}
         color={colors.gray700}
       />
     ))}
-    <Annotation {...between(fixTapAt + 6, lineEnd(ID, 2) + 10)} {...phoneBox(fixSeat, 4, "right")} label="달라진 학생만 고치기" color={colors.red600} />
+    <Annotation {...between(fixTapAt + 6, lineEnd(ID, 2) + 10)} {...phoneBox(fixSeat, SEAT_BOX_PAD)} color={colors.red600} />
+    <SeatZoomCard
+      from={fillFrom - 12}
+      to={alertOpenAt - 4}
+      studentId={COPY_SAMPLE_SEAT_ID}
+      propsAt={boardPropsAt}
+      centerY={phoneCenter(seatBox(COPY_SAMPLE_SEAT_ID)).y}
+      labels={SAMPLE_LABELS}
+      textWidth={SAMPLE_TEXT_W}
+    />
+    <SeatZoomCard
+      from={skippedNotesTo}
+      to={lineEnd(ID, 2) + 10}
+      studentId={COPY_FIX_SEAT_ID}
+      propsAt={boardPropsAt}
+      centerY={phoneCenter(fixSeat).y}
+      labels={FIX_LABELS}
+      textWidth={FIX_TEXT_W}
+    />
 
-    <TapCursor at={tabTapAt} target={boardPoint("tab_afternoon2", AFTERNOON2)} />
-    <TapCursor at={copyPressAt} target={boardPoint("copy", AFTERNOON2)} />
-    <TapCursor at={confirmOkAt} target={nativeDialogPoint("ok", PHONE_BODY.w, PHONE_BODY.h, "confirm")} />
-    <TapCursor at={alertOkAt} target={nativeDialogPoint("ok", PHONE_BODY.w, PHONE_BODY.h, "alert")} />
-    <TapCursor at={fixTapAt} target={{ x: fixSeat.x + fixSeat.w / 2, y: fixSeat.y + fixSeat.h / 2 }} />
+    <PhoneTap at={tabTapAt} target={boardPoint("tab_afternoon2", AFTERNOON2)} />
+    <PhoneTap at={copyPressAt} target={boardPoint("copy", AFTERNOON2)} />
+    <PhoneTap at={confirmOkAt} target={nativeDialogPoint("ok", PHONE_BODY.w, PHONE_BODY.h, "confirm")} />
+    <PhoneTap at={alertOkAt} target={nativeDialogPoint("ok", PHONE_BODY.w, PHONE_BODY.h, "alert")} />
+    <PhoneTap at={fixTapAt} target={{ x: fixSeat.x + fixSeat.w / 2, y: fixSeat.y + fixSeat.h / 2 }} />
   </GuideScene>
 );

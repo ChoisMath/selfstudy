@@ -2,7 +2,7 @@ import React from "react";
 import { useCurrentFrame } from "remotion";
 import { Annotation } from "../../components/Annotation";
 import { PhoneFrame } from "../../components/PhoneFrame";
-import { PHONE_X, PHONE_Y, phoneAbs } from "../../components/phone";
+import { PHONE_X, PHONE_Y } from "../../components/phone";
 import { colors } from "../../theme";
 import { GuideScene } from "../../guide/GuideScene";
 import {
@@ -13,19 +13,21 @@ import {
   seatRect,
   type SeatState,
 } from "../../app-mocks/AttendanceBoardMock";
-import { lineAt, lineEnd, lineStart, sceneFrames } from "../timing";
-import { afternoon2VisualAt } from "./CopySessionScene";
+import { lineAt, lineEnd, lineStart } from "../timing";
 import {
   afternoon1Counts,
   afternoon1Visual,
+  afternoon2SettledVisual,
   between,
   BOARD_URL,
   phoneBoardProps,
   phoneBox,
   phoneCenter,
   PhoneTap,
+  rectCenter,
   SeatZoomCard,
-} from "./SeatColorsScene";
+  zoomTextWidth,
+} from "./phone-helpers";
 import type { DemoProps } from "../../props";
 
 const ID = "LongPress";
@@ -37,8 +39,9 @@ const LONG_PRESS_FRAMES = 15;
 const BOX_PAD = 10;
 
 const firstTap = lineAt(ID, 0, 0.5);
-const longPressTo = lineStart(ID, 2);
-const longPressFrom = longPressTo - LONG_PRESS_FRAMES;
+// "0.5초쯤 누르고 있으면 파란색으로 활성화되고" — 문장 2 가 그 말을 하는 동안 링이 차오른다.
+const longPressFrom = lineAt(ID, 2, 0.2);
+const longPressTo = longPressFrom + LONG_PRESS_FRAMES;
 const checkTap = lineAt(ID, 2, 0.55);
 const checkedAt = checkTap + 3;
 const afternoon2Tap = lineAt(ID, 3, 0.1);
@@ -65,11 +68,8 @@ const afternoon1PropsAt = (frame: number) => {
   });
 };
 
-// CopySession 에서 복사를 마친 오후2(106 결석 수정 포함). 그 장면의 누름 효과는 떼어 낸다. 비참여 111은 복사 대상이 아니라 회색이다.
-const afternoon2Groups = buildAfternoonGroups((id) => ({
-  ...afternoon2VisualAt(sceneFrames("CopySession"))(id),
-  pressAt: undefined,
-}));
+// CopySession 에서 복사를 마친 오후2(106 결석 수정 포함). 비참여 111은 복사 대상이 아니라 회색이다.
+const afternoon2Groups = buildAfternoonGroups(afternoon2SettledVisual);
 const afternoon2Props = phoneBoardProps({
   tab: "afternoon2",
   tabPressAt: { tab: "afternoon2", at: afternoon2Tap },
@@ -84,9 +84,21 @@ const propsAt = (frame: number) =>
 const afternoon1Settled = afternoon1PropsAt(afternoon1At);
 const seatOn1 = seatRect(SEAT, afternoon1Settled);
 const seatOn2 = seatRect(SEAT, afternoon2Props);
-const seatPoint = phoneCenter(seatOn1);
-const tab2Point = phoneAbs(boardPoint("tab_afternoon2", afternoon1Settled));
-const tab1Point = phoneAbs(boardPoint("tab_afternoon1", afternoon2Props));
+const seatPoint = rectCenter(seatOn1);
+const seatCenterY = phoneCenter(seatOn1).y;
+const tab2Point = boardPoint("tab_afternoon2", afternoon1Settled);
+const tab1Point = boardPoint("tab_afternoon1", afternoon2Props);
+
+const PRESS_LABELS = [
+  { at: 0, title: "회색 좌석", sub: "한 번 눌러서는 반응하지 않습니다", color: colors.gray700 },
+  { at: lineStart(ID, 1), title: "좌석을 꾹 누르기", sub: "참여하지 않는 날 자습에 나온 학생", color: colors.blue600 },
+  { at: longPressTo, title: "0.5초 누르면 활성화", sub: "파란색이 되면 눌러서 체크할 수 있습니다", color: colors.blue600 },
+  { at: checkedAt, title: "눌러서 출석 체크", sub: "초록 = 출석", color: colors.green600 },
+];
+const AFTERNOON2_LABELS = [
+  { at: 0, title: "다른 탭에서는 회색", sub: "탭을 옮기면 활성화가 풀립니다", color: colors.gray700 },
+];
+const BACK_LABELS = [{ at: 0, title: "체크한 기록은 그대로", sub: "오후1로 돌아오면 초록 출석", color: colors.green600 }];
 
 const Stage: React.FC = () => {
   const frame = useCurrentFrame();
@@ -112,13 +124,9 @@ export const LongPressScene: React.FC<DemoProps> = () => (
       to={lineEnd(ID, 2)}
       studentId={SEAT}
       propsAt={afternoon1PropsAt}
-      centerY={seatPoint.y}
-      labels={[
-        { at: 0, title: "회색 좌석", sub: "한 번 눌러서는 반응하지 않습니다", color: colors.gray700 },
-        { at: lineStart(ID, 1), title: "좌석을 꾹 누르기", sub: "참여하지 않는 날 자습에 나온 학생", color: colors.blue600 },
-        { at: longPressTo, title: "0.5초 누르면 활성화", sub: "파란색이 되면 눌러서 체크할 수 있습니다", color: colors.blue600 },
-        { at: checkedAt, title: "눌러서 출석 체크", sub: "초록 = 출석", color: colors.green600 },
-      ]}
+      centerY={seatCenterY}
+      labels={PRESS_LABELS}
+      textWidth={zoomTextWidth(PRESS_LABELS)}
     />
     <SeatZoomCard
       from={afternoon2At}
@@ -126,15 +134,17 @@ export const LongPressScene: React.FC<DemoProps> = () => (
       studentId={SEAT}
       propsAt={() => afternoon2Props}
       centerY={phoneCenter(seatOn2).y}
-      labels={[{ at: 0, title: "다른 탭에서는 회색", sub: "탭을 옮기면 활성화가 풀립니다", color: colors.gray700 }]}
+      labels={AFTERNOON2_LABELS}
+      textWidth={zoomTextWidth(AFTERNOON2_LABELS)}
     />
     <SeatZoomCard
       from={afternoon1At}
       to={lineEnd(ID, 3) + 10}
       studentId={SEAT}
       propsAt={afternoon1PropsAt}
-      centerY={seatPoint.y}
-      labels={[{ at: 0, title: "체크한 기록은 그대로", sub: "오후1로 돌아오면 초록 출석", color: colors.green600 }]}
+      centerY={seatCenterY}
+      labels={BACK_LABELS}
+      textWidth={zoomTextWidth(BACK_LABELS)}
     />
 
     <PhoneTap at={firstTap} target={seatPoint} />

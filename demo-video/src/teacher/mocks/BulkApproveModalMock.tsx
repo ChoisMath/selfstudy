@@ -4,6 +4,7 @@ import { useCurrentFrame } from "remotion";
 import { tween } from "../../anim";
 import type { Point } from "../../app-mocks/layout";
 import { pressScale } from "../../app-mocks/primitives";
+import { ABSENCE_REASON_META } from "../../app-mocks/data";
 import { FONT } from "../../fonts";
 
 export type BulkApproveRow = { student: string; date: string; session: string; reason: string; detail: string };
@@ -18,6 +19,12 @@ const ROW_H = 24;
 const FOOTER_H = 60; // px-4 py-3, 버튼 min-h-11 (1175행)
 const BTN_H = 44; // min-h-11
 const BTN_GAP = 8; // gap-2 (1175행)
+
+// 사유 열은 앱과 같이 사유별 색으로 쓴다(reasonColors, page.tsx:718-723). 행은 라벨만 들고 오므로 라벨에서 색을 찾는다.
+const REASON_COLOR: Record<string, string> = Object.fromEntries(
+  Object.values(ABSENCE_REASON_META).map((meta) => [meta.label, meta.color]),
+);
+const DEFAULT_REASON_COLOR = ABSENCE_REASON_META.custom.color;
 
 const COL_FRACTIONS = { student: 0.32, date: 0.16, session: 0.18, reason: 0.14, detail: 0.2 } as const;
 
@@ -186,7 +193,7 @@ export const BulkApproveModalMock: React.FC<{
                   <div style={{ position: "absolute", left: colX.session, top: 0, width: colWidths.session, height: ROW_H, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, color: "#475569", whiteSpace: "nowrap" }}>
                     {row.session}
                   </div>
-                  <div style={{ position: "absolute", left: colX.reason, top: 0, width: colWidths.reason, height: ROW_H, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, whiteSpace: "nowrap" }}>
+                  <div style={{ position: "absolute", left: colX.reason, top: 0, width: colWidths.reason, height: ROW_H, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, whiteSpace: "nowrap", color: REASON_COLOR[row.reason] ?? DEFAULT_REASON_COLOR }}>
                     {row.reason}
                   </div>
                   <div style={{ position: "absolute", left: colX.detail, top: 0, width: colWidths.detail, height: ROW_H, display: "flex", alignItems: "center", padding: "0 6px", boxSizing: "border-box", fontSize: 10, color: "#64748b", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>

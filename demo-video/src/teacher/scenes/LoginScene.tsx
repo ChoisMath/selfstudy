@@ -13,7 +13,7 @@ import { LoginMock, loginPoint, loginRect } from "../../app-mocks/LoginMock";
 import { APP_HOST, ME } from "../../app-mocks/data";
 import { PHONE_BODY, type Rect } from "../../app-mocks/layout";
 import type { DemoProps } from "../../props";
-import { BOARD_URL, TapCursor, between, boardProps, phoneBox } from "./AttendanceTourScene";
+import { BOARD_URL, PhoneTap, between, phoneBoardProps, phoneBox } from "./phone-helpers";
 
 const ID = "Login";
 
@@ -31,7 +31,8 @@ const idTypeFrom = lineAt(ID, 2, 0.08);
 const passwordTapAt = lineAt(ID, 2, 0.36);
 const passwordTypeFrom = lineAt(ID, 2, 0.4);
 const fieldNotesTo = lineAt(ID, 2, 0.86);
-const submitAt = lineAt(ID, 2, 0.9);
+// 도움말 스틸 01-login 은 문장 2 의 0.8 지점이다 — 커서가 그 프레임에 들어오지 않도록 로그인 탭을 뒤로 물린다.
+const submitAt = lineAt(ID, 2, 0.95);
 // 버튼이 눌려 들어간 뒤에 "로그인 중..."으로 바뀐다.
 const submittingFrom = submitAt + 4;
 const boardAt = lineEnd(ID, 2) + 6;
@@ -45,7 +46,7 @@ const NOTICE_GAP = 24;
 const NOTICE_COLUMN = { x: PHONE_CROP.x + PHONE_CROP.w + NOTICE_GAP, y: 420 };
 const NOTICE_COLUMN_W = WIDTH - NOTICE_COLUMN.x - NOTICE_GAP;
 
-const BOARD = boardProps({ tab: "afternoon1", groups: buildAfternoonGroups((id) => baseVisual(id)) });
+const BOARD = phoneBoardProps({ tab: "afternoon1", groups: buildAfternoonGroups((id) => baseVisual(id)) });
 
 const Stage: React.FC = () => {
   const frame = useCurrentFrame();
@@ -88,10 +89,10 @@ export const LoginScene: React.FC<DemoProps> = () => (
     <Annotation {...between(lineStart(ID, 2), fieldNotesTo)} {...phoneBox(loginRect("field_first", W), 4, "left")} label="NEIS 아이디" color={colors.red600} />
     <Annotation {...between(passwordTapAt - 4, fieldNotesTo)} {...phoneBox(loginRect("field_second", W), 4, "left")} label="초기 비밀번호 1111" color={colors.red600} />
 
-    <TapCursor at={urlTapAt} target={{ x: URL_PILL.x + URL_PILL.w / 2, y: URL_PILL.y + URL_PILL.h / 2 }} />
-    <TapCursor at={idTapAt} target={loginPoint("field_first", W)} />
-    <TapCursor at={passwordTapAt} target={loginPoint("field_second", W)} />
-    <TapCursor at={submitAt} target={loginPoint("submit", W)} />
+    <PhoneTap at={urlTapAt} target={{ x: URL_PILL.x + URL_PILL.w / 2, y: URL_PILL.y + URL_PILL.h / 2 }} />
+    <PhoneTap at={idTapAt} target={loginPoint("field_first", W)} />
+    <PhoneTap at={passwordTapAt} target={loginPoint("field_second", W)} />
+    <PhoneTap at={submitAt} target={loginPoint("submit", W)} />
 
     <div style={{ position: "absolute", left: NOTICE_COLUMN.x, top: NOTICE_COLUMN.y, width: NOTICE_COLUMN_W }}>
       <FlashNotice

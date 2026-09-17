@@ -2,7 +2,7 @@ import React from "react";
 import { useCurrentFrame } from "remotion";
 import { Annotation } from "../../components/Annotation";
 import { PhoneFrame } from "../../components/PhoneFrame";
-import { PHONE_X, PHONE_Y, phoneAbs } from "../../components/phone";
+import { PHONE_X, PHONE_Y } from "../../components/phone";
 import { colors } from "../../theme";
 import { GuideScene } from "../../guide/GuideScene";
 import { AttendanceBoardMock, boardPoint, type AttendanceBoardProps } from "../../app-mocks/AttendanceBoardMock";
@@ -15,13 +15,20 @@ import { BulkApproveModalMock, bulkModalPoint, type BulkApproveRow } from "../mo
 import { NativeDialogMock, nativeDialogPoint } from "../mocks/NativeDialogMock";
 import { lineAt, lineEnd, lineStart } from "../timing";
 import {
+  ABSENCE_BOX_PAD,
+  ABSENCE_PANEL_W,
   absenceBadgeRect,
   absenceBoardProps,
   approveRequests,
+  between,
+  BOARD_URL,
   bulkCandidatesOf,
+  leftLabeled,
   panelRect,
-} from "./AbsenceTabScene";
-import { between, BOARD_URL, leftLabeled, phoneCenter, PhoneTap, rightLabeled } from "./SeatColorsScene";
+  PhoneTap,
+  rectCenter,
+  rightLabeled,
+} from "./phone-helpers";
 import type { DemoProps } from "../../props";
 
 const ID = "BulkApprove";
@@ -100,13 +107,11 @@ const supervisorChip: Rect = (() => {
 })();
 
 // 일괄승인 버튼 — 목업 pillWidth(글자 수×8+24)와 같은 폭, 필터 줄 높이 30.
-const PANEL_PAD = 12;
-const PANEL_W = PHONE_BODY.w - PANEL_PAD * 2;
 const FILTER_ROW_H = 30;
 const bulkButton: Rect = (() => {
   const label = `일괄승인 (${CANDIDATES.length})`;
   const w = label.length * 8 + 24;
-  return panelRect(listProps, { x: PANEL_W - PANEL_PAD - w, y: PANEL_PAD, w, h: FILTER_ROW_H });
+  return panelRect(listProps, { x: ABSENCE_PANEL_W - ABSENCE_BOX_PAD - w, y: ABSENCE_BOX_PAD, w, h: FILTER_ROW_H });
 })();
 
 const TABLE_HEAD_H = 26;
@@ -120,8 +125,8 @@ const modalTable: Rect = (() => {
 })();
 const modalRows: Rect = { ...modalTable, y: modalTable.y + TABLE_HEAD_H, h: modalTable.h - TABLE_HEAD_H };
 
-const confirmPoint = phoneAbs(bulkModalPoint("confirm", PHONE_BODY.w, PHONE_BODY.h, ROWS.length));
-const okPoint = phoneAbs(nativeDialogPoint("ok", PHONE_BODY.w, PHONE_BODY.h, "alert", ALERT_MESSAGE));
+const confirmPoint = bulkModalPoint("confirm", PHONE_BODY.w, PHONE_BODY.h, ROWS.length);
+const okPoint = nativeDialogPoint("ok", PHONE_BODY.w, PHONE_BODY.h, "alert", ALERT_MESSAGE);
 const badge = absenceBadgeRect(listProps);
 
 const Stage: React.FC = () => {
@@ -170,7 +175,7 @@ export const BulkApproveScene: React.FC<DemoProps> = () => (
       color={colors.green600}
     />
 
-    <PhoneTap at={bulkTap} target={phoneCenter(bulkButton)} />
+    <PhoneTap at={bulkTap} target={rectCenter(bulkButton)} />
     <PhoneTap at={confirmTap} target={confirmPoint} />
     <PhoneTap at={okTap} target={okPoint} />
   </GuideScene>
