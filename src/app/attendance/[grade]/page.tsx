@@ -1209,7 +1209,7 @@ export default function AttendanceGradePage() {
         if (!foundSeat) return null;
         return (
           <div
-            className="lg:hidden fixed inset-0 z-50 flex items-center justify-center p-4"
+            className="lg:hidden fixed inset-0 z-[150] flex items-center justify-center p-4"
             onClick={() => {
               setSelectedSeat(null);
               setWeeklyTotals(null);
@@ -1245,7 +1245,7 @@ export default function AttendanceGradePage() {
 
       {/* 학년 선택 모달 */}
       {showGradeModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowGradeModal(false)}>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[150]" onClick={() => setShowGradeModal(false)}>
           <div className="bg-white rounded-xl p-8 max-w-sm w-full mx-4 text-center shadow-xl" onClick={(e) => e.stopPropagation()}>
             <h2 className="text-lg font-semibold mb-2">출석 확인할 학년 선택</h2>
             <div className="flex gap-3 justify-center mt-4">
