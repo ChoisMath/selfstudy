@@ -5,7 +5,7 @@ import bcrypt from "bcryptjs";
 
 // POST /api/auth/change-password - 비밀번호 변경
 export const POST = withAuth(
-  ["admin", "homeroom", "supervisor"],
+  ["teacher"],
   async (req: Request, user) => {
     if (user.userType !== "teacher") {
       return NextResponse.json(
