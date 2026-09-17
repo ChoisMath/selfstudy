@@ -2,7 +2,7 @@
 import React from "react";
 import { useCurrentFrame } from "remotion";
 import { TEACHERS } from "../../app-mocks/data";
-import { PC_VIEWPORT, type Point } from "../../app-mocks/layout";
+import { PC_VIEWPORT, type Point, type Rect } from "../../app-mocks/layout";
 import { pressScale, typedSlice, TypedText } from "../../app-mocks/primitives";
 import { tw } from "../../app-mocks/tw";
 import { FONT } from "../../fonts";
@@ -67,45 +67,51 @@ const DROP_ROW_H = 30;
 const DROP_MAX_H = 186; // max-h-48(192px) 근사, overflow hidden
 const DROP_TOP = SEARCH_Y + SEARCH_H + 4; // mt-1(457행)
 
-// 386-394행: query로 거른 뒤 primaryGrade===grade 그룹 먼저, 나머지 뒤(구분선은 둘 다 있을 때만).
-// 실제 앱: const filtered = query ? teachers.filter(t=>t.name.includes(query)) : teachers; ... 그룹핑.
-type OptionRow = { id: number; name: string; primaryGrade: 1 | 2 | 3; dividerBefore: boolean };
+// 386-403행: query로 거른 뒤 primaryGrade===grade 그룹 먼저, 나머지 뒤.
+// 구분선은 앱처럼 마지막 우리 학년 항목의 border-b(473행 separatorAfter) — 둘 다 있을 때만.
+type OptionRow = { id: number; name: string; primaryGrade: 1 | 2 | 3; dividerAfter: boolean };
 
 const groupOptions = (grade: number, query: string): OptionRow[] => {
   const filtered = TEACHERS.filter((t) => t.name.includes(query));
   const primary = filtered.filter((t) => t.primaryGrade === grade);
   const others = filtered.filter((t) => t.primaryGrade !== grade);
-  const showDivider = primary.length > 0 && others.length > 0;
-  return [
-    ...primary.map((t) => ({ ...t, dividerBefore: false })),
-    ...others.map((t, i) => ({ ...t, dividerBefore: i === 0 && showDivider })),
-  ];
+  const separatorAfter = primary.length > 0 && others.length > 0 ? primary.length - 1 : -1;
+  return [...primary, ...others].map((t, i) => ({ ...t, dividerAfter: i === separatorAfter }));
+};
+
+export type SwapModalKey = "panel" | "search" | "reason" | "confirm" | "cancel" | "warning";
+
+export const swapModalRect = (key: SwapModalKey): Rect => {
+  switch (key) {
+    case "panel":
+      return { x: PANEL_X, y: PANEL_Y, w: PANEL_W, h: PANEL_H };
+    case "search":
+      return { x: FIELD_X, y: SEARCH_Y, w: FIELD_W, h: SEARCH_H };
+    case "reason":
+      return { x: FIELD_X, y: REASON_Y, w: FIELD_W, h: TEXTAREA_H };
+    case "warning":
+      return { x: FIELD_X, y: WARN_Y, w: FIELD_W, h: WARN_H };
+    case "cancel":
+      return { x: CANCEL_X, y: FOOTER_Y, w: CANCEL_W, h: FOOTER_H };
+    default:
+      return { x: CONFIRM_X, y: FOOTER_Y, w: CONFIRM_W, h: FOOTER_H };
+  }
 };
 
 export const swapModalPoint = (
-  key: "search" | `option_${string}` | "reason" | "confirm" | "cancel",
+  key: SwapModalKey | `option_${string}`,
   // option_<name> 전용: 현재 검색어로 걸러진 목록에서의 위치를 구한다. grade=1 고정 가정
   // (이 프로젝트의 유일한 교체 시나리오, SWAP_EXAMPLE.grade) — 다른 값을 쓰면 위치가 어긋난다.
   filterText = "",
 ): Point => {
-  if (key === "search") {
-    return { x: FIELD_X + FIELD_W / 2, y: SEARCH_Y + SEARCH_H / 2 };
-  }
-  if (key === "reason") {
-    return { x: FIELD_X + FIELD_W / 2, y: REASON_Y + TEXTAREA_H / 2 };
-  }
-  if (key === "confirm") {
-    return { x: CONFIRM_X + CONFIRM_W / 2, y: FOOTER_Y + FOOTER_H / 2 };
-  }
-  if (key === "cancel") {
-    return { x: CANCEL_X + CANCEL_W / 2, y: FOOTER_Y + FOOTER_H / 2 };
+  if (!key.startsWith("option_")) {
+    const r = swapModalRect(key as SwapModalKey);
+    return { x: r.x + r.w / 2, y: r.y + r.h / 2 };
   }
   const name = key.slice("option_".length);
   const rows = groupOptions(1, filterText);
   const idx = Math.max(0, rows.findIndex((t) => t.name === name));
-  const dividerAt = rows.findIndex((t) => t.dividerBefore);
-  const dividerOffset = dividerAt >= 0 && idx >= dividerAt ? 6 : 0;
-  return { x: FIELD_X + FIELD_W / 2, y: DROP_TOP + idx * DROP_ROW_H + dividerOffset + DROP_ROW_H / 2 };
+  return { x: FIELD_X + FIELD_W / 2, y: DROP_TOP + idx * DROP_ROW_H + DROP_ROW_H / 2 };
 };
 
 export type SwapModalMockProps = {
@@ -210,8 +216,7 @@ export const SwapModalMock: React.FC<SwapModalMockProps> = ({
                     key={t.id}
                     style={{
                       height: DROP_ROW_H,
-                      marginTop: t.dividerBefore ? 6 : 0,
-                      borderTop: t.dividerBefore ? `1px solid ${tw.gray[300]}` : "none",
+                      borderBottom: t.dividerAfter ? `1px solid ${tw.gray[300]}` : "none",
                       display: "flex",
                       alignItems: "center",
                       padding: "0 12px",

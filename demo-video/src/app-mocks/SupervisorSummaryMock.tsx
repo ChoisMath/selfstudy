@@ -28,11 +28,18 @@ const monthColW = (months: number) => (PANEL_W - TABLE_PAD_X * 2 - NAME_COL_W - 
 
 const TABLE_TOP = PANEL_Y + CLOSE_ROW_H;
 
-export const summaryRect = (key: "table" | "myRow"): Rect => {
-  if (key === "myRow") {
-    return { x: PANEL_X, y: TABLE_TOP + HEADER_ROW_H, w: PANEL_W, h: MY_ROW_H };
+// 표는 패널 좌우 TABLE_PAD_X 안쪽에 그려진다 — rect도 그 안쪽(실제로 그려진) 영역을 준다.
+const TABLE_X = PANEL_X + TABLE_PAD_X;
+const TABLE_W = PANEL_W - TABLE_PAD_X * 2;
+
+export const summaryRect = (key: "panel" | "table" | "myRow"): Rect => {
+  if (key === "panel") {
+    return { x: PANEL_X, y: PANEL_Y, w: PANEL_W, h: PANEL_H };
   }
-  return { x: PANEL_X, y: TABLE_TOP, w: PANEL_W, h: HEADER_ROW_H + MY_ROW_H + ROW_H * OTHERS_COUNT };
+  if (key === "myRow") {
+    return { x: TABLE_X, y: TABLE_TOP + HEADER_ROW_H, w: TABLE_W, h: MY_ROW_H };
+  }
+  return { x: TABLE_X, y: TABLE_TOP, w: TABLE_W, h: HEADER_ROW_H + MY_ROW_H + ROW_H * OTHERS_COUNT };
 };
 
 export type SupervisorSummaryMockProps = {

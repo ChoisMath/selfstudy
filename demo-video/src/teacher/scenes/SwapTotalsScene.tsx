@@ -1,19 +1,17 @@
 import React from "react";
 import { useCurrentFrame } from "remotion";
-import { schedulePoint } from "../../app-mocks/ScheduleCalendarMock";
 import { SupervisorSummaryMock, summaryRect } from "../../app-mocks/SupervisorSummaryMock";
 import { APP_URL, ME, SUPERVISOR_SUMMARY } from "../../app-mocks/data";
-import { PcViewport, pcAbs, pcRectAbs } from "../../app-mocks/layout";
+import { PcViewport, pcRectAbs } from "../../app-mocks/layout";
 import { Annotation } from "../../components/Annotation";
 import { BrowserFrame } from "../../components/BrowserFrame";
 import { Cursor } from "../../components/Cursor";
 import { GuideScene } from "../../guide/GuideScene";
 import type { DemoProps } from "../../props";
 import { colors } from "../../theme";
-import { HOMEROOM_BODY, HomeroomShellMock } from "../mocks/HomeroomShellMock";
+import { HomeroomShellMock } from "../mocks/HomeroomShellMock";
 import { lineAt, lineEnd, lineStart, sceneFrames } from "../timing";
-import { SchedulePage, TAB_TITLE, bodyRect, padRect } from "./SwapEntryScene";
-import { SWAPPED_SEPT } from "./SwapModalScene";
+import { SWAPPED_SEPT, SchedulePage, TAB_TITLE, calendarTotalsRect, padRect } from "./pc-helpers";
 
 const ID = "SwapTotals";
 
@@ -22,9 +20,6 @@ const totalsClick = lineAt(ID, 0, 0.38);
 const openAt = totalsClick + 6;
 const tableFrom = lineAt(ID, 0, 0.6);
 const myRowFrom = lineStart(ID, 1) + 4;
-
-// summaryRect 는 패널 전체 폭을 준다 — 표는 양옆 16 안쪽에 그려진다.
-const SUMMARY_TABLE_PAD_X = 16;
 
 const Stage: React.FC = () => {
   const frame = useCurrentFrame();
@@ -43,25 +38,17 @@ const Stage: React.FC = () => {
 };
 
 export const SwapTotalsScene: React.FC<DemoProps> = () => {
-  const totalsPoint = schedulePoint("totals", HOMEROOM_BODY.w);
-  const totals = pcAbs(bodyRect({ ...totalsPoint, w: 0, h: 0 }));
-  const totalsBox = pcRectAbs(bodyRect({ x: totalsPoint.x - 23, y: totalsPoint.y - 12, w: 46, h: 24 }));
-  const tableRect = summaryRect("table");
-  const myRowRect = summaryRect("myRow");
-  const table = pcRectAbs({ ...tableRect, x: tableRect.x + SUMMARY_TABLE_PAD_X, w: tableRect.w - SUMMARY_TABLE_PAD_X * 2 });
-  const myRow = pcRectAbs({ ...myRowRect, x: myRowRect.x + SUMMARY_TABLE_PAD_X, w: myRowRect.w - SUMMARY_TABLE_PAD_X * 2 });
+  const totalsBox = pcRectAbs(calendarTotalsRect());
+  const cursorTarget = { x: totalsBox.x + totalsBox.width * 0.5, y: totalsBox.y + totalsBox.height * 0.7 };
+  const table = pcRectAbs(summaryRect("table"));
+  const myRow = pcRectAbs(summaryRect("myRow"));
   const endFrame = sceneFrames(ID);
 
   return (
     <GuideScene id={ID} step={12} label="감독 누계">
       <Stage />
-      <Annotation
-        from={totalsFrom}
-        durationInFrames={openAt - totalsFrom}
-        {...padRect(totalsBox, 6)}
-        label="누계"
-        labelPosition="left"
-      />
+      {/* 버튼에 "누계"가 이미 적혀 있어 라벨 없이 상자만 — 라벨을 달면 옆 토일 OFF 토글을 덮는다. */}
+      <Annotation from={totalsFrom} durationInFrames={openAt - totalsFrom} {...padRect(totalsBox, 4)} />
       <Annotation
         from={tableFrom}
         durationInFrames={lineEnd(ID, 0) - tableFrom}
@@ -80,10 +67,10 @@ export const SwapTotalsScene: React.FC<DemoProps> = () => {
       />
       <Cursor
         path={[
-          { frame: lineStart(ID, 0) + 6, x: totals.x - 260, y: totals.y + 260 },
-          { frame: totalsClick - 4, x: totals.x + 10, y: totals.y + 6 },
-          { frame: openAt + 4, x: totals.x + 10, y: totals.y + 6 },
-          { frame: tableFrom, x: totals.x + 10, y: totals.y + 240 },
+          { frame: lineStart(ID, 0) + 6, x: cursorTarget.x - 260, y: cursorTarget.y + 260 },
+          { frame: totalsClick - 4, x: cursorTarget.x, y: cursorTarget.y },
+          { frame: openAt + 4, x: cursorTarget.x, y: cursorTarget.y },
+          { frame: tableFrom, x: cursorTarget.x, y: cursorTarget.y + 240 },
         ]}
         clicks={[totalsClick]}
         hideAfter={tableFrom}
