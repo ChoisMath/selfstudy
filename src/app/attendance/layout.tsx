@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { signOut, useSession } from "next-auth/react";
+import { GuideHelpButton } from "@/components/guide/GuideHelpButton";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 
 export default function AttendanceLayout({ children }: { children: React.ReactNode }) {
@@ -51,6 +52,7 @@ export default function AttendanceLayout({ children }: { children: React.ReactNo
             )}
             <NotificationBell />
             <span className="text-xs sm:text-sm text-gray-600 whitespace-nowrap">{session?.user?.name}</span>
+            <GuideHelpButton href="/help/attendance" />
             <button
               onClick={() => signOut({ callbackUrl: "/login" })}
               className="min-h-11 px-2 text-xs sm:text-sm text-gray-600 hover:text-gray-700 whitespace-nowrap"

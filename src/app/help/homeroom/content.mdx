@@ -1,0 +1,167 @@
+import { GuideToc } from "@/components/guide/GuideToc";
+import { GuideChapter } from "@/components/guide/GuideChapter";
+import { GuideStep } from "@/components/guide/GuideStep";
+import { GuideNotice } from "@/components/guide/GuideNotice";
+import { GuideVideo } from "@/components/guide/GuideVideo";
+
+# 담임교사 메뉴 사용 가이드
+
+담임 선생님 — 출석부 위쪽 담임교사 버튼으로 여는 화면입니다.
+
+<GuideVideo videoKey="teacher" start={0} caption="교사 사용 안내 영상 — 담임교사 메뉴 부분" />
+
+<GuideToc
+  items={[
+    { id: "records", label: "출결 확인" },
+    { id: "settings", label: "참여와 사유" },
+    { id: "requests", label: "신청과 계정" },
+  ]}
+/>
+
+<GuideChapter id="records" title="출결 확인">
+
+<GuideStep
+  number={1}
+  title="담임 메뉴"
+  images={[
+    {
+      src: "/guide/homeroom/01-tabs.webp",
+      alt: "담임교사 페이지 위쪽의 탭 일곱 개",
+      width: 1280,
+      height: 657,
+    },
+  ]}
+  tip="휴대폰에서는 탭이 아래 줄로 내려가고, 좌우로 넘겨 나머지 탭을 봅니다."
+>
+
+출석부 위쪽의 담임교사 버튼을 누르면 담임교사 페이지가 열립니다. 탭은 학생관리, 월간출결, 참여설정, 불참사유등록, 불참신청, 감독일정, 비밀번호 일곱 개입니다. 담임이 아닌 선생님에게는 감독일정과 비밀번호 탭만 보입니다.
+
+</GuideStep>
+
+<GuideStep
+  number={2}
+  title="주간 출결"
+  images={[
+    {
+      src: "/guide/homeroom/02-weekly.webp",
+      alt: "학생관리 탭의 이번 주 출결표와 범례",
+      width: 1280,
+      height: 657,
+    },
+  ]}
+  tip="△를 누르면 사유가 보이고, 주황 별표는 감독 선생님이 남긴 비고입니다."
+>
+
+학생관리 탭에서는 우리 반 학생들의 이번 주 출결을 한눈에 봅니다. 요일마다 오후1·오후2·야간 세 칸이 있고, 좌우 화살표로 지난주와 다음 주로 이동합니다. O는 출석, X는 무단결석, △는 사유결석, 방은 방과후이고, 회색 칸은 참여하지 않는 시간입니다. 맨 아래 합계 줄에서 출석과 결석 인원을 확인합니다.
+
+</GuideStep>
+
+<GuideStep
+  number={3}
+  title="월간출결"
+  images={[
+    {
+      src: "/guide/homeroom/03-monthly.webp",
+      alt: "한 달 출결표와 오른쪽 끝의 학생별 시간 열",
+      width: 1280,
+      height: 657,
+    },
+  ]}
+  tip="Excel 버튼을 누르면 이 달 출결표를 엑셀 파일로 내려받습니다."
+>
+
+월간출결 탭은 한 달 전체 출결표입니다. 날짜마다 오후1·오후2·야간 세 칸으로 나뉘고, 마지막 시간 열에 학생별 출석 시간이 합산됩니다. 화살표로 달을 옮겨 지난달 기록도 볼 수 있습니다.
+
+</GuideStep>
+
+</GuideChapter>
+
+<GuideChapter id="settings" title="참여와 사유">
+
+<GuideStep
+  number={4}
+  title="참여설정"
+  images={[
+    {
+      src: "/guide/homeroom/04-participation.webp",
+      alt: "참여설정 표와, 설정이 출석부 좌석에 어떻게 보이는지 함께 나타낸 그림",
+      width: 1280,
+      height: 657,
+    },
+  ]}
+  tip="방과후 체크는 요일마다 따로 켜고 끕니다."
+>
+
+참여설정 탭에서는 우리 반 학생이 언제 자습에 참여하는지 정합니다. 오후1·오후2·야간마다 참가 체크박스와 월요일부터 금요일까지 요일 버튼이 있고, 참가 체크를 끄면 그 시간에는 아예 참여하지 않습니다. 요일 버튼은 파란색이 참여하는 날, 회색이 참여하지 않는 날입니다. 요일 버튼 아래 방과후 체크박스를 켜면 그 요일 출석부에 노란 방과후 좌석으로 표시됩니다.
+
+</GuideStep>
+
+<GuideStep
+  number={5}
+  title="불참사유등록"
+  images={[
+    {
+      src: "/guide/homeroom/05-absence-reason.webp",
+      alt: "불참사유 등록 폼과 등록 완료 안내 문구",
+      width: 1280,
+      height: 657,
+    },
+  ]}
+  tip="상세 사유는 선택 항목이지만, 적어 두면 출결표에서 △를 눌러 다시 확인할 수 있습니다."
+>
+
+불참사유등록 탭에서는 담임 선생님이 학생의 결석 사유를 직접 등록합니다. 학생과 날짜를 고르고 오후1 자습·오후2 자습·야간자습 중 자습 시간을 선택합니다. 사유 유형을 학원·방과후·질병·기타 중에서 고르고, 필요하면 상세 사유를 적은 뒤 불참사유 등록을 누릅니다. 위 그림처럼 불참사유가 등록되었습니다 안내가 뜨면서 학생과 상세 사유 칸은 비워지므로, 같은 날짜와 시간으로 다음 학생을 이어서 등록할 수 있습니다.
+
+</GuideStep>
+
+</GuideChapter>
+
+<GuideChapter id="requests" title="신청과 계정">
+
+<GuideStep
+  number={6}
+  title="불참신청"
+  images={[
+    {
+      src: "/guide/homeroom/06-requests.webp",
+      alt: "불참신청 관리 표와 승인 확인 창",
+      width: 1280,
+      height: 657,
+    },
+  ]}
+  tip="대기중 버튼으로 걸러 보면 아직 처리하지 않은 신청만 남습니다."
+>
+
+불참신청 탭에는 우리 반 학생들이 낸 신청이 표로 정리됩니다. 전체·대기중·승인·반려 버튼으로 상태를 나눠 보고, 대기중인 신청은 승인이나 반려를 누른 뒤 확인을 누릅니다. 감독 선생님도 출석부에서 승인할 수 있으니, 이미 처리된 신청에는 처리한 선생님 이름이 표시됩니다.
+
+</GuideStep>
+
+<GuideStep
+  number={7}
+  title="비밀번호"
+  images={[
+    {
+      src: "/guide/homeroom/07-password.webp",
+      alt: "비밀번호 변경 폼과 변경 완료 안내 문구",
+      width: 1280,
+      height: 657,
+    },
+  ]}
+  tip="초기 비밀번호 1111은 처음 로그인한 뒤 꼭 바꿔 주세요."
+>
+
+비밀번호 탭에서는 현재 비밀번호와 새 비밀번호를 입력하고, 새 비밀번호를 한 번 더 입력한 뒤 비밀번호 변경을 누릅니다. 새 비밀번호는 네 자 이상이어야 합니다. 위 그림처럼 비밀번호가 변경되었습니다 안내가 뜨면 변경이 끝난 것이고, 입력 칸은 모두 비워집니다.
+
+</GuideStep>
+
+</GuideChapter>
+
+<GuideNotice
+  tone="yellow"
+  title="알아 둘 점"
+  items={[
+    ["담임이 아닌 선생님", "감독일정과 비밀번호 탭만 보입니다."],
+    ["불참사유등록", "출결표에는 △ 사유결석, 출석부 좌석에는 결석으로 표시됩니다."],
+    ["참여설정", "누르는 즉시 저장되고 출석부의 회색·노란 좌석에 바로 반영됩니다."],
+  ]}
+/>

@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
+import { GuideHelpButton } from "@/components/guide/GuideHelpButton";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 
 // 담임 전용 탭
@@ -99,6 +100,7 @@ export default function HomeroomLayout({ children }: { children: React.ReactNode
               )}
               <NotificationBell />
               <span className="text-sm text-gray-500 whitespace-nowrap">{user?.name}</span>
+              <GuideHelpButton href="/help/homeroom" />
               <button
                 onClick={() => signOut({ callbackUrl: "/login" })}
                 className="min-h-11 px-2 text-sm text-gray-500 hover:text-gray-700 whitespace-nowrap"

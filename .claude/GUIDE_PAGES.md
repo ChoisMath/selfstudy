@@ -2,7 +2,7 @@
 
 화면의 `?` 버튼과 도움말(`/help`)에서 여는 사용 가이드는 **목업 이미지가 들어간 안내 페이지**(`/help/<page>`)이고, 같은 장면으로 **Chois 클론 음성 안내 영상**을 만든다. 이 문서는 화면마다 같은 방식으로 만들기 위한 기준이다. 절차 실행은 `/guide-page <page>` 스킬, 영상 도구 사용법은 [`demo-video/README.md`](../demo-video/README.md).
 
-원본은 `school_cowork`(Rails)의 같은 이름 문서다. 영상 파이프라인(0·3절, 음성)은 그대로 가져왔고, 웹 페이지 구조(1·4절)는 Next.js App Router에 맞게 옮겼다. 1절 표에서 `기본안`으로 표시한 항목은 첫 페이지를 만들 때 brainstorming으로 확정하고 이 문서를 고친다.
+원본은 `school_cowork`(Rails)의 같은 이름 문서다. 영상 파이프라인(0·3절, 음성)은 그대로 가져왔고, 웹 페이지 구조(1·4절)는 Next.js App Router에 맞게 옮겼다. 1절 표의 `기본안` 항목은 첫 페이지(`attendance`·`homeroom`)를 만들며 모두 확정했다.
 
 **경로 표기**: 이 저장소에는 `src/` 트리가 둘이다. 이 문서에서 `scripts/`·`public/narration/`·`src/<guide>/`·`src/stills/`·`src/Root.tsx`·`src/theme.ts`처럼 접두어 없는 영상 쪽 경로는 `demo-video/` 기준이고, Next.js 앱 경로는 항상 `src/app/`·`src/components/`·`public/guide/`·`tests/`로 적는다.
 
@@ -24,11 +24,11 @@
 |---|---|
 | 라우트 | `src/app/help/<page>/page.tsx`(서버 컴포넌트, `metadata` 포함) + `content.mdx` — 기존 `/help`(`page.tsx` + `content.mdx`)와 같은 패턴. `/help/*`는 `src/middleware.ts`에서 로그인 없이 열리고, `.webp` 같은 정적 파일은 matcher에서 빠진다 |
 | 본문 | `content.mdx` — 빌딩 블록 컴포넌트만 조합하고 설명 문장을 쓴다 |
-| 빌딩 블록 (기본안) | `src/components/guide/` 서버 컴포넌트: `GuideToc`(목차 칩, 앵커 `#guide-<id>`) · `GuideChapter`(`id`, `title`, children) · `GuideStep`(`number`, `title`, `images`, children=설명, `tip`) · `GuideNotice`(`tone: "blue"｜"yellow"｜"green"`, `title`, `items: [강조, 본문][]`) · `GuideVideo`(`videoKey`, `caption`). 첫 페이지 작업 때 만들고 이후 페이지는 재사용만 한다 |
+| 빌딩 블록 | `src/components/guide/` 서버 컴포넌트: `GuideArticle`(← 도움말 링크 + 본문 카드, `page.tsx`가 감싼다) · `GuideToc`(목차 칩, 앵커 `#guide-<id>`) · `GuideChapter`(`id`, `title`, children) · `GuideStep`(`number`, `title`, `images`, children=설명, `tip`) · `GuideNotice`(`tone: "blue"｜"yellow"｜"green"`, `title`, `items: [강조, 본문][]`) · `GuideVideo`(`videoKey`, `start?`, `caption`) · `GuideHelpButton`(`href`, 화면 헤더의 `?`). 이후 페이지는 재사용만 한다 |
 | 이미지 | `public/guide/<page>/NN-slug.webp` → `/guide/<page>/NN-slug.webp`. `GuideStep`이 `width`·`height`를 지정해 레이아웃이 흔들리지 않게 한다 |
-| 영상 (기본안) | YouTube(일부 공개) id를 `src/components/guide/videos.ts`에 키로 등록하고 `GuideVideo`로 카드 표시. mp4를 Railway Volume·`public/`에 올리지 않는다(용량·대역폭 비용). id가 빈 키는 렌더하지 않는다 |
+| 영상 | YouTube(일부 공개) id를 `src/components/guide/videos.ts`에 키로 등록하고 `GuideVideo`로 카드 표시. 한 영상의 일부만 가리키는 페이지는 `start` prop(초)으로 시작 지점을 준다. mp4를 Railway Volume·`public/`에 올리지 않는다(용량·대역폭 비용). id가 빈 키는 렌더하지 않으므로 업로드 전에도 본문에 그대로 둔다 |
 | 도움말 허브 | `/help`(`src/app/help/content.mdx`)의 해당 역할 절에서 `/help/<page>`로 링크 |
-| 화면에서 열기 (기본안) | 해당 화면 헤더의 `?` 버튼(`aria-label="사용 가이드"`, 44×44 터치 영역) → `/help/<page>`. 모달로 띄울지(인터셉팅 라우트) 새 탭 링크로 둘지는 첫 페이지에서 결정해 여기에 기록 |
+| 화면에서 열기 | 해당 화면 헤더의 `?` 버튼(`GuideHelpButton`, `aria-label="사용 가이드"`, 44×44 터치 영역) → `/help/<page>`를 **새 탭**으로 연다(`target="_blank" rel="noopener"`). 감독 중인 출석부나 저장 전 편집 상태를 잃지 않기 위해 모달·인터셉팅 라우트 대신 새 탭으로 확정. 헤더 오른쪽 묶음의 로그아웃 바로 앞에 둔다 |
 | 스틸 목록 | `demo-video/src/stills/<page>.ts` (`{ composition, file, frame, crop?, resize? }`, `DEFAULT_CROP`) |
 | 스틸 생성 | `cd demo-video && node scripts/guide-stills.mjs --page <page> [--only NN-slug]` → `public/guide/<page>/`. 가이드 페이지에는 `--scale`·`--max-kb`를 쓰지 않는다(3절 규격 1280px·150KB, `--max-kb`는 초과 경고 기준일 뿐이다) |
 | 테스트 | `tests/guide-<page>.test.ts` — `tests/help-mdx.test.ts`와 같은 `node:assert` 계약 검사: `page.tsx`가 서버 컴포넌트이고 `content.mdx`를 렌더, MDX가 빌딩 블록을 import, MDX가 참조하는 이미지 파일이 모두 존재, `?` 버튼이 `/help/<page>`를 가리킴. 실행 `npx tsx tests/guide-<page>.test.ts` |
@@ -86,6 +86,7 @@
 - 기준선: `src/anim.ts`·`src/components/*`·`src/guide/*`는 school_cowork에서 검증된 공용 코드를 가져온 것이라 아래 규칙에 맞추려고 리팩터링하지 않는다(장면 전환 `linearTiming` 크로스페이드, `fadeInOut` 불투명도, 컴포넌트 안의 흰색·그림자 값 포함). 규칙은 **새로 쓰는 가이드별 장면 코드**에 적용한다.
 - 새 장면 코드에 적용: easing + clamp(선형 보간 금지), 2~3속성 등장, 스태거, 퇴장이 등장보다 빠르게, 색·easing은 `src/theme.ts`·`src/anim.ts`에서만, **렌더 → 프레임 추출 → 눈으로 확인 → 수정** 루프.
 - 인트로·아웃트로·썸네일에만 적용: 배경 메시, 색 보정, 그레인·비네트, 대기 중 미세 움직임.
+- 색 출처: 앱 화면 목업의 색은 `src/app-mocks/tw.ts`(앱과 같은 Tailwind 팔레트, 앱 코드에 hex로 적힌 값은 그대로), 영상 장치(배경·자막·주석·배지)의 색은 `src/theme.ts`.
 - 화면 동작 시점은 매직 프레임 번호 대신 `lineAt`(음성 길이 기반)으로 잡는다. 공용 상수(`LEAD_FRAMES`·`TAIL_FRAMES`·`TRANSITION_FRAMES`, 30fps 고정)와 짧은 트윈 길이는 예외다.
 
 ## 7. 진행 현황
@@ -93,5 +94,7 @@
 | 페이지 | `page` | 화면 | 장면(목업) | 가이드 페이지 | 영상 |
 |---|---|---|---|---|---|
 | 환경 점검 | `setup-check` | — | `src/setup-check/` (`SetupCheck`) | — (스틸은 점검용으로 `out/`에만) | `out/setup-check.mp4` (Chois 음성, git 제외) |
+| 출석부 | `attendance` | `/attendance/[grade]` (감독교사) | `src/teacher/` (`Teacher-*` 장면) | `/help/attendance` (스틸 14장) | `videos.ts` `teacher` — id 미등록 |
+| 담임교사 메뉴 | `homeroom` | `/homeroom/*` (담임교사) | `src/teacher/` (`Teacher-Homeroom*`·`AbsenceReason`·`Password`) | `/help/homeroom` (스틸 7장) | `videos.ts` `teacher` — id 미등록 |
 
 새 화면은 `/guide-page <page>`로 추가하면서 이 표에 행을 더한다.
