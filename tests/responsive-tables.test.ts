@@ -147,6 +147,7 @@ for (const rel of [
   "../src/app/attendance/layout.tsx",
   "../src/app/login/page.tsx",
   "../src/app/help/page.tsx",
+  "../src/app/help/layout.tsx",
 ]) {
   assert.doesNotMatch(read(rel), /min-h-screen/, `${rel}: min-h-screen(100vh) 사용 — min-h-dvh 로`);
 }
