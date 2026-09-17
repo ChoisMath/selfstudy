@@ -30,8 +30,20 @@ for (const file of images) assert.ok(existsSync(join(root, "public/guide", PAGE,
 assert.equal((mdx.match(/<GuideStep\b/g) ?? []).length, 8, "단계 8개");
 
 // 출결기록 스틸에는 O·X·- 를 설명하는 확대 카드가 폰 크롭 밖이라 담기지 않는다 — 본문이 대신 뜻을 적어야 한다.
-for (const meaning of ["O", "X", "출석", "결석"]) {
-  assert.ok(mdx.includes(meaning), `출결 표 기호 설명에 ${meaning} 포함`);
+for (const meaning of [/O는 출석/, /X는 결석/, /줄표는 [^.]*자습하지 않는 날/]) {
+  assert.match(mdx, meaning, `출결 표 기호 설명: ${meaning}`);
+}
+
+// 금요일 열의 파란·회색 주석 링도 설명이 폰 크롭 밖이라, 본문이 그 표시를 짚어야 오늘 열과 혼동하지 않는다.
+assert.match(mdx, /금요일 열에 덧그린 표시/, "참여일정 그림의 주석 표시 설명");
+
+assert.match(mdx, /<GuideNotice\s+tone="yellow"/, "알아 둘 점은 yellow");
+for (const item of [
+  '["본인 신청", "불참 신청은 되도록 본인이 직접 하고, 어쩔 수 없을 때만 학급 도우미에게 부탁하세요."]',
+  '["지난 날짜", "이미 지난 날짜에는 신청할 수 없습니다."]',
+  '["취소", "낸 신청은 학생이 취소할 수 없으니 잘못 신청했다면 담임 선생님께 말씀드리세요."]',
+]) {
+  assert.ok(mdx.includes(item), `GuideNotice 항목 누락: ${item}`);
 }
 
 // 스틸 파이프라인은 lossy WebP(VP8)만 만든다. 헤더 뒤 14비트 두 개가 실제 픽셀 크기다.
