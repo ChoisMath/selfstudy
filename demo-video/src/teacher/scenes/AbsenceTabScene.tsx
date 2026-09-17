@@ -20,6 +20,8 @@ import {
   AbsencePanelMock,
   absenceCardRect,
   absencePanelPoint,
+  CARD_BTN_H,
+  CARD_BTN_W,
   type AbsenceFilter,
 } from "../mocks/AbsencePanelMock";
 import { NativeDialogMock, nativeDialogPoint } from "../mocks/NativeDialogMock";
@@ -113,26 +115,15 @@ export const panelPoint = (
 export const cardRect = (props: AttendanceBoardProps, requestId: number, requests: AbsenceRequest[]) =>
   panelRect(props, absenceCardRect(requestId, PANEL_W, requests, "pending"));
 
-// 카드 오른쪽 위 버튼 묶음 [승인][반려](px-3 py-1.5 text-xs, gap-1.5). absencePanelPoint 의 approve/reject 좌표는
-// 두 버튼 자리가 뒤바뀌어 있어 카드 상자에서 직접 구한다.
-const CARD_PAD = 12;
-const BUTTON_W = 48;
-const BUTTON_H = 30;
-const BUTTON_GAP = 6;
+// 카드 오른쪽 위 버튼 묶음 [승인][반려] — 중심은 absencePanelPoint(panelPoint), 크기는 목업이 그리는 고정폭(CARD_BTN_W/H)과 같다.
 export const cardButtonRect = (
   props: AttendanceBoardProps,
   button: "approve" | "reject",
   requestId: number,
   requests: AbsenceRequest[],
 ): Rect => {
-  const card = cardRect(props, requestId, requests);
-  const rejectX = card.x + card.w - CARD_PAD - BUTTON_W;
-  return {
-    x: button === "reject" ? rejectX : rejectX - BUTTON_GAP - BUTTON_W,
-    y: card.y + CARD_PAD,
-    w: BUTTON_W,
-    h: BUTTON_H,
-  };
+  const center = panelPoint(props, `${button}_${requestId}` as Parameters<typeof absencePanelPoint>[0], requests);
+  return { x: center.x - CARD_BTN_W / 2, y: center.y - CARD_BTN_H / 2, w: CARD_BTN_W, h: CARD_BTN_H };
 };
 
 // 뱃지(-top-1 right-0, 18px) — 탭 모양 오른쪽 위.
@@ -140,13 +131,6 @@ const BADGE = 18;
 export const absenceBadgeRect = (props: AttendanceBoardProps): Rect => {
   const tab = boardTabRect("absence", props);
   return { x: tab.x + tab.w - BADGE, y: tab.y - 4, w: BADGE, h: BADGE };
-};
-
-// nativeDialogPoint 는 두 줄 메시지를 가정한다. 한 줄 메시지면 창이 한 줄(20px)만큼 낮아져 버튼이 그 절반 위에 있다.
-const MESSAGE_LINE_H = 20;
-export const oneLineDialogOk = (kind: "confirm" | "alert"): Point => {
-  const p = nativeDialogPoint("ok", PHONE_BODY.w, PHONE_BODY.h, kind);
-  return { x: p.x, y: p.y - MESSAGE_LINE_H / 2 };
 };
 
 // ── AbsenceTab 장면 ──
@@ -158,6 +142,7 @@ const REQUEST_ID = 1;
 const SEAT = 109;
 const NEXT_REQUEST_ID = 2;
 const REMOVE_FRAMES = 8;
+const CONFIRM_MESSAGE = "이 불참신청을 승인하시겠습니까?";
 
 const absenceTap = lineAt(ID, 0, 0.35);
 const absenceAt = absenceTap + 3;
@@ -219,7 +204,7 @@ const propsAt = (frame: number): AttendanceBoardProps => {
           width={PHONE_BODY.w}
           height={PHONE_BODY.h}
           kind="confirm"
-          message="이 불참신청을 승인하시겠습니까?"
+          message={CONFIRM_MESSAGE}
           openAt={confirmOpen}
           okPressAt={okTap}
         />
@@ -244,7 +229,7 @@ const firstCard = cardRect(listProps, REQUEST_ID, ABSENCE_REQUESTS);
 const approveButton = cardButtonRect(listProps, "approve", REQUEST_ID, ABSENCE_REQUESTS);
 const rejectButton = cardButtonRect(afterProps, "reject", NEXT_REQUEST_ID, APPROVED);
 const approvedSeat = seatRect(SEAT, approvedBoard);
-const okPoint = phoneAbs(oneLineDialogOk("confirm"));
+const okPoint = phoneAbs(nativeDialogPoint("ok", PHONE_BODY.w, PHONE_BODY.h, "confirm", CONFIRM_MESSAGE));
 
 const Stage: React.FC = () => {
   const frame = useCurrentFrame();

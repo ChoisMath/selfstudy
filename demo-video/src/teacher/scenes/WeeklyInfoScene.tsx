@@ -53,11 +53,7 @@ const noteCell: Rect = (() => {
   return { x: notesRow.x + LABEL_COL_W + CELL_GAP + NOTE_DAY_INDEX * (dayW + CELL_GAP), y: notesRow.y, w: dayW, h: notesRow.h };
 })();
 const table = weeklyInfoRect("table", PHONE_BODY.w, PHONE_BODY.h);
-// totals 칸은 위 테두리+pt-3 까지의 높이라 아래 숫자 줄이 밖으로 나온다 — 라벨·숫자 두 줄을 감싸게 내린다.
-const totalsRow = weeklyInfoRect("totals", PHONE_BODY.w, PHONE_BODY.h);
-const TOTALS_TEXT_TOP = 12;
-const TOTALS_TEXT_H = 40;
-const totals: Rect = { ...totalsRow, y: totalsRow.y + TOTALS_TEXT_TOP, h: TOTALS_TEXT_H };
+const totals = weeklyInfoRect("totals", PHONE_BODY.w, PHONE_BODY.h);
 // 제목 줄 가운데 빈 곳 — 입력 칸 밖을 눌러 포커스를 뺀다(바깥 어두운 곳을 누르면 창이 닫힌다).
 const blurPoint = phoneAbs({ x: table.x + table.w / 2, y: table.y - 16 });
 

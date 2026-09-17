@@ -12,14 +12,13 @@ import { ABSENCE_REASON_META, ABSENCE_REQUESTS, studentById, SUPERVISOR_SEPT, TO
 import { PHONE_BODY, type Rect } from "../../app-mocks/layout";
 import { SESSION_LABEL } from "../mocks/AbsencePanelMock";
 import { BulkApproveModalMock, bulkModalPoint, type BulkApproveRow } from "../mocks/BulkApproveModalMock";
-import { NativeDialogMock } from "../mocks/NativeDialogMock";
+import { NativeDialogMock, nativeDialogPoint } from "../mocks/NativeDialogMock";
 import { lineAt, lineEnd, lineStart } from "../timing";
 import {
   absenceBadgeRect,
   absenceBoardProps,
   approveRequests,
   bulkCandidatesOf,
-  oneLineDialogOk,
   panelRect,
 } from "./AbsenceTabScene";
 import { between, BOARD_URL, leftLabeled, phoneCenter, PhoneTap, rightLabeled } from "./SeatColorsScene";
@@ -53,6 +52,7 @@ const busyFrom = confirmTap + 3;
 const alertOpen = confirmTap + 12;
 const okTap = lineAt(ID, 2, 0.72);
 const doneAt = okTap + 4;
+const ALERT_MESSAGE = `${ROWS.length}건을 승인했습니다.`;
 
 const propsAt = (frame: number): AttendanceBoardProps => {
   const done = frame >= doneAt;
@@ -76,7 +76,7 @@ const propsAt = (frame: number): AttendanceBoardProps => {
                 width={PHONE_BODY.w}
                 height={PHONE_BODY.h}
                 kind="alert"
-                message={`${ROWS.length}건을 승인했습니다.`}
+                message={ALERT_MESSAGE}
                 openAt={alertOpen}
                 okPressAt={okTap}
               />
@@ -121,7 +121,7 @@ const modalTable: Rect = (() => {
 const modalRows: Rect = { ...modalTable, y: modalTable.y + TABLE_HEAD_H, h: modalTable.h - TABLE_HEAD_H };
 
 const confirmPoint = phoneAbs(bulkModalPoint("confirm", PHONE_BODY.w, PHONE_BODY.h, ROWS.length));
-const okPoint = phoneAbs(oneLineDialogOk("alert"));
+const okPoint = phoneAbs(nativeDialogPoint("ok", PHONE_BODY.w, PHONE_BODY.h, "alert", ALERT_MESSAGE));
 const badge = absenceBadgeRect(listProps);
 
 const Stage: React.FC = () => {

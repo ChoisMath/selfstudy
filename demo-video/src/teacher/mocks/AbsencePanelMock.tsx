@@ -35,6 +35,11 @@ const CARD_DETAIL_H = 14;
 const CARD_REVIEWER_GAP = 4; // mt-1
 const CARD_REVIEWER_H = 14;
 const REMOVE_FRAMES = 8; // 모달 등장(10프레임)보다 퇴장이 빨라야 한다.
+// 승인/반려 버튼(px-3 py-1.5 text-xs, gap-1.5) — 실제 앱은 auto width 지만, 좌표 계산과 어긋나지 않게 고정폭으로 그린다.
+// 장면에서 absencePanelPoint 의 중심 좌표로 버튼 Rect 를 만들 때도 이 크기를 그대로 쓴다.
+export const CARD_BTN_W = 48;
+export const CARD_BTN_H = 30;
+const CARD_BTN_GAP = 6;
 
 // px-3(양쪽 12) + 글자당 대략 폭. 커서 좌표용 근사치 — 픽셀 완전 일치 불필요.
 const pillWidth = (label: string) => label.length * 8 + 24;
@@ -110,10 +115,13 @@ export const absencePanelPoint = (
   const [, idStr] = key.split("_");
   const requestId = Number(idStr);
   const rect = absenceCardRect(requestId, width, requests, filter);
+  // 버튼 그룹은 카드 오른쪽 끝(패딩 제외)에 붙는다: [승인][반려] — 반려가 가장 오른쪽.
+  const rightEdge = rect.x + rect.w - CARD_PAD;
   const isApprove = key.startsWith("approve_");
-  const btnW = isApprove ? 44 : 40;
-  const rightBtnX = rect.x + rect.w - CARD_PAD - (isApprove ? btnW / 2 : btnW + 6 + btnW / 2);
-  return { x: rightBtnX, y: rect.y + CARD_PAD + CARD_NAME_H / 2 };
+  const centerX = isApprove
+    ? rightEdge - CARD_BTN_W - CARD_BTN_GAP - CARD_BTN_W / 2
+    : rightEdge - CARD_BTN_W / 2;
+  return { x: centerX, y: rect.y + CARD_PAD + CARD_BTN_H / 2 };
 };
 
 const FilterPill: React.FC<{ label: string; active: boolean; x: number; w: number; pressAt?: number | null }> = ({
@@ -197,16 +205,21 @@ const AbsenceCard: React.FC<{
           ) : null}
         </div>
         {request.status === "pending" ? (
-          <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+          <div style={{ display: "flex", gap: CARD_BTN_GAP, flexShrink: 0 }}>
             <div
               style={{
+                width: CARD_BTN_W,
+                height: CARD_BTN_H,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
                 background: "#3b82f6",
                 color: "#fff",
-                padding: "6px 12px",
                 borderRadius: 6,
                 fontSize: 12,
                 fontWeight: 600,
                 whiteSpace: "nowrap",
+                boxSizing: "border-box",
                 scale: String(pressScale(frame, approvePressAt)),
               }}
             >
@@ -214,12 +227,17 @@ const AbsenceCard: React.FC<{
             </div>
             <div
               style={{
+                width: CARD_BTN_W,
+                height: CARD_BTN_H,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
                 background: "#f1f5f9",
                 color: "#64748b",
-                padding: "6px 12px",
                 borderRadius: 6,
                 fontSize: 12,
                 whiteSpace: "nowrap",
+                boxSizing: "border-box",
               }}
             >
               반려

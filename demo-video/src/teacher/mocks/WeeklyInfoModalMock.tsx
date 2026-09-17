@@ -26,10 +26,14 @@ const CELL_ROW_H = 22;
 const NOTE_ROW_H = 20;
 const TOTALS_MT = 12; // mt-3 (674행)
 const TOTALS_PT = 12; // pt-3
-const TOTALS_H = 30;
+const TOTALS_LABEL_H = 14; // text-[10px] 줄
+const TOTALS_VALUE_H = 20; // text-sm font-bold 줄
+// 전체 total 블록(위 테두리+pt-3+라벨 줄+값 줄) 높이 — 값 줄까지 포함해야 weeklyInfoRect("totals")가 실제 콘텐츠를 덮는다.
+const TOTALS_H = TOTALS_PT + TOTALS_LABEL_H + TOTALS_VALUE_H;
 
 const TABLE_H = DAY_HEADER_H + CELL_ROW_H * 2 + NOTE_ROW_H;
-const CONTENT_H = TITLE_ROW_H + TITLE_MB + TABLE_H + TOTALS_MT + TOTALS_PT + TOTALS_H;
+// TOTALS_H 는 pt-3(TOTALS_PT)를 이미 포함한 total 박스 전체 높이 — 여기서 또 더하지 않는다.
+const CONTENT_H = TITLE_ROW_H + TITLE_MB + TABLE_H + TOTALS_MT + TOTALS_H;
 const DIALOG_H = CONTENT_H + DIALOG_PAD * 2;
 
 // 셀 라벨 → weeklyCellStyle(570-577행) 색. "-"는 오늘 이후 미체크로 취급.
