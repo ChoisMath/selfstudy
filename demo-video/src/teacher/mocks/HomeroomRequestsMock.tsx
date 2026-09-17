@@ -1,0 +1,343 @@
+// src/app/homeroom/absence-requests/page.tsx 이식 — 헤더 셸 없이 본문만 그린다.
+// 담임 화면은 1-2반 신청만 보이므로 ABSENCE_REQUESTS 중 1-2반(4, 7) 두 건만 쓰고,
+// 표를 채우기 위해 1-2반 학생 가상 신청 3건(8~10)을 이 파일에 로컬로 추가한다(brief 허용 범위).
+import React from "react";
+import { useCurrentFrame } from "remotion";
+import { FONT } from "../../fonts";
+import type { Point } from "../../app-mocks/layout";
+import { pressScale } from "../../app-mocks/primitives";
+import { tw } from "../../app-mocks/tw";
+import { ABSENCE_REASON_META, ABSENCE_REQUESTS, studentById, type AbsenceRequest, type AbsenceSession } from "../../app-mocks/data";
+
+const PAD_X = 16; // lg:px-4 (homeroom/layout.tsx main)
+const PAD_TOP = 24; // py-6 (homeroom/layout.tsx main) — HomeroomShellMock은 헤더만 그리므로 본문 패딩은 여기서 직접 재현한다
+const TITLE_H = 30; // text-2xl 줄높이(95행)와 필터 버튼 행(97-109행) 공유 높이
+
+const HEADER_MB = 16; // mb-6 근사치(압축, 94행)
+const HEAD_H = 34; // thead 행(116-125행)
+const ROW_H = 52; // tbody 행(148-200행) — 학생 셀 2줄 기준
+const FOOT_H = 32; // 총 N건(206-210행)
+const EMPTY_H = 48;
+
+const COL = { student: 260, date: 90, session: 78, reason: 78, status: 96, action: 140 } as const;
+
+const SESSION_SHORT: Record<AbsenceSession, string> = { afternoon1: "오후1", afternoon2: "오후2", night: "야간" };
+const STATUS_LABEL: Record<AbsenceRequest["status"], string> = { pending: "대기중", approved: "승인", rejected: "반려" };
+const STATUS_COLOR: Record<AbsenceRequest["status"], { bg: string; fg: string }> = {
+  pending: { bg: tw.yellow[100], fg: tw.yellow[800] },
+  approved: { bg: tw.green[100], fg: tw.green[800] },
+  rejected: { bg: tw.red[100], fg: tw.red[800] },
+};
+
+// 표를 채우기 위한 1-2반 가상 불참신청 3건 — STUDENTS의 기존 1-2반 학생만 사용, 새 이름 없음.
+// 205(안지호)는 ABSENCE_REASON_EXAMPLE과 같은 학생·사유로, 등록 화면과 자연스럽게 이어지도록 골랐다.
+const EXTRA_REQUESTS: AbsenceRequest[] = [
+  { id: 8, studentId: 205, date: "2026-09-17", dateLabel: "9/17(목)", session: "afternoon1", reason: "academy", detail: "수학 학원", status: "pending" },
+  { id: 9, studentId: 208, date: "2026-09-16", dateLabel: "9/16(수)", session: "afternoon2", reason: "illness", detail: "감기", status: "approved", reviewer: "박지훈" },
+  { id: 10, studentId: 211, date: "2026-09-15", dateLabel: "9/15(화)", session: "night", reason: "afterschool", status: "rejected", reviewer: "박지훈" },
+];
+
+const REQUESTS: AbsenceRequest[] = [
+  ...ABSENCE_REQUESTS.filter((r) => studentById(r.studentId).classNumber === 2),
+  ...EXTRA_REQUESTS,
+];
+
+export type HomeroomRequestFilter = "all" | "pending" | "approved" | "rejected";
+
+const FILTER_ORDER: { key: HomeroomRequestFilter; label: string; w: number }[] = [
+  { key: "all", label: "전체", w: 48 },
+  { key: "pending", label: "대기중", w: 64 },
+  { key: "approved", label: "승인", w: 48 },
+  { key: "rejected", label: "반려", w: 48 },
+];
+const FILTER_GAP = 8;
+
+const withApproved = (r: AbsenceRequest, approvedIds?: number[]): AbsenceRequest =>
+  approvedIds?.includes(r.id) ? { ...r, status: "approved", reviewer: "박지훈" } : r;
+
+const effectiveRequests = (approvedIds?: number[]) => REQUESTS.map((r) => withApproved(r, approvedIds));
+
+const visibleRows = (filter: HomeroomRequestFilter, approvedIds?: number[]) => {
+  const eff = effectiveRequests(approvedIds);
+  return filter === "all" ? eff : eff.filter((r) => r.status === filter);
+};
+
+const columnX = (width: number) => {
+  const contentW = width - PAD_X * 2;
+  const detailW = contentW - (COL.student + COL.date + COL.session + COL.reason + COL.status + COL.action);
+  const studentX = PAD_X;
+  const dateX = studentX + COL.student;
+  const sessionX = dateX + COL.date;
+  const reasonX = sessionX + COL.session;
+  const detailX = reasonX + COL.reason;
+  const statusX = detailX + detailW;
+  const actionX = statusX + COL.status;
+  return { contentW, detailW, studentX, dateX, sessionX, reasonX, detailX, statusX, actionX };
+};
+
+const filterRowLayout = (width: number) => {
+  const totalW = FILTER_ORDER.reduce((sum, f) => sum + f.w, 0) + FILTER_GAP * (FILTER_ORDER.length - 1);
+  let x = width - PAD_X - totalW;
+  return FILTER_ORDER.map((f) => {
+    const rect = { key: f.key, label: f.label, x, w: f.w };
+    x += f.w + FILTER_GAP;
+    return rect;
+  });
+};
+
+const tableY = PAD_TOP + TITLE_H + HEADER_MB;
+
+export const homeroomRequestsPoint = (
+  key: `filter_${string}` | `approve_${number}` | `reject_${number}` | "table" | "total",
+  width: number,
+): Point => {
+  const { contentW, actionX } = columnX(width);
+  if (key === "table") {
+    return { x: PAD_X + contentW / 2, y: tableY + (HEAD_H + REQUESTS.length * ROW_H + FOOT_H) / 2 };
+  }
+  if (key === "total") {
+    return { x: PAD_X + 40, y: tableY + HEAD_H + REQUESTS.length * ROW_H + FOOT_H / 2 };
+  }
+  if (key.startsWith("filter_")) {
+    const f = key.slice(7);
+    const pill = filterRowLayout(width).find((p) => p.key === f);
+    if (!pill) throw new Error(`unknown filter: ${f}`);
+    return { x: pill.x + pill.w / 2, y: PAD_TOP + TITLE_H / 2 };
+  }
+  // approve_<id> / reject_<id> — 필터가 "all"인 정식 순서(REQUESTS) 기준 행 위치를 반환한다.
+  // approvedIds에 따라 실제로 보이는 목록은 재배치될 수 있으니, 호출하는 장면은 그 프레임에
+  // 해당 행이 이 위치에 실제로 보이는 필터·상태 조합을 스스로 맞춰야 한다.
+  const [, idStr] = key.split("_");
+  const id = Number(idStr);
+  const rowIndex = REQUESTS.findIndex((r) => r.id === id);
+  if (rowIndex === -1) throw new Error(`unknown request id: ${id}`);
+  const rowY = tableY + HEAD_H + rowIndex * ROW_H;
+  const isApprove = key.startsWith("approve_");
+  const approveW = 44;
+  const rejectW = 40;
+  const btnGap = 4;
+  const groupW = approveW + btnGap + rejectW;
+  const groupX = actionX + (COL.action - groupW) / 2;
+  const x = isApprove ? groupX + approveW / 2 : groupX + approveW + btnGap + rejectW / 2;
+  return { x, y: rowY + ROW_H / 2 };
+};
+
+const Th: React.FC<{ x: number; w: number; align: "left" | "center"; children: React.ReactNode }> = ({ x, w, align, children }) => (
+  <div
+    style={{
+      position: "absolute",
+      left: x,
+      top: 0,
+      width: w,
+      height: HEAD_H,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: align === "left" ? "flex-start" : "center",
+      padding: align === "left" ? "0 12px" : 0,
+      fontSize: 12,
+      fontWeight: 500,
+      color: tw.gray[600],
+      whiteSpace: "nowrap",
+      boxSizing: "border-box",
+    }}
+  >
+    {children}
+  </div>
+);
+
+export const HomeroomRequestsMock: React.FC<{
+  width: number;
+  filter: HomeroomRequestFilter;
+  approvePressAt?: { requestId: number; at: number };
+  approvedIds?: number[];
+}> = ({ width, filter, approvePressAt, approvedIds }) => {
+  const frame = useCurrentFrame();
+  const { contentW, detailW, studentX, dateX, sessionX, reasonX, detailX, statusX, actionX } = columnX(width);
+  const rows = visibleRows(filter, approvedIds);
+  const tableH = HEAD_H + (rows.length === 0 ? EMPTY_H : rows.length * ROW_H + FOOT_H);
+
+  return (
+    <div style={{ position: "absolute", inset: 0, background: tw.gray[50], fontFamily: FONT, overflow: "hidden" }}>
+      <div
+        style={{
+          position: "absolute",
+          left: PAD_X,
+          top: PAD_TOP,
+          fontSize: 22,
+          fontWeight: 700,
+          color: tw.gray[900],
+          whiteSpace: "nowrap",
+        }}
+      >
+        불참신청 관리
+      </div>
+
+      {filterRowLayout(width).map((pill) => {
+        const active = pill.key === filter;
+        return (
+          <div
+            key={pill.key}
+            style={{
+              position: "absolute",
+              left: pill.x,
+              top: PAD_TOP + (TITLE_H - 26) / 2,
+              width: pill.w,
+              height: 26,
+              borderRadius: 6,
+              border: `1px solid ${active ? tw.blue[500] : tw.gray[300]}`,
+              background: active ? tw.blue[50] : tw.white,
+              color: active ? tw.blue[700] : tw.gray[600],
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: 12,
+              whiteSpace: "nowrap",
+              boxSizing: "border-box",
+            }}
+          >
+            {pill.label}
+          </div>
+        );
+      })}
+
+      <div
+        style={{
+          position: "absolute",
+          left: PAD_X,
+          top: tableY,
+          width: contentW,
+          height: tableH,
+          background: tw.white,
+          border: `1px solid ${tw.gray[200]}`,
+          borderRadius: 8,
+          overflow: "hidden",
+          boxSizing: "border-box",
+        }}
+      >
+        <div style={{ position: "relative", height: HEAD_H, background: tw.gray[50], borderBottom: `1px solid ${tw.gray[200]}` }}>
+          <Th x={studentX} w={COL.student} align="left">학생</Th>
+          <Th x={dateX} w={COL.date} align="center">날짜</Th>
+          <Th x={sessionX} w={COL.session} align="center">시간</Th>
+          <Th x={reasonX} w={COL.reason} align="center">사유</Th>
+          <Th x={detailX} w={detailW} align="left">상세</Th>
+          <Th x={statusX} w={COL.status} align="center">상태</Th>
+          <Th x={actionX} w={COL.action} align="center">처리</Th>
+        </div>
+
+        {rows.length === 0 ? (
+          <div
+            style={{
+              position: "absolute",
+              left: 0,
+              top: HEAD_H,
+              width: contentW,
+              height: EMPTY_H,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: 13,
+              color: tw.gray[400],
+              whiteSpace: "nowrap",
+            }}
+          >
+            신청이 없습니다.
+          </div>
+        ) : (
+          rows.map((r, i) => {
+            const student = studentById(r.studentId);
+            const rowY = HEAD_H + i * ROW_H;
+            const status = STATUS_COLOR[r.status];
+            const bounceAt = approvePressAt?.requestId === r.id ? approvePressAt.at : undefined;
+            return (
+              <div key={r.id} style={{ position: "absolute", left: 0, top: rowY, width: contentW, height: ROW_H, borderTop: i === 0 ? "none" : `1px solid ${tw.gray[100]}` }}>
+                <div style={{ position: "absolute", left: studentX, top: 0, width: COL.student, height: ROW_H, display: "flex", flexDirection: "column", justifyContent: "center", padding: "0 12px", boxSizing: "border-box" }}>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: tw.gray[900], whiteSpace: "nowrap" }}>{student.name}</span>
+                  <span style={{ fontSize: 11, color: tw.gray[500], whiteSpace: "nowrap" }}>
+                    {student.grade}-{student.classNumber} {student.number}번
+                  </span>
+                </div>
+                <div style={{ position: "absolute", left: dateX, top: 0, width: COL.date, height: ROW_H, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, color: tw.gray[600], whiteSpace: "nowrap" }}>
+                  {r.date}
+                </div>
+                <div style={{ position: "absolute", left: sessionX, top: 0, width: COL.session, height: ROW_H, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, color: tw.gray[600], whiteSpace: "nowrap" }}>
+                  {SESSION_SHORT[r.session]}
+                </div>
+                <div style={{ position: "absolute", left: reasonX, top: 0, width: COL.reason, height: ROW_H, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, color: tw.gray[600], whiteSpace: "nowrap" }}>
+                  {ABSENCE_REASON_META[r.reason].label}
+                </div>
+                <div style={{ position: "absolute", left: detailX, top: 0, width: detailW, height: ROW_H, display: "flex", alignItems: "center", padding: "0 12px", boxSizing: "border-box", fontSize: 12, color: tw.gray[600], whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                  {r.detail ?? "-"}
+                </div>
+                <div style={{ position: "absolute", left: statusX, top: 0, width: COL.status, height: ROW_H, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <span style={{ padding: "2px 8px", borderRadius: 999, background: status.bg, color: status.fg, fontSize: 11, fontWeight: 500, whiteSpace: "nowrap" }}>
+                    {STATUS_LABEL[r.status]}
+                  </span>
+                </div>
+                <div style={{ position: "absolute", left: actionX, top: 0, width: COL.action, height: ROW_H, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  {r.status === "pending" ? (
+                    <div style={{ display: "flex", gap: 4 }}>
+                      <div
+                        style={{
+                          padding: "3px 8px",
+                          borderRadius: 4,
+                          border: `1px solid ${tw.green[200]}`,
+                          background: tw.green[50],
+                          color: tw.green[700],
+                          fontSize: 11,
+                          fontWeight: 500,
+                          whiteSpace: "nowrap",
+                          scale: String(pressScale(frame, bounceAt)),
+                        }}
+                      >
+                        승인
+                      </div>
+                      <div
+                        style={{
+                          padding: "3px 8px",
+                          borderRadius: 4,
+                          border: `1px solid ${tw.red[200]}`,
+                          background: tw.red[50],
+                          color: tw.red[700],
+                          fontSize: 11,
+                          fontWeight: 500,
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        반려
+                      </div>
+                    </div>
+                  ) : (
+                    <span style={{ fontSize: 11, color: tw.gray[400], whiteSpace: "nowrap" }}>{r.reviewer}</span>
+                  )}
+                </div>
+              </div>
+            );
+          })
+        )}
+
+        {rows.length > 0 ? (
+          <div
+            style={{
+              position: "absolute",
+              left: 0,
+              top: HEAD_H + rows.length * ROW_H,
+              width: contentW,
+              height: FOOT_H,
+              background: tw.gray[50],
+              borderTop: `1px solid ${tw.gray[200]}`,
+              display: "flex",
+              alignItems: "center",
+              padding: "0 16px",
+              boxSizing: "border-box",
+              fontSize: 13,
+              color: tw.gray[500],
+              whiteSpace: "nowrap",
+            }}
+          >
+            총 {rows.length}건
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
+};
