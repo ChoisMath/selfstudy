@@ -117,8 +117,12 @@ const dateToggleClass = attendanceGrade.match(/setShowDatePicker\(\(v\) => !v\)\
 assert.ok(dateToggleClass, "attendance/[grade]: 날짜 토글 버튼 className 을 찾지 못함");
 assert.match(dateToggleClass, /\bmin-h-11\b/, "attendance/[grade]: 날짜 토글 버튼이 44px 미만");
 
-// 날짜 팝오버 offset 은 상단 바 높이에 수기로 맞춘 값 — 바 안 버튼이 44px 이 되면 함께 내려야 한다
-assert.match(attendanceGrade, /absolute z-\[120\] left-3 top-\[4\.75rem\]/, "날짜 팝오버가 높아진 상단 바를 가리거나 겹침");
+// 날짜 팝오버 offset 은 상단 바 높이에 수기로 맞춘 값(컨테이너 pt-2 8px + 바 min-h-11 44px + 여유 4px = 3.5rem) — 바 높이가 바뀌면 함께 옮겨야 한다
+assert.match(attendanceGrade, /absolute z-\[120\] left-3 top-\[3\.5rem\]/, "날짜 팝오버 offset 이 상단 바 높이(pt-2 + 44px)와 어긋남");
+const dateBarClass = attendanceGrade.match(/\{\/\* 날짜 바 \*\/\}\s*\n\s*<div\s*\n\s*className="([^"]+)"/)?.[1];
+assert.ok(dateBarClass, "attendance/[grade]: 날짜 바 className 을 찾지 못함");
+assert.match(dateBarClass, /\bmin-h-11\b/, "attendance/[grade]: 날짜 바가 44px 미만이면 팝오버 offset(3.5rem)과 어긋난다");
+assert.doesNotMatch(dateBarClass, /\bpy-\d/, "attendance/[grade]: 날짜 바 세로 padding 은 0 (버튼 self-stretch 로 44px 확보)");
 
 // --- 날짜 팝오버 ---
 const datePicker = read("../src/components/attendance/AttendanceDatePicker.tsx");

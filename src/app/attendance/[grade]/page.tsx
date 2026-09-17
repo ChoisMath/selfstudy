@@ -889,7 +889,7 @@ export default function AttendanceGradePage() {
       <div className="sticky top-0 z-[100] bg-[#f1f5f9] px-3 pt-2 max-w-[960px] mx-auto relative">
         {/* 날짜 바 */}
         <div
-          className="rounded-[10px] px-3.5 py-2.5 flex items-center gap-2 overflow-x-auto text-white"
+          className="rounded-[10px] px-3.5 min-h-11 flex items-center gap-2 overflow-x-auto text-white"
           style={{
             background: "linear-gradient(135deg, #1e40af, #2563eb)",
             scrollbarWidth: "none",
@@ -899,7 +899,7 @@ export default function AttendanceGradePage() {
             <button
               type="button"
               onClick={() => setShowDatePicker((v) => !v)}
-              className="text-[clamp(13px,3.5vw,16px)] font-bold whitespace-nowrap shrink-0 min-h-11 flex items-center gap-1 hover:opacity-90"
+              className="text-[clamp(13px,3.5vw,16px)] font-bold whitespace-nowrap shrink-0 min-h-11 self-stretch flex items-center gap-1 hover:opacity-90"
             >
               {selectedDateFormatted}
               <span className="text-[11px] leading-none">▾</span>
@@ -943,41 +943,51 @@ export default function AttendanceGradePage() {
           )}
           <button
             onClick={() => setShowGradeModal(true)}
-            className={`${tab === "absence" ? "ml-auto" : "ml-2"} shrink-0 min-h-11 flex items-center whitespace-nowrap bg-white/20 hover:bg-white/30 text-white text-[clamp(10px,2.4vw,12px)] px-2.5 rounded-md transition-colors`}
+            className={`${tab === "absence" ? "ml-auto" : "ml-2"} group shrink-0 min-h-11 self-stretch flex items-center whitespace-nowrap text-white text-[clamp(10px,2.4vw,12px)] focus-visible:outline-none`}
           >
-            다른학년
+            <span className="bg-white/20 group-hover:bg-white/30 group-focus-visible:ring-2 group-focus-visible:ring-white/70 px-2.5 py-1 rounded-md transition-colors">
+              다른학년
+            </span>
           </button>
         </div>
 
         {/* 블록 탭 3개 + 불참신청 */}
-        <div className="flex gap-1 mt-2 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
+        <div className="flex gap-1 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
           {SESSION_TYPES.map((sessionType) => (
             <button
               key={sessionType}
               onClick={() => { setTab(sessionType); setSelectedSeat(null); setActivatedStudents(new Set()); }}
-              className={`flex-1 text-center py-2.5 rounded-t-[10px] text-[clamp(12px,3vw,14px)] font-semibold transition-all whitespace-nowrap min-w-[64px] min-h-11 ${
-                tab === sessionType
-                  ? "bg-white text-[#2563eb] shadow-[0_-2px_8px_rgba(0,0,0,0.06)]"
-                  : "bg-[#e2e8f0] text-[#94a3b8]"
-              }`}
+              className="group flex-1 min-w-[64px] min-h-11 pt-2 flex flex-col focus-visible:outline-none"
             >
-              {SESSION_META[sessionType].shortLabel}
+              <span
+                className={`flex-1 w-full flex items-center justify-center rounded-t-[10px] text-[clamp(12px,3vw,14px)] font-semibold transition-all whitespace-nowrap group-focus-visible:ring-2 group-focus-visible:ring-[#2563eb] ${
+                  tab === sessionType
+                    ? "bg-white text-[#2563eb] shadow-[0_-2px_8px_rgba(0,0,0,0.06)]"
+                    : "bg-[#e2e8f0] text-[#94a3b8]"
+                }`}
+              >
+                {SESSION_META[sessionType].shortLabel}
+              </span>
             </button>
           ))}
           <button
             onClick={() => { setTab("absence"); setSelectedSeat(null); }}
-            className={`flex-1 text-center py-2.5 rounded-t-[10px] text-[clamp(12px,3vw,14px)] font-semibold transition-all relative whitespace-nowrap min-w-[64px] min-h-11 ${
-              tab === "absence"
-                ? "bg-white text-[#2563eb] shadow-[0_-2px_8px_rgba(0,0,0,0.06)]"
-                : "bg-[#e2e8f0] text-[#94a3b8]"
-            }`}
+            className="group flex-1 min-w-[64px] min-h-11 pt-2 flex flex-col focus-visible:outline-none"
           >
-            불참신청
-            {pendingCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-[#ef4444] text-white rounded-full w-[18px] h-[18px] flex items-center justify-center text-[10px] font-bold">
-                {pendingCount}
-              </span>
-            )}
+            <span
+              className={`relative flex-1 w-full flex items-center justify-center rounded-t-[10px] text-[clamp(12px,3vw,14px)] font-semibold transition-all whitespace-nowrap group-focus-visible:ring-2 group-focus-visible:ring-[#2563eb] ${
+                tab === "absence"
+                  ? "bg-white text-[#2563eb] shadow-[0_-2px_8px_rgba(0,0,0,0.06)]"
+                  : "bg-[#e2e8f0] text-[#94a3b8]"
+              }`}
+            >
+              불참신청
+              {pendingCount > 0 && (
+                <span className="absolute -top-1 right-0 bg-[#ef4444] text-white rounded-full w-[18px] h-[18px] flex items-center justify-center text-[10px] font-bold">
+                  {pendingCount}
+                </span>
+              )}
+            </span>
           </button>
         </div>
         {canChangeDate && showDatePicker && (
@@ -987,7 +997,7 @@ export default function AttendanceGradePage() {
               aria-hidden="true"
               onClick={() => setShowDatePicker(false)}
             />
-            <div className="absolute z-[120] left-3 top-[4.75rem]">
+            <div className="absolute z-[120] left-3 top-[3.5rem]">
               <AttendanceDatePicker value={selectedDate} today={today} onChange={handleDateChange} />
             </div>
           </>
