@@ -23,6 +23,17 @@ const SupervisorCalendarDropdownStill: React.FC = () => (
   />
 );
 
+// 저장 중 상태 확인용 — MonthlyCalendar.tsx 306행 isSaving → 443-445행 bg-yellow-50/border-yellow-300.
+const SupervisorCalendarSavingStill: React.FC = () => (
+  <SupervisorCalendarMock
+    width={WIDTH}
+    month="2026-09"
+    assignments={SUPERVISOR_MONTH}
+    myGrade={GRADE}
+    savingDate={SUPERVISOR_ASSIGN_EXAMPLE.date}
+  />
+);
+
 const GradeMonthlyStill: React.FC = () => (
   <GradeMonthlyMock width={WIDTH} dates={MONTHLY_DATES} rows={MONTHLY_ROWS} legendOpen={false} />
 );
@@ -34,6 +45,7 @@ const GradeMonthlyLegendStill: React.FC = () => (
 export const ENTRIES: GalleryEntry[] = [
   { id: "GradeAdmin-Supervisor", component: SupervisorCalendarStill, width: WIDTH, height: 640 },
   { id: "GradeAdmin-Supervisor-Dropdown", component: SupervisorCalendarDropdownStill, width: WIDTH, height: 640 },
+  { id: "GradeAdmin-Supervisor-Saving", component: SupervisorCalendarSavingStill, width: WIDTH, height: 640 },
   { id: "GradeAdmin-Monthly", component: GradeMonthlyStill, width: WIDTH, height: 1180 },
   { id: "GradeAdmin-Monthly-Legend", component: GradeMonthlyLegendStill, width: WIDTH, height: 1180 },
 ];

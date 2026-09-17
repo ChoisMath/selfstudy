@@ -178,6 +178,10 @@ export type SupervisorCalendarMockProps = {
   myGrade: 1 | 2 | 3;
   totalsPressAt?: number;
   cellPressAt?: { date: string; at: number };
+  // 배정 저장 중(서버 응답 대기) 상태 — MonthlyCalendar.tsx 306행 isSaving, 443-445행
+  // "bg-yellow-50 border-yellow-300"(텍스트색 클래스는 없음 → 기본 텍스트색). 표시값은 그대로 두고
+  // 배경·테두리만 노랗게 바뀐다(저장 완료 전이라 assignments가 아직 갱신되지 않았을 수 있음).
+  savingDate?: string;
   // 날짜 칸을 눌러 드롭다운을 여는 상태 — 검색창은 별도 필드가 아니라 셀의 입력창 자체가 바뀐다(439-449행 CalendarTeacherSelect와 동일).
   openCell?: {
     date: string;
@@ -251,6 +255,7 @@ export const SupervisorCalendarMock: React.FC<SupervisorCalendarMockProps> = ({
   myGrade,
   totalsPressAt,
   cellPressAt,
+  savingDate,
   openCell,
 }) => {
   const frame = useCurrentFrame();
@@ -337,6 +342,7 @@ export const SupervisorCalendarMock: React.FC<SupervisorCalendarMockProps> = ({
           const isWeekend = dow === 0 || dow === 6;
           const name = displayName(date);
           const isEditing = editingDate === date;
+          const isSaving = !isEditing && savingDate === date;
           const pressing = cellPressAt?.date === date ? cellPressAt.at : null;
           const justPicked = openCell?.date === date && isPicked && openCell.pickAt !== undefined ? openCell.pickAt : null;
           return (
@@ -355,15 +361,15 @@ export const SupervisorCalendarMock: React.FC<SupervisorCalendarMockProps> = ({
                     padding: "0 6px",
                     borderRadius: 4,
                     boxSizing: "border-box",
-                    background: isEditing ? tw.white : name ? tw.blue[50] : tw.white,
-                    border: `1px solid ${isEditing ? tw.blue[400] : name ? tw.blue[200] : tw.gray[200]}`,
+                    background: isEditing ? tw.white : isSaving ? tw.yellow[50] : name ? tw.blue[50] : tw.white,
+                    border: `1px solid ${isEditing ? tw.blue[400] : isSaving ? tw.yellow[300] : name ? tw.blue[200] : tw.gray[200]}`,
                     scale: String(pressScale(frame, pressing ?? justPicked)),
                   }}
                 >
                   {isEditing ? (
                     <TypedText text={openCell!.search.text} from={openCell!.search.typeFrom} placeholder="미배정" />
                   ) : (
-                    <span style={{ fontSize: 14, fontWeight: 500, color: name ? tw.blue[800] : tw.gray[400], whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                    <span style={{ fontSize: 14, fontWeight: 500, color: isSaving ? tw.gray[900] : name ? tw.blue[800] : tw.gray[400], whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                       {name ?? "미배정"}
                     </span>
                   )}
