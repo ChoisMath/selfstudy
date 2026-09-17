@@ -1,6 +1,6 @@
 # 자율학습 출석부 시스템 - 프로젝트 지도
 
-> 마지막 업데이트: 2026-09-17
+> 마지막 업데이트: 2026-09-18
 > 이 파일은 새 세션에서 코드베이스를 빠르게 파악하기 위한 참조 문서입니다.
 
 ## 개요
@@ -49,11 +49,11 @@ src/
 │   │   ├── seats/print/page.tsx # 인쇄 미리보기 (그룹별 가로/세로 + 체크박스)
 │   │   └── supervisors/page.tsx # MonthlyCalendar (단일학년 2슬롯 모드)
 │   ├── attendance/             # 감독교사
-│   │   ├── layout.tsx          # 모든 교사에게 이동 버튼 (담임교사/감독일정/학년관리) + NotificationBell
+│   │   ├── layout.tsx          # 모든 교사에게 이동 버튼 (담임교사/감독일정/학년관리) + NotificationBell + `GuideHelpButton href="/help/attendance"`
 │   │   ├── page.tsx            # 자동 학년 라우팅 / 학년 선택
-│   │   └── [grade]/page.tsx    # ★ 핵심: 좌석 출석 그리드 (4탭: 오후1/오후2/야간자습/불참신청, 오후 그룹은 buildPrintGroups 공용). 오후2 탭 "오후1 결과 복사" 버튼(`/api/attendance/copy-session`) + 불참신청 관리 UI. 오후 그룹 중 `group.classroom`이 있으면 카드 내부 격자를 `ClassroomFrame`(`overflow-x-auto` 래퍼로 좁은 화면 가로 스크롤)으로 감싸 자체 교탁 박스 대신 프레임 교탁 사용, 없으면(미래혜윰) 기존 렌더 유지
+│   │   └── [grade]/page.tsx    # ★ 핵심: 좌석 출석 그리드 (4탭: 오후1/오후2/야간자습/불참신청, 오후 그룹은 buildPrintGroups 공용). 오후2 탭 "오후1 결과 복사" 버튼(`/api/attendance/copy-session`) + 불참신청 관리 UI. 오후 그룹 중 `group.classroom`이 있으면 카드 내부 격자를 `ClassroomFrame`(`overflow-x-auto` 래퍼로 좁은 화면 가로 스크롤)으로 감싸 자체 교탁 박스 대신 프레임 교탁 사용, 없으면(미래혜윰) 기존 렌더 유지. "좌석 배치가 설정되지 않았습니다." 안내는 `tab !== "absence"` 일 때만, 주간 팝업·다른학년 모달은 `z-[150]`(sticky 상단 바 `z-[100]` 위)
 │   ├── homeroom/               # 담임교사
-│   │   ├── layout.tsx          # 담임 5탭 + 공통 2탭 네비게이션 (세션 로딩 처리) + NotificationBell
+│   │   ├── layout.tsx          # 담임 5탭 + 공통 2탭 네비게이션 (세션 로딩 처리) + NotificationBell + `GuideHelpButton href="/help/homeroom"`(로그아웃 앞)
 │   │   ├── page.tsx            # 자기반 학생 + 주간출석 (날짜당 3셀: 오후1/오후2/야간)
 │   │   ├── attendance/page.tsx # 담임 월간출결 테이블 + "시간" 컬럼 + Excel 다운로드 (날짜당 3셀)
 │   │   ├── participation/page.tsx  # 참여설정 18열(세션 3 × 참가+5요일)
@@ -67,6 +67,11 @@ src/
 │   │   ├── attendance/page.tsx # 주간/월간 출결
 │   │   ├── absence-requests/page.tsx  # 불참목록 (목록 전용 — 신청 버튼/폼 없음, 참여일정으로 안내)
 │   │   └── batch-absence/page.tsx     # 도우미 학생 전용 — 반 전체 일괄 불참신청, 학생당 세션 버튼 3개
+│   ├── help/                   # 공개 사용설명서 (로그인 불필요)
+│   │   ├── layout.tsx          # **신규.** 파란 헤더(로고+제목) + `max-w-5xl` 본문 컨테이너 — `/help`와 `/help/<page>` 공용 셸
+│   │   ├── page.tsx            # 도움말 허브 (헤더를 layout으로 옮겨 본문 카드만 남음) + content.mdx
+│   │   ├── attendance/         # **신규.** `/help/attendance` — page.tsx(서버, metadata) + content.mdx(출석 체크/불참신청/감독 교체 3장, 스틸 14장)
+│   │   └── homeroom/           # **신규.** `/help/homeroom` — page.tsx + content.mdx(출결 확인/참여와 사유/신청과 계정 3장, 스틸 7장)
 │   └── api/                    # API 라우트 (아래 별도 섹션)
 │
 ├── components/
@@ -79,6 +84,15 @@ src/
 │   │   ├── ParticipationManagement.tsx  # 참여설정 테이블 (grade prop)
 │   │   ├── MonthlyCalendar.tsx  # 월간 감독배정 캘린더 (학년당 1슬롯, 텍스트 검색 교사 선택, 담당학년 우선 그룹). 래퍼 `table-scroll`, 마지막 2주 행은 `CalendarTeacherSelect openUpward`로 드롭다운을 위로
 │   │   └── ExcelUploadModal.tsx # 공용 Excel 업로드 모달 (드래그앤드롭, 교사/학생 공용)
+│   ├── guide/                  # **신규.** 안내 페이지 빌딩 블록 (모두 서버 컴포넌트 — `"use client"` 금지, `tests/guide-components.test.ts`가 고정)
+│   │   ├── GuideArticle.tsx    # "← 도움말" 링크 + 본문 카드 래퍼 (`page.tsx`가 `content.mdx`를 감쌈)
+│   │   ├── GuideToc.tsx        # 목차 칩 (앵커 `#guide-<id>`, `min-h-11` + `whitespace-nowrap` 가로 스크롤)
+│   │   ├── GuideChapter.tsx    # 장 (`id`/`title` → `<section id="guide-<id>">`)
+│   │   ├── GuideStep.tsx       # 번호 단계 — `images: GuideImage[]`(`{src,alt,width,height,tall?}`). `tall`(폰 640×1342)은 `w-[min(320px,80vw)]`, 가로 스틸(1280×657)은 `min-w-[640px]`로 원본 크기 유지 + 래퍼 가로 스크롤(폰 폭으로 줄이면 화면 속 글자를 못 읽음). `tip` 옵션
+│   │   ├── GuideNotice.tsx     # 정리 박스 (`tone: blue|yellow|green`, `items: [강조, 본문][]`)
+│   │   ├── GuideVideo.tsx      # YouTube nocookie iframe (`videoKey`, `start?`(초), `caption`). id가 빈 문자열이면 아무것도 렌더하지 않음
+│   │   ├── GuideHelpButton.tsx # 화면 헤더의 `?` 버튼 — `/help/<page>`를 **새 탭**으로(`target="_blank" rel="noopener"`, `aria-label="사용 가이드"`, 44×44)
+│   │   └── videos.ts           # `GUIDE_VIDEOS`(teacher/student/gradeAdmin) — YouTube id는 아직 모두 빈 문자열(업로드 전)
 │   ├── grade-admin/
 │   │   ├── TodayAttendanceDashboard.tsx  # 오늘출결 대시보드 (grade prop, SESSION_TYPES 3카드)
 │   │   └── GradeMonthlyAttendance.tsx    # 월간출결 테이블 (grade prop, 짝수반 배경 구분, 날짜당 3셀 + "시간" 컬럼)
@@ -133,31 +147,41 @@ scripts/
 └── trigger-supervisor-reminders.mjs  # Railway Cron 서비스가 호출 → APP_URL + Bearer CRON_SECRET 로 /api/cron/supervisor-reminders POST
 
 public/
-└── sw.js               # 서비스워커 (CACHE_NAME=selfstudy-v2, install/activate/fetch + push/notificationclick 핸들러)
-                        # (예정) guide/<page>/NN-slug.webp — demo-video 의 guide-stills.mjs 출력 위치, 아직 없음
+├── sw.js               # 서비스워커 (CACHE_NAME=selfstudy-v2, install/activate/fetch + push/notificationclick 핸들러)
+└── guide/              # 안내 페이지 스틸 `<page>/NN-slug.webp` — demo-video 의 guide-stills.mjs 출력 위치 (git 추적)
+    ├── attendance/     # **신규.** 폰 스틸 14장 640×1342 (01-login ~ 14-swap-totals)
+    └── homeroom/       # **신규.** 브라우저 스틸 7장 1280×657 (01-tabs ~ 07-password)
 
 demo-video/             # **신규.** 안내 영상·가이드 페이지 이미지용 별도 Node 프로젝트 (Remotion 4.0.518, 자체 package.json/tsconfig/eslint). 루트 tsc·eslint·Tailwind 스캔에서 제외, Railway 빌드와 무관
 ├── README.md           # 설치·명령·음성(Qwen3-TTS 클론) 규칙 — 영상 도구 사용법의 기준
 ├── src/
-│   ├── Root.tsx        # 컴포지션 등록: 본편 `SetupCheck` + `Folder` 안 장면별 `SetupCheck-Intro`/`SetupCheck-Check` (장면 컴포지션도 `GuideContext` 로 감쌈)
+│   ├── Root.tsx        # 컴포지션 등록: 본편 `SetupCheck`·`TeacherGuide` + `Folder` 안 장면별 `SetupCheck-*`/`Teacher-<SceneId>` + `Folder "Mocks"` 의 `Mock-<id>`(MOCK_GALLERY, 목업 단독 확인용). 장면 컴포지션도 `GuideContext` 로 감쌈
 │   ├── guide/          # 공용: timing.ts `createTiming`(sceneFrames/lineStart/`lineAt`/captionsFor, LEAD/TAIL 15프레임), `GuideScene`(배경·STEP 배지·장면 mp3·자막), `GuideContext`(GuideConfig), GuideVideo.tsx `createGuideVideo`(장면 사이 페이드), `GuideCaption`
-│   ├── components/     # BrowserFrame·Cursor·Annotation·FlashNotice·StepBadge·Toggle·icons (school_cowork 에서 이식한 공용 코드)
+│   ├── components/     # BrowserFrame·Cursor·Annotation·FlashNotice·StepBadge·Toggle·icons + **신규** `PhoneFrame.tsx`(`PHONE` 390×844, 본문 390×752)·`phone.ts`(`PHONE_X`/`PHONE_Y`/`PHONE_CROP`/`phoneAbs`/`phoneRectAbs`/`phoneLeftLabelGap`) — school_cowork 이식 공용 코드
+│   ├── app-mocks/      # **신규.** 앱 화면 목업(가이드 공용, 특정 편에 종속되지 않음): `tw.ts`(생성 파일 — 앱 Tailwind 팔레트), `layout.tsx`(`PC_VIEWPORT` 1248×570 → `PC_SCALE` 확대, `pcAbs`/`pcRectAbs`/`PcViewport`, `PHONE_BODY`), `primitives.tsx`(pressScale·typedSlice 등), `data.ts`(가상 명단·좌석·일정 픽스처 — 실존 인물 금지), 화면별 `LoginMock`·`SeatCellMock`·`ClassroomFrameMock`·`AttendanceHeaderMock`·`AttendanceBoardMock`·`MonthlyAttendanceMock`·`ParticipationTableMock`·`ScheduleCalendarMock`·`SupervisorSummaryMock`, `gallery/`(목업 단독 컴포지션 목록 → Root.tsx)
 │   ├── setup-check/    # 환경 점검용 최소 가이드(장면 Intro/Check, 문장 3개): narration.ts·narration-durations.json·timing.ts·scenes.tsx·SetupCheckVideo.tsx
-│   ├── stills/<page>.ts # 가이드 페이지 스틸 목록 `{composition, file, frame, crop?, resize?}` + `DEFAULT_CROP`(theme `BROWSER`). 현재 setup-check.ts 1개
+│   ├── teacher/        # **신규.** 교사 편(감독교사+담임교사) 본편: narration.ts(21장면)·narration-durations.json·timing.ts·scenes.ts·`TeacherVideo.tsx`(`TEACHER_GUIDE_CONFIG`, stepTotal 19), `scenes/`(장면 21개 + 공용 `phone-helpers.tsx`(폰 장면 좌표·주석 장치)·`pc-helpers.tsx`(PC 감독일정·담임 장면)), `mocks/`(교사 편 전용 모달·폼 목업 11개 — AbsencePanel·BulkApproveModal·WeeklyInfoModal·SwapModal·NativeDialog·HomeroomShell·HomeroomWeekly·HomeroomRequests·AbsenceReasonForm·PasswordForm·PhoneBoardInset)
+│   ├── student/·grade-admin/  # **신규.** 아직 원고·음성만 — narration.ts(학생 11장면 / 학년관리자 18장면) + narration-durations.json. 장면·본편 컴포넌트는 없음
+│   ├── stills/<page>.ts # 가이드 페이지 스틸 목록 `{composition, file, frame, crop?, resize?}` + `DEFAULT_CROP`(theme `BROWSER`). setup-check.ts / **신규** attendance.ts(폰 14장 `crop: PHONE_CROP, resize: 640`)·homeroom.ts(브라우저 7장 기본 크롭). `frame`은 매직 넘버 대신 `lineAt(scene, line, ratio)`
 │   └── anim.ts·theme.ts·fonts.ts·props.ts·scenes.ts·index.ts·index.css
 ├── scripts/
-│   ├── narrate.mjs     # `--guide <key>` 원고 → Chois 클론 음성 mp3(로컬 mlx-audio 0.5.3 + Qwen3-TTS 0.6B, `tts_mlx.py`) + narration-durations.json + Whisper 검수(`stt_check.py`) → review.tsv. `GUIDES` 에 가이드 등록. `--only`/`--estimate`/`--measure`/`--no-check`
+│   ├── narrate.mjs     # `--guide <key>` 원고 → Chois 클론 음성 mp3(로컬 mlx-audio 0.5.3 + Qwen3-TTS 0.6B, `tts_mlx.py`) + narration-durations.json + Whisper 검수(`stt_check.py`) → review.tsv. `GUIDES` 에 가이드 등록(setup-check·teacher·student·grade-admin). `--only`/`--estimate`/`--measure`/`--no-check`
 │   ├── guide-stills.mjs # `--page <page>` 장면 프레임 → cwebp 1280px WebP, 기본 출력 `../public/guide/<page>/`
+│   ├── gen-tw-palette.mjs # **신규.** 루트 `node_modules/tailwindcss/theme.css` → `src/app-mocks/tw.ts` 재생성. 목업 색이 앱과 같은 oklch 값을 쓰게 함 (tw.ts 직접 수정 금지)
+│   ├── frame-at.mjs    # **신규.** `node scripts/frame-at.mjs <guide> <SceneId> <line> <ratio>` → `lineAt` 프레임 번호·장면 길이 출력 (스틸 프레임 고를 때)
 │   ├── doctor.mjs      # 환경 점검 (`npm run doctor`: ffmpeg/ffprobe/cwebp·모델 캐시·Voicebox 프로필·Whisper 토크나이저)
 │   ├── lib/narration-core.mjs (+ .test.mjs) # 순수 로직(캐시 키·발화속도 검사·SPOKEN 치환 등)
 │   └── tests/          # tts_mlx/stt_check unittest (`npm test`)
-├── public/narration/<guide>/ # 장면 mp3 + review.tsv + .lines/(문장 mp3·manifest.json 캐시 — 추적)
+├── public/narration/<guide>/ # 장면 mp3 + review.tsv + .lines/(문장 mp3·manifest.json 캐시 — 추적). teacher·student·grade-admin 3편 생성 완료
 ├── requirements-tts.txt / requirements-tts.lock.txt # .venv-tts(python3.12) 재현용
 └── (git 제외) node_modules/ · .venv-tts/ · out/ · public/narration/**/.lines/raw/ 등 작업 파일 — demo-video/.gitignore
+                        # 렌더 결과는 `demo-video/out/<guide>-guide.mp4`(교사 편 = `out/teacher-guide.mp4`,
+                        # `npx remotion render TeacherGuide out/teacher-guide.mp4`). `out/`은 git 제외 —
+                        # mp4 는 저장소·Railway 에 두지 않고 YouTube(일부 공개)로 올려 `videos.ts` 에 id 만 등록
 
 .claude/
 ├── PROJECT_MAP.md
-├── GUIDE_PAGES.md      # **신규.** 안내 페이지·안내 영상 기준 문서 — 원고→음성→장면→스틸→페이지→영상 순서, 계획 라우트 `/help/<page>` + `src/components/guide/*` 빌딩 블록(아직 없음), 이미지 규격, 진행 현황 표(7절)
+├── GUIDE_PAGES.md      # 안내 페이지·안내 영상 기준 문서 — 원고→음성→장면→스틸→페이지→영상 순서, 라우트 `/help/<page>` + `src/components/guide/*` 빌딩 블록, 폰 프레임 경로(3절), 색 출처 규칙(6절 — 앱 화면 목업은 `app-mocks/tw.ts`, 영상 장치는 `theme.ts`), 이미지 규격, 진행 현황 표(7절: setup-check·attendance·homeroom)
 └── skills/
     ├── guide-page/SKILL.md   # **신규.** `/guide-page <page>` — GUIDE_PAGES.md 절차 실행
     ├── remotion-*/           # **신규.** remotion-dev/skills 12종(best-practices·captions·create·docs·interactivity·maps·markup·multimedia·render·saas·studio·upgrade, 루트 `skills-lock.json` 에 해시 기록)
@@ -197,6 +221,7 @@ demo-video/             # **신규.** 안내 영상·가이드 페이지 이미�
 |--------|------|------|
 | GET/POST | `students` | 학생 목록/등록 |
 | PUT/DELETE | `students/[id]` | 학생 수정/삭제 |
+| GET | `students/template` | 학생 Excel 업로드 템플릿(`withGradeAuth`, 예시 행의 학년은 경로 학년). 구 경로 `/api/admin/students/template`에서 이동 — middleware 가 `/api/admin/*`을 메인관리자 전용으로 막아 학년관리자가 받지 못했음 |
 | POST | `students/bulk-upload` | Excel 일괄업로드 (기존 비활성화 + 새 생성) |
 | GET/PUT | `participation-days` | 참여설정. GET `students[].sessions: Record<SessionType, DaySettings>`(세션 3 × 참가+5요일 = 18열), PUT 검증 `isSessionType` |
 | GET/POST | `seat-layouts` | 좌석 배치 조회/저장(트랜잭션, roomId 기반, `sessionType`은 `SeatSessionType` — `isSeatSessionType` 검증). GET `rooms[]`에 `classroom: ClassroomMeta \| null` 포함 |
@@ -231,7 +256,6 @@ demo-video/             # **신규.** 안내 영상·가이드 페이지 이미�
 | GET | `supervisor-swap-history` | 감독교체이력 |
 | GET | `statistics?from&to&grade&class` | 출결통계. `dates[date]: Partial<Record<SessionType,{status,reason?}>>` |
 | GET | `export-excel?from&to&grade` | Excel 다운로드 (날짜당 3셀) |
-| GET | `students/template` | 업로드 템플릿 |
 | POST | `students/reset` | 학생 전체 초기화 |
 | GET | `today-attendance` | 전학년 오늘 출결 현황. `sessions: Record<SessionType, SessionStats>` × 1~3학년 |
 | GET | `supervisors/export?month=YYYY-MM` | 전학년 감독배정 Excel (Month+누계 시트), `REPRESENTATIVE_SESSION_TYPE`로 필터 |
@@ -242,7 +266,7 @@ demo-video/             # **신규.** 안내 영상·가이드 페이지 이미�
 | GET | `/api/supervisor-assignments/my-today` | 오늘 감독배정 확인 |
 | PUT | `/api/supervisor-assignments/[id]` | 감독교체 (모든 블록 동시, 모든 교사 허용) |
 | GET | `/api/teachers` | 교사 목록 (primaryGrade 포함) |
-| POST | `/api/auth/change-password` | 비밀번호 변경 |
+| POST | `/api/auth/change-password` | 비밀번호 변경. `withAuth(["teacher"])` — 역할 목록으로 막으면 역할이 비어 있는 교사(관리자 화면·Excel 등록)가 못 바꿈. 학생 차단은 `user.userType` 검사로 유지 |
 
 ### 푸시 알림 (`/api/push/`, `/api/cron/`)
 | 메서드 | 경로 | 설명 |
@@ -331,6 +355,7 @@ SupervisorReminderLog: teacherId, grade, date(@db.Date), sentAt — @@unique([te
 - `일괄승인` 버튼: 오늘 해당 학년 감독으로 배정된 세션의 pending 불참신청만 후보로 표시, 확인 모달에서 학생/날짜/시간/사유/상세 테이블을 가로 스크롤 방식으로 보여준 뒤 승인
 - 일괄승인 성공 시 불참신청 목록, pending 배지, 좌석 데이터 SWR을 갱신
 - 좌석 그리드의 빨간 "*"로 대기 중인 불참신청 학생 시각적 식별
+- 이 탭은 좌석 SWR 키가 꺼져 `rooms`가 항상 비므로 "좌석 배치가 설정되지 않았습니다." 안내는 `tab !== "absence"` 조건을 함께 건다 — 좌석이 정상인 학년에서도 이 탭에서만 보이던 오해 문구
 - 상단 헤더의 "감독" 칩은 이 탭에서만 `/api/attendance/supervisor?date&grade`를 따로 조회 — 세션별 조회 SWR(`/api/attendance?date&session&grade`)의 키가 `tab !== "absence"` 조건부라 불참신청 탭에서는 요청이 나가지 않아 `data?.supervisor`가 undefined. `const supervisor = tab === "absence" ? absenceSupervisorData?.supervisor : data?.supervisor`로 분기
 
 ### 6. 학번 파싱
@@ -386,11 +411,23 @@ SupervisorReminderLog: teacherId, grade, date(@db.Date), sentAt — @@unique([te
 - `RoomGrid`에는 X(해제) 버튼이 없음 — 해제는 좌석 탭→선택→`SeatingEditor` 하단 액션바, 또는 좌석→`UnassignedStudents` 패널 드롭(`UNASSIGNED_DROP_ID`). `tests/responsive-tables.test.ts`·`tests/seating-editor-responsive.test.ts`가 클래스/식별자를 src 스캔으로 고정하므로 관련 클래스(`min-h-11`, `z-20`, `table-scroll`, `ring-2 ring-blue-500` 등) 변경 시 테스트도 함께 갱신
 - **학급 구조 변경은 좌석 배정을 초기화함**: 배치 유형·분단 수·분단별 행 수 중 하나라도 바뀌면(`isGeometryChanged`) `PUT /api/grade-admin/[grade]/classrooms/[id]`가 그 학급의 SeatLayout을 전부 삭제하고 Room을 재생성 — 복도 위치(`corridorSide`)만 바꾸면 배정 보존. 클라이언트(`ClassroomConfigModal`)는 `assignedCount>0`이고 기하가 바뀔 때만 `confirm()` 경고
 - 미래혜윰실·야간 Room은 `classroomId=null`로 고정 — `Classroom`은 오후 자율학습의 **일반 학급 교실**(4·5·6반) 전용이며, 담임교사는 구조를 수정할 수 없음(학년관리자/메인관리자만)
+- **출석 화면 전체 오버레이는 `z-[150]`**: `/attendance/[grade]`의 상단 날짜·탭 바가 sticky `z-[100]`이라 `z-50` 모달은 바 아래에 깔려 배경이 안 덮이고 바가 눌렸다. 주간 팝업·다른학년 모달은 `z-[150]`이며 `tests/attendance-page-wiring.test.ts`가 `fixed inset-0 … z-50` 재등장을 차단
 - **`demo-video/`는 루트 tsc/eslint/Tailwind에서 반드시 제외 유지**: 루트 `tsconfig.json` `exclude: ["node_modules", "demo-video"]`(include가 `**/*.ts`라 `demo-video/node_modules`까지 잡힘 — 제외 전 루트 tsc가 약 660개 파일을 읽음), `eslint.config.mjs` `globalIgnores`에 `"demo-video/**"`·`".claude/**"`(flat config는 dot 폴더를 기본 무시하지 않아 `.claude/skills`의 서드파티 예제 .ts/.tsx가 `npm run lint`를 92개 오류로 깨뜨림), `src/app/globals.css`에 `@source not "../../demo-video";`·`@source not "../../.claude";`. 새 도구 폴더를 루트에 추가할 때도 같은 3곳을 확인
 - **`HF_HUB_CACHE`는 Whisper STT 캐시 전용**: `narrate.mjs`가 TTS 워커(`tts_mlx.py`) 환경에서는 이 변수를 지우고 STT 워커에만 넘김 — TTS 모델은 `~/.cache/huggingface/hub`(Voicebox 앱이 받아 둔 캐시, `HF_HUB_OFFLINE=1`)를 써야 하므로 셸에서 `export` 하지 말 것
 - **내레이션 무음 트림은 앞 -40dB / 뒤 -45dB**(`narrate.mjs` ffmpeg `silenceremove`, 끝에 0.5초 무음 추가) — 앞은 Qwen3-TTS가 첫 음절 앞에 내는 -44~-50dB 잡음 때문에 -40dB, 뒤는 약하게 끝나는 음절 보존용 -45dB. 트림 설정은 캐시 키에 없으므로 바꾸면 `--only`로 문장을 다시 생성
 
 ## 수정 이력 (주요 변경)
+
+### 2026-09-18: 교사 안내 페이지(`/help/attendance`·`/help/homeroom`) + 교사 편 안내 영상 장면
+- **계획 문서**: `docs/superpowers/plans/2026-09-17-role-guide-videos-plan1-foundations.md`(앱 수정·기반), `…-plan2-teacher.md`(목업·장면·영상·안내 페이지)
+- **앱 수정 3건**: `POST /api/auth/change-password`를 `withAuth(["teacher"])`로(역할 없는 교사가 비밀번호를 못 바꾸던 문제); 학생 Excel 템플릿 라우트를 `/api/admin/students/template` → `/api/grade-admin/[grade]/students/template`(`withGradeAuth`, 예시 행 학년 = 경로 학년, `StudentManagement`의 `templateUrl` 교체) — middleware 가 `/api/admin/*`을 메인관리자 전용으로 막아 학년관리자가 받지 못했음; `/attendance/[grade]`는 불참신청 탭에서 "좌석 배치가 설정되지 않았습니다."를 숨기고 주간 팝업·다른학년 모달을 `z-50` → `z-[150]`(sticky 상단 바 `z-[100]` 위)
+- **신규 안내 페이지**: `src/app/help/layout.tsx`(파란 헤더를 `/help`에서 올려 `/help/*` 공용) + `/help/attendance`(3장, 폰 스틸 14장) + `/help/homeroom`(3장, 브라우저 스틸 7장) — 각 `page.tsx`(서버, `metadata`) + `content.mdx`. `/help/content.mdx` 감독교사·담임교사 절에 링크 추가, 출석부/담임 레이아웃 헤더에 `GuideHelpButton`(`?`, 새 탭)
+- **신규 빌딩 블록** `src/components/guide/`: `GuideArticle`·`GuideToc`·`GuideChapter`·`GuideStep`·`GuideNotice`·`GuideVideo`·`GuideHelpButton`·`videos.ts`. 모두 서버 컴포넌트, YouTube id는 아직 빈 문자열이라 `GuideVideo`가 렌더되지 않음(업로드 후 id만 채우면 됨)
+- **신규 이미지**: `public/guide/attendance/`(640×1342 폰 스틸 14장), `public/guide/homeroom/`(1280×657 브라우저 스틸 7장) — `demo-video/src/stills/{attendance,homeroom}.ts` + `guide-stills.mjs` 출력
+- **demo-video**: 폰 프레임 이식(`src/components/PhoneFrame.tsx`·`phone.ts`), 가이드 공용 앱 목업 `src/app-mocks/`(생성 팔레트 `tw.ts`, `layout.tsx`, `primitives.tsx`, `data.ts` 픽스처, `gallery/`, 화면 목업 9종), 교사 편 `src/teacher/`(원고·음성·timing·`TeacherVideo`·장면 21개·전용 목업 11개·`scenes/{phone,pc}-helpers`), 학생·학년관리자는 원고+음성만, 스크립트 `gen-tw-palette.mjs`·`frame-at.mjs`, `narrate.mjs` `GUIDES`에 teacher/student/grade-admin 등록. 렌더 결과는 `demo-video/out/teacher-guide.mp4`(git 제외)
+- **기준 문서**: `.claude/GUIDE_PAGES.md` 1·3·6·7절 갱신(빌딩 블록·`?` 버튼 새 탭 확정, 폰 프레임 경로, 목업 색 출처 = `app-mocks/tw.ts`, 진행 현황에 attendance·homeroom 행)
+- **테스트 신규 5개**: `guide-components`, `guide-attendance`, `guide-homeroom`, `change-password-auth`, `student-template-route`. 갱신: `attendance-page-wiring`(불참신청 탭 안내 조건·`z-[150]`·`z-50` 오버레이 금지), `responsive-tables`(`help/layout.tsx` `min-h-dvh`)
+- DB 스키마·Railway 환경변수 변경 없음. API 경로는 학생 템플릿 1건만 이동
 
 ### 2026-09-17: 안내 영상 · 가이드 페이지 도구(demo-video) 도입
 - **신규 폴더 `demo-video/`**: school_cowork(ChoisNote 안내 영상)에서 이식한 Remotion 4.0.518 파이프라인. 소스만 git 추적(node_modules·.venv-tts·out·`.lines/raw` 등 제외). 공용 `src/guide/`·`src/components/`, 점검용 최소 가이드 `src/setup-check/`(컴포지션 `SetupCheck`·`SetupCheck-Intro`·`SetupCheck-Check`), `src/stills/<page>.ts`, 스크립트 `narrate.mjs`(Chois 클론 음성 + Whisper 검수)·`guide-stills.mjs`(WebP → `../public/guide/<page>/`)·`doctor.mjs`
