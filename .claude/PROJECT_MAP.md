@@ -1,6 +1,6 @@
 # 자율학습 출석부 시스템 - 프로젝트 지도
 
-> 마지막 업데이트: 2026-09-15
+> 마지막 업데이트: 2026-09-17
 > 이 파일은 새 세션에서 코드베이스를 빠르게 파악하기 위한 참조 문서입니다.
 
 ## 개요
@@ -62,10 +62,10 @@ src/
 │   │   ├── schedule/page.tsx   # 월간 달력 그리드 (전체 학년 감독배정 + 교체) + SupervisorSummaryModal 연동
 │   │   └── password/page.tsx
 │   ├── student/                # 학생
-│   │   ├── layout.tsx          # 3개 탭
-│   │   ├── page.tsx            # 참여일정 + 참여시간 카드 (월간/연간)
+│   │   ├── layout.tsx          # 3개 탭 (참여일정 / 출결기록 / 불참목록, 도우미는 +일괄신청)
+│   │   ├── page.tsx            # 참여일정 3행 격자(ParticipationScheduleCard) + 참여시간 카드 + 좌석 확인(SeatCheckCard). 요일 셀 클릭 → `draft` 상태로 같은 자리에서 AbsenceRequestForm 전환, 완료 시 배너
 │   │   ├── attendance/page.tsx # 주간/월간 출결
-│   │   ├── absence-requests/page.tsx  # 세션 다중선택(오후1/오후2/야간) + "오후 전체" 편의 버튼
+│   │   ├── absence-requests/page.tsx  # 불참목록 (목록 전용 — 신청 버튼/폼 없음, 참여일정으로 안내)
 │   │   └── batch-absence/page.tsx     # 도우미 학생 전용 — 반 전체 일괄 불참신청, 학생당 세션 버튼 3개
 │   └── api/                    # API 라우트 (아래 별도 섹션)
 │
@@ -91,18 +91,24 @@ src/
 │   │   ├── ClassroomConfigModal.tsx # **신규.** 학년관리자용 학급 구조 설정 모달 (props `{grade, onClose, onChanged}`). `useSWR`로 `/api/grade-admin/[grade]/classrooms` 목록(반/유형/복도/행 수/좌석 수/배정 수, `overflow-x-auto` + sticky 헤더) + 추가/수정 폼(반 번호·복도 라디오·유형 라디오·분단별 행 수) + 자체 `LayoutPreview` 미리보기(12px 박스 미니 격자 + 총 좌석 수). 기하 변경(`isGeometryChanged`)이고 `assignedCount>0`이면 `confirm()`으로 "좌석이 초기화됩니다" 확인, 삭제도 confirm. 저장/삭제 성공 시 목록 `mutate()` + `onChanged()`(SeatingEditor의 좌석 SWR 갱신)
 │   │   ├── MiraeHallLayout.tsx     # 2학년 야간 미래홀 도면 (fitContent 옵션)
 │   │   ├── PrintRoomGrid.tsx       # 인쇄용 읽기전용 좌석 격자 (dnd 없음, 고정 셀 크기)
+│   │   ├── StudentSeatGrid.tsx     # 학생용 읽기 전용 좌석 격자 (dnd 없음, `minmax(52px,1fr)` 최소 폭, 내 자리 `aria-current` + 파란 강조, props `{room, mySeat, gapAfterRows?}`)
 │   │   ├── SeatPrintGroup.tsx      # 인쇄 그룹 1개 (제목 + kind별 배치 + 교탁). `group.classroom`이 있으면 `ClassroomFrame variant="print"`로 각 `PrintRoomGrid`를 감싸고 자체 교탁 박스는 생략(`showTeacherDesk = isDivisions && !group.classroom`), 없으면(미래혜윰/야간) 기존 교탁 박스 유지
 │   │   ├── PrintPageFitter.tsx     # A4 페이지 박스 + 콘텐츠 실측 후 scale
 │   │   └── UnassignedStudents.tsx  # 미배정 학생 풀 (검색/반별 그룹). `export const UNASSIGNED_DROP_ID = "unassigned"` + `useDroppable` — 좌석을 끌어다 놓으면 해제(좌석 드래그 중에만 isOver 링)
+│   ├── student/
+│   │   ├── ParticipationScheduleCard.tsx  # 참여일정 3행 격자 (인덱스 오후1/오후2/야간 + 월~금, `grid-cols-[auto_repeat(5,1fr)]`). 활성 셀은 button → `onSelectDay(sessionType, nextDateForWeekday(today, wd))`, 오늘 열 `border-2` 강조 + "오늘" 캡션, 다음 주로 넘어간 셀 "다음주"
+│   │   ├── AbsenceRequestForm.tsx         # 불참 신청 폼 (헤더 "불참 신청하기" + 닫기). 세션 버튼은 날짜 요일의 `activeSessionTypesOn` 밖이면 disabled, [전체] = 활성 세션 전부 토글, 사유 4열 한 행, 상세 사유는 기타일 때만 표시·전송. props `{initialDate, initialSessionTypes, today, participationDays, onClose, onSubmitted}`
+│   │   └── SeatCheckCard.tsx              # 좌석 확인 카드 — SWR `/api/student/seats`, 오후/야간 탭(기본 탭은 렌더 파생 `picked ?? firstWithGroup ?? "afternoon"`), classroom 은 `ClassroomFrame variant="screen"` 안에 분단 가로 배치, room 은 세로 스택(`GAP_CONFIG` 재사용, 교탁은 오후만). 미참가/좌석 없음 문구 분기
 │   └── students/
 │       └── StudentManagement.tsx   # 학생 목록 + CRUD 모달 + ExcelUploadModal. 모달은 열려 있을 때만 마운트(`{modalOpen && <StudentModal/>}`, 마운트 시 initialData 로 초기화)
 │
 ├── lib/
 │   ├── auth.ts         # NextAuth 설정 (Credentials×2 + Google, JWT 콜백)
 │   ├── api-auth.ts     # withAuth (+ "teacher" 의사역할: 모든 교사 허용), withGradeAuth, withHomeroomAuth 래퍼
-│   ├── calendar.ts     # KST 안전 순수 날짜 유틸 (getKstTodayString/formatDateValue/parseDateValue/formatDateLabel/formatDateWithWeekday/shiftMonth/buildMonthCells, toISOString 미사용)
+│   ├── calendar.ts     # KST 안전 순수 날짜 유틸 (getKstTodayString/formatDateValue/parseDateValue/formatDateLabel/formatDateWithWeekday/shiftMonth/buildMonthCells/weekdayOf/addDays/nextDateForWeekday, toISOString 미사용)
 │   ├── sessions.ts     # ★ 세션 진실 공급원 — SESSION_TYPES(afternoon1/afternoon2/night)/SEAT_SESSION_TYPES(afternoon/night)/SESSION_META/SEAT_SESSION_META/REPRESENTATIVE_SESSION_TYPE("afternoon1")/isSessionType/isSeatSessionType/seatSessionOf/sessionTypesOfSeat/attendanceMinutes/emptySessionRecord. `"afternoon"`/`"night"` 리터럴·`100` 상수는 이 모듈 밖 사용 금지(session-literal-guard 테스트로 고정)
 │   ├── absence-reasons.ts  # REASON_TYPES/REASON_LABELS(한글)/reasonLabel — 기존 7곳에 중복되던 사유 라벨 맵의 단일 출처(수정한 파일만 교체)
+│   ├── participation-days.ts  # 학생 화면용 요일 헬퍼 — WEEKDAY_KEYS/WEEKDAY_LABELS/DaySettings/ParticipationDaysMap, weekdayKeyOf(주말 null), isActiveOn(레코드 없음 = 비활성), activeSessionTypesOn(days, date), activeDayCount
 │   ├── academic-year.ts    # 학년도(3월~익년2월) 범위 계산 + 학년 내 자습시간 랭킹(getGradeRankingMap, 모듈 인메모리 캐시 TTL 60초) — raw SQL로 `COALESCE(duration_minutes, CASE session_type WHEN 'night' THEN 100 ELSE 50 END)` 집계
 │   ├── attendance/
 │   │   ├── weekly-summary.ts  # buildWeeklyRows/summarizeWeeklyCell/weekDatesOf — 주간 API·"i" 팝업 공용. 셀 상태 우선순위: 비참여 › 불참승인 › 방과후 › 출석 › 결석 › 미체크
@@ -115,7 +121,8 @@ src/
 │   │   ├── print-groups.ts   # 방 목록 → 인쇄 그룹 분해 (화면/인쇄 공용, 타입은 SeatSessionType). `classroom` 메타(`ClassroomMeta`)가 있는 Room은 학급 단위(반 번호=`sortOrder`→`id` 순)로 먼저 묶고(`buildClassroomGroups`, `kind:"divisions-row"`), 없는 Room(미래혜윰 등)은 기존 접두사 규칙(`buildPrefixGroups`)으로 뒤에 붙임. `classroomTitle(grade,classNumber)` = `"{grade}-{classNumber}반"`. 야간 분기는 변경 없음
 │   │   ├── classroom-config.ts  # **신규.** 학급 구조 순수 로직 — `CORRIDOR_SIDES`/`LAYOUT_TYPES`(+라벨), `COLS_BY_LAYOUT`(division=2/single=1), `CLASSROOM_LIMITS`(classNumber 1~20/divisions 1~6/rows 1~10), `planClassroomRooms(grade,config)`(→Room명·cols·rows·sortOrder 목록), `isGeometryChanged(existingRooms,config)`(유형·분단수·행수 중 하나라도 다르면 true, 순서 무관), `seatCountOf`, `corridorLabels(side)`(반대쪽에 "창문"), `parseClassroomConfig(input)`(zod 미사용 손 검증, 한국어 에러)
 │   │   ├── print-layout.ts   # A4 기하 상수 + 방향 추천/배율 계산
-│   │   └── seat-participation.ts  # participatesInSeatSession: 좌석 세션의 블록 중 하나라도 참여(레코드 없으면 기본 참여)면 자리 필요
+│   │   ├── seat-participation.ts  # participatesInSeatSession: 좌석 세션의 블록 중 하나라도 참여(레코드 없으면 기본 참여)면 자리 필요
+│   │   └── student-seat-group.ts  # selectSeatGroupRooms(myRoom, sessionRooms, grade): classroomId 있으면 그 Classroom 의 Room 전부(kind "classroom", 제목 classroomTitle), 없으면 같은 roomPrefix 의 Room(kind "room"). API 응답 타입 StudentSeatGroup/StudentSeatsResponse 도 여기
 │   └── prisma.ts       # PrismaClient 싱글톤 (PrismaPg 어댑터)
 │
 ├── middleware.ts       # 라우트 보호 (getToken + 명시적 cookieName/salt, /homeroom·/attendance 모든 교사 허용)
@@ -180,6 +187,7 @@ public/
 | GET/POST | `absence-requests` | 불참신청 조회/생성. POST 입력 `sessionTypes: SessionType[]`(1개 이상, "오후 전체" 지원) → `createMany({skipDuplicates})`, 응답 `{created,skipped}` |
 | GET | `attendance?type&date/month` | 주간/월간 출결 (3세션 루프) |
 | GET | `participation-days` | 참여일정. `monthlyStudyHours`/`yearlyStudyHours`는 `attendanceMinutes()` 합산 |
+| GET | `seats` | **신규.** 내 좌석 그룹. `Record<SeatSessionType, StudentSeatGroup|null>` — 학급 교실이면 분단 Room 전부 + `corridorSide`, 별도 교실이면 같은 접두사 Room 묶음. 각 Room 의 좌석에 같은 교실 학생 `{id,name,classNumber,studentNumber}` 포함, `mySeat{roomId,rowIndex,colIndex}` |
 | GET | `batch-absence` | **신규(맵 누락분 반영).** 도우미 학생 전용 — 같은 반 학생별 오늘 `participating: Record<SessionType,boolean>` + `existingRequests: Partial<Record<SessionType,string>>` |
 | POST | `batch-absence` | **신규(맵 누락분 반영).** 도우미 학생이 반 전체 불참신청 일괄 등록. `sessionType`은 `isSessionType` 검증, `createMany({skipDuplicates})`, 응답 `{created,total,skipped}` |
 
@@ -313,7 +321,7 @@ SupervisorReminderLog: teacherId, grade, date(@db.Date), sentAt — @@unique([te
 - 좌석 세션(`SeatSessionType`: afternoon/night, `StudySession.type`)과 출석 블록(`SessionType`: afternoon1/afternoon2/night, `Attendance` 등)은 별개 enum. `seatSessionOf(session)`으로 블록→좌석 매핑, `sessionTypesOfSeat(seat)`으로 역매핑(오후 → `[afternoon1, afternoon2]`)
 - 기본 소요시간은 `SESSION_META[t].defaultMinutes`(afternoon1/afternoon2 = 50분, night = 100분), `durationMinutes`가 있으면 그 값 우선(`attendanceMinutes()`가 유일한 계산 지점)
 - 감독배정은 (date,grade)당 `SESSION_TYPES` 3행이 항상 같은 교사 — "하루 1건"으로 다뤄야 하는 조회(담임 일정, 감독횟수 요약, 감독 Excel, 달력 슬롯)는 `REPRESENTATIVE_SESSION_TYPE`("afternoon1")로 필터
-- `"afternoon"`/`"night"` 문자열 리터럴과 `100`/`?? 100` 매직넘버는 `src/lib/sessions.ts`와 좌석 컨텍스트 파일(좌석·인쇄, 출석 화면의 `seatSession` 분기, 학생 신청의 "오후 전체") 밖에서 금지 — `tests/session-literal-guard.test.ts`가 src 전체를 스캔해 회귀 차단
+- `"afternoon"`/`"night"` 문자열 리터럴과 `100`/`?? 100` 매직넘버는 `src/lib/sessions.ts`와 좌석 컨텍스트 파일(좌석·인쇄, 출석 화면의 `seatSession` 분기, 학생 좌석 확인 카드의 기본 탭 폴백) 밖에서 금지 — `tests/session-literal-guard.test.ts`가 src 전체를 스캔해 회귀 차단
 - 좌석 편집기의 참여 판정은 `participatesInSeatSession`(`src/lib/seats/seat-participation.ts`, 블록 중 하나라도 참여) — 좌석 세션 값을 `ParticipationDay.sessionType`과 직접 비교하면 오후는 항상 불일치하므로 금지. `tests/seat-participation.test.ts`가 회귀 차단
 
 ### 9. "오후1 결과 복사" (`POST /api/attendance/copy-session`)
@@ -352,6 +360,15 @@ SupervisorReminderLog: teacherId, grade, date(@db.Date), sentAt — @@unique([te
 - 미래혜윰실·야간 Room은 `classroomId=null`로 고정 — `Classroom`은 오후 자율학습의 **일반 학급 교실**(4·5·6반) 전용이며, 담임교사는 구조를 수정할 수 없음(학년관리자/메인관리자만)
 
 ## 수정 이력 (주요 변경)
+
+### 2026-09-17: 학생 참여일정 3행 격자 + 요일 클릭 불참 신청 + 좌석 확인 카드
+
+- **설계/계획**: `docs/superpowers/specs/2026-09-17-student-schedule-seat-check-design.md`, `docs/superpowers/plans/2026-09-17-student-schedule-seat-check.md`
+- **참여일정**: 세션별 카드 3개 → `ParticipationScheduleCard` 한 카드 3행 격자. 오늘 열 `border-2`(활성 파랑/비활성 회색) + "오늘" 캡션. 활성 셀 클릭 → `nextDateForWeekday(today, wd)`(당일 포함 다음 돌아오는 요일, 지났거나 주말이면 다음 주 + "다음주" 표시) 날짜와 그 행 세션이 기본값인 폼으로 같은 자리 전환
+- **불참 신청 폼**: `AbsenceRequestForm` 으로 추출. [오후 전체] → [전체](그 날짜의 `activeSessionTypesOn` 전부), 비활성 세션 disabled, 사유 4열 한 행, 상세 사유는 기타일 때만. 신청 API 변경 없음. "불참신청" 탭 → "불참목록"(목록 전용, 신청 버튼 제거)
+- **좌석 확인**: 신규 `GET /api/student/seats` + `SeatCheckCard`/`StudentSeatGrid`. 그룹 규칙은 `lib/seats/student-seat-group.ts`(`selectSeatGroupRooms`). 야간 미래홀 도면 전체는 그리지 않고 내 방(접두사 묶음)만 표시
+- **신규 lib**: `lib/participation-days.ts`(레코드 없음 = 비활성 규칙), `lib/calendar.ts` 확장(`weekdayOf/addDays/nextDateForWeekday`)
+- **테스트**: 신규 `tests/participation-days.test.ts`, `tests/student-seat-group.test.ts`, `tests/student-schedule-wiring.test.ts`; 갱신 `tests/calendar.test.ts`, `tests/absence-request-wiring.test.ts`(폼 위치·[전체]), `tests/participation-wiring.test.ts`(카드 단언), `tests/session-literal-guard.test.ts`(허용목록: 학생 신청 페이지 제거, `SeatCheckCard` 추가)
 
 ### 2026-09-15: 학급 교실 구조 설정(분단형/단독형) — feature/classroom-layout
 - **설계/계획**: `docs/superpowers/specs/2026-09-15-classroom-layout-config-design.md`, `docs/superpowers/plans/2026-09-15-classroom-layout-config.md`
