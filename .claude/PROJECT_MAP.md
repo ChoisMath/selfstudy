@@ -42,7 +42,7 @@ src/
 │   │   └── swap-history/page.tsx
 │   ├── grade-admin/[grade]/    # 서브관리자 (학년별)
 │   │   ├── layout.tsx          # AdminNav 포함
-│   │   ├── page.tsx            # 6탭 허브 (오늘출결, 학생관리, 참여설정, 좌석배치, 감독배정, 월간출결)
+│   │   ├── page.tsx            # 6탭 허브 (오늘출결, 학생관리, 참여설정, 좌석배치, 감독배정, 월간출결) + 탭 줄 끝에 `GuideHelpButton href="/help/grade-admin"`
 │   │   ├── students/page.tsx
 │   │   ├── participation/page.tsx
 │   │   ├── seats/page.tsx      # 2탭 (오후자습/야간자습) + SeatingEditor
@@ -62,16 +62,19 @@ src/
 │   │   ├── schedule/page.tsx   # 월간 달력 그리드 (전체 학년 감독배정 + 교체) + SupervisorSummaryModal 연동
 │   │   └── password/page.tsx
 │   ├── student/                # 학생
-│   │   ├── layout.tsx          # 3개 탭 (참여일정 / 출결기록 / 불참목록, 도우미는 +일괄신청)
+│   │   ├── layout.tsx          # 3개 탭 (참여일정 / 출결기록 / 불참목록, 도우미는 +일괄신청) + 헤더에 `GuideHelpButton href="/help/student"`
 │   │   ├── page.tsx            # 참여일정 3행 격자(ParticipationScheduleCard) + 참여시간 카드 + 좌석 확인(SeatCheckCard). 요일 셀 클릭 → `draft` 상태로 같은 자리에서 AbsenceRequestForm 전환, 완료 시 배너
 │   │   ├── attendance/page.tsx # 주간/월간 출결
 │   │   ├── absence-requests/page.tsx  # 불참목록 (목록 전용 — 신청 버튼/폼 없음, 참여일정으로 안내)
 │   │   └── batch-absence/page.tsx     # 도우미 학생 전용 — 반 전체 일괄 불참신청, 학생당 세션 버튼 3개
 │   ├── help/                   # 공개 사용설명서 (로그인 불필요)
 │   │   ├── layout.tsx          # **신규.** 파란 헤더(로고+제목) + `max-w-5xl` 본문 컨테이너 — `/help`와 `/help/<page>` 공용 셸
-│   │   ├── page.tsx            # 도움말 허브 (헤더를 layout으로 옮겨 본문 카드만 남음) + content.mdx
+│   │   ├── page.tsx            # 도움말 허브 (헤더를 layout으로 옮겨 본문 카드만 남음) + content.mdx(역할별 절 끝에 `/help/<page>` 링크 5개: student·attendance·homeroom·grade-admin·seats)
 │   │   ├── attendance/         # **신규.** `/help/attendance` — page.tsx(서버, metadata) + content.mdx(출석 체크/불참신청/감독 교체 3장, 스틸 14장)
-│   │   └── homeroom/           # **신규.** `/help/homeroom` — page.tsx + content.mdx(출결 확인/참여와 사유/신청과 계정 3장, 스틸 7장)
+│   │   ├── homeroom/           # **신규.** `/help/homeroom` — page.tsx + content.mdx(출결 확인/참여와 사유/신청과 계정 3장, 스틸 7장)
+│   │   ├── student/            # **신규.** `/help/student` — page.tsx + content.mdx(확인/신청/도우미 3장, 폰 스틸 8장, `GuideVideo videoKey="student"`)
+│   │   ├── grade-admin/        # **신규.** `/help/grade-admin` — page.tsx + content.mdx(현황/명단/운영 3장, PC 스틸 9장, `videoKey="gradeAdmin"`)
+│   │   └── seats/              # **신규.** `/help/seats` — page.tsx + content.mdx(구조와 배정/출력 2장, PC 스틸 5장, 학년관리자 영상의 좌석 구간 `videoKey="gradeAdmin" start={189}`)
 │   └── api/                    # API 라우트 (아래 별도 섹션)
 │
 ├── components/
@@ -99,7 +102,7 @@ src/
 │   ├── homeroom/
 │   │   └── SupervisorSummaryModal.tsx  # 학년도 기준 교사별 월별 감독횟수 집계 모달 (`/api/homeroom/schedule/summary`, 본인 행 sticky 강조)
 │   ├── seats/
-│   │   ├── SeatingEditor.tsx       # DndContext + 저장 + 출력 버튼 (props: grade, sessionType). 미배정 목록은 `participatesInSeatSession` 으로 필터. 좌석 해제: `selectedSeat` 선택 → 루트 마지막 자식 `sticky bottom-2` 액션바(배정 해제/취소/Escape), 또는 좌석→미배정 패널 드롭. 충돌 감지 커스텀(패널은 `getBoundingClientRect()` 실시간, 나머지는 패널 제외 `closestCenter`). 오후(`sessionType==="afternoon"`) 헤더에 "교실 구조 설정" 버튼(`min-h-11`, 미저장 변경 있으면 확인창) → `ClassroomConfigModal`. 오후 그룹 중 `group.classroom`이 있으면 `ClassroomFrame variant="screen"`으로 감싸고 각 `RoomGrid`에 `hideTeacherDesk`(프레임이 교탁을 대신 그림), 없으면(미래혜윰) 기존 렌더 유지
+│   │   ├── SeatingEditor.tsx       # DndContext + 저장 + 출력 버튼 (props: grade, sessionType). 미배정 목록은 `participatesInSeatSession` 으로 필터. 좌석 해제: `selectedSeat` 선택 → 루트 마지막 자식 `sticky bottom-2` 액션바(배정 해제/취소/Escape), 또는 좌석→미배정 패널 드롭. 충돌 감지 커스텀(패널은 `getBoundingClientRect()` 실시간, 나머지는 패널 제외 `closestCenter`). "좌석 편집" 제목 줄에 `GuideHelpButton href="/help/seats"`. 오후(`sessionType==="afternoon"`) 헤더에 "교실 구조 설정" 버튼(`min-h-11`, 미저장 변경 있으면 확인창) → `ClassroomConfigModal`. 오후 그룹 중 `group.classroom`이 있으면 `ClassroomFrame variant="screen"`으로 감싸고 각 `RoomGrid`에 `hideTeacherDesk`(프레임이 교탁을 대신 그림), 없으면(미래혜윰) 기존 렌더 유지
 │   │   ├── RoomGrid.tsx            # 교실 격자 (droppable/draggable 셀). X(해제) 버튼 없음 — props `selectedSeatKey?`/`onSelectSeat?(SeatRef|null)`(`export type SeatRef`)로 좌석 탭 선택(ring), 핸들 Delete/Backspace도 선택. `preserveSeatWidth` prop: 오후 분기 전용 최소 셀 폭(`MIN_SEAT_WIDTH=52`) — 셀을 찌그러뜨리지 않고 래퍼가 가로 스크롤. `hideTeacherDesk` prop: true면 자체 교탁 박스를 그리지 않음(학급 그룹은 `ClassroomFrame`이 대신 그림)
 │   │   ├── ClassroomFrame.tsx      # **신규.** 학급 분단 격자를 감싸는 공용 프레임(dnd-kit 비의존, 화면/인쇄 공용). props `{corridorSide, variant:"screen"|"print", showTeacherDesk=true, children}` — 좌우에 `corridorLabels()` 기반 세로("`writing-mode: vertical-rl`") "복도"/"창문" 라벨 + 하단 "교탁". `variant="print"`는 고정 px(라벨 20px=`PRINT_SIDE_LABEL_WIDTH`)만 사용해 `PrintPageFitter` 실측과 맞춤, `variant="screen"`은 `minmax(min-content,1fr)`이라 호출부가 `overflow-x-auto` 래퍼를 제공해야 함
 │   │   ├── ClassroomConfigModal.tsx # **신규.** 학년관리자용 학급 구조 설정 모달 (props `{grade, onClose, onChanged}`). `useSWR`로 `/api/grade-admin/[grade]/classrooms` 목록(반/유형/복도/행 수/좌석 수/배정 수, `overflow-x-auto` + sticky 헤더) + 추가/수정 폼(반 번호·복도 라디오·유형 라디오·분단별 행 수) + 자체 `LayoutPreview` 미리보기(12px 박스 미니 격자 + 총 좌석 수). 기하 변경(`isGeometryChanged`)이고 `assignedCount>0`이면 `confirm()`으로 "좌석이 초기화됩니다" 확인, 삭제도 confirm. 저장/삭제 성공 시 목록 `mutate()` + `onChanged()`(SeatingEditor의 좌석 SWR 갱신)
@@ -150,19 +153,23 @@ public/
 ├── sw.js               # 서비스워커 (CACHE_NAME=selfstudy-v2, install/activate/fetch + push/notificationclick 핸들러)
 └── guide/              # 안내 페이지 스틸 `<page>/NN-slug.webp` — demo-video 의 guide-stills.mjs 출력 위치 (git 추적)
     ├── attendance/     # **신규.** 폰 스틸 14장 640×1342 (01-login ~ 14-swap-totals)
-    └── homeroom/       # **신규.** 브라우저 스틸 7장 1280×657 (01-tabs ~ 07-password)
+    ├── homeroom/       # **신규.** 브라우저 스틸 7장 1280×657 (01-tabs ~ 07-password)
+    ├── student/        # **신규.** 폰 스틸 8장 640×1342 (01-login ~ 08-batch)
+    ├── grade-admin/    # **신규.** 브라우저 스틸 9장 1280×657 (01-enter ~ 09-monthly)
+    └── seats/          # **신규.** 브라우저 스틸 5장 1280×657 (01-editor ~ 05-print, 출처는 `GradeAdmin-Seat*`·`GradeAdmin-ClassroomConfig` 장면)
 
 demo-video/             # **신규.** 안내 영상·가이드 페이지 이미지용 별도 Node 프로젝트 (Remotion 4.0.518, 자체 package.json/tsconfig/eslint). 루트 tsc·eslint·Tailwind 스캔에서 제외, Railway 빌드와 무관
 ├── README.md           # 설치·명령·음성(Qwen3-TTS 클론) 규칙 — 영상 도구 사용법의 기준
 ├── src/
-│   ├── Root.tsx        # 컴포지션 등록: 본편 `SetupCheck`·`TeacherGuide` + `Folder` 안 장면별 `SetupCheck-*`/`Teacher-<SceneId>` + `Folder "Mocks"` 의 `Mock-<id>`(MOCK_GALLERY, 목업 단독 확인용). 장면 컴포지션도 `GuideContext` 로 감쌈
+│   ├── Root.tsx        # 컴포지션 등록: 본편 `SetupCheck`·`TeacherGuide`·`StudentGuide`·`GradeAdminGuide` + `Folder` 안 장면별 `SetupCheck-*`/`Teacher-<SceneId>`/`Student-<SceneId>`/`GradeAdmin-<SceneId>` + `Folder "Mocks"` 의 `Mock-<id>`(MOCK_GALLERY, 목업 단독 확인용). 장면 컴포지션도 `GuideContext` 로 감쌈
 │   ├── guide/          # 공용: timing.ts `createTiming`(sceneFrames/lineStart/`lineAt`/captionsFor, LEAD/TAIL 15프레임), `GuideScene`(배경·STEP 배지·장면 mp3·자막), `GuideContext`(GuideConfig), GuideVideo.tsx `createGuideVideo`(장면 사이 페이드), `GuideCaption`
 │   ├── components/     # BrowserFrame·Cursor·Annotation·FlashNotice·StepBadge·Toggle·icons + **신규** `PhoneFrame.tsx`(`PHONE` 390×844, 본문 390×752)·`phone.ts`(`PHONE_X`/`PHONE_Y`/`PHONE_CROP`/`phoneAbs`/`phoneRectAbs`/`phoneLeftLabelGap`) — school_cowork 이식 공용 코드
-│   ├── app-mocks/      # **신규.** 앱 화면 목업(가이드 공용, 특정 편에 종속되지 않음): `tw.ts`(생성 파일 — 앱 Tailwind 팔레트), `layout.tsx`(`PC_VIEWPORT` 1248×570 → `PC_SCALE` 확대, `pcAbs`/`pcRectAbs`/`PcViewport`, `PHONE_BODY`), `primitives.tsx`(pressScale·typedSlice 등), `data.ts`(가상 명단·좌석·일정 픽스처 — 실존 인물 금지), 화면별 `LoginMock`·`SeatCellMock`·`ClassroomFrameMock`·`AttendanceHeaderMock`·`AttendanceBoardMock`·`MonthlyAttendanceMock`·`ParticipationTableMock`·`ScheduleCalendarMock`·`SupervisorSummaryMock`, `gallery/`(목업 단독 컴포지션 목록 → Root.tsx)
+│   ├── app-mocks/      # **신규.** 앱 화면 목업(가이드 공용, 특정 편에 종속되지 않음): `tw.ts`(생성 파일 — 앱 Tailwind 팔레트), `layout.tsx`(`PC_VIEWPORT` 1248×570 → `PC_SCALE` 확대, `pcAbs`/`pcRectAbs`/`PcViewport`, `PHONE_BODY`), `primitives.tsx`(pressScale·typedSlice 등), `data.ts`(가상 명단·좌석·일정 픽스처 — 실존 인물 금지), 화면별 `LoginMock`·`SeatCellMock`·`ClassroomFrameMock`·`AttendanceHeaderMock`·`AttendanceBoardMock`·`MonthlyAttendanceMock`·`ParticipationTableMock`(`variant: "homeroom" | "grade"` — 담임 참여설정표와 학년관리자 `ParticipationManagement` 표를 한 파일에서 그림)·`ScheduleCalendarMock`·`SupervisorSummaryMock`, `gallery/`(목업 단독 컴포지션 목록 → Root.tsx: login·attendance·attendance-panels·schedule·homeroom-tables·homeroom-forms·`student-{schedule,absence,batch}`·`grade-{students,participation,seats,supervisor}`)
 │   ├── setup-check/    # 환경 점검용 최소 가이드(장면 Intro/Check, 문장 3개): narration.ts·narration-durations.json·timing.ts·scenes.tsx·SetupCheckVideo.tsx
 │   ├── teacher/        # **신규.** 교사 편(감독교사+담임교사) 본편: narration.ts(21장면)·narration-durations.json·timing.ts·scenes.ts·`TeacherVideo.tsx`(`TEACHER_GUIDE_CONFIG`, stepTotal 19), `scenes/`(장면 21개 + 공용 `phone-helpers.tsx`(폰 장면 좌표·주석 장치)·`pc-helpers.tsx`(PC 감독일정·담임 장면)), `mocks/`(교사 편 전용 모달·폼 목업 11개 — AbsencePanel·BulkApproveModal·WeeklyInfoModal·SwapModal·NativeDialog·HomeroomShell·HomeroomWeekly·HomeroomRequests·AbsenceReasonForm·PasswordForm·PhoneBoardInset)
-│   ├── student/·grade-admin/  # **신규.** 아직 원고·음성만 — narration.ts(학생 11장면 / 학년관리자 18장면) + narration-durations.json. 장면·본편 컴포넌트는 없음
-│   ├── stills/<page>.ts # 가이드 페이지 스틸 목록 `{composition, file, frame, crop?, resize?}` + `DEFAULT_CROP`(theme `BROWSER`). setup-check.ts / **신규** attendance.ts(폰 14장 `crop: PHONE_CROP, resize: 640`)·homeroom.ts(브라우저 7장 기본 크롭). `frame`은 매직 넘버 대신 `lineAt(scene, line, ratio)`
+│   ├── student/        # **신규.** 학생 편 본편: narration.ts(11장면)·narration-durations.json·timing.ts·scenes.ts·data.ts(편 전용 픽스처)·`StudentVideo.tsx`(`STUDENT_GUIDE_CONFIG`, stepTotal 9), `scenes/`(Intro·Login·Tour·Schedule·StudyHours·Seat·AbsenceApply·Record·AbsenceList·Batch·Outro — 전부 폰 화면, 좌표 장치는 `teacher/scenes/phone-helpers` 재사용), `mocks/`(StudentShell·ParticipationCard·StudyHoursCard·SeatCheckCard·AbsenceForm·Record·AbsenceList·BatchAbsence 8개)
+│   ├── grade-admin/    # **신규.** 학년관리자 편 본편: narration.ts(18장면)·narration-durations.json·timing.ts·scenes.ts·data.ts(편 전용 픽스처)·`GradeAdminVideo.tsx`(`GRADE_ADMIN_GUIDE_CONFIG`, stepTotal 16), `scenes/`(Intro·Enter·Today·StudentsList·StudentAdd·StudentExcel·Helper·Participation·ParticipationBulk·SeatsTour·ClassroomConfig·SeatAssign·SeatEdit·SeatPrint·SupervisorAssign·SupervisorTotals·Monthly·Outro — PC 화면, `teacher/scenes/pc-helpers` 재사용), `mocks/`(GradeAdminShell·TodayDashboard·StudentTable·StudentModal·ExcelUpload·SeatEditor·ClassroomConfig·SeatPrint·SupervisorCalendar·GradeMonthly·AttendanceTopBar 11개). 좌석 5장면(`SeatsTour`·`ClassroomConfig`·`SeatAssign`·`SeatEdit`·`SeatPrint`)이 `/help/seats` 스틸의 출처
+│   ├── stills/<page>.ts # 가이드 페이지 스틸 목록 `{composition, file, frame, crop?, resize?}` + `DEFAULT_CROP`(theme `BROWSER`). setup-check.ts / **신규** attendance.ts(폰 14장 `crop: PHONE_CROP, resize: 640`)·homeroom.ts(브라우저 7장 기본 크롭)·student.ts(폰 8장, `../student/timing`의 `lineAt`)·grade-admin.ts(브라우저 9장)·seats.ts(브라우저 5장 — 둘 다 `../grade-admin/timing`). `frame`은 매직 넘버 대신 `lineAt(scene, line, ratio)`
 │   └── anim.ts·theme.ts·fonts.ts·props.ts·scenes.ts·index.ts·index.css
 ├── scripts/
 │   ├── narrate.mjs     # `--guide <key>` 원고 → Chois 클론 음성 mp3(로컬 mlx-audio 0.5.3 + Qwen3-TTS 0.6B, `tts_mlx.py`) + narration-durations.json + Whisper 검수(`stt_check.py`) → review.tsv. `GUIDES` 에 가이드 등록(setup-check·teacher·student·grade-admin). `--only`/`--estimate`/`--measure`/`--no-check`
@@ -176,12 +183,13 @@ demo-video/             # **신규.** 안내 영상·가이드 페이지 이미�
 ├── requirements-tts.txt / requirements-tts.lock.txt # .venv-tts(python3.12) 재현용
 └── (git 제외) node_modules/ · .venv-tts/ · out/ · public/narration/**/.lines/raw/ 등 작업 파일 — demo-video/.gitignore
                         # 렌더 결과는 `demo-video/out/<guide>-guide.mp4`(교사 편 = `out/teacher-guide.mp4`,
-                        # `npx remotion render TeacherGuide out/teacher-guide.mp4`). `out/`은 git 제외 —
+                        # `npx remotion render TeacherGuide out/teacher-guide.mp4`. 학생 편 `StudentVideo`→
+                        # 컴포지션 `StudentGuide`, 학년관리자 편 `GradeAdminGuide`). `out/`은 git 제외 —
                         # mp4 는 저장소·Railway 에 두지 않고 YouTube(일부 공개)로 올려 `videos.ts` 에 id 만 등록
 
 .claude/
 ├── PROJECT_MAP.md
-├── GUIDE_PAGES.md      # 안내 페이지·안내 영상 기준 문서 — 원고→음성→장면→스틸→페이지→영상 순서, 라우트 `/help/<page>` + `src/components/guide/*` 빌딩 블록, 폰 프레임 경로(3절), 색 출처 규칙(6절 — 앱 화면 목업은 `app-mocks/tw.ts`, 영상 장치는 `theme.ts`), 이미지 규격, 진행 현황 표(7절: setup-check·attendance·homeroom)
+├── GUIDE_PAGES.md      # 안내 페이지·안내 영상 기준 문서 — 원고→음성→장면→스틸→페이지→영상 순서, 라우트 `/help/<page>` + `src/components/guide/*` 빌딩 블록, 폰 프레임 경로(3절), 색 출처 규칙(6절 — 앱 화면 목업은 `app-mocks/tw.ts`, 영상 장치는 `theme.ts`), 이미지 규격, 진행 현황 표(7절: setup-check·attendance·homeroom·student·grade-admin·seats)
 └── skills/
     ├── guide-page/SKILL.md   # **신규.** `/guide-page <page>` — GUIDE_PAGES.md 절차 실행
     ├── remotion-*/           # **신규.** remotion-dev/skills 12종(best-practices·captions·create·docs·interactivity·maps·markup·multimedia·render·saas·studio·upgrade, 루트 `skills-lock.json` 에 해시 기록)
@@ -417,6 +425,16 @@ SupervisorReminderLog: teacherId, grade, date(@db.Date), sentAt — @@unique([te
 - **내레이션 무음 트림은 앞 -40dB / 뒤 -45dB**(`narrate.mjs` ffmpeg `silenceremove`, 끝에 0.5초 무음 추가) — 앞은 Qwen3-TTS가 첫 음절 앞에 내는 -44~-50dB 잡음 때문에 -40dB, 뒤는 약하게 끝나는 음절 보존용 -45dB. 트림 설정은 캐시 키에 없으므로 바꾸면 `--only`로 문장을 다시 생성
 
 ## 수정 이력 (주요 변경)
+
+### 2026-09-18: 학생·학년관리자·좌석 안내 페이지 + 학생/학년관리자 편 안내 영상 장면
+- **계획 문서**: `docs/superpowers/plans/2026-09-18-role-guide-videos-plan3-student.md`, `…-plan4-grade-admin.md`
+- **신규 안내 페이지 3개**: `/help/student`(확인·신청·도우미 3장, 폰 스틸 8장), `/help/grade-admin`(현황·명단·운영 3장, PC 스틸 9장), `/help/seats`(구조와 배정·출력 2장, PC 스틸 5장) — 각 `page.tsx`(서버, `metadata`) + `content.mdx`. `/help/content.mdx` 허브의 학생·학년관리·좌석 절에 링크 추가. `GuideVideo`는 `videoKey="student"` / `"gradeAdmin"`, 좌석 페이지는 같은 학년관리자 영상의 좌석 구간(`start={189}`) — YouTube id는 여전히 빈 문자열
+- **`?` 버튼 3곳 추가**: `src/app/student/layout.tsx` 헤더, `src/app/grade-admin/[grade]/page.tsx` 탭 줄, `src/components/seats/SeatingEditor.tsx` "좌석 편집" 제목 줄 — 기존 `GuideHelpButton`(새 탭) 재사용, 새 컴포넌트 없음
+- **신규 이미지**: `public/guide/student/`(640×1342 폰 8장), `public/guide/grade-admin/`(1280×657 PC 9장), `public/guide/seats/`(1280×657 PC 5장) — `demo-video/src/stills/{student,grade-admin,seats}.ts` + `guide-stills.mjs` 출력. seats 스틸은 학년관리자 편 좌석 장면에서 뽑아 별도 장면을 만들지 않음
+- **demo-video**: 학생 편 `src/student/`(11장면, 컴포지션 `StudentGuide`, 전용 목업 8개, 폰 장면이라 `teacher/scenes/phone-helpers` 재사용) + 학년관리자 편 `src/grade-admin/`(18장면, `GradeAdminGuide`, 전용 목업 11개, `pc-helpers` 재사용) — 원고·음성만 있던 상태에서 장면·본편 완성. 공용 `app-mocks/gallery/`에 `student-{schedule,absence,batch}`·`grade-{students,participation,seats,supervisor}` 7개 추가, `ParticipationTableMock`에 `variant: "grade"`(학년관리자 `ParticipationManagement` 표)를 더해 담임 `"homeroom"` 과 한 파일에서 공용
+- **테스트 신규 3개**: `guide-student`, `guide-grade-admin`, `guide-seats`(기존 `guide-attendance`/`guide-homeroom`과 같은 형식 — MDX 장·스틸 파일 존재·`?` 버튼 배선 스캔)
+- **기준 문서**: `.claude/GUIDE_PAGES.md` 7절 진행 현황 표에 student·grade-admin·seats 3행 추가
+- 앱 로직·DB 스키마·API 변경 없음(버그 수정 3건은 같은 날 이전 항목에 기록)
 
 ### 2026-09-18: 교사 안내 페이지(`/help/attendance`·`/help/homeroom`) + 교사 편 안내 영상 장면
 - **계획 문서**: `docs/superpowers/plans/2026-09-17-role-guide-videos-plan1-foundations.md`(앱 수정·기반), `…-plan2-teacher.md`(목업·장면·영상·안내 페이지)
