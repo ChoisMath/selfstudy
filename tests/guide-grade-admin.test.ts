@@ -33,7 +33,24 @@ assert.equal((mdx.match(/<GuideStep\b/g) ?? []).length, 9, "단계 9개");
 // 화면만 봐서는 알 수 없고 잘못 알면 데이터를 잃는 동작 — 본문이 반드시 적어야 한다.
 // Excel 재업로드는 같은 반·번호라도 기존 학생을 비활성화하고 새 레코드를 만든다
 // (src/app/api/grade-admin/[grade]/students/bulk-upload/route.ts: isActive:false + createMany).
-assert.match(mdx, /새 학생으로 등록되어 참여 설정과 좌석이 처음부터 시작됩니다/, "Excel 재업로드가 참여 설정·좌석을 초기화한다는 설명");
+// 새 Student.id 라 prisma/schema.prisma 의 Student 관계 다섯 개(seatLayouts·attendances·
+// participationDays·absenceRequests·attendanceNotes)와 isHelper 가 전부 새 학생을 따라오지 않는다.
+// 손실 범위를 좁게 쓰면 학기 중 재업로드를 안전한 일로 오해하게 되므로 여섯 가지를 모두 적어야 한다.
+assert.match(mdx, /이름까지 같더라도 기존 학생이 비활성으로 물러나고 그 자리에 전혀 다른 학생이 새로 등록됩니다/, "Excel 재업로드가 새 학생을 만든다는 설명");
+const LOST_ON_REUPLOAD = ["출결 기록", "참여 설정", "좌석 배정", "불참 신청", "출석 비고", "도우미 지정"];
+const lossSentence = /그러면 그 학생의 ([^.]+?)이 모두 새 학생으로 따라오지 않고/.exec(mdx)?.[1];
+assert.ok(lossSentence, "재업로드로 무엇이 끊기는지 열거한 문장이 없음");
+for (const lost of LOST_ON_REUPLOAD) {
+  assert.ok(lossSentence.includes(lost), `Excel 재업로드 손실 목록에 빠짐: ${lost}`);
+}
+assert.match(mdx, /월간출결이 통째로 줄표로 바뀌고/, "학기 중 재업로드의 결과(월간출결이 빈다)");
+// GuideNotice 도 같은 여섯 가지를 담아야 한다 — 요약만 읽고 넘어가는 독자가 범위를 좁게 알면 안 된다.
+const reuploadNotice = /\["Excel 재업로드", "([^"]+)"\]/.exec(mdx)?.[1];
+assert.ok(reuploadNotice, "Excel 재업로드 GuideNotice 항목이 없음");
+for (const lost of LOST_ON_REUPLOAD) {
+  assert.ok(reuploadNotice.includes(lost), `GuideNotice 손실 목록에 빠짐: ${lost}`);
+}
+assert.match(reuploadNotice, /학기 중에는 쓰지 말고/, "GuideNotice 가 학기 중 사용을 말리지 않음");
 // 삭제는 레코드 삭제가 아니라 비활성 (StudentManagement.handleDelete → PUT/DELETE isActive)
 assert.match(mdx, /삭제를 누르면 학생이 지워지는 것이 아니라 상태가 비활성으로 바뀌며/, "삭제=비활성 설명");
 // isHelper 는 로그인 때 JWT 에 담긴다 (src/lib/auth.ts) — 지정 즉시 학생 화면에 탭이 생기지 않는다
@@ -57,7 +74,7 @@ for (const meaning of [
 
 assert.match(mdx, /<GuideNotice\s+tone="yellow"/, "알아 둘 점은 yellow");
 for (const item of [
-  '["Excel 재업로드", "반과 번호가 같아도 새 학생으로 등록되어 참여 설정과 좌석이 처음부터 시작됩니다. 학기 초 명단 등록에만 사용하세요."]',
+  '["Excel 재업로드", "반과 번호가 같으면 새 학생으로 등록되어 출결 기록과 참여 설정, 좌석 배정, 불참 신청, 출석 비고, 도우미 지정이 모두 끊깁니다. 학기 중에는 쓰지 말고 학기 초 명단 등록에만 사용하세요."]',
   '["즉시 저장", "도우미 지정과 참여 설정에는 저장 버튼이 없습니다. 누르는 즉시 저장됩니다."]',
   '["도우미 반영", "도우미로 지정한 학생은 다시 로그인해야 일괄신청 탭이 보입니다."]',
 ]) {
