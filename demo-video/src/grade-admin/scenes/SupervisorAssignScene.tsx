@@ -135,8 +135,8 @@ export const SupervisorAssignScene: React.FC<DemoProps> = () => {
         durationInFrames={lineEnd(ID, 0) - lineAt(ID, 0, 0.22)}
         {...padRect(calendarBox, 4)}
         label="한 달 달력"
-        labelPosition="bottom"
-        labelAlign="end"
+        labelPosition="top"
+        labelAlign="start"
         color={colors.blue600}
       />
 
@@ -196,7 +196,7 @@ export const SupervisorAssignScene: React.FC<DemoProps> = () => {
 
       <Cursor
         path={[
-          { frame: lineStart(ID, 1), x: cellPoint.x + 150, y: cellPoint.y + 120 },
+          { frame: lineStart(ID, 1) + 14, x: cellPoint.x + 150, y: cellPoint.y + 120 },
           { frame: cellClick - 8, x: cellPoint.x, y: cellPoint.y },
           { frame: openAt + 6, x: cellPoint.x, y: cellPoint.y },
           { frame: pickAt - 8, x: myOptionPoint.x, y: myOptionPoint.y },
