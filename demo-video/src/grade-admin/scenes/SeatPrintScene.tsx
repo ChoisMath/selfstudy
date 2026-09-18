@@ -3,6 +3,7 @@ import { useCurrentFrame } from "remotion";
 import { tween } from "../../anim";
 import { APP_URL } from "../../app-mocks/data";
 import { PC_VIEWPORT, PcViewport, pcRectAbs, type Point, type Rect } from "../../app-mocks/layout";
+import { tw } from "../../app-mocks/tw";
 import { Annotation } from "../../components/Annotation";
 import { BrowserFrame } from "../../components/BrowserFrame";
 import { Cursor } from "../../components/Cursor";
@@ -16,6 +17,7 @@ import { GRADE_ADMIN_BODY, GradeAdminShellMock } from "../mocks/GradeAdminShellM
 import { SeatEditorMock, seatEditorRect } from "../mocks/SeatEditorMock";
 import { SeatPrintMock, seatPrintRect, type SeatPrintGroupState } from "../mocks/SeatPrintMock";
 import { lineAt, lineEnd, lineStart } from "../timing";
+import { SAVED_SEATS, SavedSeatLayout } from "./SeatEditScene";
 
 const ID = "SeatPrint";
 const TAB_TITLE = "포산고 자율학습";
@@ -66,6 +68,75 @@ const printScroll = (frame: number) => {
 
 const groupsAt = (frame: number) => (frame >= orientPress + 3 ? GROUPS_FINAL : frame >= checkPress + 3 ? GROUPS_CHECKED : GROUPS_BASE);
 
+// --- A4 위에 저장된 배치를 덮어 그린다 --------------------------------------------------
+// SeatPrintMock 은 원본 SEAT_EDITOR 를 그리므로 SeatEdit 이 저장한 좌석만 다시 얹는다.
+// 좌표는 SeatPrintMock 의 PrintPageContent 기하 그대로(셀 96x60, gap 4, 분단 사이 16,
+// 세로 라벨 20 + columnGap 4 양쪽, 제목 36 + 분단 라벨 20).
+const CELL_W = 96;
+const CELL_H = 60;
+const CELL_GAP = 4;
+const DIV_CONTENT_W = CELL_W * 2 + CELL_GAP;
+const DIV_PITCH = DIV_CONTENT_W + 16;
+const SIDE_X = 20 + CELL_GAP * 2;
+const CELLS_Y = 36 + 20;
+const GROUP_CONTENT_W = DIV_CONTENT_W * 3 + 16 * 2 + (20 + CELL_GAP * 2) * 2;
+
+const PrintCellOverlay: React.FC<{ seat: (typeof SAVED_SEATS)[number] }> = ({ seat }) => (
+  <div
+    style={{
+      position: "absolute",
+      left: SIDE_X + (seat.division - 1) * DIV_PITCH + (seat.col - 1) * (CELL_W + CELL_GAP),
+      top: CELLS_Y + (seat.row - 1) * (CELL_H + CELL_GAP),
+      width: CELL_W,
+      height: CELL_H,
+      border: `1px solid ${tw.gray[700]}`,
+      borderRadius: 2,
+      background: tw.white,
+      boxSizing: "border-box",
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      justifyContent: "center",
+      overflow: "hidden",
+    }}
+  >
+    {seat.student ? (
+      <>
+        <span style={{ fontSize: 10, color: tw.gray[500], whiteSpace: "nowrap" }}>
+          {seat.student.classNumber}-{seat.student.number}
+        </span>
+        <span style={{ fontSize: 13, fontWeight: 500, color: tw.black, whiteSpace: "nowrap" }}>{seat.student.name}</span>
+      </>
+    ) : null}
+  </div>
+);
+
+const PrintSavedSeats: React.FC<{ groups: SeatPrintGroupState[] }> = ({ groups }) => (
+  <>
+    {groups
+      .filter((g) => g.checked && SAVED_SEATS.some((s) => s.classNumber === g.classNumber))
+      .map((g) => {
+        const content = seatPrintRect(`pageContent_${g.classNumber}`, W, groups);
+        return (
+          <div
+            key={g.classNumber}
+            style={{
+              position: "absolute",
+              left: content.x,
+              top: content.y,
+              transform: `scale(${content.w / GROUP_CONTENT_W})`,
+              transformOrigin: "top left",
+            }}
+          >
+            {SAVED_SEATS.filter((s) => s.classNumber === g.classNumber).map((s) => (
+              <PrintCellOverlay key={`${s.division}-${s.row}-${s.col}`} seat={s} />
+            ))}
+          </div>
+        );
+      })}
+  </>
+);
+
 // BrowserFrame 은 탭 하나만 그린다(공용 컴포넌트, 수정 금지) — 인쇄 미리보기가 열리는 새 탭은
 // 탭 띠 위에 이 장면이 덧그린다. 좌표는 BrowserFrame.tsx 의 탭 줄(paddingLeft 16 + 신호등 52 + mr 14,
 // 탭 높이 32 · 폭 220+padding 32)에서 그대로 따왔다.
@@ -80,7 +151,7 @@ const tabStyle = (active: boolean): React.CSSProperties => ({
   top: TAB_Y,
   width: TAB_W,
   height: TAB_H,
-  background: active ? "#fff" : "#CBD0D6",
+  background: active ? "#fff" : colors.gray300,
   borderRadius: "10px 10px 0 0",
   padding: "0 16px",
   display: "flex",
@@ -131,11 +202,13 @@ const Stage: React.FC = () => {
                 checkboxPressAt={{ classNumber: LAST_CLASS, at: checkPress }}
                 orientationPressAt={{ classNumber: LAST_CLASS, orientation: "landscape", at: orientPress }}
               />
+              <PrintSavedSeats groups={groupsAt(frame)} />
             </div>
           </div>
         ) : (
           <GradeAdminShellMock tab="seats" showHelp>
             <SeatEditorMock width={GRADE_ADMIN_BODY.w} height={GRADE_ADMIN_BODY.h} session="afternoon" printPressAt={printClick} />
+            <SavedSeatLayout />
           </GradeAdminShellMock>
         )}
       </PcViewport>

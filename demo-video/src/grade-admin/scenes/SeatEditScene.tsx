@@ -167,6 +167,31 @@ const SeatOverlay: React.FC<{ seat: Rect; student?: Student; row?: number; col?:
   </div>
 );
 
+// 이 장면이 저장한 최종 배치 — 뒤따르는 SeatPrint 가 편집기와 A4 양쪽에 그대로 이어 받는다.
+export type SavedSeat = { classNumber: number; division: number; row: number; col: number; student: Student | null };
+
+export const SAVED_SEATS: SavedSeat[] = [
+  { classNumber: 1, division: 2, row: 1, col: 2, student: MOVED },
+  { classNumber: 1, division: 1, row: SWAP_A.row, col: SWAP_A.col, student: STUDENT_B },
+  { classNumber: 1, division: 3, row: SWAP_B.row, col: SWAP_B.col, student: STUDENT_A },
+  { classNumber: 2, division: 3, row: FREE.row, col: FREE.col, student: null },
+];
+
+export const SavedSeatLayout: React.FC = () => (
+  <>
+    {SAVED_SEATS.map((s) => (
+      <SeatOverlay
+        key={`${s.classNumber}-${s.division}-${s.row}-${s.col}`}
+        seat={seatCellRect(afternoonRoomId(s.classNumber, s.division), s.row, s.col)}
+        student={s.student ?? undefined}
+        row={s.row}
+        col={s.col}
+      />
+    ))}
+    <UnassignedOverlay groups={AFTER_GROUPS} />
+  </>
+);
+
 const CHIP_W = 164;
 const CHIP_H = 44;
 

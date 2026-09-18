@@ -160,6 +160,107 @@ const AddedClassroom: React.FC<{ from: number }> = ({ from }) => {
   );
 };
 
+// --- 목록 표에 덧붙이는 1-7반 행 ------------------------------------------------------
+// ClassroomConfigMock 의 목록은 SEAT_EDITOR 에서 파생된 3행 고정이라 방금 만든 교실이 없다.
+// 표 아래 테두리를 덮고 한 행을 이어 붙인 뒤, 패널 아래쪽을 그 높이만큼 흰 배경으로 늘린다.
+const LIST_PANEL = classroomConfigRect("panel", "list");
+const LIST_TABLE = classroomConfigRect("table", "list");
+const LIST_ROW_H = 44;
+const LIST_COL_W = [84, 64, 64, 108, 64, 64, 160]; // ClassroomConfigMock COL_W 순서
+const EXISTING_ROWS = SEAT_EDITOR.afternoon.classes.length;
+const LIST_BODY_PAD = 16;
+const NEW_ROW: Rect = { x: LIST_TABLE.x, y: LIST_TABLE.y + LIST_TABLE.h - 1, w: LIST_TABLE.w, h: LIST_ROW_H + 1 };
+const PANEL_EXT: Rect = {
+  x: LIST_PANEL.x,
+  y: LIST_PANEL.y + LIST_PANEL.h - LIST_BODY_PAD,
+  w: LIST_PANEL.w,
+  h: LIST_BODY_PAD + LIST_ROW_H,
+};
+
+const NEW_ROW_CELLS = [
+  `${GRADE}-${CLASSROOM_CONFIG_EXAMPLE.classNumber}반`,
+  "분단형",
+  CLASSROOM_CONFIG_EXAMPLE.corridorSide === "right" ? "오른쪽" : "왼쪽",
+  CLASSROOM_CONFIG_EXAMPLE.rowsPerDivision.join(" / "),
+  `${CLASSROOM_CONFIG_EXAMPLE.seatCount}석`,
+  "0명",
+];
+
+const listCellX = (index: number) => LIST_COL_W.slice(0, index).reduce((sum, w) => sum + w, 0);
+
+const AddedClassroomRow: React.FC = () => (
+  <div style={{ position: "absolute", left: 0, top: 0 }}>
+    <div
+      style={{
+        position: "absolute",
+        left: PANEL_EXT.x,
+        top: PANEL_EXT.y,
+        width: PANEL_EXT.w,
+        height: PANEL_EXT.h,
+        background: tw.white,
+        borderRadius: "0 0 8px 8px",
+      }}
+    />
+    <div
+      style={{
+        position: "absolute",
+        left: NEW_ROW.x,
+        top: NEW_ROW.y,
+        width: NEW_ROW.w,
+        height: NEW_ROW.h,
+        background: tw.white,
+        border: `1px solid ${tw.gray[200]}`,
+        borderRadius: "0 0 8px 8px",
+        boxSizing: "border-box",
+      }}
+    >
+      {NEW_ROW_CELLS.map((text, i) => (
+        <div
+          key={text}
+          style={{
+            position: "absolute",
+            left: listCellX(i),
+            top: 1,
+            width: LIST_COL_W[i],
+            height: LIST_ROW_H,
+            display: "flex",
+            alignItems: "center",
+            paddingLeft: 12,
+            fontSize: 13,
+            fontWeight: i === 0 ? 500 : 400,
+            color: i === 0 ? tw.gray[900] : tw.gray[700],
+            whiteSpace: "nowrap",
+            boxSizing: "border-box",
+          }}
+        >
+          {text}
+        </div>
+      ))}
+      <div style={{ position: "absolute", left: listCellX(6) + 8, top: 1, height: LIST_ROW_H, display: "flex", alignItems: "center", gap: 8 }}>
+        {(["수정", "삭제"] as const).map((label) => (
+          <span
+            key={label}
+            style={{
+              minHeight: 44,
+              display: "flex",
+              alignItems: "center",
+              padding: "0 12px",
+              borderRadius: 6,
+              border: `1px solid ${label === "수정" ? tw.gray[300] : tw.red[200]}`,
+              fontSize: 13,
+              color: label === "수정" ? tw.gray[700] : tw.red[600],
+              whiteSpace: "nowrap",
+              boxSizing: "border-box",
+            }}
+          >
+            {label}
+          </span>
+        ))}
+      </div>
+    </div>
+  </div>
+);
+
 // --- 타이밍 ---------------------------------------------------------------------------
 const sessionFrom = lineAt(ID, 0, 0.06);
 const configBoxFrom = lineAt(ID, 0, 0.42);
@@ -255,6 +356,8 @@ const Stage: React.FC = () => {
               layoutPressAt={frame < divisionPress ? { type: "single", at: singlePress } : { type: "division", at: divisionPress }}
               savePressAt={second ? save2Click : saveClick}
             />
+            {/* 문장 4에서 저장한 1-7반은 두 번째로 연 목록에만 있다. */}
+            {second && listOpen ? <AddedClassroomRow /> : null}
           </div>
         ) : null}
         {frame >= dialogAt ? (
@@ -284,9 +387,14 @@ const ROW_INPUTS = union(classroomConfigRect("rowInput_1", "edit"), classroomCon
 const FORM_INPUTS = union(classroomConfigRect("divisionsInput", "edit"), ROW_INPUTS);
 const CORRIDOR = union(classroomConfigRect("corridorLeft", "edit"), classroomConfigRect("corridorRight", "edit"));
 const LAYOUT = union(classroomConfigRect("layoutDivision", "edit"), classroomConfigRect("layoutSingle", "edit"));
-// 목록 표의 "배정" 열 — 앞선 6개 열 폭(84·64·64·108·64)을 지나야 나온다(ClassroomConfigMock COL_W).
-const TABLE = classroomConfigRect("table", "list");
-const ASSIGNED_COL: Rect = { x: TABLE.x + 384, y: TABLE.y + 36, w: 64, h: TABLE.h - 36 };
+// 목록 표의 "배정" 열 — 앞선 5개 열 폭(84·64·64·108·64)을 지나야 나온다(ClassroomConfigMock COL_W).
+// 덧붙인 1-7반 행까지 감싼다(라벨이 그 행을 덮지 않게 하려는 목적도 있다).
+const ASSIGNED_COL: Rect = {
+  x: LIST_TABLE.x + listCellX(5),
+  y: LIST_TABLE.y + LIST_TABLE.h - LIST_ROW_H * EXISTING_ROWS,
+  w: LIST_COL_W[5],
+  h: LIST_ROW_H * (EXISTING_ROWS + 1),
+};
 
 export const ClassroomConfigScene: React.FC<DemoProps> = () => {
   const configPoint = centerOf(bodyAbs(seatEditorRect("configButton")));
@@ -313,7 +421,8 @@ export const ClassroomConfigScene: React.FC<DemoProps> = () => {
       />
       <Annotation
         from={configBoxFrom}
-        durationInFrames={modalAt + 6 - configBoxFrom}
+        // 모달이 페이드 인하기 전에 사라져야 모달 제목줄을 덮지 않는다.
+        durationInFrames={modalAt - configBoxFrom}
         {...padRect(bodyAbs(seatEditorRect("configButton")), 5)}
         label="교실 구조 설정"
         labelPosition="top"
