@@ -73,20 +73,18 @@ const HOMEROOM_CHIP_LABEL = "담임교사";
 const HOMEROOM_CHIP_W = 24 + HOMEROOM_CHIP_LABEL.length * 12;
 const BELL_W = 96;
 const NAME_W = ME.name.length * 14;
-const HELP_HIT = 44;
-const HELP_DOT = 28;
 const LOGOUT_W = 16 + "로그아웃".length * 13;
 const GAP_RIGHT = 12;
 
 type NavRightBlock = { key: string; x: number; w: number };
 
-// GradeAdminShellMock.tsx 의 rightLayout() 과 동일 — 항상 showHelp(GradeAdmin-Shell-Today 스틸 기준).
+// GradeAdminShellMock.tsx 의 rightLayout() 과 동일. AdminNav 에는 도움말 버튼이 없다 —
+// 학년관리 화면의 ? 는 탭 줄에 있고, 인쇄 미리보기에는 탭 줄 자체가 없다.
 const navRightLayout = (width: number): NavRightBlock[] => {
   const blocks = [
     { key: "homeroom", w: HOMEROOM_CHIP_W },
     { key: "bell", w: BELL_W },
     { key: "name", w: NAME_W },
-    { key: "help", w: HELP_HIT },
     { key: "logout", w: LOGOUT_W },
   ];
   let right = width - NAV_PAD_X;
@@ -357,15 +355,6 @@ export const SeatPrintMock: React.FC<{
               return (
                 <div key={b.key} style={{ position: "absolute", left: b.x, top: 0, width: b.w, height: ADMIN_NAV_H, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, color: tw.gray[500], whiteSpace: "nowrap" }}>
                   {ME.name}
-                </div>
-              );
-            }
-            if (b.key === "help") {
-              return (
-                <div key={b.key} style={{ position: "absolute", left: b.x, top: (ADMIN_NAV_H - HELP_HIT) / 2, width: HELP_HIT, height: HELP_HIT, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <div style={{ width: HELP_DOT, height: HELP_DOT, borderRadius: HELP_DOT / 2, border: `2px solid ${tw.gray[500]}`, color: tw.gray[500], display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 700, whiteSpace: "nowrap", boxSizing: "border-box" }}>
-                    ?
-                  </div>
                 </div>
               );
             }
