@@ -34,7 +34,7 @@ TTS 모델(`Qwen3-TTS-12Hz-0.6B-Base-bf16`)과 `Chois` 목소리 프로필은 **
 | 위치 | 내용 |
 |---|---|
 | `src/guide/` | 공용: `createTiming`(`lineAt`·`captionsFor`), `GuideScene`(배경·STEP 배지·장면 mp3·자막), `GuideContext`, `createGuideVideo`(장면 사이 페이드) |
-| `src/components/` | `BrowserFrame`·`Cursor`·`Annotation`·`FlashNotice`·`StepBadge`·`Toggle`·`icons` |
+| `src/components/` | `BrowserFrame`·`Cursor`·`Annotation`·`FlashNotice`·`StepBadge`·`icons` |
 | `src/<guide>/` | 가이드별 `narration.ts`·`narration-durations.json`·`timing.ts`·장면·`<Guide>Video.tsx` |
 | `src/stills/<page>.ts` | 가이드 페이지 스틸 목록 `{ composition, file, frame, crop?, resize? }` |
 | `src/setup-check/` | 환경 점검용 최소 가이드(장면 2개·문장 3개). 파이프라인 전체를 1분 안에 통과시킨다 |
