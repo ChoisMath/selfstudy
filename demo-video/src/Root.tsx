@@ -14,6 +14,16 @@ import { STUDENT_SCENES } from "./student/scenes";
 import { GRADE_ADMIN_GUIDE_CONFIG, GradeAdminVideo } from "./grade-admin/GradeAdminVideo";
 import { GRADE_ADMIN_SCENES } from "./grade-admin/scenes";
 import { MOCK_GALLERY } from "./app-mocks/gallery";
+import { THUMB_HEIGHT, THUMB_WIDTH } from "./thumbnails/ThumbnailFrame";
+import { TeacherThumbnail } from "./thumbnails/TeacherThumbnail";
+import { StudentThumbnail } from "./thumbnails/StudentThumbnail";
+import { GradeAdminThumbnail } from "./thumbnails/GradeAdminThumbnail";
+
+const THUMBNAILS = [
+  { id: "Thumb-Teacher", component: TeacherThumbnail },
+  { id: "Thumb-Student", component: StudentThumbnail },
+  { id: "Thumb-GradeAdmin", component: GradeAdminThumbnail },
+];
 
 // 단일 장면 컴포지션도 본편과 같은 오디오 경로·자막 설정으로 감싼다.
 const withConfig = (Component: React.FC<DemoProps>, config: GuideConfig): React.FC<DemoProps> => {
@@ -97,6 +107,19 @@ export const RemotionRoot: React.FC = () => (
     />
     <Folder name="GradeAdmin">
       <SceneCompositions scenes={GRADE_ADMIN_SCENES} prefix="GradeAdmin" config={GRADE_ADMIN_GUIDE_CONFIG} />
+    </Folder>
+    <Folder name="Thumbnails">
+      {THUMBNAILS.map((thumb) => (
+        <Composition
+          key={thumb.id}
+          id={thumb.id}
+          component={thumb.component}
+          durationInFrames={1}
+          fps={FPS}
+          width={THUMB_WIDTH}
+          height={THUMB_HEIGHT}
+        />
+      ))}
     </Folder>
     <Folder name="Mocks">
       {MOCK_GALLERY.map((entry) => (
