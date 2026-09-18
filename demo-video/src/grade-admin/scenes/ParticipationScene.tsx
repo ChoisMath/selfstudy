@@ -43,8 +43,6 @@ const THU = 3;
 const DAY_STUDENT = 103;
 // 1-1 7번 조예린 — 오늘 오후1 출석부에서 노란 방과후 좌석인 학생(AFTERNOON1_BASE 107).
 const AFTER_SCHOOL_STUDENT = 107;
-// 1-1 11번 한지유 — 오늘 오후1 참여하지 않아 회색 좌석인 학생(AFTERNOON1_BASE 111).
-const INACTIVE_STUDENT = 111;
 
 type Toggle = {
   studentId: number;
@@ -206,16 +204,24 @@ const DAY_ZOOM_CARD = { x: 1740 - DAY_ZOOM_SIZE.width - 24, y: 560 };
 
 const AS_ZOOM = zoomCrop(AFTER_SCHOOL_STUDENT);
 const AS_ZOOM_SIZE = insetCardSize(AS_ZOOM);
-const AS_ZOOM_CARD = { x: 1740 - AS_ZOOM_SIZE.width - 24, y: 300 };
+const AS_ZOOM_CARD = { x: 1740 - AS_ZOOM_SIZE.width - 24, y: 240 };
 
 const dayZoomFrom = dayClick - 26;
 const dayZoomOut = lineEnd(ID, 3) + 2;
 const asZoomFrom = afterSchoolClick - 22;
-const asZoomOut = lineAt(ID, 4, 0.5);
+// 표가 빽빽해 방과후 체크박스 옆에는 라벨을 놓을 빈 자리가 없다(어디에 붙여도 이웃 학생의 요일
+// 버튼을 덮는다). 그래서 상자는 라벨 없이 두고, 확대 카드 제목이 도움말 스틸(문장 4, 0.6)까지 설명을 맡는다.
+const asZoomOut = lineEnd(ID, 4) + 6;
 
 // ── 출석부 인셋(1-1반 교실 카드) ──
 
-const insetVisual = (studentId: number): SeatState => baseVisual(studentId);
+// 문장 3에서 박지민의 오후1 목요일을 껐으니, 오늘(목) 출석부에서 그 자리는 회색이어야 한다.
+// AFTERNOON1_BASE 는 참여설정을 바꾸기 전 모습이라 그대로 쓰면 표의 박지민 행과 인셋이 한 화면에서 어긋난다.
+// 표를 내려 박지민 행을 감추는 방법은 쓸 수 없다 — 그 행이 사라지는 스크롤(≥251)에서는 8번 윤시우의
+// 방과후 칸(≤11에서만 잘림)이 드러나 같은 어긋남이 그대로 되살아난다. 앞선 장면의 결과를 반영해
+// 좌석 상태를 다시 계산하는 teacher/scenes/pc-helpers.tsx 의 pcSeatState 와 같은 방식으로 푼다.
+const insetVisual = (studentId: number): SeatState =>
+  studentId === DAY_STUDENT ? { visual: "inactive" } : baseVisual(studentId);
 const BOARD_GROUPS = buildAfternoonGroups(insetVisual);
 const BOARD_PROPS: AttendanceBoardProps = {
   width: PHONE_BODY.w,
@@ -271,7 +277,8 @@ export const ParticipationScene: React.FC<DemoProps> = () => {
   const secondThursdayPoint = { x: secondThursday.x + secondThursday.width / 2, y: secondThursday.y + secondThursday.height / 2 };
 
   const afterSchoolSeat = insetRectAbs(BOARD_CARD, BOARD_CROP, seatRect(AFTER_SCHOOL_STUDENT, BOARD_PROPS));
-  const inactiveSeat = insetRectAbs(BOARD_CARD, BOARD_CROP, seatRect(INACTIVE_STUDENT, BOARD_PROPS));
+  // 문장 3에서 끈 바로 그 학생의 좌석 — 표의 회색 목요일 버튼과 인셋의 회색 좌석이 한 화면에서 이어진다.
+  const inactiveSeat = insetRectAbs(BOARD_CARD, BOARD_CROP, seatRect(DAY_STUDENT, BOARD_PROPS));
 
   return (
     <GuideScene id={ID} step={7} label="참여 설정">
@@ -289,7 +296,7 @@ export const ParticipationScene: React.FC<DemoProps> = () => {
 
       <Annotation
         from={lineStart(ID, 1) + 2}
-        durationInFrames={mixDownFrom + 8 - lineStart(ID, 1) - 2}
+        durationInFrames={mixDownFrom - lineStart(ID, 1) - 2}
         {...padRect(classFilter, 5)}
         label="전체 반"
         labelPosition="right"
@@ -340,9 +347,6 @@ export const ParticipationScene: React.FC<DemoProps> = () => {
         from={afterSchoolClick + 6}
         durationInFrames={lineEnd(ID, 4) + 8 - afterSchoolClick - 6}
         {...padRect(afterSchool, 5)}
-        label="방과후 체크"
-        labelPosition="top"
-        labelAlign="end"
         color={colors.amber300}
       />
       <InsetCard card={AS_ZOOM_CARD} crop={AS_ZOOM} title={`${GRADE}-1 7번 조예린 · 방과후 체크`} from={asZoomFrom} out={asZoomOut}>
@@ -375,7 +379,6 @@ export const ParticipationScene: React.FC<DemoProps> = () => {
         {...padRect(inactiveSeat, 4)}
         label="참여하지 않는 학생 = 회색"
         labelPosition="bottom"
-        labelAlign="end"
         color={colors.gray700}
       />
 
@@ -405,7 +408,7 @@ export const ParticipationScene: React.FC<DemoProps> = () => {
           { frame: saveClick - 6, x: secondThursdayPoint.x, y: secondThursdayPoint.y },
         ]}
         clicks={[saveClick]}
-        hideAfter={lineEnd(ID, 5)}
+        hideAfter={saveClick + 14}
       />
     </GuideScene>
   );

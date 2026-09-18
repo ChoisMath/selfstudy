@@ -143,10 +143,12 @@ export const ParticipationBulkScene: React.FC<DemoProps> = () => {
 
       <Annotation
         from={lineStart(ID, 1) + 2}
-        durationInFrames={dialogOpen - lineStart(ID, 1) - 2}
+        durationInFrames={dialogOpen + 8 - lineStart(ID, 1) - 2}
         {...padRect(bulk, 5)}
         label="시간 이름 아래 체크박스"
-        labelPosition="left"
+        labelPosition="top"
+        labelGap={46}
+        labelAlign="end"
         color={colors.blue600}
       />
       <Annotation
