@@ -19,6 +19,7 @@ import UnassignedStudents, { UNASSIGNED_DROP_ID } from "./UnassignedStudents";
 import MiraeHallLayout, { GAP_CONFIG } from "./MiraeHallLayout";
 import ClassroomFrame from "./ClassroomFrame";
 import ClassroomConfigModal from "./ClassroomConfigModal";
+import { GuideHelpButton } from "@/components/guide/GuideHelpButton";
 import { buildPrintGroups, type ClassroomMeta } from "@/lib/seats/print-groups";
 import { participatesInSeatSession } from "@/lib/seats/seat-participation";
 import { type SeatSessionType } from "@/lib/sessions";
@@ -377,9 +378,13 @@ export default function SeatingEditor({
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="whitespace-nowrap text-xl font-bold text-gray-900">좌석 편집</h2>
-        <div className="flex items-center gap-2">
+      {/* 버튼 라벨이 길어 좁은 화면에서는 줄을 접는다 — 라벨을 줄이거나 문서를 가로로 넘기지 않기 위해 */}
+      <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+        <div className="flex items-center gap-1">
+          <h2 className="whitespace-nowrap text-xl font-bold text-gray-900">좌석 편집</h2>
+          <GuideHelpButton href="/help/seats" />
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
           {sessionType === "afternoon" && (
             <button
               onClick={() => {
