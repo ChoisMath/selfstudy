@@ -7,7 +7,7 @@ import { GuideScene } from "../../guide/GuideScene";
 import { FONT, MONO } from "../../fonts";
 import type { DemoProps } from "../../props";
 import { colors } from "../../theme";
-import { GradeAdminShellMock } from "../mocks/GradeAdminShellMock";
+import { GradeAdminShellMock, gradeAdminHelpRect } from "../mocks/GradeAdminShellMock";
 import { lineAt, lineStart } from "../timing";
 
 const ID = "Outro";
@@ -21,14 +21,12 @@ const STEPS: { text: string; note: string }[] = [
   { text: "감독 배정", note: "달력에서 날짜마다" },
 ];
 
-// GradeAdminShellMock 헤더 오른쪽(담임교사 칩 ~ 로그아웃)만 잘라 키운다.
-// 셸이 ? 버튼 좌표를 export 하지 않아 셸 안의 배치 규칙(오른쪽 16 - 로그아웃 68 - 간격 12 - 44)을 그대로 적는다.
-const HELP_HIT = 44;
-const HELP_X = PC_VIEWPORT.w - 16 - 68 - 12 - HELP_HIT;
-const HELP_CENTER = { x: HELP_X + HELP_HIT / 2, y: 28 };
-const HEADER_H = 56;
+// GradeAdminShellMock 의 ? 버튼(gradeAdminHelpRect — 6탭 줄 오른쪽 끝)만 잘라 키운다.
+// 크롭 세로 밴드는 그 rect 의 y/h 그대로 써서, 셸의 탭 줄 배치가 바뀌면 여기도 같이 따라간다.
+const HELP_RECT = gradeAdminHelpRect();
+const HELP_CENTER = { x: HELP_RECT.x + HELP_RECT.w / 2, y: HELP_RECT.y + HELP_RECT.h / 2 };
 const HEADER_SCALE = 1.9;
-const CROP = { x: 855, w: PC_VIEWPORT.w - 12 - 855 };
+const CROP = { x: 855, y: HELP_RECT.y, w: PC_VIEWPORT.w - 12 - 855, h: HELP_RECT.h };
 // GuideHelpButton 의 보이는 원 지름(h-7).
 const HELP_DOT = 28;
 
@@ -137,7 +135,7 @@ const StepRow: React.FC<{ at: number; index: number; text: string; note: string 
   );
 };
 
-// 교사 편·학생 편 Outro 와 같은 장치 — 실제 헤더를 키워 ? 버튼 위치를 보여 준다.
+// 교사 편·학생 편 Outro 와 같은 장치 — 실제 탭 줄을 키워 ? 버튼 위치를 보여 준다.
 const HeaderZoom: React.FC<{ at: number }> = ({ at }) => {
   const frame = useCurrentFrame();
   const ringIn = tween(frame, [at, at + 12], [0, 1]);
@@ -147,7 +145,7 @@ const HeaderZoom: React.FC<{ at: number }> = ({ at }) => {
       style={{
         position: "relative",
         width: CROP.w * HEADER_SCALE,
-        height: HEADER_H * HEADER_SCALE,
+        height: CROP.h * HEADER_SCALE,
         borderRadius: 14,
         overflow: "hidden",
         border: `1px solid ${colors.gray200}`,
@@ -160,8 +158,8 @@ const HeaderZoom: React.FC<{ at: number }> = ({ at }) => {
           left: 0,
           top: 0,
           width: PC_VIEWPORT.w,
-          height: HEADER_H,
-          transform: `scale(${HEADER_SCALE}) translateX(${-CROP.x}px)`,
+          height: PC_VIEWPORT.h,
+          transform: `scale(${HEADER_SCALE}) translate(${-CROP.x}px, ${-CROP.y}px)`,
           transformOrigin: "top left",
         }}
       >
@@ -171,7 +169,7 @@ const HeaderZoom: React.FC<{ at: number }> = ({ at }) => {
         style={{
           position: "absolute",
           left: (HELP_CENTER.x - CROP.x) * HEADER_SCALE - ring / 2,
-          top: HELP_CENTER.y * HEADER_SCALE - ring / 2,
+          top: (HELP_CENTER.y - CROP.y) * HEADER_SCALE - ring / 2,
           width: ring,
           height: ring,
           borderRadius: "50%",

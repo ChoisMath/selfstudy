@@ -1,6 +1,8 @@
 // src/components/admin-shared/AdminNav.tsx(58-121행, subAdminGrades=[GRADE] 세션) +
-// src/app/grade-admin/[grade]/page.tsx(56-72행 6탭) 이식 — PC 폭 학년관리 셸.
-// 나머지 학년관리자 목업 태스크가 GRADE_ADMIN_BODY·gradeAdminTabPoint 를 기준으로 본문을 얹는다.
+// src/app/grade-admin/[grade]/page.tsx(56-77행 6탭 + GuideHelpButton) 이식 — PC 폭 학년관리 셸.
+// ? 도움말(page.tsx 76행 <GuideHelpButton href="/help/grade-admin" />)은 AdminNav 가 아니라
+// 6탭 줄 오른쪽 끝에 있다 — AdminNav 는 /admin 관리자 화면과 공유해 엉뚱한 도움말로 갈 수 있어 넣지 않는다.
+// 나머지 학년관리자 목업 태스크가 GRADE_ADMIN_BODY·gradeAdminTabPoint·gradeAdminHelpRect 를 기준으로 본문을 얹는다.
 import React from "react";
 import { Img, staticFile, useCurrentFrame } from "remotion";
 import { GRADE, ME } from "../data";
@@ -58,6 +60,16 @@ export const gradeAdminTabPoint = (tab: GradeAdminTab): Point => {
   return { x: rect.x + rect.w / 2, y: rect.y + rect.h / 2 };
 };
 
+// page.tsx 76행 <GuideHelpButton href="/help/grade-admin" /> — 탭 줄(60행 flex ... mb-3) 오른쪽 끝,
+// main 의 lg:px-4 안쪽 오른쪽 기준선(탭 밑줄과 동일한 MAIN_PAD_X)에 붙는다. GuideHelpButton.tsx 그대로:
+// 44px 히트 영역(min-h-11 min-w-11) 안에 28px 원(h-7 w-7, border-2 border-current text-sm font-bold).
+const HELP_HIT = 44;
+const HELP_DOT = 28;
+const HELP_X = PC_VIEWPORT.w - MAIN_PAD_X - HELP_HIT;
+const HELP_Y = TAB_ROW_Y + (TAB_H - HELP_HIT) / 2;
+
+export const gradeAdminHelpRect = (): Rect => ({ x: HELP_X, y: HELP_Y, w: HELP_HIT, h: HELP_HIT });
+
 // AdminNav.tsx 33-38행 gradeAdminItems — subAdminGrades=[GRADE] 하나뿐이라 이 셸 안에서는 항상 active(초록).
 const GRADE_LABEL = `${GRADE}학년 데이터관리`;
 const LOGO_IMG = 32; // AdminNav.tsx 67행 w-8 h-8
@@ -73,20 +85,18 @@ const HOMEROOM_CHIP_LABEL = "담임교사"; // AdminNav.tsx 96-101행 — ME 는
 const HOMEROOM_CHIP_W = 24 + HOMEROOM_CHIP_LABEL.length * 12; // px-3(24) + text-xs(12px/자)
 const BELL_W = 96; // NotificationBell.tsx — 아이콘 + "알림 켜기"(sm:inline 라벨)
 const NAME_W = ME.name.length * 14;
-const HELP_HIT = 44; // 컨트롤러 결정: AdminNav 에는 아직 없는 "?" 도움말 — 44px 히트 영역
-const HELP_DOT = 28; // GuideHelpButton.tsx 실제 원 크기(h-7 w-7)
 const LOGOUT_W = 16 + "로그아웃".length * 13;
 const GAP_RIGHT = 12; // AdminNav.tsx 94행 gap-3
 
 type RightBlock = { key: string; x: number; w: number };
 
-const rightLayout = (showHelp: boolean): RightBlock[] => {
+// AdminNav.tsx 94-107행 — 담임교사 칩·알림벨·이름·로그아웃뿐, ? 도움말은 없다(탭 줄 쪽 gradeAdminHelpRect 참고).
+const rightLayout = (): RightBlock[] => {
   const blocks: { key: string; w: number }[] = [
     { key: "homeroom", w: HOMEROOM_CHIP_W },
     { key: "bell", w: BELL_W },
     { key: "name", w: NAME_W },
   ];
-  if (showHelp) blocks.push({ key: "help", w: HELP_HIT });
   blocks.push({ key: "logout", w: LOGOUT_W });
 
   let right = PC_VIEWPORT.w - NAV_PAD_X;
@@ -117,13 +127,13 @@ export const GradeAdminShellMock: React.FC<GradeAdminShellMockProps> = ({
 }) => {
   const frame = useCurrentFrame();
   const tabs = tabLayout();
-  const right = rightLayout(Boolean(showHelp));
+  const right = rightLayout();
   const rightOf = (key: string) => right.find((b) => b.key === key);
   const homeroomChip = rightOf("homeroom");
   const bell = rightOf("bell");
   const name = rightOf("name");
-  const help = rightOf("help");
   const logout = rightOf("logout");
+  const helpRect = showHelp ? gradeAdminHelpRect() : null;
 
   return (
     <div
@@ -197,7 +207,7 @@ export const GradeAdminShellMock: React.FC<GradeAdminShellMockProps> = ({
           {GRADE_LABEL}
         </div>
 
-        {/* 우측: 담임교사 칩·알림벨·이름·(도움말)·로그아웃(94-107행) */}
+        {/* 우측: 담임교사 칩·알림벨·이름·로그아웃(94-107행) — ? 도움말은 탭 줄 쪽(gradeAdminHelpRect) */}
         {homeroomChip ? (
           <div
             style={{
@@ -265,42 +275,6 @@ export const GradeAdminShellMock: React.FC<GradeAdminShellMockProps> = ({
           </div>
         ) : null}
 
-        {/* ? 도움말 — AdminNav 에는 아직 없음(컨트롤러 결정: HomeroomShellMock/StudentShellMock 과 동일 관례,
-            로그아웃 직전 44px 히트 영역 + GuideHelpButton.tsx 실제 스타일: border-2 border-current text-sm font-bold) */}
-        {help ? (
-          <div
-            style={{
-              position: "absolute",
-              left: help.x,
-              top: (HEADER_H - HELP_HIT) / 2,
-              width: HELP_HIT,
-              height: HELP_HIT,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <div
-              style={{
-                width: HELP_DOT,
-                height: HELP_DOT,
-                borderRadius: HELP_DOT / 2,
-                border: `2px solid ${tw.gray[500]}`,
-                color: tw.gray[500],
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: 14,
-                fontWeight: 700,
-                whiteSpace: "nowrap",
-                boxSizing: "border-box",
-              }}
-            >
-              ?
-            </div>
-          </div>
-        ) : null}
-
         {logout ? (
           <div
             style={{
@@ -334,7 +308,7 @@ export const GradeAdminShellMock: React.FC<GradeAdminShellMockProps> = ({
         }}
       />
 
-      {/* page.tsx 56-72행: 6탭 */}
+      {/* page.tsx 56-77행: 6탭 + ? 도움말 */}
       {tabs.map((t) => {
         const active = t.tab === tab;
         const pressing = tabPressAt && tabPressAt.tab === t.tab ? tabPressAt.at : null;
@@ -362,6 +336,41 @@ export const GradeAdminShellMock: React.FC<GradeAdminShellMockProps> = ({
           </div>
         );
       })}
+
+      {/* page.tsx 76행 <GuideHelpButton href="/help/grade-admin" /> — 탭 줄 오른쪽 끝, GuideHelpButton.tsx 그대로 */}
+      {helpRect ? (
+        <div
+          style={{
+            position: "absolute",
+            left: helpRect.x,
+            top: helpRect.y,
+            width: helpRect.w,
+            height: helpRect.h,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <div
+            style={{
+              width: HELP_DOT,
+              height: HELP_DOT,
+              borderRadius: HELP_DOT / 2,
+              border: `2px solid ${tw.gray[500]}`,
+              color: tw.gray[500],
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: 14,
+              fontWeight: 700,
+              whiteSpace: "nowrap",
+              boxSizing: "border-box",
+            }}
+          >
+            ?
+          </div>
+        </div>
+      ) : null}
 
       {/* 탭 콘텐츠(GRADE_ADMIN_BODY) — overflow-y 스크롤을 scrollY 로 흉내 낸다 */}
       <div
