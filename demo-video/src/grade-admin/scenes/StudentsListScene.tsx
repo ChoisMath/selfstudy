@@ -23,7 +23,8 @@ const W = GRADE_ADMIN_BODY.w;
 // 앞 장면(Today)은 야간 카드까지 내려간 상태로 끝난다 — 같은 스크롤에서 시작해 탭만 바꾼다.
 const TODAY_SCROLL = todayRect("night", W).y + todayRect("night", W).h - GRADE_ADMIN_BODY.h;
 
-const FILTER_CLASS = 1;
+// 1반을 고르면 화면에 보이는 위 5행이 필터 전후 모두 같아 필터가 걸린 게 드러나지 않는다 — 2반을 고른다.
+const FILTER_CLASS = 2;
 const CLASS_ROWS = STUDENT_ROWS.filter((row) => row.student.classNumber === FILTER_CLASS);
 
 const INACTIVE_ID = STUDENT_ROWS.find((row) => row.status === "inactive")?.student.id ?? 0;

@@ -131,7 +131,8 @@ export const TodayScene: React.FC<DemoProps> = () => {
         durationInFrames={lineEnd(ID, 1) + 4 - statsFrom}
         {...padRect(stats, 5)}
         label="출석 · 결석 · 사유결석 · 방과후"
-        labelPosition="bottom"
+        // 아래에 두면 라벨 밑동이 스틸 크롭선(브라우저 아래 끝)에 1px 까지 붙는다 — 카드 머리줄로 올린다.
+        labelPosition="top"
         color={colors.blue600}
       />
 

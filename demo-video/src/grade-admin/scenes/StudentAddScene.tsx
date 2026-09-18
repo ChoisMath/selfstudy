@@ -44,10 +44,12 @@ const modalOpenAt = addClick + 6;
 
 const classClick = lineAt(ID, 1, 0.05);
 const classType = classClick + 4;
-const numberClick = classType + 8;
+const numberClick = classType + 12;
 const numberType = numberClick + 4;
 const nameClick = numberType + 12;
 const nameType = nameClick + 4;
+// 클릭 물결은 그 프레임의 커서 자리에 찍힌다 — 누르는 동안 커서가 멈춰 있어야 칸 가운데에 온다.
+const CLICK_HOLD = 5;
 const typeCursorHide = nameType + 16;
 const previewFrom = nameType + 20;
 const previewOut = lineEnd(ID, 1) + 8;
@@ -196,7 +198,9 @@ export const StudentAddScene: React.FC<DemoProps> = () => {
           { frame: addClick - 10, x: addCenter.x, y: addCenter.y },
           { frame: modalOpenAt + 4, x: addCenter.x, y: addCenter.y },
           { frame: classClick - 6, x: classPoint.x, y: classPoint.y },
+          { frame: classClick + CLICK_HOLD, x: classPoint.x, y: classPoint.y },
           { frame: numberClick - 4, x: numberPoint.x, y: numberPoint.y },
+          { frame: numberClick + CLICK_HOLD, x: numberPoint.x, y: numberPoint.y },
           { frame: nameClick - 4, x: namePoint.x, y: namePoint.y },
           { frame: typeCursorHide, x: namePoint.x, y: namePoint.y },
         ]}

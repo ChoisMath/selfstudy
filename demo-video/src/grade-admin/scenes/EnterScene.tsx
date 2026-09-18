@@ -60,7 +60,7 @@ const ALL_TABS: Rect = (() => {
 const TOP_BAR_H = attendanceTopBarRect("logo").h;
 
 const AttendancePage: React.FC<{ chipPressAt: number }> = ({ chipPressAt }) => (
-  <div style={{ position: "absolute", inset: 0, isolation: "isolate", background: "#F9FAFB" }}>
+  <div style={{ position: "absolute", inset: 0, isolation: "isolate", background: colors.gray50 }}>
     <div
       style={{
         position: "absolute",
