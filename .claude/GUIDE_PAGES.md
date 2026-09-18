@@ -94,10 +94,10 @@
 | 페이지 | `page` | 화면 | 장면(목업) | 가이드 페이지 | 영상 |
 |---|---|---|---|---|---|
 | 환경 점검 | `setup-check` | — | `src/setup-check/` (`SetupCheck`) | — (스틸은 점검용으로 `out/`에만) | `out/setup-check.mp4` (Chois 음성, git 제외) |
-| 출석부 | `attendance` | `/attendance/[grade]` (감독교사) | `src/teacher/` (`Teacher-*` 장면) | `/help/attendance` (스틸 14장) | `videos.ts` `teacher` — id 미등록 |
-| 담임교사 메뉴 | `homeroom` | `/homeroom/*` (담임교사) | `src/teacher/` (`Teacher-Homeroom*`·`AbsenceReason`·`Password`) | `/help/homeroom` (스틸 7장) | `videos.ts` `teacher` — id 미등록 |
-| 학생 | `student` | `/student/*` (학생) | `src/student/` (`Student-*` 장면) | `/help/student` (스틸 8장, 전부 폰) | `videos.ts` `student` — id 미등록 |
-| 학년관리 | `grade-admin` | `/grade-admin/[grade]` 6탭 (학년관리자) | `src/grade-admin/` (`GradeAdmin-*` 장면) | `/help/grade-admin` (스틸 9장, 전부 PC) | `videos.ts` `gradeAdmin` — id 미등록 |
-| 좌석 배치 | `seats` | `/grade-admin/[grade]` 좌석 탭 + `/seats/print` | `src/grade-admin/` (`GradeAdmin-Seat*`·`ClassroomConfig`) | `/help/seats` (스틸 5장, `start={189}`) | `videos.ts` `gradeAdmin` — id 미등록 |
+| 출석부 | `attendance` | `/attendance/[grade]` (감독교사) | `src/teacher/` (`Teacher-*` 장면) | `/help/attendance` (스틸 14장) | `videos.ts` `teacher` — WdVHeC7N3N8 |
+| 담임교사 메뉴 | `homeroom` | `/homeroom/*` (담임교사) | `src/teacher/` (`Teacher-Homeroom*`·`AbsenceReason`·`Password`) | `/help/homeroom` (스틸 7장) | `videos.ts` `teacher` — WdVHeC7N3N8 |
+| 학생 | `student` | `/student/*` (학생) | `src/student/` (`Student-*` 장면) | `/help/student` (스틸 8장, 전부 폰) | `videos.ts` `student` — Cj4Bj0sKnOg |
+| 학년관리 | `grade-admin` | `/grade-admin/[grade]` 6탭 (학년관리자) | `src/grade-admin/` (`GradeAdmin-*` 장면) | `/help/grade-admin` (스틸 9장, 전부 PC) | `videos.ts` `gradeAdmin` — gd6SfylSIFI |
+| 좌석 배치 | `seats` | `/grade-admin/[grade]` 좌석 탭 + `/seats/print` | `src/grade-admin/` (`GradeAdmin-Seat*`·`ClassroomConfig`) | `/help/seats` (스틸 5장, `start={190}`) | `videos.ts` `gradeAdmin` — gd6SfylSIFI |
 
 새 화면은 `/guide-page <page>`로 추가하면서 이 표에 행을 더한다.

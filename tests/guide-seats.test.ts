@@ -55,7 +55,8 @@ for (const [index, id] of sceneOrder.entries()) {
   }
   frames += lead + Math.round(durations[id].total * fps) + tail;
 }
-const seatsTourStart = Math.floor(frames / fps);
+// 올림이어야 한다 — 내림하면 앞 장면의 마지막 0.5초(페이드 구간)에 착지한다.
+const seatsTourStart = Math.ceil(frames / fps);
 assert.match(
   mdx,
   new RegExp(`<GuideVideo videoKey="gradeAdmin" start=\\{${seatsTourStart}\\}`),
