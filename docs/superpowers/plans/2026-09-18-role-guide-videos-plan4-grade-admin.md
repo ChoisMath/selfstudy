@@ -133,7 +133,7 @@
 오케스트레이터가 dispatch 때 `scene-notes.md`(연속성 재정·목업 API 표·도움말 스틸 프레임·보고 계약)를 함께 준다.
 
 **도움말 스틸 프레임(계획)**
-- `/help/grade-admin`(9단계): `01-enter` Enter 1,0.7 · `02-today` Today 1,0.7 · `03-students` StudentsList 1,0.7 · `04-student-add` StudentAdd 1,0.8 · `05-excel` StudentExcel 3,0.6 · `06-helper` Helper 2,0.6 · `07-participation` Participation 4,0.6 · `08-supervisor` SupervisorAssign 1,0.7 · `09-monthly` Monthly 1,0.7
+- `/help/grade-admin`(9단계): `01-enter` Enter 1,0.7 · `02-today` Today 1,0.7 · `03-students` StudentsList 1,0.7 · `04-student-add` StudentAdd 1,0.8 · `05-excel` StudentExcel 3,0.6 · `06-helper` Helper 2,0.6 · `07-participation` Participation 4,0.6 · `08-supervisor` SupervisorAssign 0,<비율은 T10 이 고름 — 월 이동 줄이 보이고 주석 라벨이 프레임 안에 온전히 들어오는 시점> · `09-monthly` Monthly 1,0.7
 - `/help/seats`(5단계): `01-editor` SeatsTour 1,0.7 · `02-classroom` ClassroomConfig 3,0.7 · `03-assign` SeatAssign 3,0.7 · `04-edit` SeatEdit 2,0.6 · `05-print` SeatPrint 1,0.7
 
 ---
@@ -141,6 +141,32 @@
 ### Task 10: 스틸 2페이지
 
 `demo-video/src/stills/{grade-admin,seats}.ts` 작성 → `node scripts/guide-stills.mjs --page grade-admin`·`--page seats` → 모든 WebP를 Read로 확인·보정(장당 150KB, 페이지 2MB 이하) → 픽셀 크기 기록 → 커밋.
+
+**확정된 프레임 목록** (검수를 거쳐 도움말 스틸로 합격 판정된 것. 모두 브라우저 크롭 1280×657, `tall` 없음)
+
+`/help/grade-admin` 9단계
+| 파일 | 장면·문장·비율 | 화면 |
+|---|---|---|
+| `01-enter` | Enter 1,0.7 | 학년 데이터관리 6탭 |
+| `02-today` | Today 1,0.7 | 오늘출결 카드와 숫자 타일 |
+| `03-students` | StudentsList 1,0.7 | 학생 표(2반 필터) |
+| `04-student-add` | StudentAdd 1,0.8 | 학생 추가 모달, 학번 10213 자동 |
+| `05-excel` | StudentExcel 3,0.6 | **Excel 업로드 결과**(성공 34·실패 2) — 캡션을 "업로드 결과"로 쓴다 |
+| `06-helper` | Helper 2,0.6 | 보라 도우미 배지 + 학생 폰 인셋 |
+| `07-participation` | Participation 4,0.6 | 방과후 체크 + 출석부 인셋 |
+| `08-supervisor` | **SupervisorAssign 0,0.7** | 감독 배정 달력(월 이동 줄·Excel·누계 포함) |
+| `09-monthly` | Monthly 1,0.7 | 월간출결 표와 범례 |
+
+`/help/seats` 5단계
+| 파일 | 장면·문장·비율 | 화면 |
+|---|---|---|
+| `01-editor` | SeatsTour 1,0.7 | 좌석 격자 + 미배정 패널 |
+| `02-classroom` | ClassroomConfig 3,0.7 | 구조 설정 미리보기(18석) |
+| `03-assign` | SeatAssign 3,0.7 | 드래그로 배정된 좌석 |
+| `04-edit` | SeatEdit 2,0.6 | 저장 (2개 교실 변경) |
+| `05-print` | SeatPrint 1,0.7 | 인쇄 미리보기 |
+
+주의: `03-assign`·`04-edit`·`05-print` 는 **같은 좌석의 주인이 서로 같아야 한다**(수정 라운드에서 맞췄다). 스틸을 뽑은 뒤 세 장을 나란히 열어 확인할 것.
 
 ### Task 11: `/help/grade-admin` · `/help/seats` · `?` 버튼
 
