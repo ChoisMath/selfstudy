@@ -1,5 +1,5 @@
 // 사용: node scripts/narrate.mjs --guide <GUIDES 키>
-//         [--measure] [--only Slug-4,Seats-2] [--estimate] [--no-check]
+//         [--reprocess | --measure | --estimate] [--only Slug-4,Seats-2] [--no-check]
 //   engine "say": macOS say 로 문장 mp3 생성 (현재 사용하는 가이드 없음)
 //   engine "mlx": 로컬 Qwen3-TTS 클론 음성 — 환경·동작은 demo-video/README.md 「음성」 절
 import { execFileSync, spawnSync } from "node:child_process";
@@ -8,8 +8,8 @@ import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
-  checkSpeech, estimateSeconds, findUnreadable, isCached, lineKey, mergeStt, parseJsonLines, parseOnly, reviewFlag,
-  sha1, spokenText, sttTargets, unknownKeys,
+  assertNarrationMode, assertReprocessable, audioTailFilter, checkSpeech, estimateSeconds, findUnreadable, isCached,
+  lineKey, mergeStt, parseJsonLines, parseOnly, reviewFlag, sha1, spokenText, sttTargets, unknownKeys, withAudioProcessing,
 } from "./lib/narration-core.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -28,20 +28,30 @@ const flag = (name) => process.argv.includes(name);
 const guideName = arg("--guide");
 const guide = GUIDES[guideName];
 if (!guide) throw new Error(`unknown guide: ${guideName} (가능: ${Object.keys(GUIDES).join(", ")})`);
-const { NARRATION, LINE_GAP_SECONDS, SPOKEN = {}, TRAILING_SILENCE_SECONDS = 0 } = await import(join(ROOT, guide.module));
+const { NARRATION, LINE_GAP_SECONDS, SPOKEN = {}, TRAILING_SILENCE_SECONDS = 0, FADE_OUT_SECONDS = 0 } = await import(join(ROOT, guide.module));
+const audioSettings = { trailing: TRAILING_SILENCE_SECONDS, fadeOut: FADE_OUT_SECONDS };
 
 const OUT_DIR = join(ROOT, guide.outDir);
 const TMP_DIR = join(OUT_DIR, ".lines");
 const RAW_DIR = join(TMP_DIR, "raw");
 const JSON_PATH = join(ROOT, guide.json);
 const only = parseOnly(arg("--only"));
+const reprocess = flag("--reprocess");
+assertNarrationMode({ reprocess, measure: flag("--measure"), estimate: flag("--estimate"), only, engine: guide.engine });
+if (flag("--only") && !only?.size) throw new Error("--only 뒤에 문장 키를 지정하세요.");
 const unknownOnly = unknownKeys(only, NARRATION);
 if (unknownOnly.length > 0) {
   console.error(`--only 에 없는 문장 키: ${unknownOnly.join(", ")}`);
   process.exit(1);
 }
 if (only && guide.engine === "say") console.log("--only 는 say 엔진에서 무시됩니다 (전체 문장을 다시 만듭니다).");
-mkdirSync(TMP_DIR, { recursive: true });
+
+const narrationLines = NARRATION.flatMap((scene) =>
+  scene.lines.map((line, index) => {
+    const text = spokenText(SPOKEN, scene.id, index, line);
+    return { key: lineKey(scene.id, index), text, textHash: sha1(text) };
+  }),
+);
 
 const probe = (file) =>
   Number(execFileSync("ffprobe", ["-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", file]).toString().trim());
@@ -52,6 +62,7 @@ const ffmpeg = (args) => execFileSync("ffmpeg", ["-y", "-loglevel", "error", ...
 const VOICE = process.env.NARRATION_VOICE ?? "Yuna";
 const RATE = process.env.NARRATION_RATE ?? "175";
 const synthesizeSay = () => {
+  mkdirSync(TMP_DIR, { recursive: true });
   for (const scene of NARRATION) {
     scene.lines.forEach((text, index) => {
       const aiff = join(TMP_DIR, `${lineKey(scene.id, index)}.aiff`);
@@ -72,7 +83,7 @@ const MAX_ROUNDS = 3;
 const MANIFEST = join(TMP_DIR, "manifest.json");
 // 앞머리는 -40dB: Qwen3-TTS 가 첫 음절 앞에 -44~-50dB 잡음을 내는 문장이 많아 -45dB 로는 트림이 일찍 멈추고
 // 음성이 자막보다 최대 0.74초 늦게 시작했다(school_cowork 원본 360문장 실측: 0.3초 초과 96→31, 발화 잘림 0건).
-// 꼬리는 약하게 끝나는 음절을 지키려고 -45dB 를 유지한다. 캐시 키에 트림 설정이 없으므로 바꾸면 --only 로 다시 만든다.
+// 꼬리는 약하게 끝나는 음절을 지키려고 -45dB 를 유지한다. 트림을 바꾸면 AUDIO_PROCESSING_VERSION도 올린다.
 const TRIM =
   "silenceremove=start_periods=1:start_threshold=-40dB:start_silence=0.05,areverse," +
   "silenceremove=start_periods=1:start_threshold=-45dB:start_silence=0.05,areverse";
@@ -91,14 +102,16 @@ const runPython = (script, args, env = {}) => {
   return parseJsonLines(result.stdout);
 };
 
-// 앞뒤 무음을 걷어낸 발화 길이를 재고, 끝에 꼬리 무음을 붙여 문장 mp3 로 만든다
 const trimAndPad = (key) => {
   const trimmed = join(RAW_DIR, `${key}.trim.wav`);
-  ffmpeg(["-i", join(RAW_DIR, `${key}.wav`), "-af", TRIM, trimmed]);
-  const speech = probe(trimmed);
-  ffmpeg(["-i", trimmed, "-af", `apad=pad_dur=${TRAILING_SILENCE_SECONDS}`, "-ar", "44100", "-ac", "1", "-b:a", "128k", lineMp3(key)]);
-  rmSync(trimmed);
-  return speech;
+  try {
+    ffmpeg(["-i", join(RAW_DIR, `${key}.wav`), "-af", TRIM, trimmed]);
+    const speech = probe(trimmed);
+    ffmpeg(["-i", trimmed, "-af", audioTailFilter(speech, audioSettings), "-ar", "44100", "-ac", "1", "-b:a", "128k", lineMp3(key)]);
+    return speech;
+  } finally {
+    rmSync(trimmed, { force: true });
+  }
 };
 
 const synthesizeMlx = () => {
@@ -110,16 +123,11 @@ const synthesizeMlx = () => {
   mkdirSync(RAW_DIR, { recursive: true });
   const manifest = existsSync(MANIFEST) ? JSON.parse(readFileSync(MANIFEST, "utf8")) : {};
   const [{ refHash }] = runPython("tts_mlx.py", ["--ref-hash", TTS_PROFILE, VOICEBOX_DB]);
-  const lines = NARRATION.flatMap((scene) =>
-    scene.lines.map((line, index) => {
-      const text = spokenText(SPOKEN, scene.id, index, line);
-      return { key: lineKey(scene.id, index), text, textHash: sha1(text) };
-    }),
-  );
+  const lines = narrationLines;
   let pending = lines.filter(
     (l) =>
       only?.has(l.key) ||
-      !isCached(manifest[l.key], { textHash: l.textHash, refHash, model: TTS_MODEL, trailing: TRAILING_SILENCE_SECONDS }, existsSync(lineMp3(l.key))),
+      !isCached(manifest[l.key], { textHash: l.textHash, refHash, model: TTS_MODEL, ...audioSettings }, existsSync(lineMp3(l.key))),
   );
   for (let round = 1; round <= MAX_ROUNDS && pending.length > 0; round += 1) {
     console.log(`생성 ${round}라운드: ${pending.length}문장`);
@@ -134,7 +142,11 @@ const synthesizeMlx = () => {
       const speech = trimAndPad(l.key);
       const verdict = checkSpeech(l.text, speech);
       if (verdict.ok) {
-        manifest[l.key] = { textHash: l.textHash, refHash, model: TTS_MODEL, trailing: TRAILING_SILENCE_SECONDS, speech: Number(speech.toFixed(3)), cps: Number(verdict.cps.toFixed(2)), attempts: round };
+        manifest[l.key] = withAudioProcessing(
+          { textHash: l.textHash, refHash, model: TTS_MODEL, cps: Number(verdict.cps.toFixed(2)), attempts: round },
+          speech,
+          audioSettings,
+        );
         console.log(`  ${l.key.padEnd(16)} ${speech.toFixed(2)}s ${verdict.cps.toFixed(1)}자/초`);
       } else {
         renameSync(join(RAW_DIR, `${l.key}.wav`), join(RAW_DIR, `${l.key}.fail-${round}.wav`));
@@ -155,8 +167,21 @@ const synthesizeMlx = () => {
 
 const rawWav = (key) => join(RAW_DIR, `${key}.wav`);
 
+const reprocessMlx = () => {
+  if (!existsSync(MANIFEST)) throw new Error("재처리할 manifest.json이 없습니다. 음성을 새로 합성하지 않습니다.");
+  const manifest = JSON.parse(readFileSync(MANIFEST, "utf8"));
+  assertReprocessable(narrationLines, manifest, (key) => existsSync(rawWav(key)));
+  console.info(`기존 raw WAV 재처리: ${narrationLines.length}문장 (페이드 ${FADE_OUT_SECONDS}초, 후행 무음 ${TRAILING_SILENCE_SECONDS}초)`);
+  for (const line of narrationLines) {
+    const speech = trimAndPad(line.key);
+    manifest[line.key] = withAudioProcessing(manifest[line.key], speech, audioSettings);
+  }
+  writeFileSync(MANIFEST, `${JSON.stringify(manifest, null, 2)}\n`);
+  return { lines: narrationLines, manifest };
+};
+
 const writeReview = ({ lines, manifest }) => {
-  const targets = flag("--no-check") ? [] : sttTargets(lines, manifest, (key) => existsSync(rawWav(key)));
+  const targets = reprocess || flag("--no-check") ? [] : sttTargets(lines, manifest, (key) => existsSync(rawWav(key)));
   if (targets.length > 0) {
     console.log(`전사 검수: ${targets.length}문장`);
     const itemsPath = join(TMP_DIR, "stt.json");
@@ -218,7 +243,8 @@ if (flag("--estimate")) {
 
 let report = null;
 if (!flag("--measure")) {
-  if (guide.engine === "mlx") report = synthesizeMlx();
+  if (reprocess) report = reprocessMlx();
+  else if (guide.engine === "mlx") report = synthesizeMlx();
   else synthesizeSay();
   NARRATION.forEach(concatScene);
 }

@@ -29,11 +29,57 @@ export const checkSpeech = (text, speechSeconds, { minCps = 3.0, maxCps = 9.0, m
 
 export const sha1 = (text) => createHash("sha1").update(text).digest("hex");
 
-export const isCached = (entry, { textHash, refHash, model, trailing }, mp3Exists) =>
+export const AUDIO_PROCESSING_VERSION = 1;
+
+export const isCached = (entry, { textHash, refHash, model, trailing, fadeOut }, mp3Exists) =>
   Boolean(
     entry && mp3Exists && entry.textHash === textHash && entry.refHash === refHash && entry.model === model &&
-      entry.trailing === trailing,
+      entry.trailing === trailing && entry.fadeOut === fadeOut && entry.processingVersion === AUDIO_PROCESSING_VERSION,
   );
+
+export const audioTailFilter = (speechSeconds, { fadeOut, trailing }) => {
+  if (!Number.isFinite(speechSeconds) || speechSeconds <= 0) throw new Error("발화 길이는 양수여야 합니다.");
+  for (const [name, seconds] of Object.entries({ fadeOut, trailing })) {
+    if (!Number.isFinite(seconds) || seconds < 0) throw new Error(`${name} 길이는 0 이상이어야 합니다.`);
+  }
+  const duration = Math.min(speechSeconds, fadeOut);
+  const fade = duration > 0
+    ? [`afade=t=out:st=${Number((speechSeconds - duration).toFixed(6))}:d=${duration}:curve=qsin`]
+    : [];
+  return [...fade, `apad=pad_dur=${trailing}`].join(",");
+};
+
+export const withAudioProcessing = (entry, speech, { fadeOut, trailing }) => ({
+  ...entry,
+  speech: Number(speech.toFixed(3)),
+  fadeOut,
+  trailing,
+  processingVersion: AUDIO_PROCESSING_VERSION,
+});
+
+export const assertReprocessable = (lines, manifest, hasRaw) => {
+  if (!manifest || typeof manifest !== "object" || Array.isArray(manifest)) {
+    throw new Error("재처리할 manifest가 올바른 객체가 아닙니다.");
+  }
+  const errors = lines.flatMap(({ key, textHash }) => {
+    const entry = manifest[key];
+    return [
+      ...(!entry ? [`${key}: manifest 항목 없음`] : entry.textHash !== textHash ? [`${key}: 음성 원고 해시 불일치`] : []),
+      ...(!hasRaw(key) ? [`${key}: raw WAV 없음`] : []),
+    ];
+  });
+  if (errors.length > 0) throw new Error(`재처리 사전 검사 실패 (음성을 새로 합성하지 않습니다):\n${errors.join("\n")}`);
+};
+
+export const assertNarrationMode = ({ reprocess, measure, estimate, only, engine }) => {
+  if ([reprocess, measure, estimate].filter(Boolean).length > 1) {
+    throw new Error("--reprocess, --measure, --estimate는 함께 사용할 수 없습니다.");
+  }
+  if (only && (reprocess || measure || estimate)) {
+    throw new Error("--only는 기본 합성 모드에서만 사용할 수 있습니다. --reprocess는 가이드 전체를 재처리합니다.");
+  }
+  if (reprocess && engine !== "mlx") throw new Error("--reprocess는 raw WAV를 보관하는 mlx 가이드에서만 지원합니다.");
+};
 
 export const estimateSeconds = (text, trailingSeconds) => Number((countChars(text) / 5.8 + trailingSeconds).toFixed(3));
 

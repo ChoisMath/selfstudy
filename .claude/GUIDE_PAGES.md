@@ -94,10 +94,12 @@
 | 페이지 | `page` | 화면 | 장면(목업) | 가이드 페이지 | 영상 |
 |---|---|---|---|---|---|
 | 환경 점검 | `setup-check` | — | `src/setup-check/` (`SetupCheck`) | — (스틸은 점검용으로 `out/`에만) | `out/setup-check.mp4` (Chois 음성, git 제외) |
-| 출석부 | `attendance` | `/attendance/[grade]` (감독교사) | `src/teacher/` (`Teacher-*` 장면) | `/help/attendance` (스틸 14장) | `videos.ts` `teacher` — WdVHeC7N3N8 |
-| 담임교사 메뉴 | `homeroom` | `/homeroom/*` (담임교사) | `src/teacher/` (`Teacher-Homeroom*`·`AbsenceReason`·`Password`) | `/help/homeroom` (스틸 7장) | `videos.ts` `teacher` — WdVHeC7N3N8 |
-| 학생 | `student` | `/student/*` (학생) | `src/student/` (`Student-*` 장면) | `/help/student` (스틸 8장, 전부 폰) | `videos.ts` `student` — Cj4Bj0sKnOg |
-| 학년관리 | `grade-admin` | `/grade-admin/[grade]` 6탭 (학년관리자) | `src/grade-admin/` (`GradeAdmin-*` 장면) | `/help/grade-admin` (스틸 9장, 전부 PC) | `videos.ts` `gradeAdmin` — gd6SfylSIFI |
-| 좌석 배치 | `seats` | `/grade-admin/[grade]` 좌석 탭 + `/seats/print` | `src/grade-admin/` (`GradeAdmin-Seat*`·`ClassroomConfig`) | `/help/seats` (스틸 5장, `start={190}`) | `videos.ts` `gradeAdmin` — gd6SfylSIFI |
+| 출석부 | `attendance` | `/attendance/[grade]` (감독교사) | `src/teacher/` (`Teacher-*` 장면) | `/help/attendance` (스틸 14장) | `videos.ts` `teacher` — a2BRtp_1Yqo |
+| 담임교사 메뉴 | `homeroom` | `/homeroom/*` (담임교사) | `src/teacher/` (`Teacher-Homeroom*`·`AbsenceReason`·`Password`) | `/help/homeroom` (스틸 7장, `start={313}`) | `videos.ts` `teacher` — a2BRtp_1Yqo |
+| 학생 | `student` | `/student/*` (학생) | `src/student/` (`Student-*` 장면) | `/help/student` (스틸 8장, 전부 폰) | `videos.ts` `student` — 554VD2s8G1E |
+| 학년관리 | `grade-admin` | `/grade-admin/[grade]` 6탭 (학년관리자) | `src/grade-admin/` (`GradeAdmin-*` 장면) | `/help/grade-admin` (스틸 9장, 전부 PC) | `videos.ts` `gradeAdmin` — VOlUOgOuNwE |
+| 좌석 배치 | `seats` | `/grade-admin/[grade]` 좌석 탭 + `/seats/print` | `src/grade-admin/` (`GradeAdmin-Seat*`·`ClassroomConfig`) | `/help/seats` (스틸 5장, `start={206}`) | `videos.ts` `gradeAdmin` — VOlUOgOuNwE |
 
 새 화면은 `/guide-page <page>`로 추가하면서 이 표에 행을 더한다.
+
+2026-09-19: 음성 끝 페이드·후행 무음을 조정한 영상 3편으로 연결을 교체하고 담임·좌석 시작 시각을 새 렌더에 맞췄다. 위 표는 현재 코드 기준이며 앱 배포는 실행하지 않았다.

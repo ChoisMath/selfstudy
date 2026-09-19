@@ -47,7 +47,8 @@ TTS 모델(`Qwen3-TTS-12Hz-0.6B-Base-bf16`)과 `Chois` 목소리 프로필은 **
 
 ```bash
 npm run dev                                                   # Remotion Studio
-node scripts/narrate.mjs --guide <guide>                      # 생성(캐시 제외) + 끝 0.5초 무음 + 길이 검증 + Whisper 검수 → review.tsv
+node scripts/narrate.mjs --guide <guide>                      # 생성(캐시 제외) + 가이드별 끝 페이드·무음 + 길이 검증 + Whisper 검수 → review.tsv
+node scripts/narrate.mjs --guide <guide> --reprocess          # 기존 raw 음성 재처리 + 장면 결합 + 길이 JSON·review.tsv 갱신(TTS/STT 호출 없음)
 node scripts/narrate.mjs --guide <guide> --only Check-1       # 특정 문장만 다시
 node scripts/narrate.mjs --guide <guide> --estimate           # 음성 없이 임시 길이 JSON (초당 5.8자) — 추적 중인 JSON 을 덮어쓰므로 음성을 만든 뒤 반드시 다시 생성
 node scripts/narrate.mjs --guide <guide> --measure            # 생성 없이 기존 문장 mp3 길이로 JSON만 다시
@@ -78,12 +79,27 @@ npm run doctor && node scripts/narrate.mjs --guide setup-check && npx remotion r
 - **Voicebox 서버 API는 쓰지 않는다.** MLX 스레드 문제로 생성 중 멈춘다. Voicebox 앱은 목소리 프로필을 만들고 고치는 도구로만 쓴다.
 - **참조 문장은 녹음과 한 글자까지 같아야 한다.** 다르면 생성 음성이 대상 문장 대신 참조 음성의 발화를 읽다가 끊긴다.
 - 음성용 문장에는 한글·공백·`.`·`,`·`·` 만 허용한다. 숫자·영문·기호는 `narration.ts` 의 `SPOKEN` 에 한글 읽기를 둔다(자막은 원고 표기). 빠지면 생성 전에 멈춘다.
-- 생성 음성은 앞뒤 무음을 잘라(앞 -40dB, 뒤 -45dB) 끝에 0.5초 무음을 붙인다. 트림 설정은 캐시 키에 없으므로 바꾸면 `--only` 로 다시 만든다.
+- 생성 음성은 앞뒤 무음을 잘라(앞 -40dB, 뒤 -45dB), 가이드의 `FADE_OUT_SECONDS`만큼 끝을 완만하게 줄인 뒤 `TRAILING_SILENCE_SECONDS`만큼 무음을 붙인다. 교사·학생·학년관리자 편은 마지막 0.5초 `qsin` 페이드 + 1초 무음이며, 기존 문장 간격 0.2초까지 합치면 약 1.2초 쉰다. 환경 점검 편의 설정은 유지한다.
 - 발화 속도가 초당 3~9자(공백 제외)를 벗어나거나 0.6초 미만이면 실패로 보고 최대 3라운드 다시 만든다.
 - `review.tsv` 의 `CHECK` 는 Whisper 유사도 0.8 미만(실패 아님, 사람이 들어서 판단), `NOCHECK` 는 전사가 아직 없는 문장(`--no-check` 로 만들었거나 raw wav 가 없음). 다음 실행(`--no-check` 없이)은 `.lines/raw/` 에 wav 가 남은 NOCHECK 문장만 전사한다 — raw 는 git 제외라 워크트리·새 clone 에서는 `--only` 로 다시 만들어야 전사된다.
-- 캐시 키는 음성용 문장·참조 해시·모델·끝 무음 길이다. Voicebox에서 목소리를 다시 녹음하면 전체가 다시 생성된다.
+- 캐시 키는 음성용 문장·참조 해시·모델·끝 무음 길이·페이드 길이·처리 버전이다. Voicebox에서 목소리를 다시 녹음하면 전체가 다시 생성된다. 트림 등 후처리 규칙 자체를 바꿀 때는 `AUDIO_PROCESSING_VERSION`도 올리고 `--reprocess`로 기존 raw를 재사용한다.
 - TTS 워커와 Whisper 워커를 동시에 돌리지 않는다(`narrate.mjs` 가 순서대로 실행한다).
 
 장면 길이와 자막 타이밍은 `narration-durations.json` 에서 자동 계산되므로, 원고를 고치면 `narrate.mjs` 만 다시 돌리면 된다.
+
+### 기존 목소리를 유지하며 끝 처리만 바꾸기
+
+`--reprocess`는 `.lines/raw/<문장키>.wav`에서 다시 처리하므로 페이드가 누적되지 않는다. 원본 WAV·manifest·현재 원고의 일치 여부를 전체 확인한 뒤 실행하고, 입력이 없거나 달라졌으면 중단한다. `--only`·`--measure`·`--estimate`와 함께 사용하지 않는다. 기존 전사·유사도는 보존하며 TTS 모델이나 Voicebox 프로필을 읽지 않는다.
+
+```bash
+node scripts/narrate.mjs --guide teacher --reprocess
+node scripts/narrate.mjs --guide student --reprocess
+node scripts/narrate.mjs --guide grade-admin --reprocess
+npx remotion render TeacherGuide out/teacher-guide.mp4
+npx remotion render StudentGuide out/student-guide.mp4
+npx remotion render GradeAdminGuide out/grade-admin-guide.mp4
+```
+
+무음이나 페이드 설정만 바꿀 때도 새 음성을 원하지 않으면 반드시 `--reprocess`를 사용한다. 일반 생성 명령은 변경된 캐시 조건 때문에 TTS를 다시 만들 수 있다. `--measure`는 길이만 재므로 오디오 변경을 대신하지 못한다. 영상 길이가 바뀌면 새 업로드의 챕터 시각도 다시 계산한다. 기존 웹사이트가 가리키는 YouTube 영상은 로컬 MP4 수정만으로 바뀌지 않는다.
 
 렌더 시 Google Fonts(Inter, Noto Sans KR)를 네트워크에서 받으므로 오프라인에서는 실패한다.

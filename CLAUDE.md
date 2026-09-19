@@ -1,5 +1,7 @@
 @AGENTS.md
 
+Codex와 공유하는 시작·종료 절차는 위 공통 지침을 따른다. `.claude/HANDOFF.md`와 `.claude/WORK_LOG.md`를 함께 갱신하고, 자동 메모리는 기존 원본(`.claude/memory/` 링크 대상)을 계속 사용한다. 연결 방식은 `.codex/README.md`에 있다.
+
 # 자율학습 출석부 시스템
 
 ## 프로젝트 지도

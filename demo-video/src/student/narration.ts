@@ -18,7 +18,8 @@ export type NarrationScene = { id: StudentSceneId; lines: string[] };
 export const LINE_GAP_SECONDS = 0.2;
 
 // 문장 음성 끝에 붙이는 무음. 마지막 음절이 잘린 듯 끝나지 않게 한다. 문장 길이에 포함되어 자막도 이만큼 더 남는다.
-export const TRAILING_SILENCE_SECONDS = 0.5;
+export const TRAILING_SILENCE_SECONDS = 1;
+export const FADE_OUT_SECONDS = 0.5;
 
 export const NARRATION: NarrationScene[] = [
   { id: "Intro", lines: [

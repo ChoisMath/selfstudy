@@ -3,902 +3,1066 @@
     "textHash": "239b5e96cc8c74e56e29ac68c3b48bd361143c45",
     "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
     "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
-    "trailing": 0.5,
+    "trailing": 1,
     "speech": 3.185,
     "cps": 6.59,
     "attempts": 1,
     "transcript": "포상고 자율학습 출석부 교사 사용 안내입니다.",
-    "similarity": 0.947
+    "similarity": 0.947,
+    "fadeOut": 0.5,
+    "processingVersion": 1
   },
   "Intro-1": {
     "textHash": "d070980a09000e8fe78166d5aa2107bb3836d2ae",
     "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
     "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
-    "trailing": 0.5,
+    "trailing": 1,
     "speech": 7.496,
     "cps": 5.87,
     "attempts": 1,
     "transcript": "로그인부터 출석 체크, 불참 신청 승인, 감독 교체, 그리고 담임교사 메뉴까지 차례로 살펴보겠습니다.",
-    "similarity": 1
+    "similarity": 1,
+    "fadeOut": 0.5,
+    "processingVersion": 1
   },
   "Login-0": {
     "textHash": "bb95f17f136d4c4808870424c67583305d4e05d2",
     "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
     "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
-    "trailing": 0.5,
+    "trailing": 1,
     "speech": 4.791,
     "cps": 6.26,
     "attempts": 1,
     "transcript": "휴대폰이나 컴퓨터 브라우저에서 셀프 점포 산점, KR에 접속합니다.",
-    "similarity": 0.912
+    "similarity": 0.912,
+    "fadeOut": 0.5,
+    "processingVersion": 1
   },
   "Login-1": {
     "textHash": "b3298fe61ddd3e6c8b82bec1292bc29aa7052df5",
     "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
     "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
-    "trailing": 0.5,
+    "trailing": 1,
     "speech": 3.133,
     "cps": 6.7,
     "attempts": 1,
     "transcript": "처음 화면은 교사 로그인 탭이 선택되어 있습니다.",
-    "similarity": 1
+    "similarity": 1,
+    "fadeOut": 0.5,
+    "processingVersion": 1
   },
   "Login-2": {
     "textHash": "f497699d83f202d2892aed87aa5658c061502a40",
     "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
     "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
-    "trailing": 0.5,
+    "trailing": 1,
     "speech": 7.681,
     "cps": 5.99,
     "attempts": 1,
     "transcript": "아이디에는 나이스 로그인 아이디를 비밀번호에는 초기 비밀번호 1111을 입력하고 로그인을 누릅니다.",
-    "similarity": 0.909
+    "similarity": 0.909,
+    "fadeOut": 0.5,
+    "processingVersion": 1
   },
   "Login-3": {
     "textHash": "0184188975b066405829294191406fcc70eda5f6",
     "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
     "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
-    "trailing": 0.5,
+    "trailing": 1,
     "speech": 5.732,
     "cps": 6.28,
     "attempts": 1,
     "transcript": "처음 로그인한 뒤에는 비밀번호를 꼭 바꿔주세요. 방법은 영상 마지막에 안내합니다.",
-    "similarity": 1
+    "similarity": 1,
+    "fadeOut": 0.5,
+    "processingVersion": 1
   },
   "AttendanceTour-0": {
     "textHash": "42721733df243662f1355e1eeb66b85be6dceb0b",
     "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
     "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
-    "trailing": 0.5,
+    "trailing": 1,
     "speech": 3.615,
     "cps": 6.36,
     "attempts": 1,
     "transcript": "로그인하면 담당 학년의 자율학습 출석부가 열립니다.",
-    "similarity": 1
+    "similarity": 1,
+    "fadeOut": 0.5,
+    "processingVersion": 1
   },
   "AttendanceTour-1": {
     "textHash": "29e9f4ae617f450e5de80b084ceba1121cc36ce5",
     "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
     "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
-    "trailing": 0.5,
+    "trailing": 1,
     "speech": 7.323,
     "cps": 6.01,
     "attempts": 1,
     "transcript": "파란막대에는 오늘 날짜와 감독교사, 학년, 그리고 출석, 결석, 미체크, 방과후 인원이 표시됩니다.",
-    "similarity": 1
+    "similarity": 1,
+    "fadeOut": 0.5,
+    "processingVersion": 1
   },
   "AttendanceTour-2": {
     "textHash": "def5b8140a815151dbfdcc1e6fd67877176b2ee3",
     "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
     "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
-    "trailing": 0.5,
+    "trailing": 1,
     "speech": 4.021,
     "cps": 6.71,
     "attempts": 1,
     "transcript": "다른 학년을 체크해야 할 때는 오른쪽 다른 학년 버튼을 누릅니다.",
-    "similarity": 1
+    "similarity": 1,
+    "fadeOut": 0.5,
+    "processingVersion": 1
   },
   "AttendanceTour-3": {
     "textHash": "210643cb317e8410b23d5a8cd86c764df8c40f2b",
     "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
     "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
-    "trailing": 0.5,
+    "trailing": 1,
     "speech": 6.301,
     "cps": 5.4,
     "attempts": 1,
     "transcript": "아래 탭은 5.1, 5.2, 야간 3개의 출석부와 4. 불참 신청 탭입니다.",
-    "similarity": 0.714
+    "similarity": 0.714,
+    "fadeOut": 0.5,
+    "processingVersion": 1
   },
   "SeatTap-0": {
     "textHash": "7d8c6c0774d9f0b994261f8afc909d3627525505",
     "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
     "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
-    "trailing": 0.5,
+    "trailing": 1,
     "speech": 5.633,
     "cps": 6.04,
     "attempts": 1,
     "transcript": "좌석은 교실 모양 그대로 놓여있고 파란 좌석이 아직 체크하지 않은 학생입니다.",
-    "similarity": 1
+    "similarity": 1,
+    "fadeOut": 0.5,
+    "processingVersion": 1
   },
   "SeatTap-1": {
     "textHash": "e935b2bd4da4c436d348744007e2261b5d81b275",
     "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
     "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
-    "trailing": 0.5,
+    "trailing": 1,
     "speech": 2.994,
     "cps": 6.68,
     "attempts": 1,
     "transcript": "좌석을 한번 누르면 초록색 출석으로 바뀝니다.",
-    "similarity": 1
+    "similarity": 1,
+    "fadeOut": 0.5,
+    "processingVersion": 1
   },
   "SeatTap-2": {
     "textHash": "6414bdc471eca6c7ccc12cd3cc657796c89a3e01",
     "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
     "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
-    "trailing": 0.5,
+    "trailing": 1,
     "speech": 2.368,
     "cps": 6.76,
     "attempts": 1,
     "transcript": "한번 더 누르면 빨간색 결석이 됩니다.",
-    "similarity": 1
+    "similarity": 1,
+    "fadeOut": 0.5,
+    "processingVersion": 1
   },
   "SeatTap-3": {
     "textHash": "6c79f0665866df35fbca711830c3943c838b4f1d",
     "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
     "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
-    "trailing": 0.5,
+    "trailing": 1,
     "speech": 3.135,
     "cps": 6.7,
     "attempts": 1,
     "transcript": "잘못 눌렀다면 한번 더 눌러 미체크로 되돌립니다.",
-    "similarity": 1
+    "similarity": 1,
+    "fadeOut": 0.5,
+    "processingVersion": 1
   },
   "SeatTap-4": {
     "textHash": "68a5eae2f3935abdf4fb9b0e46e5564d68897109",
     "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
     "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
-    "trailing": 0.5,
+    "trailing": 1,
     "speech": 3.576,
     "cps": 6.71,
     "attempts": 1,
     "transcript": "누르는 순간 바로 저장되므로 따로 저장 버튼은 없습니다.",
-    "similarity": 1
+    "similarity": 1,
+    "fadeOut": 0.5,
+    "processingVersion": 1
   },
   "SeatTap-5": {
     "textHash": "ba9c0e335255bb1fc51894186e5c46c1302ef75b",
     "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
     "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
-    "trailing": 0.5,
+    "trailing": 1,
     "speech": 3.755,
     "cps": 5.86,
     "attempts": 1,
     "transcript": "오후 1, 오후 2 야간은 템마다 따로 체크합니다.",
-    "similarity": 0.842
+    "similarity": 0.842,
+    "fadeOut": 0.5,
+    "processingVersion": 1
   },
   "CopySession-0": {
     "textHash": "85c6eb6c630d88661b93aa78240422396c4cdaf4",
     "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
     "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
-    "trailing": 0.5,
+    "trailing": 1,
     "speech": 3.211,
     "cps": 6.54,
     "attempts": 1,
     "transcript": "5호 이탭에는 5호 1결과 복사 버튼이 있습니다.",
-    "similarity": 0.75
+    "similarity": 0.75,
+    "fadeOut": 0.5,
+    "processingVersion": 1
   },
   "CopySession-1": {
     "textHash": "5b7d071d1b08b005d5916b9b49aedb61627e2eb3",
     "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
     "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
-    "trailing": 0.5,
+    "trailing": 1,
     "speech": 6.161,
     "cps": 6.33,
     "attempts": 1,
     "transcript": "누르면 5일의 출석과 결석을 5일에서 아직 체크하지 않은 학생에게 그대로 옮깁니다.",
-    "similarity": 0.889
+    "similarity": 0.889,
+    "fadeOut": 0.5,
+    "processingVersion": 1
   },
   "CopySession-2": {
     "textHash": "6554335d0720a3a059f0ca19e5c17b573cd40ce2",
     "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
     "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
-    "trailing": 0.5,
+    "trailing": 1,
     "speech": 6.318,
     "cps": 6.81,
     "attempts": 1,
     "transcript": "이미 체크한 학생이나 불참 신청이 있는 학생은 바꾸지 않으니 복사한 뒤 달라진 학생만 고치면 됩니다.",
-    "similarity": 1
+    "similarity": 1,
+    "fadeOut": 0.5,
+    "processingVersion": 1
   },
   "SeatColors-0": {
     "textHash": "382811193d176d9ae5f1829a8e38e1a2a40e88e4",
     "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
     "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
-    "trailing": 0.5,
+    "trailing": 1,
     "speech": 2.554,
     "cps": 6.66,
     "attempts": 1,
     "transcript": "좌석색으로 학생 상태를 알 수 있습니다.",
-    "similarity": 1
+    "similarity": 1,
+    "fadeOut": 0.5,
+    "processingVersion": 1
   },
   "SeatColors-1": {
     "textHash": "849b633127ada32c1f24df94368b46ea7585e999",
     "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
     "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
-    "trailing": 0.5,
+    "trailing": 1,
     "speech": 4.767,
     "cps": 6.5,
     "attempts": 1,
     "transcript": "노란 좌석에 불참 승인이라고 적혀있으면 불참 신청이 승인된 학생입니다.",
-    "similarity": 1
+    "similarity": 1,
+    "fadeOut": 0.5,
+    "processingVersion": 1
   },
   "SeatColors-2": {
     "textHash": "72d54d4e50e0b0e9a55b9090438c509cf96df2e1",
     "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
     "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
-    "trailing": 0.5,
+    "trailing": 1,
     "speech": 8.696,
     "cps": 6.09,
     "attempts": 1,
     "transcript": "노란 자석에 방과후라고 적혀있으면 오늘 방과후 수업에 참여하는 학생이고 누르면 테두리 색으로 출석과 결석이 표시됩니다.",
-    "similarity": 0.98
+    "similarity": 0.98,
+    "fadeOut": 0.5,
+    "processingVersion": 1
   },
   "SeatColors-3": {
     "textHash": "0742c4fdeafd8def0144b0354fa1ff70df96f78f",
     "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
     "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
-    "trailing": 0.5,
+    "trailing": 1,
     "speech": 4.365,
     "cps": 7.56,
     "attempts": 1,
     "transcript": "이름 앞에 빨간 별표가 있으면 아직 승인되지 않은 불참신청이 있다는 뜻입니다.",
-    "similarity": 1
+    "similarity": 1,
+    "fadeOut": 0.5,
+    "processingVersion": 1
   },
   "SeatColors-4": {
     "textHash": "1f1dcb39df406d71e81fafac049339b2e49b5d38",
     "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
     "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
-    "trailing": 0.5,
+    "trailing": 1,
     "speech": 3.793,
     "cps": 6.59,
     "attempts": 1,
     "transcript": "회색 좌석은 참여 설정에서 오늘 참여하지 않는 학생입니다.",
-    "similarity": 1
+    "similarity": 1,
+    "fadeOut": 0.5,
+    "processingVersion": 1
   },
   "SeatColors-5": {
     "textHash": "1b776c108c3ad3c988606691a16c591a64466017",
     "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
     "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
-    "trailing": 0.5,
+    "trailing": 1,
     "speech": 3.578,
     "cps": 6.43,
     "attempts": 1,
     "transcript": "화면 아랫업 내에서 색의 뜻을 다시 확인할 수 있습니다.",
-    "similarity": 0.864
+    "similarity": 0.864,
+    "fadeOut": 0.5,
+    "processingVersion": 1
   },
   "LongPress-0": {
     "textHash": "ea23eb18bb8b603f85b17f6760b4ee23694ae632",
     "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
     "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
-    "trailing": 0.5,
+    "trailing": 1,
     "speech": 2.649,
     "cps": 7.17,
     "attempts": 1,
     "transcript": "회색 좌석은 한번 눌러도 반응하지 않습니다.",
-    "similarity": 1
+    "similarity": 1,
+    "fadeOut": 0.5,
+    "processingVersion": 1
   },
   "LongPress-1": {
     "textHash": "5f385dac33f8d2620708e43be93ae93717533e87",
     "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
     "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
-    "trailing": 0.5,
+    "trailing": 1,
     "speech": 4.208,
     "cps": 6.65,
     "attempts": 1,
     "transcript": "참여하지 않는 날이지만 자습에 나온 학생은 좌석을 꾹 눌러주세요.",
-    "similarity": 1
+    "similarity": 1,
+    "fadeOut": 0.5,
+    "processingVersion": 1
   },
   "LongPress-2": {
     "textHash": "bc52811b48c0b3ff0bc2550cabc7bf77a20261ed",
     "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
     "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
-    "trailing": 0.5,
+    "trailing": 1,
     "speech": 6.033,
     "cps": 6.96,
     "attempts": 1,
     "transcript": "0.5초쯤 누르고 있으면 파란색으로 활성화되고 그 다음부터 눌러서 출석을 체크할 수 있습니다.",
-    "similarity": 0.937
+    "similarity": 0.937,
+    "fadeOut": 0.5,
+    "processingVersion": 1
   },
   "LongPress-3": {
     "textHash": "f1d08a2edb9300f40041d2e92b9777dd46089fcb",
     "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
     "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
-    "trailing": 0.5,
+    "trailing": 1,
     "speech": 4.898,
     "cps": 6.33,
     "attempts": 1,
     "transcript": "다른 탭으로 옮기면 활성화는 풀리지만 체크한 기록은 그대로 남습니다.",
-    "similarity": 1
+    "similarity": 1,
+    "fadeOut": 0.5,
+    "processingVersion": 1
   },
   "WeeklyInfo-0": {
     "textHash": "b07e1dd076d42f3d037caf0429fa2138948ececc",
     "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
     "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
-    "trailing": 0.5,
+    "trailing": 1,
     "speech": 5.575,
     "cps": 6.1,
     "attempts": 1,
     "transcript": "좌석 오른쪽 위에 작은 아이 버튼을 누르면 그 학생의 이번주 출석 현황이 열립니다.",
-    "similarity": 0.97
+    "similarity": 0.97,
+    "fadeOut": 0.5,
+    "processingVersion": 1
   },
   "WeeklyInfo-1": {
     "textHash": "e9e3581b0056310a75b63aa487d3a09da96f085a",
     "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
     "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
-    "trailing": 0.5,
+    "trailing": 1,
     "speech": 4.642,
     "cps": 6.89,
     "attempts": 1,
     "transcript": "요일마다 비고를 적어둘 수 있고 입력 칸을 벗어나면 자동으로 저장됩니다.",
-    "similarity": 1
+    "similarity": 1,
+    "fadeOut": 0.5,
+    "processingVersion": 1
   },
   "WeeklyInfo-2": {
     "textHash": "d43bd6be87fe49e8114fb9599d7ddb2b9b401b23",
     "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
     "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
-    "trailing": 0.5,
+    "trailing": 1,
     "speech": 4.162,
     "cps": 7.21,
     "attempts": 1,
     "transcript": "아래에는 이번 달과 학년도 참여시간 학년안에서의 순위가 나옵니다.",
-    "similarity": 1
+    "similarity": 1,
+    "fadeOut": 0.5,
+    "processingVersion": 1
   },
   "AbsenceTab-0": {
     "textHash": "3eb89e215f8d9ae00fb1fffe60d9e15e23c3cb54",
     "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
     "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
-    "trailing": 0.5,
+    "trailing": 1,
     "speech": 4.548,
     "cps": 5.5,
     "attempts": 1,
     "transcript": "네 번째 불참신청 탭에는 학생들이 낸 불참신청이 모입니다.",
-    "similarity": 1
+    "similarity": 1,
+    "fadeOut": 0.5,
+    "processingVersion": 1
   },
   "AbsenceTab-1": {
     "textHash": "459c448724e975351bb269cd8672459fb0d5f4cc",
     "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
     "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
-    "trailing": 0.5,
+    "trailing": 1,
     "speech": 3.423,
     "cps": 6.14,
     "attempts": 1,
     "transcript": "탭의 빨간 숫자는 승인을 기다리는 신청수입니다.",
-    "similarity": 1
+    "similarity": 1,
+    "fadeOut": 0.5,
+    "processingVersion": 1
   },
   "AbsenceTab-2": {
     "textHash": "636fbc23ea5bf236e1887ee5c7238f61fc78741a",
     "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
     "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
-    "trailing": 0.5,
+    "trailing": 1,
     "speech": 7.314,
     "cps": 5.88,
     "attempts": 1,
     "transcript": "대기중, 승인, 반려 버튼으로 목록을 나눠보고 카드에서 학생과 날짜, 시간, 사유를 확인합니다.",
-    "similarity": 1
+    "similarity": 1,
+    "fadeOut": 0.5,
+    "processingVersion": 1
   },
   "AbsenceTab-3": {
     "textHash": "3bc7e381cde0bc0a31dc358a45ef48072024379e",
     "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
     "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
-    "trailing": 0.5,
+    "trailing": 1,
     "speech": 2.695,
     "cps": 7.05,
     "attempts": 1,
     "transcript": "승인을 누르고 확인하면 신청이 승인됩니다.",
-    "similarity": 1
+    "similarity": 1,
+    "fadeOut": 0.5,
+    "processingVersion": 1
   },
   "AbsenceTab-4": {
     "textHash": "be19b0bd6fd6fae594538749ca3a181350078a04",
     "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
     "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
-    "trailing": 0.5,
+    "trailing": 1,
     "speech": 4.627,
     "cps": 6.05,
     "attempts": 1,
     "transcript": "승인된 학생의 좌석은 출석부에서 노란색 불참 승인으로 바뀝니다.",
-    "similarity": 1
+    "similarity": 1,
+    "fadeOut": 0.5,
+    "processingVersion": 1
   },
   "AbsenceTab-5": {
     "textHash": "a628943c360d9ea9902a1a6a1f474a93bd2b2e83",
     "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
     "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
-    "trailing": 0.5,
+    "trailing": 1,
     "speech": 2.196,
     "cps": 7.28,
     "attempts": 1,
     "transcript": "사유가 맞지 않으면 반려를 누릅니다.",
-    "similarity": 1
+    "similarity": 1,
+    "fadeOut": 0.5,
+    "processingVersion": 1
   },
   "BulkApprove-0": {
     "textHash": "878c048a8e929c395c972ce7754ce106ebf6010f",
     "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
     "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
-    "trailing": 0.5,
+    "trailing": 1,
     "speech": 4.979,
     "cps": 6.23,
     "attempts": 1,
     "transcript": "오늘 2학년의 감독교사로 배정되었다면 일괄승인 버튼을 쓸 수 있습니다.",
-    "similarity": 0.967
+    "similarity": 0.967,
+    "fadeOut": 0.5,
+    "processingVersion": 1
   },
   "BulkApprove-1": {
     "textHash": "fb9b8f2dc52777dbab73a9f6c2ec47f02c0ad344",
     "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
     "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
-    "trailing": 0.5,
+    "trailing": 1,
     "speech": 3.228,
     "cps": 7.43,
     "attempts": 1,
     "transcript": "누르면 오늘 들어온 대기 신청이 표로 정리되어 나옵니다.",
-    "similarity": 1
+    "similarity": 1,
+    "fadeOut": 0.5,
+    "processingVersion": 1
   },
   "BulkApprove-2": {
     "textHash": "349a9cdde065afc1ba641eda543536d6ed7e9cc6",
     "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
     "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
-    "trailing": 0.5,
+    "trailing": 1,
     "speech": 4.328,
     "cps": 6.93,
     "attempts": 1,
     "transcript": "학생과 시간 사유를 확인한 뒤 일괄 승인을 누르면 한 번에 승인됩니다.",
-    "similarity": 1
+    "similarity": 1,
+    "fadeOut": 0.5,
+    "processingVersion": 1
   },
   "SwapEntry-0": {
     "textHash": "2927912139b586596f70e4c719608cc9d8614ad5",
     "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
     "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
-    "trailing": 0.5,
+    "trailing": 1,
     "speech": 4.913,
     "cps": 5.7,
     "attempts": 1,
     "transcript": "감독 날짜를 다른 선생님과 바꿔야 할 때는 감독 일정 화면을 엽니다.",
-    "similarity": 1
+    "similarity": 1,
+    "fadeOut": 0.5,
+    "processingVersion": 1
   },
   "SwapEntry-1": {
     "textHash": "bf3f58701387c650c6bbdf9a60d391882a5751f5",
     "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
     "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
-    "trailing": 0.5,
+    "trailing": 1,
     "speech": 8.873,
     "cps": 5.64,
     "attempts": 1,
     "transcript": "담임이 아닌 선생님은 출석부 위쪽에 감독일정 버튼을 담임선생님은 담임교사 버튼을 누른 뒤 감독일정 탭을 누릅니다.",
-    "similarity": 0.979
+    "similarity": 0.979,
+    "fadeOut": 0.5,
+    "processingVersion": 1
   },
   "SwapEntry-2": {
     "textHash": "ce83d187c2bc6cdac8b333c02d5a0e1403d85244",
     "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
     "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
-    "trailing": 0.5,
+    "trailing": 1,
     "speech": 6.888,
     "cps": 6.24,
     "attempts": 1,
     "transcript": "달력에는 날짜마다 1학년, 2학년, 3학년 감독교사가 표시되고 노란 줄이 내가 배정된 날입니다.",
-    "similarity": 0.923
+    "similarity": 0.923,
+    "fadeOut": 0.5,
+    "processingVersion": 1
   },
   "SwapModal-0": {
     "textHash": "c7a628037b1f9329ed09f2587f52194c5bed974f",
     "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
     "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
-    "trailing": 0.5,
+    "trailing": 1,
     "speech": 3.912,
     "cps": 6.14,
     "attempts": 1,
     "transcript": "오늘 이후 날짜의 줄에는 오른쪽에 교체 버튼이 있습니다.",
-    "similarity": 1
+    "similarity": 1,
+    "fadeOut": 0.5,
+    "processingVersion": 1
   },
   "SwapModal-1": {
     "textHash": "8c50864e5c11e23bd32f738d5c7e8e2df75c5bd9",
     "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
     "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
-    "trailing": 0.5,
+    "trailing": 1,
     "speech": 2.55,
     "cps": 6.27,
     "attempts": 1,
     "transcript": "줄을 누르면 감독 교체 창이 열립니다.",
-    "similarity": 1
+    "similarity": 1,
+    "fadeOut": 0.5,
+    "processingVersion": 1
   },
   "SwapModal-2": {
     "textHash": "a7739114d8d4f04272295623c560fbc77ccc148a",
     "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
     "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
-    "trailing": 0.5,
+    "trailing": 1,
     "speech": 5.671,
     "cps": 6.35,
     "attempts": 1,
     "transcript": "교체대상 교사 칸에 이름을 입력해 선생님을 고르고 필요하면 교체 사유를 적습니다.",
-    "similarity": 1
+    "similarity": 1,
+    "fadeOut": 0.5,
+    "processingVersion": 1
   },
   "SwapModal-3": {
     "textHash": "a723221a016cbf33d3c963e024802df2e57c0bb2",
     "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
     "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
-    "trailing": 0.5,
+    "trailing": 1,
     "speech": 5.832,
     "cps": 5.83,
     "attempts": 1,
     "transcript": "교체를 누르면 그날 오후 1, 오후 2, 야간 감독이 모두 새 선생님으로 바뀝니다.",
-    "similarity": 0.935
+    "similarity": 0.935,
+    "fadeOut": 0.5,
+    "processingVersion": 1
   },
   "SwapModal-4": {
     "textHash": "9663c13c2ad524e1cdeb5dd6cc09cea7a338034e",
     "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
     "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
-    "trailing": 0.5,
+    "trailing": 1,
     "speech": 5.903,
     "cps": 6.1,
     "attempts": 1,
     "transcript": "다른 학년 소속 선생님을 고르면 확인 문구가 나오니 확인 후 교체를 한 번 더 누릅니다.",
-    "similarity": 1
+    "similarity": 1,
+    "fadeOut": 0.5,
+    "processingVersion": 1
   },
   "SwapModal-5": {
     "textHash": "72d432a8d5fa66dd2a01429845df9cec8dfe8b92",
     "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
     "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
-    "trailing": 0.5,
+    "trailing": 1,
     "speech": 5.543,
     "cps": 6.31,
     "attempts": 1,
     "transcript": "교체 기록은 관리자에게 남으니 바꾸기 전에 상대 선생님과 먼저 이야기해 주세요.",
-    "similarity": 1
+    "similarity": 1,
+    "fadeOut": 0.5,
+    "processingVersion": 1
   },
   "SwapTotals-0": {
     "textHash": "699077fa2765828f628255f97dce25dc26738f91",
     "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
     "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
-    "trailing": 0.5,
+    "trailing": 1,
     "speech": 4.443,
     "cps": 6.53,
     "attempts": 1,
     "transcript": "누게 버튼을 누르면 선생님별로 달마다 감독한 횟수를 볼 수 있습니다.",
-    "similarity": 0.964
+    "similarity": 0.964,
+    "fadeOut": 0.5,
+    "processingVersion": 1
   },
   "SwapTotals-1": {
     "textHash": "d7f0631060af4de05719f3d587557eae898e030f",
     "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
     "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
-    "trailing": 0.5,
+    "trailing": 1,
     "speech": 2.74,
     "cps": 6.21,
     "attempts": 1,
     "transcript": "4줄은 맨 위에 노란색으로 표시됩니다.",
-    "similarity": 0.938
+    "similarity": 0.938,
+    "fadeOut": 0.5,
+    "processingVersion": 1
   },
   "HomeroomTour-0": {
     "textHash": "a8088c3b11ffc9d943ec9ef304b1202ecb3c4c2b",
     "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
     "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
-    "trailing": 0.5,
+    "trailing": 1,
     "speech": 1.866,
     "cps": 6.97,
     "attempts": 1,
     "transcript": "이제 담임선생님 메뉴입니다.",
-    "similarity": 1
+    "similarity": 1,
+    "fadeOut": 0.5,
+    "processingVersion": 1
   },
   "HomeroomTour-1": {
     "textHash": "ddd5a673bcf4e8af337db7b317cd667471f995fd",
     "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
     "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
-    "trailing": 0.5,
+    "trailing": 1,
     "speech": 5.213,
     "cps": 5.56,
     "attempts": 1,
     "transcript": "출석부 위쪽에 담임교사 버튼을 누르면 담임교사 페이지가 열립니다.",
-    "similarity": 0.964
+    "similarity": 0.964,
+    "fadeOut": 0.5,
+    "processingVersion": 1
   },
   "HomeroomTour-2": {
     "textHash": "03140c334f0a865b4986c676dc862f2a10d42c5c",
     "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
     "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
-    "trailing": 0.5,
+    "trailing": 1,
     "speech": 8.089,
     "cps": 5.56,
     "attempts": 1,
     "transcript": "탭은 학생관리, 월간출결, 참여설정, 불참사유 등록, 불참신청, 감독일정, 비밀번호 7개입니다.",
-    "similarity": 0.96
+    "similarity": 0.96,
+    "fadeOut": 0.5,
+    "processingVersion": 1
   },
   "HomeroomTour-3": {
     "textHash": "680192eb0e62f2bec88715442507246de58b877a",
     "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
     "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
-    "trailing": 0.5,
+    "trailing": 1,
     "speech": 4.634,
     "cps": 5.83,
     "attempts": 1,
     "transcript": "담임이 아닌 선생님에게는 감독 일정과 비밀번호 템만 보입니다.",
-    "similarity": 0.962
+    "similarity": 0.962,
+    "fadeOut": 0.5,
+    "processingVersion": 1
   },
   "HomeroomWeekly-0": {
     "textHash": "3907b3aecd822743a31ab9742e21395dda5e6404",
     "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
     "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
-    "trailing": 0.5,
+    "trailing": 1,
     "speech": 4.322,
     "cps": 6.48,
     "attempts": 1,
     "transcript": "학생관리 탭에서는 우리 반 학생들의 이번주 출결을 한눈에 봅니다.",
-    "similarity": 1
+    "similarity": 1,
+    "fadeOut": 0.5,
+    "processingVersion": 1
   },
   "HomeroomWeekly-1": {
     "textHash": "f49122c6cae1ff3ab00415bbb0827223d0582108",
     "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
     "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
-    "trailing": 0.5,
+    "trailing": 1,
     "speech": 6.672,
     "cps": 5.7,
     "attempts": 1,
     "transcript": "요일마다 오후 1, 오후 2, 야간 3칸이 있고 화살표로 지난주와 다음주로 이동합니다.",
-    "similarity": 0.912
+    "similarity": 0.912,
+    "fadeOut": 0.5,
+    "processingVersion": 1
   },
   "HomeroomWeekly-2": {
     "textHash": "19b4f7a8d11ffcd2b1c310bd31ea2f6dd45fd9d7",
     "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
     "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
-    "trailing": 0.5,
+    "trailing": 1,
     "speech": 7.896,
     "cps": 5.45,
     "attempts": 1,
     "transcript": "O는 출석, X는 무당결석, 세모는 사유결석, 방은 방과 후, 회색한은 참여하지 않는 시간입니다.",
-    "similarity": 0.88
+    "similarity": 0.88,
+    "fadeOut": 0.5,
+    "processingVersion": 1
   },
   "HomeroomWeekly-3": {
     "textHash": "719c40c1a32b54f2b05fbc11ec964d577d853cb8",
     "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
     "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
-    "trailing": 0.5,
+    "trailing": 1,
     "speech": 5.312,
     "cps": 6.02,
     "attempts": 1,
     "transcript": "세모를 누르면 사유가 보이고 주황별표는 감독선생님이 남긴 비교입니다.",
-    "similarity": 0.967
+    "similarity": 0.967,
+    "fadeOut": 0.5,
+    "processingVersion": 1
   },
   "HomeroomWeekly-4": {
     "textHash": "13ff94b885e390857d9324204f63050225be0497",
     "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
     "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
-    "trailing": 0.5,
+    "trailing": 1,
     "speech": 3.875,
     "cps": 5.68,
     "attempts": 1,
     "transcript": "맨 아래 합계줄에서 출석과 결석 인원을 확인합니다.",
-    "similarity": 1
+    "similarity": 1,
+    "fadeOut": 0.5,
+    "processingVersion": 1
   },
   "HomeroomMonthly-0": {
     "textHash": "9074370bfc3ea0399664884357a462a6058d7d99",
     "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
     "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
-    "trailing": 0.5,
+    "trailing": 1,
     "speech": 3.07,
     "cps": 5.54,
     "attempts": 1,
     "transcript": "월간 출결 탭은 한달 전체 출결표입니다.",
-    "similarity": 1
+    "similarity": 1,
+    "fadeOut": 0.5,
+    "processingVersion": 1
   },
   "HomeroomMonthly-1": {
     "textHash": "9c8258298c8a735b56a6b340860c50c1ddafb709",
     "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
     "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
-    "trailing": 0.5,
+    "trailing": 1,
     "speech": 6.917,
     "cps": 6.22,
     "attempts": 1,
     "transcript": "날짜마다 오후 1, 오후 2, 야간 3칸으로 나뉘고 마지막 시간 10회 학생별 출석시간이 합산됩니다.",
-    "similarity": 0.861
+    "similarity": 0.861,
+    "fadeOut": 0.5,
+    "processingVersion": 1
   },
   "HomeroomMonthly-2": {
     "textHash": "f34f6a01741703b55173bc358a7f10fdc4130398",
     "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
     "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
-    "trailing": 0.5,
+    "trailing": 1,
     "speech": 6.186,
     "cps": 5.82,
     "attempts": 1,
     "transcript": "화살표로 달을 옮기고 엑셀 버튼을 누르면 이달 출결표를 엑셀 파일로 내려봤습니다.",
-    "similarity": 0.971
+    "similarity": 0.971,
+    "fadeOut": 0.5,
+    "processingVersion": 1
   },
   "HomeroomParticipation-0": {
     "textHash": "1bf51f4f35c57a79fb6816016dca88ca29bbb054",
     "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
     "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
-    "trailing": 0.5,
+    "trailing": 1,
     "speech": 4.436,
     "cps": 6.54,
     "attempts": 1,
     "transcript": "참여설정 탭에서는 우리 반학생이 언제 자습에 참여하는지 정합니다.",
-    "similarity": 1
+    "similarity": 1,
+    "fadeOut": 0.5,
+    "processingVersion": 1
   },
   "HomeroomParticipation-1": {
     "textHash": "8d0986824c6b57ab96c7d809e72c79976c328fab",
     "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
     "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
-    "trailing": 0.5,
+    "trailing": 1,
     "speech": 6.242,
     "cps": 6.25,
     "attempts": 1,
     "transcript": "오후 1, 오후 2, 야간마다 참가 체크박스와 월요일부터 금요일까지 요일 버튼이 있습니다.",
-    "similarity": 0.944
+    "similarity": 0.944,
+    "fadeOut": 0.5,
+    "processingVersion": 1
   },
   "HomeroomParticipation-2": {
     "textHash": "f7ae93987e94355b7fad237016c14b3fdd0c7282",
     "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
     "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
-    "trailing": 0.5,
+    "trailing": 1,
     "speech": 3.04,
     "cps": 7.57,
     "attempts": 1,
     "transcript": "참가 체크를 끄면 그 시간에는 아예 참여하지 않습니다.",
-    "similarity": 1
+    "similarity": 1,
+    "fadeOut": 0.5,
+    "processingVersion": 1
   },
   "HomeroomParticipation-3": {
     "textHash": "faebd79dbe4cdc6b3469ae0abf4cb0af8a503f10",
     "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
     "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
-    "trailing": 0.5,
+    "trailing": 1,
     "speech": 4.224,
     "cps": 6.86,
     "attempts": 1,
     "transcript": "요일 버튼은 파란색이 참여하는 날, 회색이 참여하지 않는 날입니다.",
-    "similarity": 1
+    "similarity": 1,
+    "fadeOut": 0.5,
+    "processingVersion": 1
   },
   "HomeroomParticipation-4": {
     "textHash": "240395eb2274c09401c2294207891517f9f63411",
     "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
     "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
-    "trailing": 0.5,
+    "trailing": 1,
     "speech": 6.434,
     "cps": 6.06,
     "attempts": 1,
     "transcript": "요일 버튼 아래 방과 후 체크박스를 켜면 그 요일 출석부의 노란 방과 후 좌석으로 표시됩니다.",
-    "similarity": 0.973
+    "similarity": 0.973,
+    "fadeOut": 0.5,
+    "processingVersion": 1
   },
   "HomeroomParticipation-5": {
     "textHash": "decdb450f006101fdb9d6b4e901cc5c74c46d041",
     "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
     "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
-    "trailing": 0.5,
+    "trailing": 1,
     "speech": 5.096,
     "cps": 6.48,
     "attempts": 1,
     "transcript": "누르는 즉시 저장되고 참여하지 않는 학생은 출석부에서 회색으로 보입니다.",
-    "similarity": 1
+    "similarity": 1,
+    "fadeOut": 0.5,
+    "processingVersion": 1
   },
   "AbsenceReason-0": {
     "textHash": "6b05d84a5392ebcc7a147bff95bdda5c9d6a4ebf",
     "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
     "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
-    "trailing": 0.5,
+    "trailing": 1,
     "speech": 5.598,
     "cps": 5.72,
     "attempts": 1,
     "transcript": "불참사유등록 탭에서는 담임선생님이 학생의 결석사유를 직접 등록합니다.",
-    "similarity": 1
+    "similarity": 1,
+    "fadeOut": 0.5,
+    "processingVersion": 1
   },
   "AbsenceReason-1": {
     "textHash": "8234c6848e581a58e6e9434b6c00fde13dff8be8",
     "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
     "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
-    "trailing": 0.5,
+    "trailing": 1,
     "speech": 5.804,
     "cps": 5.51,
     "attempts": 1,
     "transcript": "학생과 날짜를 고르고 오후 1, 오후 2, 야간 중 자습 시간을 선택합니다.",
-    "similarity": 0.929
+    "similarity": 0.929,
+    "fadeOut": 0.5,
+    "processingVersion": 1
   },
   "AbsenceReason-2": {
     "textHash": "647ba182c513029dde9438659a447f4e675140fe",
     "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
     "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
-    "trailing": 0.5,
+    "trailing": 1,
     "speech": 8.275,
     "cps": 5.8,
     "attempts": 1,
     "transcript": "사유 유형을 하곤 방과 후 질병 기타 중에서 고르고 필요하면 상세 사유를 적은 뒤 불참 사유 등록을 누릅니다.",
-    "similarity": 0.953
+    "similarity": 0.953,
+    "fadeOut": 0.5,
+    "processingVersion": 1
   },
   "AbsenceReason-3": {
     "textHash": "fc8067e9bbb9f1a8a73a27327caca8c4d982db92",
     "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
     "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
-    "trailing": 0.5,
+    "trailing": 1,
     "speech": 6.337,
     "cps": 6.15,
     "attempts": 1,
     "transcript": "등록한 결석은 출결표의 세모 사유 결석으로 표시되고 출석부 좌석에는 결석으로 보입니다.",
-    "similarity": 0.973
+    "similarity": 0.973,
+    "fadeOut": 0.5,
+    "processingVersion": 1
   },
   "HomeroomRequests-0": {
     "textHash": "4c30d0cfc5477a03a8f8fd1d71942119280c874d",
     "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
     "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
-    "trailing": 0.5,
+    "trailing": 1,
     "speech": 4.403,
     "cps": 5.91,
     "attempts": 1,
     "transcript": "불참신청 탭에는 우리 반 학생들이 낸 신청이 표로 정리됩니다.",
-    "similarity": 1
+    "similarity": 1,
+    "fadeOut": 0.5,
+    "processingVersion": 1
   },
   "HomeroomRequests-1": {
     "textHash": "32bb5f89eaa72144d27a31a35b1c647ebf2decc1",
     "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
     "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
-    "trailing": 0.5,
+    "trailing": 1,
     "speech": 4.115,
     "cps": 6.81,
     "attempts": 1,
     "transcript": "상태별로 나눠보고 대기 중인 신청은 승인 또는 반려를 누릅니다.",
-    "similarity": 1
+    "similarity": 1,
+    "fadeOut": 0.5,
+    "processingVersion": 1
   },
   "HomeroomRequests-2": {
     "textHash": "529693cbc96bb58c8ea6bf7e24f80af3d75c5f3e",
     "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
     "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
-    "trailing": 0.5,
+    "trailing": 1,
     "speech": 6.654,
     "cps": 6.46,
     "attempts": 1,
     "transcript": "감독 선생님도 출석부에서 승인할 수 있으니 이미 처리된 신청에는 처리한 선생님 이름이 표시됩니다.",
-    "similarity": 1
+    "similarity": 1,
+    "fadeOut": 0.5,
+    "processingVersion": 1
   },
   "Password-0": {
     "textHash": "73a2888b758b7ac0e81c3e7dad795d90393801d7",
     "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
     "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
-    "trailing": 0.5,
+    "trailing": 1,
     "speech": 1.851,
     "cps": 7.56,
     "attempts": 1,
     "transcript": "마지막으로 비밀번호 탭입니다.",
-    "similarity": 1
+    "similarity": 1,
+    "fadeOut": 0.5,
+    "processingVersion": 1
   },
   "Password-1": {
     "textHash": "8efb40ad635eed5f856d8863ba55a0a50a553014",
     "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
     "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
-    "trailing": 0.5,
+    "trailing": 1,
     "speech": 7.605,
     "cps": 5.65,
     "attempts": 1,
     "transcript": "현재 비밀번호와 새 비밀번호를 입력하고 새 비밀번호를 한번 더 입력한 뒤 비밀번호 변경을 누릅니다.",
-    "similarity": 1
+    "similarity": 1,
+    "fadeOut": 0.5,
+    "processingVersion": 1
   },
   "Password-2": {
     "textHash": "22090bd095eaea58f4c21ba7adada623bd16bdb0",
     "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
     "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
-    "trailing": 0.5,
+    "trailing": 1,
     "speech": 6.233,
     "cps": 5.62,
     "attempts": 1,
     "transcript": "새 비밀번호는 4자 이상이어야 합니다. 초기 비밀번호 1111은 꼭 바꿔주세요.",
-    "similarity": 0.848
+    "similarity": 0.848,
+    "fadeOut": 0.5,
+    "processingVersion": 1
   },
   "Outro-0": {
     "textHash": "8932a0a477b6041a481cc36408f47ad2a4f662c3",
     "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
     "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
-    "trailing": 0.5,
+    "trailing": 1,
     "speech": 2.886,
     "cps": 7.62,
     "attempts": 1,
     "transcript": "지금까지 교사 화면의 주요 기능을 살펴보았습니다.",
-    "similarity": 1
+    "similarity": 1,
+    "fadeOut": 0.5,
+    "processingVersion": 1
   },
   "Outro-1": {
     "textHash": "289202fa45b4cc817a811cd20bf7e4db18dc24c6",
     "refHash": "9e38b8a741256b971cf54310379810c631d451f5",
     "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
-    "trailing": 0.5,
+    "trailing": 1,
     "speech": 4.731,
     "cps": 6.55,
     "attempts": 1,
     "transcript": "궁금한 점은 화면의 물음표 버튼이나 도움말에서 언제든 다시 확인하세요.",
-    "similarity": 1
+    "similarity": 1,
+    "fadeOut": 0.5,
+    "processingVersion": 1
   }
 }

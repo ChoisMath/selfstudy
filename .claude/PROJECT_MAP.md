@@ -1,6 +1,6 @@
 # 자율학습 출석부 시스템 - 프로젝트 지도
 
-> 마지막 업데이트: 2026-09-18
+> 마지막 업데이트: 2026-09-19
 > 이 파일은 새 세션에서 코드베이스를 빠르게 파악하기 위한 참조 문서입니다.
 
 ## 개요
@@ -9,6 +9,14 @@
 - **기술 스택**: Next.js 16 (App Router) + Prisma 7 + NextAuth v5 + Tailwind CSS 4 + SWR + @dnd-kit
 - **DB**: PostgreSQL (Railway)
 - **배포**: https://self.posan.kr (Railway custom domain, 구주소 https://posan.up.railway.app 도 당분간 병행)
+
+## Claude Code · Codex 공통 기록
+
+- 진입 지침은 루트 `AGENTS.md`이며, Claude Code는 `CLAUDE.md`의 `@AGENTS.md`로 함께 읽는다. 기존 Claude 기술 스택·안내 영상 지침은 유지한다.
+- 지도·현재 인계·작업일지는 `.claude/{PROJECT_MAP,HANDOFF,WORK_LOG}.md`가 공통 원본이며, `.codex/`의 같은 이름은 상대 심볼릭 링크다. 세션 전환 시 최신 인계·작업일지를 다시 읽고 종료 시 원본에 결과를 남긴다.
+- `.claude/memory/`는 기존 Claude 자동 메모리 디렉터리에 연결되고, `.codex/memory/`는 이를 상대 링크로 참조한다. 메모리·세션 원문은 이동하거나 복제하지 않는다.
+- `.claude/memory`, `.codex/claude-history`, `.codex/rules`는 이 Mac의 외부 경로를 가리켜 Git에서 제외한다. 사용법·실제 연결 대상·복구 절차는 `.codex/README.md`에 있다.
+- 공유 대상은 기록 파일이다. 도구별 대화창·resume 목록은 별개이며, 과거 세션 원문은 필요한 것만 읽는다. 링크 대신 실제 원본을 편집하고 같은 파일을 동시에 갱신하지 않는다.
 
 ## 사용자 역할 (5종)
 
@@ -71,10 +79,10 @@ src/
 │   │   ├── layout.tsx          # **신규.** 파란 헤더(로고+제목) + `max-w-5xl` 본문 컨테이너 — `/help`와 `/help/<page>` 공용 셸
 │   │   ├── page.tsx            # 도움말 허브 (헤더를 layout으로 옮겨 본문 카드만 남음) + content.mdx(역할별 절 끝에 `/help/<page>` 링크 5개: student·attendance·homeroom·grade-admin·seats)
 │   │   ├── attendance/         # **신규.** `/help/attendance` — page.tsx(서버, metadata) + content.mdx(출석 체크/불참신청/감독 교체 3장, 스틸 14장)
-│   │   ├── homeroom/           # **신규.** `/help/homeroom` — page.tsx + content.mdx(출결 확인/참여와 사유/신청과 계정 3장, 스틸 7장)
+│   │   ├── homeroom/           # **신규.** `/help/homeroom` — page.tsx + content.mdx(출결 확인/참여와 사유/신청과 계정 3장, 스틸 7장, 교사 영상의 담임 구간 `videoKey="teacher" start={313}`)
 │   │   ├── student/            # **신규.** `/help/student` — page.tsx + content.mdx(확인/신청/도우미 3장, 폰 스틸 8장, `GuideVideo videoKey="student"`)
 │   │   ├── grade-admin/        # **신규.** `/help/grade-admin` — page.tsx + content.mdx(현황/명단/운영 3장, PC 스틸 9장, `videoKey="gradeAdmin"`)
-│   │   └── seats/              # **신규.** `/help/seats` — page.tsx + content.mdx(구조와 배정/출력 2장, PC 스틸 5장, 학년관리자 영상의 좌석 구간 `videoKey="gradeAdmin" start={189}`)
+│   │   └── seats/              # **신규.** `/help/seats` — page.tsx + content.mdx(구조와 배정/출력 2장, PC 스틸 5장, 학년관리자 영상의 좌석 구간 `videoKey="gradeAdmin" start={206}`)
 │   └── api/                    # API 라우트 (아래 별도 섹션)
 │
 ├── components/
@@ -95,7 +103,7 @@ src/
 │   │   ├── GuideNotice.tsx     # 정리 박스 (`tone: blue|yellow|green`, `items: [강조, 본문][]`)
 │   │   ├── GuideVideo.tsx      # YouTube nocookie iframe (`videoKey`, `start?`(초), `caption`). id가 빈 문자열이면 아무것도 렌더하지 않음
 │   │   ├── GuideHelpButton.tsx # 화면 헤더의 `?` 버튼 — `/help/<page>`를 **새 탭**으로(`target="_blank" rel="noopener"`, `aria-label="사용 가이드"`, 44×44)
-│   │   └── videos.ts           # `GUIDE_VIDEOS`(teacher/student/gradeAdmin) — YouTube id는 아직 모두 빈 문자열(업로드 전)
+│   │   └── videos.ts           # `GUIDE_VIDEOS` YouTube id: teacher=`a2BRtp_1Yqo`, student=`554VD2s8G1E`, gradeAdmin=`VOlUOgOuNwE` (2026-09-19 음성 끝 처리 수정 영상으로 교체)
 │   ├── grade-admin/
 │   │   ├── TodayAttendanceDashboard.tsx  # 오늘출결 대시보드 (grade prop, SESSION_TYPES 3카드)
 │   │   └── GradeMonthlyAttendance.tsx    # 월간출결 테이블 (grade prop, 짝수반 배경 구분, 날짜당 3셀 + "시간" 컬럼)
@@ -159,7 +167,7 @@ public/
     └── seats/          # **신규.** 브라우저 스틸 5장 1280×657 (01-editor ~ 05-print, 출처는 `GradeAdmin-Seat*`·`GradeAdmin-ClassroomConfig` 장면)
 
 demo-video/             # **신규.** 안내 영상·가이드 페이지 이미지용 별도 Node 프로젝트 (Remotion 4.0.518, 자체 package.json/tsconfig/eslint). 루트 tsc·eslint·Tailwind 스캔에서 제외, Railway 빌드와 무관
-├── README.md           # 설치·명령·음성(Qwen3-TTS 클론) 규칙 — 영상 도구 사용법의 기준
+├── README.md           # 설치·명령·음성(Qwen3-TTS 클론) 규칙·기존 raw 음성 재처리(`--reprocess`) — 영상 도구 사용법의 기준
 ├── src/
 │   ├── Root.tsx        # 컴포지션 등록: 본편 `SetupCheck`·`TeacherGuide`·`StudentGuide`·`GradeAdminGuide` + `Folder` 안 장면별 `SetupCheck-*`/`Teacher-<SceneId>`/`Student-<SceneId>`/`GradeAdmin-<SceneId>` + `Folder "Mocks"` 의 `Mock-<id>`(MOCK_GALLERY, 목업 단독 확인용). 장면 컴포지션도 `GuideContext` 로 감쌈
 │   ├── guide/          # 공용: timing.ts `createTiming`(sceneFrames/lineStart/`lineAt`/captionsFor, LEAD/TAIL 15프레임), `GuideScene`(배경·STEP 배지·장면 mp3·자막), `GuideContext`(GuideConfig), GuideVideo.tsx `createGuideVideo`(장면 사이 페이드), `GuideCaption`
@@ -172,12 +180,12 @@ demo-video/             # **신규.** 안내 영상·가이드 페이지 이미�
 │   ├── stills/<page>.ts # 가이드 페이지 스틸 목록 `{composition, file, frame, crop?, resize?}` + `DEFAULT_CROP`(theme `BROWSER`). setup-check.ts / **신규** attendance.ts(폰 14장 `crop: PHONE_CROP, resize: 640`)·homeroom.ts(브라우저 7장 기본 크롭)·student.ts(폰 8장, `../student/timing`의 `lineAt`)·grade-admin.ts(브라우저 9장)·seats.ts(브라우저 5장 — 둘 다 `../grade-admin/timing`). `frame`은 매직 넘버 대신 `lineAt(scene, line, ratio)`
 │   └── anim.ts·theme.ts·fonts.ts·props.ts·scenes.ts·index.ts·index.css
 ├── scripts/
-│   ├── narrate.mjs     # `--guide <key>` 원고 → Chois 클론 음성 mp3(로컬 mlx-audio 0.5.3 + Qwen3-TTS 0.6B, `tts_mlx.py`) + narration-durations.json + Whisper 검수(`stt_check.py`) → review.tsv. `GUIDES` 에 가이드 등록(setup-check·teacher·student·grade-admin). `--only`/`--estimate`/`--measure`/`--no-check`
+│   ├── narrate.mjs     # `--guide <key>` 원고 → Chois 클론 음성 mp3(로컬 mlx-audio 0.5.3 + Qwen3-TTS 0.6B, `tts_mlx.py`) + narration-durations.json + Whisper 검수(`stt_check.py`) → review.tsv. `GUIDES`: setup-check·teacher·student·grade-admin. `--reprocess`는 raw WAV·manifest·원고 전체 사전 확인 후 TTS/Voicebox/STT 호출 없이 문장·장면 MP3와 길이 JSON·review 갱신(기존 전사 보존). 기존 `--only`/`--estimate`/`--measure`/`--no-check` 지원
 │   ├── guide-stills.mjs # `--page <page>` 장면 프레임 → cwebp 1280px WebP, 기본 출력 `../public/guide/<page>/`
 │   ├── gen-tw-palette.mjs # **신규.** 루트 `node_modules/tailwindcss/theme.css` → `src/app-mocks/tw.ts` 재생성. 목업 색이 앱과 같은 oklch 값을 쓰게 함 (tw.ts 직접 수정 금지)
 │   ├── frame-at.mjs    # **신규.** `node scripts/frame-at.mjs <guide> <SceneId> <line> <ratio>` → `lineAt` 프레임 번호·장면 길이 출력 (스틸 프레임 고를 때)
 │   ├── doctor.mjs      # 환경 점검 (`npm run doctor`: ffmpeg/ffprobe/cwebp·모델 캐시·Voicebox 프로필·Whisper 토크나이저)
-│   ├── lib/narration-core.mjs (+ .test.mjs) # 순수 로직(캐시 키·발화속도 검사·SPOKEN 치환 등)
+│   ├── lib/narration-core.mjs (+ .test.mjs) # 순수 로직(캐시 키·발화속도 검사·SPOKEN 치환·재처리 사전 검증·qsin 페이드). 캐시 조건에 fadeOut·processingVersion 포함
 │   └── tests/          # tts_mlx/stt_check unittest (`npm test`)
 ├── public/narration/<guide>/ # 장면 mp3 + review.tsv + .lines/(문장 mp3·manifest.json 캐시 — 추적). teacher·student·grade-admin 3편 생성 완료
 ├── requirements-tts.txt / requirements-tts.lock.txt # .venv-tts(python3.12) 재현용
@@ -187,13 +195,28 @@ demo-video/             # **신규.** 안내 영상·가이드 페이지 이미�
                         # 컴포지션 `StudentGuide`, 학년관리자 편 `GradeAdminGuide`). `out/`은 git 제외 —
                         # mp4 는 저장소·Railway 에 두지 않고 YouTube(일부 공개)로 올려 `videos.ts` 에 id 만 등록
 
+AGENTS.md              # Codex·Claude Code 공통 작업 지침
+CLAUDE.md              # 기존 Claude 프로젝트 지침 + @AGENTS.md import
+
 .claude/
-├── PROJECT_MAP.md
+├── PROJECT_MAP.md      # 공통 프로젝트 지도 원본
+├── HANDOFF.md          # 현재 상태·남은 작업·검증 범위 원본
+├── WORK_LOG.md         # 날짜·도구별 공통 작업일지 원본 (최신 항목 먼저)
+├── memory/            # 기존 Claude 자동 메모리 원본으로 향한 로컬 링크 (Git 제외)
 ├── GUIDE_PAGES.md      # 안내 페이지·안내 영상 기준 문서 — 원고→음성→장면→스틸→페이지→영상 순서, 라우트 `/help/<page>` + `src/components/guide/*` 빌딩 블록, 폰 프레임 경로(3절), 색 출처 규칙(6절 — 앱 화면 목업은 `app-mocks/tw.ts`, 영상 장치는 `theme.ts`), 이미지 규격, 진행 현황 표(7절: setup-check·attendance·homeroom·student·grade-admin·seats)
 └── skills/
     ├── guide-page/SKILL.md   # **신규.** `/guide-page <page>` — GUIDE_PAGES.md 절차 실행
     ├── remotion-*/           # **신규.** remotion-dev/skills 12종(best-practices·captions·create·docs·interactivity·maps·markup·multimedia·render·saas·studio·upgrade, 루트 `skills-lock.json` 에 해시 기록)
     └── remotion-motion-graphics/ # **신규.** haidrrrry/claude-remotion-skill @1dcbe5e (MIT, 폴더에 LICENSE). skills-lock.json 밖 — 갱신은 폴더 재복사
+
+.codex/                # 소문자 경로 사용 — 별도 기록 사본 없음
+├── README.md          # 연결 방식·원본 경로·로컬 링크 복구 안내
+├── PROJECT_MAP.md     # → ../.claude/PROJECT_MAP.md
+├── HANDOFF.md         # → ../.claude/HANDOFF.md
+├── WORK_LOG.md        # → ../.claude/WORK_LOG.md
+├── memory/            # → ../.claude/memory
+├── claude-history/    # 기존 Claude 세션 저장 디렉터리 참고용 링크 (Git 제외, 원문 수정 금지)
+└── rules/             # ~/.claude/rules/ 공통 규칙 링크 (Git 제외)
 ```
 
 ## API 라우트 요약
@@ -422,9 +445,26 @@ SupervisorReminderLog: teacherId, grade, date(@db.Date), sentAt — @@unique([te
 - **출석 화면 전체 오버레이는 `z-[150]`**: `/attendance/[grade]`의 상단 날짜·탭 바가 sticky `z-[100]`이라 `z-50` 모달은 바 아래에 깔려 배경이 안 덮이고 바가 눌렸다. 주간 팝업·다른학년 모달은 `z-[150]`이며 `tests/attendance-page-wiring.test.ts`가 `fixed inset-0 … z-50` 재등장을 차단
 - **`demo-video/`는 루트 tsc/eslint/Tailwind에서 반드시 제외 유지**: 루트 `tsconfig.json` `exclude: ["node_modules", "demo-video"]`(include가 `**/*.ts`라 `demo-video/node_modules`까지 잡힘 — 제외 전 루트 tsc가 약 660개 파일을 읽음), `eslint.config.mjs` `globalIgnores`에 `"demo-video/**"`·`".claude/**"`(flat config는 dot 폴더를 기본 무시하지 않아 `.claude/skills`의 서드파티 예제 .ts/.tsx가 `npm run lint`를 92개 오류로 깨뜨림), `src/app/globals.css`에 `@source not "../../demo-video";`·`@source not "../../.claude";`. 새 도구 폴더를 루트에 추가할 때도 같은 3곳을 확인
 - **`HF_HUB_CACHE`는 Whisper STT 캐시 전용**: `narrate.mjs`가 TTS 워커(`tts_mlx.py`) 환경에서는 이 변수를 지우고 STT 워커에만 넘김 — TTS 모델은 `~/.cache/huggingface/hub`(Voicebox 앱이 받아 둔 캐시, `HF_HUB_OFFLINE=1`)를 써야 하므로 셸에서 `export` 하지 말 것
-- **내레이션 무음 트림은 앞 -40dB / 뒤 -45dB**(`narrate.mjs` ffmpeg `silenceremove`, 끝에 0.5초 무음 추가) — 앞은 Qwen3-TTS가 첫 음절 앞에 내는 -44~-50dB 잡음 때문에 -40dB, 뒤는 약하게 끝나는 음절 보존용 -45dB. 트림 설정은 캐시 키에 없으므로 바꾸면 `--only`로 문장을 다시 생성
+- **내레이션 무음 트림은 앞 -40dB / 뒤 -45dB**(`narrate.mjs` ffmpeg `silenceremove`) — 앞머리 잡음을 제거하고 약한 끝 음절을 보존한다. 교사·학생·학년관리자 편은 마지막 0.5초 `qsin` 페이드 후 1초 무음(`narration.ts` 상수), 문장 간격 0.2초 유지(문장 사이 약 1.2초). 후처리만 바꾸면 `node scripts/narrate.mjs --guide <guide> --reprocess`로 원본 raw WAV에서 재처리한다(페이드 중첩·재합성 없음). 일반 생성은 fadeOut·trailing·processingVersion 캐시 조건 변경 시 재합성할 수 있으며, `--measure`는 오디오를 바꾸지 않는다
 
 ## 수정 이력 (주요 변경)
+
+### 2026-09-19: 도움말의 안내 영상 3편 연결 교체
+- `src/components/guide/videos.ts`의 YouTube ID를 교사 `a2BRtp_1Yqo`·학생 `554VD2s8G1E`·학년관리자 `VOlUOgOuNwE`로 교체했다. 새 렌더 타임라인에 맞춰 담임교사 도움말 영상 시작은 313초, 좌석 도움말은 206초로 조정했다.
+- `.claude/GUIDE_PAGES.md` 진행 현황과 이 지도의 현행 구조 설명을 갱신했다. 앱 배포는 실행하지 않았다.
+
+### 2026-09-19: 안내 영상 3편 음성 끝 페이드·후행 무음 조정
+- `demo-video/src/{teacher,student,grade-admin}/narration.ts`의 음성 처리 상수만 변경: 마지막 0.5초 `qsin` 페이드 + 후행 무음 1초, 기존 문장 간격 0.2초 유지. 교사 82·학생 44·학년관리자 65문장을 기존 raw WAV에서 재합성 없이 재처리했다.
+- `scripts/narrate.mjs`에 `--reprocess`를 추가하고 `scripts/lib/narration-core.mjs`에 전체 사전 확인·페이드 필터·fadeOut/processingVersion 캐시 조건을 반영했다. 문장/장면 MP3·manifest·길이 JSON·review를 갱신하고 `demo-video/README.md`에 실행 방법을 기록했다.
+- `demo-video`의 `npm test`: JavaScript 19개·Python 7개 통과. 원본 raw 191개 해시·원고·SPOKEN·전사를 보존했고, 문장 191개·장면 50개 수치 검증은 실패 0건이다.
+- 최종 MP4 3편 렌더 완료(exit 0) 후 전체 디코딩·프레임 수·1920×1080/30fps·대표 화면·실제 음성 여백을 확인하고 `demo-video/out/{teacher,student,grade-admin}-guide.mp4`를 교체했다(각 510.165초·267.669초·413.632초). 검증 근거: `demo-video/out/audio-tail-qa/final-videos.json`, 원본 백업: `demo-video/out/before-audio-tail-20260919-180746/`.
+- 원고·화면·앱·배포 변경 없음. `.claude/GUIDE_PAGES.md`와 웹사이트 YouTube ID·좌석 영상 `start`는 기존 업로드 기준을 유지한다.
+
+### 2026-09-19: Claude Code · Codex 기록 연결
+- 루트 `AGENTS.md`에 공통 세션 시작·종료 규칙을 추가하고 기존 `CLAUDE.md`에서 import한다. `.claude/PROJECT_MAP.md`를 원본으로 유지하며 `.codex/PROJECT_MAP.md`는 상대 링크로 연결한다.
+- `.claude/HANDOFF.md`·`.claude/WORK_LOG.md`를 공통 인계·작업일지로 추가하고 `.codex/`에 상대 링크를 둔다. 기존 자동 메모리는 `.claude/memory`와 `.codex/memory`에서 같은 원본을 참조한다.
+- `.codex/README.md`에 사용·복구 방법을 기록하고 외부 메모리·세션·규칙의 로컬 링크 3개는 `.gitignore`에서 제외한다. 원본 메모리·세션 기록은 보존하며, 양쪽 대화 UI 대신 파일로 작업 맥락을 공유한다.
+- 앱 코드·DB 스키마·배포 설정 변경 없음. 연결 검증 결과와 후속 상태는 공통 인계·작업일지에 기록한다.
 
 ### 2026-09-18: 학생·학년관리자·좌석 안내 페이지 + 학생/학년관리자 편 안내 영상 장면
 - **계획 문서**: `docs/superpowers/plans/2026-09-18-role-guide-videos-plan3-student.md`, `…-plan4-grade-admin.md`
@@ -744,3 +784,6 @@ SupervisorReminderLog: teacherId, grade, date(@db.Date), sentAt — @@unique([te
 - 미래아띠존: 4열×2행 (8석)
 - 미래201: 3열×2행 (6석)
 - 미래예술실1: 5열×10행 (50석)
+
+---
+마지막 업데이트: 2026-09-19
