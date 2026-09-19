@@ -2,13 +2,15 @@
 
 최신 항목을 위에 추가한다. 날짜·도구·변경 이유·파일·실제로 실행한 검증·남은 작업을 기록한다. 기존 상세 이력은 `.claude/PROJECT_MAP.md`, `docs/superpowers/`, `.plans/`, Git 및 Claude 세션 원문에 그대로 남아 있다.
 
-## 2026-09-19 — Codex — 승인된 세션 변경 푸시·배포 (진행 중)
+## 2026-09-19 — Codex — 승인된 세션 변경 푸시·배포 완료
 
-- 승인: 사용자가 이번 세션 전체 변경의 푸시·배포를 승인함. 아래 기록 연결·영상 후처리·YouTube 링크 교체 변경을 함께 커밋·푸시할 예정.
+- 승인: 사용자가 이번 세션 전체 변경의 푸시·배포를 승인함. 아래 기록 연결·영상 후처리·YouTube 링크 교체 변경을 함께 커밋·푸시함.
 - 사전 검증: 루트 앱 `npm run build` 통과(Prisma generate·Next.js 16 컴파일·TypeScript·정적 페이지 67개). 기존 middleware deprecation 경고만 확인. `git diff --check` 통과.
 - 원격 확인: fetch 후 로컬 `HEAD`와 `origin/main`이 `c47c076`으로 일치함을 확인. 이는 새 커밋·푸시 전 상태임.
-- 현재 상태: 커밋·푸시·배포 진행 중. 아직 푸시·배포 성공은 확인하지 않았으며 실제 결과로 최종 기록을 보완할 예정.
-- 남은 작업: 세션 변경 커밋·푸시, 배포 상태와 운영 반영 확인.
+- 푸시: 변경 커밋 `468fe25c4a522b628e66c0a5e9226a5bb72c6ea1`을 `origin/main`에 푸시 성공.
+- 배포: Railway `production`의 `selfstudy` 배포 `26ee3631-3384-4b0c-acd6-45ec6fd5349a`가 `SUCCESS`이며 `commitHash`가 위 변경 커밋과 일치함을 확인.
+- 운영 확인: `https://self.posan.kr/help/{student,attendance,homeroom,grade-admin,seats}` 5곳 모두 TLS 검증을 적용한 curl 요청에서 리다이렉트 없이 HTTP 200. 실제 응답 iframe이 순서대로 `554VD2s8G1E`, `a2BRtp_1Yqo`, `a2BRtp_1Yqo?start=313`, `VOlUOgOuNwE`, `VOlUOgOuNwE?start=206`과 일치. YouTube 동영상 자체 재생 검증은 미실행.
+- 남은 작업: 승인된 앱 푸시·배포·운영 반영 확인 완료. 추가 요청 작업 없음.
 
 ## 2026-09-19 — Codex — 사용 가이드 YouTube 연결 교체 완료
 
