@@ -86,14 +86,14 @@ export function NotificationBell() {
         disabled={busy}
         aria-label={label}
         title={label}
-        className="inline-flex min-h-11 min-w-11 items-center justify-center gap-1 rounded-md px-2 text-sm whitespace-nowrap disabled:opacity-50"
+        className="inline-flex min-h-11 min-w-11 cursor-pointer items-center justify-center gap-1 rounded-full px-2 text-sm whitespace-nowrap text-ink-muted transition-colors hover:bg-butter hover:text-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-50"
       >
         <span aria-hidden>{state === "subscribed" ? "🔔" : "🔕"}</span>
         <span className="hidden sm:inline whitespace-nowrap">{label}</span>
       </button>
 
       {showGuide && (
-        <div className="absolute right-0 z-[120] mt-1 w-64 max-w-[calc(100vw-1rem)] rounded-md border border-gray-200 bg-white p-3 text-sm shadow-lg">
+        <div className="absolute right-0 z-[120] mt-1 w-64 max-w-[calc(100vw-1rem)] rounded-2xl border border-line bg-white p-3 text-sm shadow-lg">
           {state === "ios-install" ? (
             <p className="leading-relaxed">
               iPhone에서는 Safari 하단 <b>공유</b> 버튼 → <b>홈 화면에 추가</b>로

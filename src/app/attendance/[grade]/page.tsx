@@ -6,6 +6,7 @@ import useSWR from "swr";
 import { useSession } from "next-auth/react";
 import AttendanceDatePicker from "@/components/attendance/AttendanceDatePicker";
 import { getKstTodayString, formatDateLabel } from "@/lib/calendar";
+import { formatMonthDay, formatWeekOfMonth } from "@/lib/format-date";
 import MiraeHallLayout, { GAP_CONFIG } from "@/components/seats/MiraeHallLayout";
 import ClassroomFrame from "@/components/seats/ClassroomFrame";
 import { buildPrintGroups, type ClassroomMeta } from "@/lib/seats/print-groups";
@@ -100,11 +101,13 @@ interface SeatCellProps {
   onPointerDown: (studentId: number, isParticipating: boolean) => void;
   onPointerUp: () => void;
   onInfoClick: (e: React.MouseEvent, studentId: number, name: string) => void;
+  /** 길게 누르기의 키보드 대안(Shift+Enter): 비참여 학생 활성화/해제 */
+  onActivateToggle: (studentId: number) => void;
 }
 
 const SeatCell = memo(function SeatCell({
   student, status, isSelected, isInactive, grade,
-  attendanceStatus, onSeatClick, onPointerDown, onPointerUp, onInfoClick,
+  attendanceStatus, onSeatClick, onPointerDown, onPointerUp, onInfoClick, onActivateToggle,
 }: SeatCellProps) {
   let seatClass = "";
   if (isInactive) {
@@ -126,44 +129,67 @@ const SeatCell = memo(function SeatCell({
     seatClass = "bg-[#dbeafe] text-[#1e293b] border-transparent";
   }
 
+  const aStatus = attendanceStatus?.status || "unchecked";
+  const statusLabel = isInactive
+    ? "비참여"
+    : student.isAfterSchool
+      ? `방과후 ${aStatus === "present" ? "출석" : aStatus === "absent" ? "결석" : "미체크"}`
+      : student.isApprovedAbsence
+        ? "불참승인"
+        : status === "present" ? "출석" : status === "absent" ? "결석" : "미체크";
+
   return (
     <div
-      className={`relative rounded-[clamp(3px,0.8vw,5px)] py-[clamp(4px,1vw,8px)] px-[clamp(1px,0.3vw,4px)] text-center cursor-pointer border-2 transition-all active:scale-95 min-w-0 select-none ${seatClass}`}
-      onClick={() => onSeatClick(student.id, student.isParticipating)}
-      onPointerDown={() => onPointerDown(student.id, student.isParticipating)}
-      onPointerUp={onPointerUp}
-      onPointerLeave={onPointerUp}
-      onContextMenu={(e) => e.preventDefault()}
+      className={`relative rounded-[clamp(3px,0.8vw,5px)] border-2 min-w-0 min-h-11 select-none transition-[background-color,border-color,box-shadow] ${seatClass}`}
     >
+      {/* 좌석 본체 = 진짜 버튼(키보드·스크린리더 접근, 44px 이상). 정보 버튼은 형제 요소라 중첩 버튼이 아니다 */}
       <button
+        type="button"
+        aria-label={`${student.name} ${grade}-${student.classNumber} ${statusLabel}${student.hasPendingAbsenceRequest ? " 불참신청 대기" : ""}`}
+        className="w-full h-full min-h-11 py-[clamp(4px,1vw,8px)] px-[clamp(1px,0.3vw,4px)] text-center cursor-pointer touch-manipulation rounded-[inherit] transition-transform active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
+        onClick={() => onSeatClick(student.id, student.isParticipating)}
+        onPointerDown={() => onPointerDown(student.id, student.isParticipating)}
+        onPointerUp={onPointerUp}
+        onPointerLeave={onPointerUp}
+        onContextMenu={(e) => e.preventDefault()}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" && e.shiftKey) {
+            e.preventDefault();
+            onActivateToggle(student.id);
+          }
+        }}
+      >
+        <div className="font-bold text-[clamp(9px,2.2vw,12px)] whitespace-nowrap overflow-hidden text-ellipsis pr-[clamp(10px,2.5vw,14px)]">
+          {student.hasPendingAbsenceRequest && (
+            <span className="text-[#ef4444] font-black" aria-hidden="true">*</span>
+          )}
+          {student.name}
+        </div>
+        <div className={`text-[clamp(8px,2vw,10px)] mt-0.5 tabular-nums ${isSelected ? "text-[#bfdbfe]" : "text-[#6b7280]"}`}>
+          {grade}-{student.classNumber}
+        </div>
+        {student.isApprovedAbsence && !isSelected && (
+          <div className="text-[clamp(7px,1.8vw,9px)] text-[#ca8a04] mt-0.5">불참승인</div>
+        )}
+        {student.isAfterSchool && !isSelected && (
+          aStatus === "present" ? <div className="text-[clamp(7px,1.8vw,9px)] text-[#166534] mt-0.5">출석</div>
+          : aStatus === "absent" ? <div className="text-[clamp(7px,1.8vw,9px)] text-[#991b1b] mt-0.5">결석</div>
+          : <div className="text-[clamp(7px,1.8vw,9px)] text-[#ca8a04] mt-0.5">방과후</div>
+        )}
+      </button>
+      <button
+        type="button"
         onClick={(e) => onInfoClick(e, student.id, student.name)}
-        className={`absolute top-0.5 right-0.5 w-[clamp(12px,3vw,16px)] h-[clamp(12px,3vw,16px)] rounded-full text-[clamp(7px,1.8vw,10px)] font-bold leading-none flex items-center justify-center transition-colors ${
+        aria-label={`${student.name} 주간 출석현황`}
+        title="주간 출석현황"
+        className={`absolute top-0 right-0 w-[clamp(20px,5vw,26px)] h-[clamp(20px,5vw,26px)] rounded-full text-[clamp(8px,2vw,11px)] font-bold leading-none flex items-center justify-center cursor-pointer touch-manipulation transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
           isSelected
             ? "bg-white/30 text-white hover:bg-white/50"
             : "bg-black/5 text-[#6b7280] hover:bg-black/10 hover:text-[#1e293b]"
         }`}
-        title="주간 출석현황"
       >
         i
       </button>
-      <div className="font-bold text-[clamp(9px,2.2vw,12px)] whitespace-nowrap overflow-hidden text-ellipsis">
-        {student.hasPendingAbsenceRequest && (
-          <span className="text-[#ef4444] font-black">*</span>
-        )}
-        {student.name}
-      </div>
-      <div className={`text-[clamp(7px,1.8vw,9px)] mt-0.5 ${isSelected ? "text-[#bfdbfe]" : "text-[#6b7280]"}`}>
-        {grade}-{student.classNumber}
-      </div>
-      {student.isApprovedAbsence && !isSelected && (
-        <div className="text-[7px] text-[#ca8a04] mt-0.5">불참승인</div>
-      )}
-      {student.isAfterSchool && !isSelected && (() => {
-        const aStatus = attendanceStatus?.status || "unchecked";
-        if (aStatus === "present") return <div className="text-[7px] text-[#166534] mt-0.5">출석</div>;
-        if (aStatus === "absent") return <div className="text-[7px] text-[#991b1b] mt-0.5">결석</div>;
-        return <div className="text-[7px] text-[#ca8a04] mt-0.5">방과후</div>;
-      })()}
     </div>
   );
 });
@@ -212,7 +238,7 @@ export default function AttendanceGradePage() {
     setShowDatePicker(false);
   }
 
-  const { data, mutate } = useSWR(
+  const { data, error: seatsError, mutate } = useSWR(
     tab !== "absence" ? `/api/attendance?date=${selectedDate}&session=${tab}&grade=${grade}` : null,
     fetcher,
     { revalidateOnFocus: false }
@@ -370,6 +396,16 @@ export default function AttendanceGradePage() {
     }
   }, []);
 
+  // 길게 누르기(500ms)의 키보드 대안: Shift+Enter 로 즉시 활성화/해제 (기존 출석기록이 있으면 무시 — 포인터 규칙과 동일)
+  const handleActivateToggle = useCallback((studentId: number) => {
+    if (attendancesRef.current[studentId]) return;
+    setActivatedStudents(prev => {
+      const next = new Set(prev);
+      if (next.has(studentId)) next.delete(studentId); else next.add(studentId);
+      return next;
+    });
+  }, []);
+
   function applyWeeklyResult(
     studentId: number,
     name: string,
@@ -454,6 +490,17 @@ export default function AttendanceGradePage() {
     return () => window.removeEventListener("keydown", onKey);
   }, [showDatePicker]);
 
+  useEffect(() => {
+    if (!showGradeModal && !showBulkApproveModal) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      setShowGradeModal(false);
+      if (!isBulkApproving) setShowBulkApproveModal(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [showGradeModal, showBulkApproveModal, isBulkApproving]);
+
   async function handleNoteSave(studentId: number, date: string, note: string) {
     try {
       await fetch("/api/attendance/notes", {
@@ -535,6 +582,7 @@ export default function AttendanceGradePage() {
                       onPointerDown={handlePointerDown}
                       onPointerUp={handlePointerUp}
                       onInfoClick={handleInfoClick}
+                      onActivateToggle={handleActivateToggle}
                     />
                   );
                 })}
@@ -598,10 +646,7 @@ export default function AttendanceGradePage() {
             {weeklyName} ({grade}-{selectedInThisRow.student?.classNumber})
           </span>
           <span className="text-[clamp(9px,2.2vw,11px)] text-[#6b7280] whitespace-nowrap">
-            {(() => {
-              const d = new Date(weeklyData[0]?.date);
-              return `${d.getMonth() + 1}월 ${Math.ceil(d.getDate() / 7)}주차`;
-            })()}
+            {formatWeekOfMonth(weeklyData[0]?.date ?? selectedDate)}
           </span>
         </div>
         <div className="grid grid-cols-[auto_repeat(5,1fr)] gap-[clamp(2px,0.6vw,4px)] text-center">
@@ -649,7 +694,9 @@ export default function AttendanceGradePage() {
                 <input
                   type="text"
                   maxLength={100}
-                  placeholder="비고"
+                  placeholder="비고…"
+                  aria-label={`${formatMonthDay(d.date)} 비고`}
+                  autoComplete="off"
                   disabled={!participating}
                   value={noteValues[noteKey] ?? ""}
                   onChange={(e) => setNoteValues(prev => ({ ...prev, [noteKey]: e.target.value }))}
@@ -800,11 +847,13 @@ export default function AttendanceGradePage() {
           ].map((f) => (
             <button
               key={f.key}
+              type="button"
+              aria-pressed={absenceFilter === f.key}
               onClick={() => setAbsenceFilter(f.key)}
-              className={`px-3 py-1.5 rounded-full text-[clamp(11px,2.8vw,13px)] font-semibold transition-all ${
+              className={`min-h-11 px-3 rounded-full text-[clamp(11px,2.8vw,13px)] font-semibold cursor-pointer transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
                 absenceFilter === f.key
-                  ? "bg-[#3b82f6] text-white"
-                  : "bg-[#f1f5f9] text-[#64748b] hover:bg-[#e2e8f0]"
+                  ? "bg-primary text-white"
+                  : "bg-butter text-ink-muted hover:bg-peach hover:text-ink"
               }`}
             >
               {f.label}
@@ -814,7 +863,7 @@ export default function AttendanceGradePage() {
             type="button"
             onClick={() => setShowBulkApproveModal(true)}
             disabled={bulkCandidates.length === 0 || isBulkApproving}
-            className="ml-auto shrink-0 bg-[#2563eb] text-white px-3 py-1.5 rounded-md text-[clamp(11px,2.8vw,13px)] font-semibold hover:bg-[#1d4ed8] disabled:bg-[#cbd5e1] disabled:text-[#64748b] disabled:cursor-not-allowed transition-colors whitespace-nowrap"
+            className="ml-auto shrink-0 min-h-11 bg-primary text-white px-3 rounded-xl text-[clamp(11px,2.8vw,13px)] font-semibold cursor-pointer hover:bg-primary-deep disabled:bg-line disabled:text-ink-muted disabled:cursor-not-allowed transition-colors whitespace-nowrap focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
           >
             일괄승인{bulkCandidates.length > 0 ? ` (${bulkCandidates.length})` : ""}
           </button>
@@ -828,9 +877,7 @@ export default function AttendanceGradePage() {
         ) : (
           <div className="flex flex-col gap-2">
             {requests.map((r) => {
-              const dateObj = new Date(r.date + "T12:00:00+09:00");
-              const days = ["일", "월", "화", "수", "목", "금", "토"];
-              const dateLabel = `${dateObj.getMonth() + 1}/${dateObj.getDate()}(${days[dateObj.getDay()]})`;
+              const dateLabel = formatMonthDay(r.date);
 
               return (
                 <div key={r.id} className="bg-white border border-[#e2e8f0] rounded-lg p-3">
@@ -858,16 +905,20 @@ export default function AttendanceGradePage() {
                       )}
                     </div>
                     {r.status === "pending" && (
-                      <div className="flex gap-1.5 shrink-0">
+                      <div className="flex gap-2 shrink-0">
                         <button
+                          type="button"
                           onClick={() => handleAbsenceAction(r.id, "approved")}
-                          className="bg-[#3b82f6] text-white px-3 py-1.5 rounded-md text-xs font-semibold hover:bg-[#2563eb] transition-colors"
+                          aria-label={`${r.student.name} ${dateLabel} 불참신청 승인`}
+                          className="min-h-11 bg-primary text-white px-3 rounded-xl text-xs font-semibold cursor-pointer hover:bg-primary-deep transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                         >
                           승인
                         </button>
                         <button
+                          type="button"
                           onClick={() => handleAbsenceAction(r.id, "rejected")}
-                          className="bg-[#f1f5f9] text-[#64748b] px-3 py-1.5 rounded-md text-xs hover:bg-[#e2e8f0] transition-colors"
+                          aria-label={`${r.student.name} ${dateLabel} 불참신청 반려`}
+                          className="min-h-11 bg-white border border-line text-ink-muted px-3 rounded-xl text-xs cursor-pointer hover:bg-butter hover:text-ink transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                         >
                           반려
                         </button>
@@ -884,14 +935,14 @@ export default function AttendanceGradePage() {
   }
 
   return (
-    <div className="bg-[#f1f5f9] min-h-dvh">
+    <div className="bg-canvas min-h-dvh">
       {/* 고정 상단 바 - seat-responsive-v2 디자인 */}
-      <div className="sticky top-0 z-[100] bg-[#f1f5f9] px-3 pt-2 max-w-[960px] mx-auto relative">
+      <div className="sticky top-0 z-[100] bg-canvas px-3 pt-2 max-w-[960px] mx-auto relative">
         {/* 날짜 바 */}
         <div
           className="rounded-[10px] px-3.5 min-h-11 flex items-center gap-2 overflow-x-auto text-white"
           style={{
-            background: "linear-gradient(135deg, #1e40af, #2563eb)",
+            background: "linear-gradient(135deg, var(--color-primary-deep), var(--color-primary))",
             scrollbarWidth: "none",
           }}
         >
@@ -899,10 +950,13 @@ export default function AttendanceGradePage() {
             <button
               type="button"
               onClick={() => setShowDatePicker((v) => !v)}
-              className="text-[clamp(13px,3.5vw,16px)] font-bold whitespace-nowrap shrink-0 min-h-11 self-stretch flex items-center gap-1 hover:opacity-90"
+              className="text-[clamp(13px,3.5vw,16px)] font-bold whitespace-nowrap shrink-0 min-h-11 self-stretch flex items-center gap-1 cursor-pointer rounded-md hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80"
+              aria-expanded={showDatePicker}
+              aria-haspopup="dialog"
+              aria-label={`날짜 선택, 현재 ${selectedDateFormatted}`}
             >
               {selectedDateFormatted}
-              <span className="text-[11px] leading-none">▾</span>
+              <span className="text-[11px] leading-none" aria-hidden="true">▾</span>
             </button>
           ) : (
             <span className="text-[clamp(13px,3.5vw,16px)] font-bold whitespace-nowrap shrink-0">
@@ -926,24 +980,25 @@ export default function AttendanceGradePage() {
             {grade}학년
           </span>
           {tab !== "absence" && (
-            <div className="flex gap-2 ml-auto shrink-0 whitespace-nowrap text-[clamp(10px,2.4vw,12px)]">
+            <div className="flex gap-2 ml-auto shrink-0 whitespace-nowrap text-[clamp(10px,2.4vw,12px)] tabular-nums">
               <span className="opacity-90">
-                출석 <b className="opacity-100 font-bold" style={{ color: "#86efac" }}>{presentCount}</b>
+                출석 <b className="opacity-100 font-bold" style={{ color: "#dcfce7" }}>{presentCount}</b>
               </span>
               <span className="opacity-90">
-                결석 <b className="opacity-100 font-bold" style={{ color: "#fca5a5" }}>{absentCount}</b>
+                결석 <b className="opacity-100 font-bold" style={{ color: "#fee2e2" }}>{absentCount}</b>
               </span>
               <span className="opacity-90">
                 미체크 <b className="opacity-100 font-bold">{uncheckedCount}</b>
               </span>
               <span className="opacity-90">
-                방과후 <b className="opacity-100 font-bold" style={{ color: "#fde047" }}>{afterSchoolDefaultCount}</b>
+                방과후 <b className="opacity-100 font-bold" style={{ color: "#fef9c3" }}>{afterSchoolDefaultCount}</b>
               </span>
             </div>
           )}
           <button
+            type="button"
             onClick={() => setShowGradeModal(true)}
-            className={`${tab === "absence" ? "ml-auto" : "ml-2"} group shrink-0 min-h-11 self-stretch flex items-center whitespace-nowrap text-white text-[clamp(10px,2.4vw,12px)] focus-visible:outline-none`}
+            className={`${tab === "absence" ? "ml-auto" : "ml-2"} group shrink-0 cursor-pointer min-h-11 self-stretch flex items-center whitespace-nowrap text-white text-[clamp(10px,2.4vw,12px)] focus-visible:outline-none`}
           >
             <span className="bg-white/20 group-hover:bg-white/30 group-focus-visible:ring-2 group-focus-visible:ring-white/70 px-2.5 py-1 rounded-md transition-colors">
               다른학년
@@ -952,18 +1007,21 @@ export default function AttendanceGradePage() {
         </div>
 
         {/* 블록 탭 3개 + 불참신청 */}
-        <div className="flex gap-1 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
+        <div className="flex gap-1 overflow-x-auto" style={{ scrollbarWidth: "none" }} role="tablist" aria-label="자습 블록">
           {SESSION_TYPES.map((sessionType) => (
             <button
               key={sessionType}
+              type="button"
+              role="tab"
+              aria-selected={tab === sessionType}
               onClick={() => { setTab(sessionType); setSelectedSeat(null); setActivatedStudents(new Set()); }}
-              className="group flex-1 min-w-[64px] min-h-11 pt-2 flex flex-col focus-visible:outline-none"
+              className="group flex-1 min-w-[64px] min-h-11 pt-2 flex flex-col cursor-pointer touch-manipulation focus-visible:outline-none"
             >
               <span
-                className={`flex-1 w-full flex items-center justify-center rounded-t-[10px] text-[clamp(12px,3vw,14px)] font-semibold transition-all whitespace-nowrap group-focus-visible:ring-2 group-focus-visible:ring-[#2563eb] ${
+                className={`flex-1 w-full flex items-center justify-center rounded-t-[10px] text-[clamp(12px,3vw,14px)] font-semibold transition-colors whitespace-nowrap group-focus-visible:ring-2 group-focus-visible:ring-primary ${
                   tab === sessionType
-                    ? "bg-white text-[#2563eb] shadow-[0_-2px_8px_rgba(0,0,0,0.06)]"
-                    : "bg-[#e2e8f0] text-[#94a3b8]"
+                    ? "bg-white text-primary shadow-[0_-2px_8px_rgba(0,0,0,0.06)]"
+                    : "bg-peach/70 text-ink-muted group-hover:bg-peach group-hover:text-ink"
                 }`}
               >
                 {SESSION_META[sessionType].shortLabel}
@@ -971,20 +1029,23 @@ export default function AttendanceGradePage() {
             </button>
           ))}
           <button
+            type="button"
+            role="tab"
+            aria-selected={tab === "absence"}
             onClick={() => { setTab("absence"); setSelectedSeat(null); }}
-            className="group flex-1 min-w-[64px] min-h-11 pt-2 flex flex-col focus-visible:outline-none"
+            className="group flex-1 min-w-[64px] min-h-11 pt-2 flex flex-col cursor-pointer touch-manipulation focus-visible:outline-none"
           >
             <span
-              className={`relative flex-1 w-full flex items-center justify-center rounded-t-[10px] text-[clamp(12px,3vw,14px)] font-semibold transition-all whitespace-nowrap group-focus-visible:ring-2 group-focus-visible:ring-[#2563eb] ${
+              className={`relative flex-1 w-full flex items-center justify-center rounded-t-[10px] text-[clamp(12px,3vw,14px)] font-semibold transition-colors whitespace-nowrap group-focus-visible:ring-2 group-focus-visible:ring-primary ${
                 tab === "absence"
-                  ? "bg-white text-[#2563eb] shadow-[0_-2px_8px_rgba(0,0,0,0.06)]"
-                  : "bg-[#e2e8f0] text-[#94a3b8]"
+                  ? "bg-white text-primary shadow-[0_-2px_8px_rgba(0,0,0,0.06)]"
+                  : "bg-peach/70 text-ink-muted group-hover:bg-peach group-hover:text-ink"
               }`}
             >
               불참신청
               {pendingCount > 0 && (
-                <span className="absolute -top-1 right-0 bg-[#ef4444] text-white rounded-full w-[18px] h-[18px] flex items-center justify-center text-[10px] font-bold">
-                  {pendingCount}
+                <span className="absolute -top-1 right-0 bg-[#ef4444] text-white rounded-full min-w-[18px] h-[18px] px-1 flex items-center justify-center text-[10px] font-bold tabular-nums" aria-label={`대기 ${pendingCount}건`}>
+                  {pendingCount > 99 ? "99+" : pendingCount}
                 </span>
               )}
             </span>
@@ -1013,9 +1074,9 @@ export default function AttendanceGradePage() {
                 type="button"
                 onClick={handleCopyFromSource}
                 disabled={isCopying}
-                className="min-h-11 px-4 rounded-md text-[clamp(11px,2.8vw,13px)] font-semibold bg-[#eff6ff] text-[#1d4ed8] border border-[#bfdbfe] hover:bg-[#dbeafe] disabled:opacity-50 whitespace-nowrap"
+                className="min-h-11 px-4 rounded-xl text-[clamp(11px,2.8vw,13px)] font-semibold bg-butter text-primary-deep border border-primary-soft hover:bg-peach disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors whitespace-nowrap focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               >
-                {isCopying ? "복사 중..." : "오후1 결과 복사"}
+                {isCopying ? "복사 중…" : "오후1 결과 복사"}
               </button>
             </div>
           )}
@@ -1073,9 +1134,20 @@ export default function AttendanceGradePage() {
           )}
 
           {tab !== "absence" && rooms.length === 0 && (
-            <div className="text-center text-gray-500 py-12">
-              좌석 배치가 설정되지 않았습니다.
-            </div>
+            data === undefined && !seatsError ? (
+              <div className="text-center text-ink-muted py-12" role="status" aria-live="polite">
+                좌석 정보를 불러오는 중…
+              </div>
+            ) : seatsError ? (
+              <div className="text-center py-12" role="alert">
+                <p className="text-ink">좌석 정보를 불러오지 못했어요.</p>
+                <button type="button" onClick={() => mutate()} className="mt-3 inline-flex min-h-11 items-center rounded-xl border border-line bg-white px-4 text-sm font-medium text-ink hover:bg-butter cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary">다시 시도</button>
+              </div>
+            ) : (
+              <div className="text-center text-ink-muted py-12">
+                좌석 배치가 설정되지 않았습니다.
+              </div>
+            )
           )}
 
           {/* 범례 */}
@@ -1115,26 +1187,27 @@ export default function AttendanceGradePage() {
           <div
             role="dialog"
             aria-modal="true"
-            className="relative bg-white rounded-xl shadow-xl w-full max-w-3xl max-h-[85dvh] overflow-hidden"
+            aria-labelledby="bulk-approve-title"
+            className="relative bg-white rounded-2xl shadow-xl w-full max-w-3xl max-h-[85dvh] overflow-hidden"
             onClick={(event) => event.stopPropagation()}
           >
-            <div className="px-4 py-3 border-b border-[#e2e8f0] flex items-center justify-between gap-3">
+            <div className="px-4 py-3 border-b border-line flex items-center justify-between gap-3">
               <div>
-                <h2 className="text-base font-bold text-[#0f172a]">불참신청 일괄승인</h2>
+                <h2 id="bulk-approve-title" className="text-base font-bold text-ink">불참신청 일괄승인</h2>
                 <p className="text-xs text-[#64748b] mt-0.5">{bulkCandidates.length}건을 승인합니다.</p>
               </div>
               <button
                 type="button"
                 onClick={() => setShowBulkApproveModal(false)}
                 disabled={isBulkApproving}
-                className="w-11 h-11 flex items-center justify-center rounded-md text-[#64748b] hover:bg-[#f1f5f9] disabled:opacity-50"
+                className="w-11 h-11 flex items-center justify-center rounded-full text-ink-muted hover:bg-butter cursor-pointer disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                 aria-label="닫기"
               >
                 ×
               </button>
             </div>
             <div className="p-4">
-              <div className="overflow-auto max-h-[60dvh] border border-[#e2e8f0] rounded-lg">
+              <div className="overflow-auto overscroll-contain max-h-[60dvh] border border-line rounded-xl">
                 <table className="w-full text-sm">
                   <thead className="sticky top-0 z-20 bg-[#f8fafc] border-b border-[#e2e8f0]">
                     <tr>
@@ -1187,7 +1260,7 @@ export default function AttendanceGradePage() {
                 disabled={isBulkApproving || bulkCandidates.length === 0}
                 className="min-h-11 px-4 py-2 rounded-md text-sm font-semibold bg-[#2563eb] text-white hover:bg-[#1d4ed8] disabled:bg-[#cbd5e1] disabled:text-[#64748b] disabled:cursor-not-allowed"
               >
-                {isBulkApproving ? "승인 중..." : "일괄승인"}
+                {isBulkApproving ? "승인 중…" : "일괄승인"}
               </button>
             </div>
           </div>
@@ -1220,13 +1293,14 @@ export default function AttendanceGradePage() {
             <div
               role="dialog"
               aria-modal="true"
-              className="relative bg-[#eff6ff] border-2 border-[#2563eb] rounded-xl max-w-md w-full max-h-[90dvh] overflow-y-auto p-4 shadow-xl"
+              aria-label="주간 출석현황"
+              className="relative bg-[#eff6ff] border-2 border-[#2563eb] rounded-2xl max-w-md w-full max-h-[90dvh] overflow-y-auto overscroll-contain p-4 shadow-xl"
               onClick={(e) => e.stopPropagation()}
             >
               <button
                 type="button"
                 aria-label="닫기"
-                className="absolute top-2 right-2 w-11 h-11 flex items-center justify-center text-gray-600 hover:text-gray-900 text-lg font-bold"
+                className="absolute top-2 right-2 w-11 h-11 flex items-center justify-center rounded-full text-ink-muted hover:text-ink hover:bg-white/70 cursor-pointer text-lg font-bold focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                 onClick={() => {
                   setSelectedSeat(null);
                   setWeeklyTotals(null);
@@ -1246,20 +1320,22 @@ export default function AttendanceGradePage() {
       {/* 학년 선택 모달 */}
       {showGradeModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[150]" onClick={() => setShowGradeModal(false)}>
-          <div className="bg-white rounded-xl p-8 max-w-sm w-full mx-4 text-center shadow-xl" onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-lg font-semibold mb-2">출석 확인할 학년 선택</h2>
-            <div className="flex gap-3 justify-center mt-4">
+          <div role="dialog" aria-modal="true" aria-labelledby="grade-modal-title" className="bg-white rounded-2xl p-6 sm:p-8 max-w-sm w-full mx-4 text-center shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <h2 id="grade-modal-title" className="text-lg font-semibold mb-2 text-ink text-balance">출석 확인할 학년을 고르세요</h2>
+            <div className="flex gap-2 sm:gap-3 justify-center mt-4">
               {[1, 2, 3].map((g) => (
                 <button
                   key={g}
+                  type="button"
+                  aria-current={g === grade ? "page" : undefined}
                   onClick={() => {
                     router.push(`/attendance/${g}`);
                     setShowGradeModal(false);
                   }}
-                  className={`px-8 py-5 rounded-xl text-xl font-bold transition-all ${
+                  className={`min-h-14 px-5 sm:px-8 rounded-2xl text-lg sm:text-xl font-bold cursor-pointer transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
                     g === grade
-                      ? "bg-[#2563eb] text-white shadow-lg"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                      ? "bg-primary text-white shadow-lg"
+                      : "bg-butter text-ink hover:bg-peach"
                   }`}
                 >
                   {g}학년
