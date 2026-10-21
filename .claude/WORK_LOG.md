@@ -2,6 +2,15 @@
 
 최신 항목을 위에 추가한다. 날짜·도구·변경 이유·파일·실제로 실행한 검증·남은 작업을 기록한다. 기존 상세 이력은 `.claude/PROJECT_MAP.md`, `docs/superpowers/`, `.plans/`, Git 및 Claude 세션 원문에 그대로 남아 있다.
 
+## 2026-10-21 — Claude Code(클라우드) — 클라우드 세션용 스킬·SessionStart 훅·MCP 설정 추가
+
+- 요청: ChoisMath/MathChois 공개 레포의 설정 핸드아웃대로 디자인 스킬 3종·MCP 런처·`.mcp.json`을 가져오고, `.claude/settings.json`·`.claude/hooks/session-start.sh`는 이 레포 스택에 맞게 새로 작성. 브랜치 `claude/peaceful-galileo-lxzu81`.
+- 가져온 파일: `.claude/skills/{frontend-design,ui-ux-pro-max,web-design-guidelines}/`, `.claude/mcp/launch.mjs`, `.mcp.json`(기존 파일 없어 그대로 생성). `.gitignore`에 `__pycache__/`·`*.pyc` 추가.
+- 새로 작성: `.claude/settings.json`(enabledMcpjsonServers·SessionStart 훅·skill-creator 플러그인), `.claude/hooks/session-start.sh`(원격 세션에서만 `npm install --no-audit --no-fund` → `npx prisma generate`(src/generated/prisma 가 git 제외라 tsc·eslint 에 필요) → `PW_CHROMIUM_EXECUTABLE` export → MCP prefetch). `demo-video/` 의존성은 설치하지 않는다.
+- 검증: ① `CLAUDE_CODE_REMOTE=true ./.claude/hooks/session-start.sh` 종료 코드 0(726 패키지, Prisma Client 7.6.0 생성, MCP 2종 prefetch), 재실행 멱등, 변수 미설정 시 즉시 종료, stdout 비어 있음 ② `npx eslint src/lib/calendar.ts` 통과 ③ `npx tsx tests/calendar.test.ts` 통과 ④ 세 스킬 frontmatter(name·description) 원본과 동일, 세션 스킬 목록에 인식됨 ⑤ `search.py --help` 및 `--domain style` 검색 정상.
+- 주의: `npm install` 이 `package-lock.json` 의 optional 패키지 `dev` 플래그만 바꾸므로 되돌리고 커밋에서 제외. `project-map-updater` 에이전트 대신 `.claude/PROJECT_MAP.md` 트리 블록을 직접 갱신. 앱 코드·배포 변경 없음.
+- 남은 작업: 기본 브랜치에 머지되면 이후 모든 새 클라우드 세션에 훅·스킬·MCP 설정이 적용된다. PR 은 사용자 요청 전까지 만들지 않는다.
+
 ## 2026-09-19 — Codex — 승인된 세션 변경 푸시·배포 완료
 
 - 승인: 사용자가 이번 세션 전체 변경의 푸시·배포를 승인함. 아래 기록 연결·영상 후처리·YouTube 링크 교체 변경을 함께 커밋·푸시함.

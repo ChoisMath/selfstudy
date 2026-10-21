@@ -197,17 +197,24 @@ demo-video/             # **신규.** 안내 영상·가이드 페이지 이미�
 
 AGENTS.md              # Codex·Claude Code 공통 작업 지침
 CLAUDE.md              # 기존 Claude 프로젝트 지침 + @AGENTS.md import
+.mcp.json              # **신규.** 프로젝트 MCP 서버 선언(playwright·chrome-devtools) — 둘 다 `.claude/mcp/launch.mjs` 경유
 
 .claude/
 ├── PROJECT_MAP.md      # 공통 프로젝트 지도 원본
 ├── HANDOFF.md          # 현재 상태·남은 작업·검증 범위 원본
 ├── WORK_LOG.md         # 날짜·도구별 공통 작업일지 원본 (최신 항목 먼저)
 ├── memory/            # 기존 Claude 자동 메모리 원본으로 향한 로컬 링크 (Git 제외)
+├── settings.json       # **신규.** 클라우드 세션 공용 설정 — `enabledMcpjsonServers`(playwright·chrome-devtools), `hooks.SessionStart` → hooks/session-start.sh, `enabledPlugins`(skill-creator)
+├── hooks/session-start.sh # **신규.** SessionStart 훅 — `CLAUDE_CODE_REMOTE=true`일 때만 `npm install` → `npx prisma generate` → `PW_CHROMIUM_EXECUTABLE` export → MCP prefetch. 동기·멱등, 로그는 stderr
+├── mcp/launch.mjs      # **신규.** `.mcp.json`의 playwright(@playwright/mcp@0.0.83)·chrome-devtools(chrome-devtools-mcp@1.11.0) 런처 — 클라우드(headless·/opt/pw-browsers/chromium·no-sandbox·isolated)와 Windows(npx.cmd) 처리, `--prefetch`
 ├── GUIDE_PAGES.md      # 안내 페이지·안내 영상 기준 문서 — 원고→음성→장면→스틸→페이지→영상 순서, 라우트 `/help/<page>` + `src/components/guide/*` 빌딩 블록, 폰 프레임 경로(3절), 색 출처 규칙(6절 — 앱 화면 목업은 `app-mocks/tw.ts`, 영상 장치는 `theme.ts`), 이미지 규격, 진행 현황 표(7절: setup-check·attendance·homeroom·student·grade-admin·seats)
 └── skills/
     ├── guide-page/SKILL.md   # **신규.** `/guide-page <page>` — GUIDE_PAGES.md 절차 실행
     ├── remotion-*/           # **신규.** remotion-dev/skills 12종(best-practices·captions·create·docs·interactivity·maps·markup·multimedia·render·saas·studio·upgrade, 루트 `skills-lock.json` 에 해시 기록)
-    └── remotion-motion-graphics/ # **신규.** haidrrrry/claude-remotion-skill @1dcbe5e (MIT, 폴더에 LICENSE). skills-lock.json 밖 — 갱신은 폴더 재복사
+    ├── remotion-motion-graphics/ # haidrrrry/claude-remotion-skill @1dcbe5e (MIT, 폴더에 LICENSE). skills-lock.json 밖 — 갱신은 폴더 재복사
+    ├── frontend-design/      # **신규.** ChoisMath/MathChois 에서 복사 (SKILL.md + LICENSE.txt) — UI 시각 디자인 방향
+    ├── ui-ux-pro-max/        # **신규.** MathChois 에서 복사 (약 3.6MB, data/ CSV + scripts/ Python). `python3 .claude/skills/ui-ux-pro-max/scripts/search.py --help`
+    └── web-design-guidelines/ # **신규.** MathChois 에서 복사 — Web Interface Guidelines UI 검토
 
 .codex/                # 소문자 경로 사용 — 별도 기록 사본 없음
 ├── README.md          # 연결 방식·원본 경로·로컬 링크 복구 안내

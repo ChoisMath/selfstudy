@@ -1,8 +1,12 @@
 # 현재 인계 — Claude Code · Codex 공용
 
-> 마지막 갱신: 2026-09-19, Codex
+> 마지막 갱신: 2026-10-21, Claude Code(클라우드)
 
 ## 현재 작업
+
+브랜치 `claude/peaceful-galileo-lxzu81`에 클라우드 세션 설정을 추가했다. MathChois 에서 스킬 3종(`frontend-design`·`ui-ux-pro-max`·`web-design-guidelines`)·`.claude/mcp/launch.mjs`·`.mcp.json`을 복사하고, `.claude/settings.json`과 `.claude/hooks/session-start.sh`(원격 세션 한정 `npm install` → `prisma generate` → MCP prefetch, 동기·멱등)를 새로 작성했다. 훅 실행·ESLint·tsx 테스트·스킬 인식·`search.py` 검증을 통과했고 앱 코드·배포는 바꾸지 않았다. 기본 브랜치 머지 후 새 클라우드 세션부터 적용된다. 상세는 `.claude/WORK_LOG.md` 최신 항목.
+
+## 앞선 작업 (2026-09-19)
 
 사용자가 승인한 이번 세션 변경을 커밋 `468fe25c4a522b628e66c0a5e9226a5bb72c6ea1`로 `origin/main`에 푸시했고, Railway `production`의 `selfstudy` 배포가 `SUCCESS`로 완료됐다. 배포 ID는 `26ee3631-3384-4b0c-acd6-45ec6fd5349a`이며 배포의 `commitHash`도 일치한다. `https://self.posan.kr/help/`의 가이드 5곳에서 HTTP 200과 새 영상 ID·시작 시각 반영을 확인했다. 남은 요청 작업은 없다.
 

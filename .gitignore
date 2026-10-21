@@ -46,3 +46,7 @@ next-env.d.ts
 /.claude/memory
 /.codex/claude-history
 /.codex/rules
+
+# python (ui-ux-pro-max skill scripts)
+__pycache__/
+*.pyc
