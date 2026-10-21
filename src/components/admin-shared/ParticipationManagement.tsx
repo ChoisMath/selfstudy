@@ -3,6 +3,7 @@
 import { useState, useCallback, useMemo } from "react";
 import useSWR from "swr";
 import { SESSION_TYPES, SESSION_META, emptySessionRecord, type SessionType } from "@/lib/sessions";
+import { chrome } from "@/components/ui/chrome";
 
 type DaySettings = {
   isParticipating: boolean;
@@ -19,7 +20,11 @@ type StudentParticipation = {
   sessions: Record<SessionType, DaySettings>;
 };
 
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
+const fetcher = async (url: string) => {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error("참여 설정을 불러오지 못했습니다. 새로고침 후 다시 시도하세요.");
+  return res.json();
+};
 const DAY_KEYS = ["mon", "tue", "wed", "thu", "fri"] as const;
 const DAY_LABELS = ["월", "화", "수", "목", "금"] as const;
 const AFTER_SCHOOL_KEYS = ["afterSchoolMon", "afterSchoolTue", "afterSchoolWed", "afterSchoolThu", "afterSchoolFri"] as const;
@@ -28,9 +33,10 @@ export default function ParticipationManagement({ grade }: { grade: number }) {
   const [classFilter, setClassFilter] = useState<string>("");
   const [savingKey, setSavingKey] = useState<string | null>(null);
   const [bulkSaving, setBulkSaving] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const apiUrl = `/api/grade-admin/${grade}/participation-days`;
-  const { data, mutate, isLoading } = useSWR<{ students: StudentParticipation[] }>(apiUrl, fetcher);
+  const { data, error, mutate, isLoading } = useSWR<{ students: StudentParticipation[] }>(apiUrl, fetcher);
 
   const students = useMemo(() => data?.students ?? [], [data]);
   const filteredStudents = classFilter
@@ -55,6 +61,7 @@ export default function ParticipationManagement({ grade }: { grade: number }) {
       const updated = { ...current, [field]: value };
       const key = `${studentId}-${sessionType}-${field}`;
       setSavingKey(key);
+      setSaveError(null);
       mutate({ students: students.map((s) => s.id === studentId ? { ...s, sessions: { ...s.sessions, [sessionType]: updated } } : s) }, false);
       try {
         const res = await fetch(apiUrl, {
@@ -64,7 +71,7 @@ export default function ParticipationManagement({ grade }: { grade: number }) {
         });
         if (!res.ok) { const data = await res.json(); throw new Error(data.error || "저장 실패"); }
       } catch (err: unknown) {
-        alert(err instanceof Error ? err.message : "저장 실패");
+        setSaveError(`${student.name} ${SESSION_META[sessionType].shortLabel}: ${err instanceof Error ? err.message : "저장 실패"}. 다시 시도하세요.`);
         mutate();
       } finally {
         setSavingKey(null);
@@ -81,6 +88,7 @@ export default function ParticipationManagement({ grade }: { grade: number }) {
       if (!confirm(`${classFilter ? classFilter + "반" : "전체"} 학생 ${targets.length}명의 ${label} 참가를 ${value ? "설정" : "해제"}하시겠습니까?`)) return;
 
       setBulkSaving(sessionType);
+      setSaveError(null);
       const targetIds = new Set(targets.map((s) => s.id));
       mutate({
         students: students.map((s) =>
@@ -95,7 +103,7 @@ export default function ParticipationManagement({ grade }: { grade: number }) {
         });
         if (!res.ok) throw new Error("일괄 저장 실패");
       } catch (err: unknown) {
-        alert(err instanceof Error ? err.message : "일괄 저장 실패");
+        setSaveError(`${label} ${err instanceof Error ? err.message : "일괄 저장 실패"}. 다시 시도하세요.`);
         mutate();
       } finally {
         setBulkSaving(null);
@@ -106,19 +114,27 @@ export default function ParticipationManagement({ grade }: { grade: number }) {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-4">
+      <div className="mb-4 flex flex-wrap items-center gap-3">
+        <label htmlFor="participation-class-filter" className="text-sm font-medium text-ink">반</label>
         <select
+          id="participation-class-filter"
+          name="classFilter"
           value={classFilter}
           onChange={(e) => setClassFilter(e.target.value)}
-          className="min-h-11 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className={chrome.select}
         >
           <option value="">전체 반</option>
           {classNumbers.map((n) => (<option key={n} value={n}>{n}반</option>))}
         </select>
-        {(savingKey || bulkSaving) && <span className="text-xs text-gray-400">저장 중...</span>}
+        <span aria-live="polite" className="text-xs text-ink-muted">{savingKey || bulkSaving ? "저장 중…" : ""}</span>
       </div>
 
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+      <div aria-live="polite" className={saveError || error ? "mb-3" : undefined}>
+        {error && <div className={chrome.notice("error")}>{error instanceof Error ? error.message : "참여 설정을 불러오지 못했습니다. 새로고침 후 다시 시도하세요."}</div>}
+        {saveError && <div className={chrome.notice("error")}>{saveError}</div>}
+      </div>
+
+      <div className={`${chrome.card} overflow-hidden`}>
         <div className="overflow-x-auto table-scroll">
           <table className="w-full text-sm whitespace-nowrap" style={{ tableLayout: "fixed" }}>
             <colgroup>
@@ -149,10 +165,11 @@ export default function ParticipationManagement({ grade }: { grade: number }) {
                     >
                       <input
                         type="checkbox"
+                        aria-label={`${SESSION_META[session].shortLabel} 전체 참가`}
                         checked={allChecked[session]}
                         onChange={(e) => handleBulkToggle(session, e.target.checked)}
                         disabled={!!bulkSaving || filteredStudents.length === 0}
-                        className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50"
+                        className="h-4 w-4 rounded border-line accent-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-50"
                       />
                     </label>
                   </th>,
@@ -174,39 +191,44 @@ export default function ParticipationManagement({ grade }: { grade: number }) {
             </thead>
             <tbody className="divide-y divide-gray-100">
               {isLoading ? (
-                <tr><td colSpan={21} className="px-4 py-8 text-center text-gray-400">불러오는 중...</td></tr>
+                <tr><td colSpan={21} className="px-4 py-8 text-center text-ink-muted">불러오는 중…</td></tr>
               ) : filteredStudents.length === 0 ? (
-                <tr><td colSpan={21} className="px-4 py-8 text-center text-gray-400">학생이 없습니다.</td></tr>
+                <tr><td colSpan={21} className="px-4 py-8 text-center text-ink-muted">학생이 없습니다. 학생 관리에서 먼저 명단을 등록하세요.</td></tr>
               ) : (
                 filteredStudents.map((student) => (
-                  <tr key={student.id} className="group hover:bg-gray-50">
-                    <td className="sticky left-0 z-10 bg-white group-hover:bg-gray-50 px-2 py-1 text-gray-900 font-medium whitespace-nowrap truncate">{student.name}</td>
-                    <td className="py-1 text-center text-gray-600">{student.classNumber}</td>
-                    <td className="py-1 text-center text-gray-600">{student.studentNumber}</td>
+                  <tr key={student.id} className="group hover:bg-canvas">
+                    <td className="sticky left-0 z-10 bg-white group-hover:bg-canvas px-2 py-1 text-ink font-medium whitespace-nowrap truncate">{student.name}</td>
+                    <td className="py-1 text-center text-ink-muted tabular-nums">{student.classNumber}</td>
+                    <td className="py-1 text-center text-ink-muted tabular-nums">{student.studentNumber}</td>
                     {SESSION_TYPES.map((session) => {
                       const settings = student.sessions[session];
+                      const sessionLabel = SESSION_META[session].shortLabel;
                       return [
                         <td key={`${session}-chk`} className="py-1 text-center border-l border-gray-100">
                           <label className="inline-flex h-11 w-11 cursor-pointer items-center justify-center">
                             <input
                               type="checkbox"
+                              aria-label={`${student.name} ${sessionLabel} 참가`}
                               checked={settings.isParticipating}
                               onChange={(e) => handleUpdate(student.id, session, "isParticipating", e.target.checked)}
-                              className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                              className="h-4 w-4 rounded border-line accent-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                             />
                           </label>
                         </td>,
                         ...DAY_KEYS.map((day, dayIdx) => (
                           <td key={`${session}-${day}`} className="py-1 text-center">
                             <button
+                              type="button"
+                              aria-label={`${student.name} ${sessionLabel} ${DAY_LABELS[dayIdx]}요일`}
+                              aria-pressed={settings[day]}
                               onClick={() => handleUpdate(student.id, session, day, !settings[day])}
                               disabled={!settings.isParticipating}
-                              className={`h-11 w-11 rounded text-xs font-medium transition-colors ${
+                              className={`h-11 w-11 rounded-lg text-xs font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
                                 !settings.isParticipating
                                   ? "bg-gray-100 text-gray-300 cursor-not-allowed"
                                   : settings[day]
-                                    ? "bg-blue-100 text-blue-700 hover:bg-blue-200"
-                                    : "bg-gray-100 text-gray-400 hover:bg-gray-200"
+                                    ? "bg-peach text-primary-deep hover:bg-primary-soft/60 cursor-pointer"
+                                    : "bg-butter text-ink-muted hover:bg-peach cursor-pointer"
                               }`}
                             >
                               {DAY_LABELS[dayIdx]}
@@ -214,10 +236,11 @@ export default function ParticipationManagement({ grade }: { grade: number }) {
                             <label className="mx-auto mt-2 flex h-11 w-11 cursor-pointer items-center justify-center">
                               <input
                                 type="checkbox"
+                                aria-label={`${student.name} ${sessionLabel} ${DAY_LABELS[dayIdx]}요일 방과후`}
                                 checked={settings[AFTER_SCHOOL_KEYS[dayIdx]]}
                                 onChange={(e) => handleUpdate(student.id, session, AFTER_SCHOOL_KEYS[dayIdx], e.target.checked)}
                                 disabled={!settings.isParticipating || !settings[day]}
-                                className="w-3.5 h-3.5 rounded border-gray-300 disabled:opacity-30"
+                                className="h-3.5 w-3.5 rounded border-line focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-30"
                                 style={{ accentColor: '#ea580c' }}
                               />
                             </label>
@@ -236,13 +259,13 @@ export default function ParticipationManagement({ grade }: { grade: number }) {
                   {SESSION_TYPES.map((session) => {
                     const participating = filteredStudents.filter((s) => s.sessions[session].isParticipating).length;
                     return [
-                      <td key={`${session}-total`} className="py-2.5 text-center font-bold text-blue-700 text-xs border-l border-gray-200">
+                      <td key={`${session}-total`} className="py-2.5 text-center font-bold text-primary text-xs border-l border-gray-200 tabular-nums">
                         {participating}
                       </td>,
                       ...DAY_KEYS.map((day) => {
                         const count = filteredStudents.filter((s) => s.sessions[session].isParticipating && s.sessions[session][day]).length;
                         return (
-                          <td key={`${session}-${day}-total`} className="py-2.5 text-center font-medium text-gray-600 text-xs">
+                          <td key={`${session}-${day}-total`} className="py-2.5 text-center font-medium text-gray-600 text-xs tabular-nums">
                             {count}
                           </td>
                         );
@@ -255,7 +278,7 @@ export default function ParticipationManagement({ grade }: { grade: number }) {
           </table>
         </div>
         {!isLoading && filteredStudents.length > 0 && (
-          <div className="px-4 py-3 bg-gray-50 border-t border-gray-200 text-sm text-gray-500">
+          <div className="border-t border-line bg-butter px-4 py-3 text-sm text-ink-muted">
             총 {filteredStudents.length}명{classFilter && ` (${classFilter}반)`}
           </div>
         )}

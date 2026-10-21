@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 
 const StudentManagement = dynamic(() => import("@/components/students/StudentManagement"), {
   ssr: false,
-  loading: () => <div className="text-center py-12 text-gray-400">불러오는 중...</div>,
+  loading: () => <div className="text-center py-12 text-ink-muted">불러오는 중…</div>,
 });
 
 export default function GradeStudentsPage() {
@@ -14,7 +14,7 @@ export default function GradeStudentsPage() {
 
   if (isNaN(grade) || grade < 1 || grade > 3) {
     return (
-      <div className="text-center py-12 text-gray-500">
+      <div className="text-center py-12 text-ink-muted">
         잘못된 학년입니다.
       </div>
     );

@@ -248,7 +248,7 @@ export default function MonthlyCalendar({
       </div>
 
       {loading && (
-        <div className="text-center py-4 text-sm text-gray-400">로딩 중...</div>
+        <div className="text-center py-4 text-sm text-gray-400">로딩 중…</div>
       )}
 
       <div className="bg-white border border-gray-200 rounded-lg overflow-x-auto table-scroll">

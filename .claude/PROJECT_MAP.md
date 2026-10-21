@@ -88,8 +88,11 @@ src/
 │   └── api/                    # API 라우트 (아래 별도 섹션)
 │
 ├── components/
+│   ├── ui/                     # **신규.** 교사·관리자·학생 공용 셸
+│   │   ├── chrome.ts           # 공용 클래스 문자열 — page/nav/navStatic/brand/navLink(display 는 호출부: `hidden lg:inline-flex`)/navTab/roleChip/badge/ghostButton/iconButton/tab/chip/label/input/select/notice/tableHead/card/primaryButton/secondaryButton. 색은 globals `@theme static` 토큰(primary 코랄·canvas 크림·butter·peach·ink)
+│   │   └── Dialog.tsx          # 접근 가능한 모달 — role=dialog·aria-modal·제목 연결, Escape, Tab 순환, 열릴 때 첫 컨트롤 포커스·닫힐 때 복귀, body 스크롤 잠금, overscroll-contain, `closeDisabled`, `zClassName`. 사용: SupervisorSummaryModal·ExcelUploadModal·admin/users 교사 모달
 │   ├── attendance/
-│   │   └── AttendanceDatePicker.tsx  # 커스텀 월간 달력 팝오버 (props: value/today/onChange, "오늘로" 버튼, @/lib/calendar 의존)
+│   │   └── AttendanceDatePicker.tsx  # 커스텀 월간 달력 팝오버 (props: value/today/onChange, "오늘로" 버튼, @/lib/calendar 의존). role=dialog, 날짜 셀 aria-label(전체 날짜)·aria-pressed·aria-current, 월 제목 `formatYearMonth`
 │   ├── notifications/
 │   │   └── NotificationBell.tsx # 공통 네비 알림 벨 (구독 토글 + iOS "홈 화면에 추가" 안내, BellState 분기)
 │   ├── admin-shared/
@@ -133,6 +136,7 @@ src/
 │   ├── auth.ts         # NextAuth 설정 (Credentials×2 + Google, JWT 콜백)
 │   ├── api-auth.ts     # withAuth (+ "teacher" 의사역할: 모든 교사 허용), withGradeAuth, withHomeroomAuth 래퍼
 │   ├── calendar.ts     # KST 안전 순수 날짜 유틸 (getKstTodayString/formatDateValue/parseDateValue/formatDateLabel/formatDateWithWeekday/shiftMonth/buildMonthCells/weekdayOf/addDays/nextDateForWeekday/mondayOf, toISOString 미사용)
+│   ├── format-date.ts      # **신규.** Intl(ko-KR, Asia/Seoul) 날짜 표시 — `formatMonthDay`(10/21(화)), `formatMonthDayDots`(10.21), `formatYearMonth`, `formatFullDate`, `formatWeekOfMonth`, `parseKstDate`("YYYY-MM-DD" 는 KST 정오로 해석; `new Date("YYYY-MM-DD")` UTC 파싱 금지)
 │   ├── sessions.ts     # ★ 세션 진실 공급원 — SESSION_TYPES(afternoon1/afternoon2/night)/SEAT_SESSION_TYPES(afternoon/night)/SESSION_META/SEAT_SESSION_META/REPRESENTATIVE_SESSION_TYPE("afternoon1")/isSessionType/isSeatSessionType/seatSessionOf/sessionTypesOfSeat/attendanceMinutes/emptySessionRecord. `"afternoon"`/`"night"` 리터럴·`100` 상수는 이 모듈 밖 사용 금지(session-literal-guard 테스트로 고정)
 │   ├── absence-reasons.ts  # REASON_TYPES/REASON_LABELS(한글)/reasonLabel — 기존 7곳에 중복되던 사유 라벨 맵의 단일 출처(수정한 파일만 교체)
 │   ├── participation-days.ts  # 학생 화면용 요일 헬퍼 — WEEKDAY_KEYS/WEEKDAY_LABELS/DaySettings/ParticipationDaysMap, weekdayKeyOf(주말 null), isActiveOn(레코드 없음 = 비활성), activeSessionTypesOn(days, date), activeDayCount
@@ -447,6 +451,7 @@ SupervisorReminderLog: teacherId, grade, date(@db.Date), sentAt — @@unique([te
 
 ## 주의사항 / 특이 패턴
 
+- **교사·관리자 화면 공용 셸은 `src/components/ui/chrome.ts`**: 새 버튼·탭·칩·입력·카드는 `chrome.*` 클래스와 `@theme static` 토큰(primary/canvas/butter/peach/ink)을 쓰고 파란 CTA(`bg-blue-600` 등)를 새로 넣지 않는다. 모달은 `components/ui/Dialog.tsx`. 날짜 표시는 `lib/format-date.ts`(Intl). 로딩 문구는 "…"(U+2026). 터치 대상 44px(`min-h-11`), 아이콘 버튼 `aria-label`, 탭 `role="tab"`+`aria-selected`, 토글 `aria-pressed`, 상태 메시지 `aria-live`/`role="status"` — `/web-design-guidelines` 점검 기준
 - **로그인 장면 CSS는 생성기 산출물**: `src/app/login/login-scene.module.css`를 직접 고치지 말고 `scripts/login-scene-css.mjs`를 수정한 뒤 재생성한다(`tests/login-page.test.ts`가 산출물과 생성기 출력의 일치, 좌표 상수 일치, transform/opacity/fill 외 속성 애니메이션 금지를 검사). 장면 색은 `globals.css`의 `@theme static` 토큰을 `var()`로 참조한다
 - `react-hooks/set-state-in-effect`는 eslint 오류(빌드 게이트 아님)이며 "이전 값 저장 후 렌더 중 상태 조정" 패턴으로 대응 — `eslint-disable` 금지. 검수(tsc/eslint/build)는 `~/dev/selfstudy` 로컬 클론에서 실행(Google Drive 트리는 I/O로 정지)
 - 표 래퍼는 `overflow-x-auto table-scroll`(`globals.css` `@utility`, `--header-h` 기반 내부 스크롤포트) + thead `sticky top-0 z-20` / thead 안 인덱스 th `z-30` / 본문 인덱스 td `z-10` 관행 — 래퍼에 `overflow-x-auto`만 두면 높이 제한이 없어 sticky thead가 붙지 않음. 새 표는 이 구조를 따르고 `tests/responsive-tables.test.ts`의 `TABLE_FILES`에 추가. 헤더가 다른 레이아웃은 루트에 `[--header-h:…]` 재정의(학생 `7.625rem`, 담임 `6.25rem` + `lg:[--header-h:3.5rem]` — lg 미만에서 탭이 2행째로 내려감)
@@ -459,6 +464,13 @@ SupervisorReminderLog: teacherId, grade, date(@db.Date), sentAt — @@unique([te
 - **내레이션 무음 트림은 앞 -40dB / 뒤 -45dB**(`narrate.mjs` ffmpeg `silenceremove`) — 앞머리 잡음을 제거하고 약한 끝 음절을 보존한다. 교사·학생·학년관리자 편은 마지막 0.5초 `qsin` 페이드 후 1초 무음(`narration.ts` 상수), 문장 간격 0.2초 유지(문장 사이 약 1.2초). 후처리만 바꾸면 `node scripts/narrate.mjs --guide <guide> --reprocess`로 원본 raw WAV에서 재처리한다(페이드 중첩·재합성 없음). 일반 생성은 fadeOut·trailing·processingVersion 캐시 조건 변경 시 재합성할 수 있으며, `--measure`는 오디오를 바꾸지 않는다
 
 ## 수정 이력 (주요 변경)
+
+### 2026-10-21 — 출석체크·담임·관리자·학생 화면 사용성 개선 (Claude Code 클라우드, 브랜치 `claude/upbeat-volta-8a7ixx`)
+
+- `/web-design-guidelines` 점검(약 120건) 후 수정: 공용 셸 `components/ui/chrome.ts`·`Dialog.tsx`·`lib/format-date.ts` 신설, 출석·담임·관리자·학생 레이아웃을 로그인과 같은 크림·코랄 톤으로 통일(AdminNav 폰 2행 탭, `[--header-h:6.25rem] lg:[--header-h:3.5rem]`), `theme-color`·manifest `#fff7ea`.
+- 출석 그리드: 좌석 칸을 진짜 `<button>`(aria-label, 44px, `touch-manipulation`, 포커스 링)으로, 정보 버튼은 형제 요소, 길게 누르기 대안 Shift+Enter(`onActivateToggle`), 탭 `role=tab`, 필터·승인·반려·일괄승인 44px, 날짜 Intl, 로딩·오류(다시 시도) 상태, 모달 Escape·`overscroll-contain`.
+- 담임 7화면·관리자/학년관리자 16화면: 라벨 `htmlFor`, 아이콘 버튼 `aria-label`, 44px, `alert()`→인라인 `aria-live` 알림, 날짜 Intl, 빈 상태·오류 상태, 모달 Dialog화(교사 추가·Excel 업로드·감독 누계), 콤보박스 ARIA(감독 교체).
+- 미착수: 탭·필터·월 상태의 URL 동기화, 탭 화살표 키 이동, 교사 행 select 즉시 저장의 되돌리기.
 
 ### 2026-10-21 — 로그인 페이지 재설계 (Claude Code 클라우드, 브랜치 `claude/upbeat-volta-8a7ixx`)
 

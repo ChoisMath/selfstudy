@@ -13,9 +13,9 @@ export const chrome = {
   /** 로고 + "출석부" */
   brand: "flex items-center gap-1.5 sm:gap-2 shrink-0 min-h-11 font-bold text-ink rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
   brandText: "text-sm sm:text-lg font-bold text-ink whitespace-nowrap",
-  /** 데스크톱 네비 링크(알약) */
+  /** 데스크톱 네비 링크(알약). display 는 호출부가 정한다(`hidden lg:inline-flex` 와 겹치면 inline-flex 가 이겨서 폰에서도 보임) */
   navLink: (active: boolean) =>
-    `inline-flex min-h-11 items-center px-3 text-sm font-medium rounded-xl whitespace-nowrap transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+    `min-h-11 items-center px-3 text-sm font-medium rounded-xl whitespace-nowrap transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
       active ? "bg-peach text-primary-deep" : "text-ink-muted hover:text-ink hover:bg-butter"
     }`,
   /** 모바일 가로 스크롤 탭(밑줄) */
