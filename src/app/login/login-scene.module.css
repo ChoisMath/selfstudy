@@ -1,0 +1,180 @@
+/* 자동 생성: scripts/login-scene-css.mjs (node scripts/login-scene-css.mjs > src/app/login/login-scene.module.css) — 손으로 고치지 말고 생성기를 수정한다 */
+.scene { --seat-blank: var(--color-seat-blank); --seat-present: var(--color-seat-present); }
+@keyframes pointerPath {
+  0%, 3.33% { transform: translate(150px, 100px); opacity: 0; }
+  8.33%, 11.25% { transform: translate(15px, 11px); opacity: 1; }
+  12.92%, 15.83% { transform: translate(51px, 11px); opacity: 1; }
+  17.50%, 20.42% { transform: translate(87px, 11px); opacity: 1; }
+  22.08%, 25.00% { transform: translate(123px, 11px); opacity: 1; }
+  26.67%, 29.58% { transform: translate(15px, 39px); opacity: 1; }
+  31.25%, 34.17% { transform: translate(51px, 39px); opacity: 1; }
+  35.83%, 38.75% { transform: translate(87px, 39px); opacity: 1; }
+  40.42%, 43.33% { transform: translate(123px, 39px); opacity: 1; }
+  45.00%, 47.92% { transform: translate(15px, 67px); opacity: 1; }
+  49.58%, 52.50% { transform: translate(51px, 67px); opacity: 1; }
+  54.17%, 57.08% { transform: translate(87px, 67px); opacity: 1; }
+  58.75%, 61.67% { transform: translate(123px, 67px); opacity: 1; }
+  65.83%, 100% { transform: translate(150px, 100px); opacity: 0; }
+}
+.pointer { opacity: 0; transform: translate(150px, 100px); animation: pointerPath 12s cubic-bezier(.4,0,.2,1) infinite; }
+@keyframes tapRipple {
+  0% { transform: scale(.4); opacity: 0; }
+  9.83% { transform: scale(.4); opacity: .8; }
+  12.33% { transform: scale(1.6); opacity: 0; }
+  14.42% { transform: scale(.4); opacity: .8; }
+  16.92% { transform: scale(1.6); opacity: 0; }
+  19.00% { transform: scale(.4); opacity: .8; }
+  21.50% { transform: scale(1.6); opacity: 0; }
+  23.58% { transform: scale(.4); opacity: .8; }
+  26.08% { transform: scale(1.6); opacity: 0; }
+  28.17% { transform: scale(.4); opacity: .8; }
+  30.67% { transform: scale(1.6); opacity: 0; }
+  32.75% { transform: scale(.4); opacity: .8; }
+  35.25% { transform: scale(1.6); opacity: 0; }
+  37.33% { transform: scale(.4); opacity: .8; }
+  39.83% { transform: scale(1.6); opacity: 0; }
+  41.92% { transform: scale(.4); opacity: .8; }
+  44.42% { transform: scale(1.6); opacity: 0; }
+  46.50% { transform: scale(.4); opacity: .8; }
+  49.00% { transform: scale(1.6); opacity: 0; }
+  51.08% { transform: scale(.4); opacity: .8; }
+  53.58% { transform: scale(1.6); opacity: 0; }
+  55.67% { transform: scale(.4); opacity: .8; }
+  58.17% { transform: scale(1.6); opacity: 0; }
+  60.25% { transform: scale(.4); opacity: .8; }
+  62.75% { transform: scale(1.6); opacity: 0; }
+  100% { transform: scale(.4); opacity: 0; }
+}
+.ripple { opacity: 0; transform-box: fill-box; transform-origin: center; animation: tapRipple 12s ease-out infinite; }
+@keyframes seat0 { 0%, 10.00% { fill: var(--seat-blank); } 11.00%, 88.33% { fill: var(--seat-present); } 90.83%, 100% { fill: var(--seat-blank); } }
+.seat0 { fill: var(--seat-present); animation: seat0 12s linear infinite; }
+@keyframes check0 { 0%, 10.00% { opacity: 0; transform: scale(.5); } 11.50%, 88.33% { opacity: 1; transform: scale(1); } 90.83%, 100% { opacity: 0; transform: scale(.5); } }
+.check0 { transform-box: fill-box; transform-origin: center; animation: check0 12s cubic-bezier(.34,1.56,.64,1) infinite; }
+@keyframes seat1 { 0%, 14.58% { fill: var(--seat-blank); } 15.58%, 88.33% { fill: var(--seat-present); } 90.83%, 100% { fill: var(--seat-blank); } }
+.seat1 { fill: var(--seat-present); animation: seat1 12s linear infinite; }
+@keyframes check1 { 0%, 14.58% { opacity: 0; transform: scale(.5); } 16.08%, 88.33% { opacity: 1; transform: scale(1); } 90.83%, 100% { opacity: 0; transform: scale(.5); } }
+.check1 { transform-box: fill-box; transform-origin: center; animation: check1 12s cubic-bezier(.34,1.56,.64,1) infinite; }
+@keyframes seat2 { 0%, 19.17% { fill: var(--seat-blank); } 20.17%, 88.33% { fill: var(--seat-present); } 90.83%, 100% { fill: var(--seat-blank); } }
+.seat2 { fill: var(--seat-present); animation: seat2 12s linear infinite; }
+@keyframes check2 { 0%, 19.17% { opacity: 0; transform: scale(.5); } 20.67%, 88.33% { opacity: 1; transform: scale(1); } 90.83%, 100% { opacity: 0; transform: scale(.5); } }
+.check2 { transform-box: fill-box; transform-origin: center; animation: check2 12s cubic-bezier(.34,1.56,.64,1) infinite; }
+@keyframes seat3 { 0%, 23.75% { fill: var(--seat-blank); } 24.75%, 88.33% { fill: var(--seat-present); } 90.83%, 100% { fill: var(--seat-blank); } }
+.seat3 { fill: var(--seat-present); animation: seat3 12s linear infinite; }
+@keyframes check3 { 0%, 23.75% { opacity: 0; transform: scale(.5); } 25.25%, 88.33% { opacity: 1; transform: scale(1); } 90.83%, 100% { opacity: 0; transform: scale(.5); } }
+.check3 { transform-box: fill-box; transform-origin: center; animation: check3 12s cubic-bezier(.34,1.56,.64,1) infinite; }
+@keyframes seat4 { 0%, 28.33% { fill: var(--seat-blank); } 29.33%, 88.33% { fill: var(--seat-present); } 90.83%, 100% { fill: var(--seat-blank); } }
+.seat4 { fill: var(--seat-present); animation: seat4 12s linear infinite; }
+@keyframes check4 { 0%, 28.33% { opacity: 0; transform: scale(.5); } 29.83%, 88.33% { opacity: 1; transform: scale(1); } 90.83%, 100% { opacity: 0; transform: scale(.5); } }
+.check4 { transform-box: fill-box; transform-origin: center; animation: check4 12s cubic-bezier(.34,1.56,.64,1) infinite; }
+@keyframes seat5 { 0%, 32.92% { fill: var(--seat-blank); } 33.92%, 88.33% { fill: var(--seat-present); } 90.83%, 100% { fill: var(--seat-blank); } }
+.seat5 { fill: var(--seat-present); animation: seat5 12s linear infinite; }
+@keyframes check5 { 0%, 32.92% { opacity: 0; transform: scale(.5); } 34.42%, 88.33% { opacity: 1; transform: scale(1); } 90.83%, 100% { opacity: 0; transform: scale(.5); } }
+.check5 { transform-box: fill-box; transform-origin: center; animation: check5 12s cubic-bezier(.34,1.56,.64,1) infinite; }
+@keyframes seat6 { 0%, 37.50% { fill: var(--seat-blank); } 38.50%, 88.33% { fill: var(--seat-present); } 90.83%, 100% { fill: var(--seat-blank); } }
+.seat6 { fill: var(--seat-present); animation: seat6 12s linear infinite; }
+@keyframes check6 { 0%, 37.50% { opacity: 0; transform: scale(.5); } 39.00%, 88.33% { opacity: 1; transform: scale(1); } 90.83%, 100% { opacity: 0; transform: scale(.5); } }
+.check6 { transform-box: fill-box; transform-origin: center; animation: check6 12s cubic-bezier(.34,1.56,.64,1) infinite; }
+@keyframes seat7 { 0%, 42.08% { fill: var(--seat-blank); } 43.08%, 88.33% { fill: var(--seat-present); } 90.83%, 100% { fill: var(--seat-blank); } }
+.seat7 { fill: var(--seat-present); animation: seat7 12s linear infinite; }
+@keyframes check7 { 0%, 42.08% { opacity: 0; transform: scale(.5); } 43.58%, 88.33% { opacity: 1; transform: scale(1); } 90.83%, 100% { opacity: 0; transform: scale(.5); } }
+.check7 { transform-box: fill-box; transform-origin: center; animation: check7 12s cubic-bezier(.34,1.56,.64,1) infinite; }
+@keyframes seat8 { 0%, 46.67% { fill: var(--seat-blank); } 47.67%, 88.33% { fill: var(--seat-present); } 90.83%, 100% { fill: var(--seat-blank); } }
+.seat8 { fill: var(--seat-present); animation: seat8 12s linear infinite; }
+@keyframes check8 { 0%, 46.67% { opacity: 0; transform: scale(.5); } 48.17%, 88.33% { opacity: 1; transform: scale(1); } 90.83%, 100% { opacity: 0; transform: scale(.5); } }
+.check8 { transform-box: fill-box; transform-origin: center; animation: check8 12s cubic-bezier(.34,1.56,.64,1) infinite; }
+@keyframes seat9 { 0%, 51.25% { fill: var(--seat-blank); } 52.25%, 88.33% { fill: var(--seat-present); } 90.83%, 100% { fill: var(--seat-blank); } }
+.seat9 { fill: var(--seat-present); animation: seat9 12s linear infinite; }
+@keyframes check9 { 0%, 51.25% { opacity: 0; transform: scale(.5); } 52.75%, 88.33% { opacity: 1; transform: scale(1); } 90.83%, 100% { opacity: 0; transform: scale(.5); } }
+.check9 { transform-box: fill-box; transform-origin: center; animation: check9 12s cubic-bezier(.34,1.56,.64,1) infinite; }
+@keyframes seat10 { 0%, 55.83% { fill: var(--seat-blank); } 56.83%, 88.33% { fill: var(--seat-present); } 90.83%, 100% { fill: var(--seat-blank); } }
+.seat10 { fill: var(--seat-present); animation: seat10 12s linear infinite; }
+@keyframes check10 { 0%, 55.83% { opacity: 0; transform: scale(.5); } 57.33%, 88.33% { opacity: 1; transform: scale(1); } 90.83%, 100% { opacity: 0; transform: scale(.5); } }
+.check10 { transform-box: fill-box; transform-origin: center; animation: check10 12s cubic-bezier(.34,1.56,.64,1) infinite; }
+@keyframes seat11 { 0%, 60.42% { fill: var(--seat-blank); } 61.42%, 88.33% { fill: var(--seat-present); } 90.83%, 100% { fill: var(--seat-blank); } }
+.seat11 { fill: var(--seat-present); animation: seat11 12s linear infinite; }
+@keyframes check11 { 0%, 60.42% { opacity: 0; transform: scale(.5); } 61.92%, 88.33% { opacity: 1; transform: scale(1); } 90.83%, 100% { opacity: 0; transform: scale(.5); } }
+.check11 { transform-box: fill-box; transform-origin: center; animation: check11 12s cubic-bezier(.34,1.56,.64,1) infinite; }
+@keyframes progressFill { 0%, 8.33% { transform: scaleX(0); } 61.67%, 88.33% { transform: scaleX(1); } 90.83%, 100% { transform: scaleX(0); } }
+.progress { transform-box: fill-box; transform-origin: left center; animation: progressFill 12s linear infinite; }
+@keyframes line0 { 0%, 5.00% { transform: scaleX(0); } 13.33%, 88.33% { transform: scaleX(1); } 90.83%, 100% { transform: scaleX(0); } }
+.line0 { transform-box: fill-box; transform-origin: left center; animation: line0 12s linear infinite; }
+@keyframes line1 { 0%, 16.25% { transform: scaleX(0); } 24.58%, 88.33% { transform: scaleX(1); } 90.83%, 100% { transform: scaleX(0); } }
+.line1 { transform-box: fill-box; transform-origin: left center; animation: line1 12s linear infinite; }
+@keyframes line2 { 0%, 27.50% { transform: scaleX(0); } 35.83%, 88.33% { transform: scaleX(1); } 90.83%, 100% { transform: scaleX(0); } }
+.line2 { transform-box: fill-box; transform-origin: left center; animation: line2 12s linear infinite; }
+@keyframes line3 { 0%, 38.75% { transform: scaleX(0); } 47.08%, 88.33% { transform: scaleX(1); } 90.83%, 100% { transform: scaleX(0); } }
+.line3 { transform-box: fill-box; transform-origin: left center; animation: line3 12s linear infinite; }
+@keyframes line4 { 0%, 50.00% { transform: scaleX(0); } 58.33%, 88.33% { transform: scaleX(1); } 90.83%, 100% { transform: scaleX(0); } }
+.line4 { transform-box: fill-box; transform-origin: left center; animation: line4 12s linear infinite; }
+@keyframes upperArm {
+  0.00% { transform: rotate(10.18deg); }
+  5.00% { transform: rotate(107.03deg); }
+  7.08% { transform: rotate(84.32deg); }
+  9.17% { transform: rotate(54.80deg); }
+  11.25% { transform: rotate(18.46deg); }
+  13.33% { transform: rotate(-8.86deg); }
+  16.25% { transform: rotate(104.73deg); }
+  18.33% { transform: rotate(81.03deg); }
+  20.42% { transform: rotate(54.62deg); }
+  22.50% { transform: rotate(24.89deg); }
+  24.58% { transform: rotate(3.52deg); }
+  27.50% { transform: rotate(104.88deg); }
+  29.58% { transform: rotate(80.52deg); }
+  31.67% { transform: rotate(57.04deg); }
+  33.75% { transform: rotate(31.67deg); }
+  35.83% { transform: rotate(14.44deg); }
+  38.75% { transform: rotate(108.05deg); }
+  40.83% { transform: rotate(82.51deg); }
+  42.92% { transform: rotate(61.44deg); }
+  45.00% { transform: rotate(38.99deg); }
+  47.08% { transform: rotate(24.86deg); }
+  50.00% { transform: rotate(117.30deg); }
+  52.08% { transform: rotate(87.11deg); }
+  54.17% { transform: rotate(67.81deg); }
+  56.25% { transform: rotate(47.17deg); }
+  58.33% { transform: rotate(35.59deg); }
+  63.33% { transform: rotate(10.18deg); }
+  88.33% { transform: rotate(10.18deg); }
+  100% { transform: rotate(10.18deg); }
+}
+@keyframes forearm {
+  0.00% { transform: rotate(98.34deg); }
+  5.00% { transform: rotate(89.80deg); }
+  7.08% { transform: rotate(116.89deg); }
+  9.17% { transform: rotate(131.93deg); }
+  11.25% { transform: rotate(143.08deg); }
+  13.33% { transform: rotate(133.71deg); }
+  16.25% { transform: rotate(80.56deg); }
+  18.33% { transform: rotate(107.37deg); }
+  20.42% { transform: rotate(120.04deg); }
+  22.50% { transform: rotate(130.23deg); }
+  24.58% { transform: rotate(122.03deg); }
+  27.50% { transform: rotate(68.40deg); }
+  29.58% { transform: rotate(95.83deg); }
+  31.67% { transform: rotate(106.84deg); }
+  33.75% { transform: rotate(116.66deg); }
+  35.83% { transform: rotate(109.05deg); }
+  38.75% { transform: rotate(52.02deg); }
+  40.83% { transform: rotate(82.01deg); }
+  42.92% { transform: rotate(92.03deg); }
+  45.00% { transform: rotate(102.02deg); }
+  47.08% { transform: rotate(94.53deg); }
+  50.00% { transform: rotate(25.01deg); }
+  52.08% { transform: rotate(64.99deg); }
+  54.17% { transform: rotate(74.79deg); }
+  56.25% { transform: rotate(85.67deg); }
+  58.33% { transform: rotate(77.77deg); }
+  63.33% { transform: rotate(98.34deg); }
+  88.33% { transform: rotate(98.34deg); }
+  100% { transform: rotate(98.34deg); }
+}
+.upperArm { transform-box: fill-box; transform-origin: center; transform: rotate(10.18deg); animation: upperArm 12s cubic-bezier(.4,0,.2,1) infinite; }
+.forearm { transform-box: fill-box; transform-origin: center; transform: rotate(98.34deg); animation: forearm 12s cubic-bezier(.4,0,.2,1) infinite; }
+@keyframes clockHand { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.clockHand { transform-box: fill-box; transform-origin: 50% 100%; animation: clockHand 12s linear infinite; }
+@keyframes lampGlow { from { opacity: .28; } to { opacity: .5; } }
+.glow { opacity: .4; animation: lampGlow 3.2s ease-in-out infinite alternate; }
+.paused, .paused * { animation-play-state: paused; }
+@media (prefers-reduced-motion: reduce) {
+  .scene, .scene * { animation: none !important; }
+}

@@ -2,6 +2,18 @@
 
 최신 항목을 위에 추가한다. 날짜·도구·변경 이유·파일·실제로 실행한 검증·남은 작업을 기록한다. 기존 상세 이력은 `.claude/PROJECT_MAP.md`, `docs/superpowers/`, `.plans/`, Git 및 Claude 세션 원문에 그대로 남아 있다.
 
+## 2026-10-21 — Claude Code(클라우드) — 로그인 페이지 재설계 + 학습·출석 모션그래픽
+
+- 요청: 로그인·출석체크·교사·관리자 전체 사용성 개선의 1단계. `ui-ux-pro-max`로 로그인 페이지를 학습 분위기의 전문적인 디자인으로 바꾸고, 학생이 학습하고 교사가 출석체크하는 모션그래픽 삽입. 포산고 로고·로그인 기능 유지. 브랜치 `claude/upbeat-volta-8a7ixx`.
+- 디자인 근거: `search.py --design-system` 1차 결과(Claymorphism·Baloo 2)는 아동용이라 기각, 재질의로 Minimalism & Swiss(기본 `#1E3A5F` navy, 보조 `#2563EB`, 배경 `#F8FAFC`, 강조 `#059669`)를 채택. 장면의 좌석 색은 출석 그리드의 `#dbeafe`(미체크)·`#bbf7d0`(출석)을 그대로 사용. UX 검색 근거: 접근 가능한 인증(autocomplete·붙여넣기 허용), 비밀번호 표시 토글, 감속 모션, 움직이는 콘텐츠의 일시정지 제어.
+- 변경 파일: `src/app/login/page.tsx`(재작성: lg 2열, tablist 탭 + 화살표 키, 마지막 탭 localStorage, 단일 submit 핸들러, autocomplete, 비밀번호 토글, `role="alert"` + 첫 입력칸 포커스, 44px 이상 터치 영역, `useSyncExternalStore`로 날짜·저장 탭), `src/app/login/LoginScene.tsx`(신규 SVG 장면), `src/app/login/login-scene.module.css`(신규·자동 생성), `scripts/login-scene-css.mjs`(신규 생성기: 좌석 12칸 순차 탭·물결·체크·진행 막대, 노트 5줄 필기, 2관절 팔 역기구학, 시계·스탠드, 12초 루프), `src/app/globals.css`(`@theme static` 토큰 12개), `tests/login-page.test.ts`(신규), `.claude/PROJECT_MAP.md`·`.claude/HANDOFF.md`.
+- 유지한 것: `actions.ts`와 formData 키(`loginId`·`password`·`name`·`studentCode`), 성공 시 `window.location.href = "/"`, `/posan.svg` 로고(`next/image`, svg 라 자동 unoptimized), `/help` 링크.
+- 검증: ① `npx eslint src/app/login/ tests/login-page.test.ts scripts/login-scene-css.mjs` 통과(처음 `react-hooks/set-state-in-effect` 오류 → `useSyncExternalStore`로 수정) ② `npx tsc --noEmit` 통과(테스트의 정규식 `s` 플래그가 target ES2017 에서 오류 → 제거) ③ `tsx tests/login-page.test.ts` 통과 ④ 로컬 `next dev`(더미 DATABASE_URL) + Playwright(`/opt/node-tools` playwright-core, `/opt/pw-browsers/chromium`): 375·1024·1440px 스크린샷, 가로 넘침 없음, 44px 미만 대상 없음, 콘솔 오류 없음, 애니메이션 36개 running / 일시정지 시 paused / `reducedMotion: reduce`에서 0개, 학생 탭 로그인 실패 시 `role=alert` 표시 + 이름 칸 포커스 ⑤ 파일 수정 중 HMR 로 서버 번들이 낡아 hydration 경고가 1회 보였으나 서버 재시작 후 재현 없음 ⑥ 프로덕션 빌드 결과는 아래 줄.
+- 빌드: `npx next build`(더미 DATABASE_URL·AUTH_SECRET) 종료 코드 0 — Prisma generate·컴파일·정적 페이지 67개 생성, `/login` 정적(○). 기존 middleware→proxy deprecation 경고만 있음. 배포 미실행.
+- 기록: `project-map-updater` 에이전트 대신 `.claude/PROJECT_MAP.md`를 직접 갱신(login 트리·scripts·주의사항·수정 이력). `responsive-ui-reviewer` 에이전트는 이 환경에 없어 위 Playwright 점검으로 대체.
+- 주의: `pkill -f 'next dev …'` 를 Bash 도구 명령 안에 쓰면 패턴이 래퍼 셸 argv 에 들어가 자기 자신을 죽인다(exit 144) → 스크립트 파일로 분리하고 `$$`·`$PPID` 제외.
+- 남은 작업: `/web-design-guidelines`로 출석체크·교사·관리자 화면 사용성 검토·개선(2단계). 배포는 사용자 승인 후.
+
 ## 2026-10-21 — Claude Code(클라우드) — 클라우드 세션용 스킬·SessionStart 훅·MCP 설정 추가
 
 - 요청: ChoisMath/MathChois 공개 레포의 설정 핸드아웃대로 디자인 스킬 3종·MCP 런처·`.mcp.json`을 가져오고, `.claude/settings.json`·`.claude/hooks/session-start.sh`는 이 레포 스택에 맞게 새로 작성. 브랜치 `claude/peaceful-galileo-lxzu81`.

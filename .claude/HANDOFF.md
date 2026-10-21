@@ -4,6 +4,12 @@
 
 ## 현재 작업
 
+브랜치 `claude/upbeat-volta-8a7ixx`에서 로그인 페이지를 재설계했다. 사용자 요청은 "로그인·출석체크·교사·관리자 페이지 전체 사용성 개선(`/web-design-guidelines`)" 중 1단계로, `ui-ux-pro-max`로 디자인 시스템(Minimalism & Swiss, navy 기본색, 앱 좌석 색 재사용)을 뽑아 로그인 화면을 학습 분위기의 2열 레이아웃으로 바꾸고, 학생이 필기하고 교사가 좌석표를 눌러 출석을 확인하는 SVG 모션그래픽(`LoginScene.tsx` + 생성기 `scripts/login-scene-css.mjs`)을 넣었다. 포산고 로고와 `actions.ts` 로그인 기능·formData 키는 그대로다. ESLint·tsc·`tests/login-page.test.ts`·로컬 dev 서버 Playwright 확인(375/1024/1440px, 감속 모션, 일시정지, 학생 탭 오류 표시, 가로 넘침 없음, 콘솔 오류 없음)을 통과했고 프로덕션 빌드 결과는 `.claude/WORK_LOG.md` 최신 항목에 있다. 배포하지 않았다.
+
+다음 단계(미착수): `/web-design-guidelines`로 출석체크(`/attendance/[grade]`)·교사(`/homeroom`)·관리자(`/admin`, `/grade-admin`) 화면을 검토하고 같은 토큰(`bg-navy`, `text-ink` 등)으로 사용성을 개선한다. 로그인 장면 CSS는 생성기 산출물이므로 직접 고치지 않는다.
+
+## 앞선 작업 (2026-10-21, 클라우드 세션 설정)
+
 브랜치 `claude/peaceful-galileo-lxzu81`에 클라우드 세션 설정을 추가했다. MathChois 에서 스킬 3종(`frontend-design`·`ui-ux-pro-max`·`web-design-guidelines`)·`.claude/mcp/launch.mjs`·`.mcp.json`을 복사하고, `.claude/settings.json`과 `.claude/hooks/session-start.sh`(원격 세션 한정 `npm install` → `prisma generate` → MCP prefetch, 동기·멱등)를 새로 작성했다. 훅 실행·ESLint·tsx 테스트·스킬 인식·`search.py` 검증을 통과했고 앱 코드·배포는 바꾸지 않았다. 기본 브랜치 머지 후 새 클라우드 세션부터 적용된다. 상세는 `.claude/WORK_LOG.md` 최신 항목.
 
 ## 앞선 작업 (2026-09-19)

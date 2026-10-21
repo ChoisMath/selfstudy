@@ -15,6 +15,23 @@
   --font-mono: var(--font-geist-mono);
 }
 
+/* 학습 분위기 디자인 토큰 — 로그인에서 시작해 교사·관리자 화면으로 확장한다.
+   static: CSS 모듈·SVG 속성의 var() 참조에서도 항상 존재해야 하므로 사용 여부와 무관하게 출력 */
+@theme static {
+  --color-ink: #0f172a;
+  --color-ink-muted: #475569;
+  --color-navy: #1e3a5f;
+  --color-navy-deep: #16304f;
+  --color-navy-soft: #2f5584;
+  --color-canvas: #f8fafc;
+  --color-line: #e4e7eb;
+  --color-seat-blank: #dbeafe;
+  --color-seat-present: #bbf7d0;
+  --color-seat-absent: #fecaca;
+  --color-lamp: #fde68a;
+  --color-ok: #059669;
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;

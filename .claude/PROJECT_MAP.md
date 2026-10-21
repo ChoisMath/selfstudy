@@ -1,6 +1,6 @@
 # 자율학습 출석부 시스템 - 프로젝트 지도
 
-> 마지막 업데이트: 2026-09-19
+> 마지막 업데이트: 2026-10-21
 > 이 파일은 새 세션에서 코드베이스를 빠르게 파악하기 위한 참조 문서입니다.
 
 ## 개요
@@ -34,11 +34,13 @@
 src/
 ├── app/
 │   ├── layout.tsx              # 루트 (Providers 래핑)
-│   ├── globals.css             # Tailwind 진입 + `:root --header-h: 3.5rem`(sticky nav h-14) + `@utility table-scroll`(표 래퍼 내부 스크롤포트)
+│   ├── globals.css             # Tailwind 진입 + `:root --header-h: 3.5rem`(sticky nav h-14) + `@utility table-scroll`(표 래퍼 내부 스크롤포트) + `@theme static` 학습 분위기 토큰(`--color-ink/ink-muted/navy/navy-deep/navy-soft/canvas/line/seat-blank/seat-present/seat-absent/lamp/ok` → `bg-navy`·`text-ink` 등. static 이라 CSS 모듈·SVG 의 var() 에서도 항상 존재)
 │   ├── page.tsx                # / → admin→/admin, 기타 교사→/attendance
 │   ├── providers.tsx           # SessionProvider
 │   ├── login/
-│   │   ├── page.tsx            # 로그인 UI (교사/학생 탭)
+│   │   ├── page.tsx            # 로그인 UI — lg 2열(왼쪽 navy 학교 패널 + `LoginScene` 모션그래픽 / 오른쪽 카드). 교사·학생 `role="tablist"` 탭(화살표 키, 마지막 탭 localStorage `selfstudy.login.tab`), 단일 `handleSubmit`이 탭에 따라 `loginTeacher`/`loginStudent` 호출(formData 키 `loginId`·`password`·`name`·`studentCode` 불변), `autoComplete`·비밀번호 표시 토글·`role="alert"` 오류 + 첫 입력칸 포커스, 날짜·저장 탭은 `useSyncExternalStore`(hydration 불일치 없음). `tests/login-page.test.ts`가 고정
+│   │   ├── LoginScene.tsx      # **신규.** 학생 필기 + 교사 좌석표 탭 장면 SVG(`role="img"`). 좌표 상수(LINE_X0/X1, SHOULDER, UPPER_ARM/FOREARM)는 생성기와 동일해야 함. `paused` prop → `.paused` 클래스
+│   │   ├── login-scene.module.css # **신규·자동 생성.** `node scripts/login-scene-css.mjs > …` 산출물(손으로 수정 금지, 테스트가 생성기 출력과 비교). 12초 루프, transform/opacity/fill 만 애니메이션, 기본 상태 = 완료 화면이라 `prefers-reduced-motion`·일시정지에서 정지 화면
 │   │   └── actions.ts          # Server Action (signIn 호출)
 │   ├── admin/                  # 메인관리자 전용
 │   │   ├── layout.tsx          # AdminNav 포함
@@ -155,6 +157,7 @@ src/
 └── generated/prisma/   # Prisma 자동 생성 (gitignore)
 
 scripts/
+├── login-scene-css.mjs      # **신규.** 로그인 모션그래픽 키프레임 생성기(2관절 팔 역기구학 포함). `node scripts/login-scene-css.mjs > src/app/login/login-scene.module.css`
 └── trigger-supervisor-reminders.mjs  # Railway Cron 서비스가 호출 → APP_URL + Bearer CRON_SECRET 로 /api/cron/supervisor-reminders POST
 
 public/
@@ -444,6 +447,7 @@ SupervisorReminderLog: teacherId, grade, date(@db.Date), sentAt — @@unique([te
 
 ## 주의사항 / 특이 패턴
 
+- **로그인 장면 CSS는 생성기 산출물**: `src/app/login/login-scene.module.css`를 직접 고치지 말고 `scripts/login-scene-css.mjs`를 수정한 뒤 재생성한다(`tests/login-page.test.ts`가 산출물과 생성기 출력의 일치, 좌표 상수 일치, transform/opacity/fill 외 속성 애니메이션 금지를 검사). 장면 색은 `globals.css`의 `@theme static` 토큰을 `var()`로 참조한다
 - `react-hooks/set-state-in-effect`는 eslint 오류(빌드 게이트 아님)이며 "이전 값 저장 후 렌더 중 상태 조정" 패턴으로 대응 — `eslint-disable` 금지. 검수(tsc/eslint/build)는 `~/dev/selfstudy` 로컬 클론에서 실행(Google Drive 트리는 I/O로 정지)
 - 표 래퍼는 `overflow-x-auto table-scroll`(`globals.css` `@utility`, `--header-h` 기반 내부 스크롤포트) + thead `sticky top-0 z-20` / thead 안 인덱스 th `z-30` / 본문 인덱스 td `z-10` 관행 — 래퍼에 `overflow-x-auto`만 두면 높이 제한이 없어 sticky thead가 붙지 않음. 새 표는 이 구조를 따르고 `tests/responsive-tables.test.ts`의 `TABLE_FILES`에 추가. 헤더가 다른 레이아웃은 루트에 `[--header-h:…]` 재정의(학생 `7.625rem`, 담임 `6.25rem` + `lg:[--header-h:3.5rem]` — lg 미만에서 탭이 2행째로 내려감)
 - `RoomGrid`에는 X(해제) 버튼이 없음 — 해제는 좌석 탭→선택→`SeatingEditor` 하단 액션바, 또는 좌석→`UnassignedStudents` 패널 드롭(`UNASSIGNED_DROP_ID`). `tests/responsive-tables.test.ts`·`tests/seating-editor-responsive.test.ts`가 클래스/식별자를 src 스캔으로 고정하므로 관련 클래스(`min-h-11`, `z-20`, `table-scroll`, `ring-2 ring-blue-500` 등) 변경 시 테스트도 함께 갱신
@@ -455,6 +459,12 @@ SupervisorReminderLog: teacherId, grade, date(@db.Date), sentAt — @@unique([te
 - **내레이션 무음 트림은 앞 -40dB / 뒤 -45dB**(`narrate.mjs` ffmpeg `silenceremove`) — 앞머리 잡음을 제거하고 약한 끝 음절을 보존한다. 교사·학생·학년관리자 편은 마지막 0.5초 `qsin` 페이드 후 1초 무음(`narration.ts` 상수), 문장 간격 0.2초 유지(문장 사이 약 1.2초). 후처리만 바꾸면 `node scripts/narrate.mjs --guide <guide> --reprocess`로 원본 raw WAV에서 재처리한다(페이드 중첩·재합성 없음). 일반 생성은 fadeOut·trailing·processingVersion 캐시 조건 변경 시 재합성할 수 있으며, `--measure`는 오디오를 바꾸지 않는다
 
 ## 수정 이력 (주요 변경)
+
+### 2026-10-21 — 로그인 페이지 재설계 (Claude Code 클라우드, 브랜치 `claude/upbeat-volta-8a7ixx`)
+
+- `ui-ux-pro-max` 디자인 시스템(Minimalism & Swiss, navy `#1E3A5F` 기본, 앱 좌석 색 재사용)에 맞춰 `src/app/login/page.tsx`를 2열 레이아웃으로 재작성. 로고(`/posan.svg`)와 `actions.ts` 서버 액션·formData 키는 그대로.
+- `LoginScene.tsx` + 생성기 `scripts/login-scene-css.mjs` → `login-scene.module.css`: 학생 필기(2관절 팔)·교사 좌석표 탭 모션그래픽, 일시정지 버튼, `prefers-reduced-motion` 정지 화면.
+- `globals.css`에 `@theme static` 토큰 추가, `tests/login-page.test.ts` 신설.
 
 ### 2026-09-19: 도움말의 안내 영상 3편 연결 교체
 - `src/components/guide/videos.ts`의 YouTube ID를 교사 `a2BRtp_1Yqo`·학생 `554VD2s8G1E`·학년관리자 `VOlUOgOuNwE`로 교체했다. 새 렌더 타임라인에 맞춰 담임교사 도움말 영상 시작은 313초, 좌석 도움말은 206초로 조정했다.
