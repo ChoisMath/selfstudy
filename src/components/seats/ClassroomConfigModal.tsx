@@ -226,7 +226,7 @@ export default function ClassroomConfigModal({
               </div>
 
               {isLoading ? (
-                <div className="py-8 text-center text-gray-400">불러오는 중...</div>
+                <div className="py-8 text-center text-gray-400">불러오는 중…</div>
               ) : classrooms.length === 0 ? (
                 <div className="rounded-lg border py-8 text-center text-gray-400">등록된 학급 교실이 없습니다.</div>
               ) : (
@@ -398,7 +398,7 @@ export default function ClassroomConfigModal({
                   onClick={handleSubmit}
                   className="min-h-11 whitespace-nowrap rounded-md bg-blue-600 px-4 text-sm text-white hover:bg-blue-700 disabled:opacity-50"
                 >
-                  {busy ? "저장 중..." : "저장"}
+                  {busy ? "저장 중…" : "저장"}
                 </button>
               </div>
             </div>
