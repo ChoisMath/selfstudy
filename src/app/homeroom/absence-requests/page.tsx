@@ -4,6 +4,8 @@ import { useState, useCallback } from "react";
 import useSWR from "swr";
 import { SESSION_META, type SessionType } from "@/lib/sessions";
 import { reasonLabel } from "@/lib/absence-reasons";
+import { chrome } from "@/components/ui/chrome";
+import { formatMonthDay } from "@/lib/format-date";
 
 type AbsenceRequestData = {
   id: number;
@@ -45,9 +47,12 @@ const STATUS_COLORS: Record<string, string> = {
   rejected: "bg-red-100 text-red-800",
 };
 
+const FILTERS = ["", "pending", "approved", "rejected"] as const;
+
 export default function AbsenceRequestsPage() {
   const [statusFilter, setStatusFilter] = useState<string>("");
   const [processingId, setProcessingId] = useState<number | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const apiUrl = statusFilter
     ? `/api/homeroom/absence-requests?status=${statusFilter}`
@@ -65,6 +70,7 @@ export default function AbsenceRequestsPage() {
       if (!confirm(`이 신청을 ${actionLabel}하시겠습니까?`)) return;
 
       setProcessingId(id);
+      setActionError(null);
 
       try {
         const res = await fetch(`/api/homeroom/absence-requests/${id}`, {
@@ -81,7 +87,7 @@ export default function AbsenceRequestsPage() {
         mutate();
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : `${actionLabel}에 실패했습니다.`;
-        alert(msg);
+        setActionError(`${msg} 다시 시도하세요.`);
       } finally {
         setProcessingId(null);
       }
@@ -91,18 +97,16 @@ export default function AbsenceRequestsPage() {
 
   return (
     <div>
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">불참신청 관리</h1>
-        <div className="flex items-center gap-2">
-          {["", "pending", "approved", "rejected"].map((status) => (
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h1 className="text-2xl font-bold text-ink text-balance">불참신청 관리</h1>
+        <div className="flex flex-wrap items-center gap-2" role="group" aria-label="상태 필터">
+          {FILTERS.map((status) => (
             <button
               key={status}
+              type="button"
               onClick={() => setStatusFilter(status)}
-              className={`px-3 py-1.5 text-sm rounded-md border transition-colors ${
-                statusFilter === status
-                  ? "border-blue-500 bg-blue-50 text-blue-700"
-                  : "border-gray-300 text-gray-600 hover:bg-gray-50"
-              }`}
+              aria-pressed={statusFilter === status}
+              className={chrome.chip(statusFilter === status)}
             >
               {status === "" ? "전체" : STATUS_LABELS[status]}
             </button>
@@ -110,89 +114,101 @@ export default function AbsenceRequestsPage() {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+      <div role="status" aria-live="polite">
+        {actionError && <div className={`${chrome.notice("error")} mb-3`}>{actionError}</div>}
+      </div>
+
+      <div className={`${chrome.card} overflow-hidden`}>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
+            <thead className={`${chrome.tableHead} sticky top-0 z-10 border-b border-line`}>
               <tr>
-                <th className="px-4 py-3 text-left font-medium text-gray-600 whitespace-nowrap">학생</th>
-                <th className="px-3 py-3 text-center font-medium text-gray-600 whitespace-nowrap">날짜</th>
-                <th className="px-3 py-3 text-center font-medium text-gray-600 whitespace-nowrap">시간</th>
-                <th className="px-3 py-3 text-center font-medium text-gray-600 whitespace-nowrap">사유</th>
-                <th className="px-3 py-3 text-left font-medium text-gray-600 whitespace-nowrap">상세</th>
-                <th className="px-3 py-3 text-center font-medium text-gray-600 whitespace-nowrap">상태</th>
-                <th className="px-3 py-3 text-center font-medium text-gray-600 whitespace-nowrap">처리</th>
+                <th className="whitespace-nowrap px-4 py-3 text-left font-medium">학생</th>
+                <th className="whitespace-nowrap px-3 py-3 text-center font-medium">날짜</th>
+                <th className="whitespace-nowrap px-3 py-3 text-center font-medium">시간</th>
+                <th className="whitespace-nowrap px-3 py-3 text-center font-medium">사유</th>
+                <th className="whitespace-nowrap px-3 py-3 text-left font-medium">상세</th>
+                <th className="whitespace-nowrap px-3 py-3 text-center font-medium">상태</th>
+                <th className="whitespace-nowrap px-3 py-3 text-center font-medium">처리</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-line">
               {isLoading ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-8 text-center text-gray-400">
-                    불러오는 중...
+                  <td colSpan={7} className="px-4 py-8 text-center text-ink-muted">
+                    불러오는 중…
                   </td>
                 </tr>
               ) : error ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-8 text-center text-red-500">
-                    {error.message}
+                  <td colSpan={7} className="px-4 py-6">
+                    <div role="alert" className={chrome.notice("error")}>{error.message}</div>
                   </td>
                 </tr>
               ) : requests.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-8 text-center text-gray-400">
+                  <td colSpan={7} className="px-4 py-8 text-center text-ink-muted">
                     신청이 없습니다.
                   </td>
                 </tr>
               ) : (
                 requests.map((req) => (
-                  <tr key={req.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 text-gray-900 whitespace-nowrap">
+                  <tr key={req.id} className={chrome.tableRowHover}>
+                    <td className="whitespace-nowrap px-4 py-3 text-ink">
                       <div className="font-medium">{req.student.name}</div>
-                      <div className="text-xs text-gray-500">
+                      <div className="text-xs text-ink-muted tabular-nums">
                         {req.student.grade}-{req.student.classNumber} {req.student.studentNumber}번
                       </div>
                     </td>
-                    <td className="px-3 py-3 text-center text-gray-600 whitespace-nowrap">
-                      {req.date}
+                    <td className="whitespace-nowrap px-3 py-3 text-center text-ink-muted tabular-nums">
+                      {formatMonthDay(req.date)}
                     </td>
-                    <td className="px-3 py-3 text-center text-gray-600 whitespace-nowrap">
+                    <td className="whitespace-nowrap px-3 py-3 text-center text-ink-muted">
                       {SESSION_META[req.sessionType].shortLabel}
                     </td>
-                    <td className="px-3 py-3 text-center text-gray-600 whitespace-nowrap">
+                    <td className="whitespace-nowrap px-3 py-3 text-center text-ink-muted">
                       {reasonLabel(req.reasonType)}
                     </td>
-                    <td className="px-3 py-3 text-gray-600 whitespace-nowrap max-w-[200px] truncate">
-                      {req.detail || "-"}
+                    <td className="max-w-[240px] min-w-[8rem] px-3 py-3 text-ink-muted">
+                      {req.detail ? (
+                        <span title={req.detail} className="line-clamp-2 break-words">{req.detail}</span>
+                      ) : (
+                        "-"
+                      )}
                     </td>
-                    <td className="px-3 py-3 text-center whitespace-nowrap">
+                    <td className="whitespace-nowrap px-3 py-3 text-center">
                       <span
-                        className={`inline-block px-2 py-0.5 text-xs font-medium rounded-full ${
+                        className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
                           STATUS_COLORS[req.status]
                         }`}
                       >
                         {STATUS_LABELS[req.status]}
                       </span>
                     </td>
-                    <td className="px-3 py-3 text-center whitespace-nowrap">
+                    <td className="whitespace-nowrap px-3 py-3 text-center">
                       {req.status === "pending" ? (
-                        <div className="flex items-center justify-center gap-1">
+                        <div className="flex items-center justify-center gap-2">
                           <button
+                            type="button"
                             onClick={() => handleAction(req.id, "approved")}
                             disabled={processingId === req.id}
-                            className="px-2.5 py-1 text-xs font-medium text-green-700 bg-green-50 border border-green-200 rounded hover:bg-green-100 disabled:opacity-50 transition-colors"
+                            aria-label={`${req.student.name} ${formatMonthDay(req.date)} 신청 승인`}
+                            className={`${chrome.primaryButton} px-3`}
                           >
                             승인
                           </button>
                           <button
+                            type="button"
                             onClick={() => handleAction(req.id, "rejected")}
                             disabled={processingId === req.id}
-                            className="px-2.5 py-1 text-xs font-medium text-red-700 bg-red-50 border border-red-200 rounded hover:bg-red-100 disabled:opacity-50 transition-colors"
+                            aria-label={`${req.student.name} ${formatMonthDay(req.date)} 신청 반려`}
+                            className={`${chrome.secondaryButton} px-3`}
                           >
                             반려
                           </button>
                         </div>
                       ) : (
-                        <span className="text-xs text-gray-400">
+                        <span className="text-xs text-ink-muted">
                           {req.reviewer?.name}
                         </span>
                       )}
@@ -204,7 +220,7 @@ export default function AbsenceRequestsPage() {
           </table>
         </div>
         {!isLoading && requests.length > 0 && (
-          <div className="px-4 py-3 bg-gray-50 border-t border-gray-200 text-sm text-gray-500">
+          <div className="border-t border-line bg-canvas px-4 py-3 text-sm text-ink-muted">
             총 {requests.length}건
           </div>
         )}
