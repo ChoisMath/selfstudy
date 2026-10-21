@@ -2,6 +2,13 @@
 
 최신 항목을 위에 추가한다. 날짜·도구·변경 이유·파일·실제로 실행한 검증·남은 작업을 기록한다. 기존 상세 이력은 `.claude/PROJECT_MAP.md`, `docs/superpowers/`, `.plans/`, Git 및 Claude 세션 원문에 그대로 남아 있다.
 
+## 2026-10-21 — Claude Code(클라우드) — PR #1 생성·main 병합
+
+- 요청: "PR 만들어 주세요. 그리고 main에 병합해 주세요."
+- 수행: 브랜치 `claude/upbeat-volta-8a7ixx`(main 대비 6커밋 앞, 0 뒤)로 PR [ChoisMath/selfstudy#1](https://github.com/ChoisMath/selfstudy/pull/1) 생성 후 merge 커밋 `1409316b`로 병합. 저장소에 PR 템플릿·GitHub Actions 없음.
+- 배포: Railway 는 main 자동 배포 설정(PROJECT_MAP 배포 정보). 이 세션에는 Railway 접근 수단이 없어 배포 성공 여부·운영 반영은 미확인. 다음 세션에서 `curl https://self.posan.kr/login` 에 "반가워요!" 문구가 있는지로 확인 가능.
+- 후속: 병합 뒤 브랜치를 `origin/main` 에서 다시 시작하고 이 기록만 추가 커밋(별도 PR 미생성).
+
 ## 2026-10-21 — Claude Code(클라우드) — 2단계: 출석체크·담임·관리자·학생 화면 사용성 개선
 
 - 요청: 로그인 톤 확정 후 "이 톤으로 2단계 진행". `/web-design-guidelines`(Vercel Web Interface Guidelines, 리뷰 시점에 원문 fetch)로 출석체크·담임·관리자·학년관리자 화면을 점검하고 같은 토큰으로 개선. 브랜치 `claude/upbeat-volta-8a7ixx`.

@@ -4,9 +4,9 @@
 
 ## 현재 작업
 
-브랜치 `claude/upbeat-volta-8a7ixx`에서 사용자 요청 "로그인·출석체크·교사·관리자 페이지 전체 사용성 개선"의 2단계를 완료했다. 1단계(로그인 재설계 + 밝고 따뜻한 톤 조정, 모션그래픽)는 커밋 e0d9e7d·59ea61f, 2단계는 e74a29c(공용 셸·출석 그리드)·4740c83(담임 7화면)·이후 커밋(관리자·학년관리자 16화면 + 기록)이다. `/web-design-guidelines`(Vercel Web Interface Guidelines) 점검 결과 약 120건을 고쳤고, 공용 셸은 `src/components/ui/chrome.ts`·`Dialog.tsx`, 날짜는 `src/lib/format-date.ts`로 모았다. 상세 목록·검증은 `.claude/WORK_LOG.md` 최신 항목.
+브랜치 `claude/upbeat-volta-8a7ixx`에서 사용자 요청 "로그인·출석체크·교사·관리자 페이지 전체 사용성 개선"의 2단계를 완료했다. 1단계(로그인 재설계 + 밝고 따뜻한 톤 조정, 모션그래픽)는 커밋 e0d9e7d·59ea61f, 2단계는 e74a29c(공용 셸·출석 그리드)·4740c83(담임 7화면)·이후 커밋(관리자·학년관리자 16화면 + 기록)이다. `/web-design-guidelines`(Vercel Web Interface Guidelines) 점검 결과 약 120건을 고쳤고, 공용 셸은 `src/components/ui/chrome.ts`·`Dialog.tsx`, 날짜는 `src/lib/format-date.ts`로 모았다. 상세 목록·검증은 `.claude/WORK_LOG.md` 최신 항목. 사용자 요청으로 PR [ChoisMath/selfstudy#1](https://github.com/ChoisMath/selfstudy/pull/1)을 만들고 `main`에 병합 커밋 `1409316`으로 병합했다(Railway 는 main 을 자동 배포하므로 운영 반영 여부는 다음 세션에서 `https://self.posan.kr/login` 으로 확인). 브랜치는 병합 후 `origin/main` 에서 다시 시작했다.
 
-검증: 저장소 전체 ESLint 0 오류(`<img>` 경고 6건은 기존), `tsc --noEmit` 통과, 테스트 45개 전부 통과, 프로덕션 빌드 결과는 작업일지 참조. 로컬 dev 서버 + 위조 세션 쿠키(더미 AUTH_SECRET, DB 없음)로 교사·관리자 13화면 × 2뷰포트 스크린샷: 가로 넘침 없음, 44px 미만 실제 대상 없음(라디오의 sr-only input 1px 제외), 스크립트 오류 없음. DB가 없어 데이터가 있는 상태(좌석 그리드·표)는 눈으로 확인하지 못했다. 배포하지 않았다.
+검증: 저장소 전체 ESLint 0 오류(`<img>` 경고 6건은 기존), `tsc --noEmit` 통과, 테스트 45개 전부 통과, 프로덕션 빌드 결과는 작업일지 참조. 로컬 dev 서버 + 위조 세션 쿠키(더미 AUTH_SECRET, DB 없음)로 교사·관리자 13화면 × 2뷰포트 스크린샷: 가로 넘침 없음, 44px 미만 실제 대상 없음(라디오의 sr-only input 1px 제외), 스크립트 오류 없음. DB가 없어 데이터가 있는 상태(좌석 그리드·표)는 눈으로 확인하지 못했다. PR 병합으로 main 에 반영됐고 Railway 자동 배포 결과는 미확인이다.
 
 다음 단계(미착수, 선택): ① 탭·필터·월 상태의 URL 동기화, ② 탭 화살표 키 이동(roving tabindex), ③ 교사 행 select 즉시 저장에 되돌리기, ④ 실제 데이터가 있는 환경(로컬 Postgres 또는 운영 미리보기)에서 좌석 그리드·표의 시각 확인, ⑤ 학생 화면 본문(레이아웃만 통일함)의 같은 기준 점검. 로그인 장면 CSS는 생성기 산출물이므로 직접 고치지 않는다.
 
