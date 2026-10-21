@@ -34,7 +34,7 @@
 src/
 ├── app/
 │   ├── layout.tsx              # 루트 (Providers 래핑)
-│   ├── globals.css             # Tailwind 진입 + `:root --header-h: 3.5rem`(sticky nav h-14) + `@utility table-scroll`(표 래퍼 내부 스크롤포트) + `@theme static` 학습 분위기 토큰(`--color-ink/ink-muted/navy/navy-deep/navy-soft/canvas/line/seat-blank/seat-present/seat-absent/lamp/ok` → `bg-navy`·`text-ink` 등. static 이라 CSS 모듈·SVG 의 var() 에서도 항상 존재)
+│   ├── globals.css             # Tailwind 진입 + `:root --header-h: 3.5rem`(sticky nav h-14) + `@utility table-scroll`(표 래퍼 내부 스크롤포트) + `@theme static` 밝고 따뜻한 학습 분위기 토큰(`--color-ink/ink-muted/primary(#c2410c)/primary-deep/primary-soft/canvas(#fff7ea)/peach/butter/line/sunny/mint/sky/skin/blush/wood/wood-deep/cocoa/seat-blank/seat-present/seat-absent/ok/check` → `bg-primary`·`text-ink`·`bg-canvas` 등. static 이라 CSS 모듈·SVG 의 var() 에서도 항상 존재. 대비: ink/canvas 11.6, ink-muted/canvas 6.4, white/primary 5.2)
 │   ├── page.tsx                # / → admin→/admin, 기타 교사→/attendance
 │   ├── providers.tsx           # SessionProvider
 │   ├── login/
@@ -462,7 +462,7 @@ SupervisorReminderLog: teacherId, grade, date(@db.Date), sentAt — @@unique([te
 
 ### 2026-10-21 — 로그인 페이지 재설계 (Claude Code 클라우드, 브랜치 `claude/upbeat-volta-8a7ixx`)
 
-- `ui-ux-pro-max` 디자인 시스템(Minimalism & Swiss, navy `#1E3A5F` 기본, 앱 좌석 색 재사용)에 맞춰 `src/app/login/page.tsx`를 2열 레이아웃으로 재작성. 로고(`/posan.svg`)와 `actions.ts` 서버 액션·formData 키는 그대로.
+- `ui-ux-pro-max`로 뽑은 체계를 사용자 피드백(더 밝고 따뜻하게, 학생이 귀엽다고 느끼도록)에 따라 크림·피치·코랄 `#C2410C` 기본 + 둥근 캐릭터(볼터치·깜빡임·머그컵 김)로 조정하고, 앱 좌석 색을 재사용해 `src/app/login/page.tsx`를 2열 레이아웃으로 재작성. 로고(`/posan.svg`)와 `actions.ts` 서버 액션·formData 키는 그대로.
 - `LoginScene.tsx` + 생성기 `scripts/login-scene-css.mjs` → `login-scene.module.css`: 학생 필기(2관절 팔)·교사 좌석표 탭 모션그래픽, 일시정지 버튼, `prefers-reduced-motion` 정지 화면.
 - `globals.css`에 `@theme static` 토큰 추가, `tests/login-page.test.ts` 신설.
 

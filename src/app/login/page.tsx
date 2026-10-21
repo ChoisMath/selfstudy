@@ -8,8 +8,8 @@ import { LoginScene } from "./LoginScene";
 type Tab = "teacher" | "student";
 
 const TABS: { id: Tab; label: string; hint: string }[] = [
-  { id: "teacher", label: "교사", hint: "아이디와 비밀번호로 로그인합니다." },
-  { id: "student", label: "학생", hint: "이름과 학번 5자리로 로그인합니다." },
+  { id: "teacher", label: "교사", hint: "아이디와 비밀번호로 로그인해요." },
+  { id: "student", label: "학생", hint: "이름과 학번 5자리만 있으면 돼요." },
 ];
 
 /** 마지막으로 쓴 탭을 이 기기에만 기억한다 (학생 폰에서 매번 탭을 바꾸지 않도록) */
@@ -24,6 +24,14 @@ function readStoredTab(): Tab | null {
   }
 }
 
+function storeTab(tab: Tab) {
+  try {
+    window.localStorage.setItem(TAB_STORAGE_KEY, tab);
+  } catch {
+    /* 사생활 보호 모드 등에서는 기억하지 않아도 된다 */
+  }
+}
+
 // 서버 렌더에서는 값이 없고 클라이언트에서만 읽는 외부 상태 → useSyncExternalStore 로 hydration 불일치 없이 구독
 const subscribeStorage = (onChange: () => void) => {
   window.addEventListener("storage", onChange);
@@ -33,18 +41,10 @@ const noSubscribe = () => () => {};
 const formatToday = () =>
   new Intl.DateTimeFormat("ko-KR", { year: "numeric", month: "long", day: "numeric", weekday: "long" }).format(new Date());
 
-function storeTab(tab: Tab) {
-  try {
-    window.localStorage.setItem(TAB_STORAGE_KEY, tab);
-  } catch {
-    /* 사생활 보호 모드 등에서는 기억하지 않아도 된다 */
-  }
-}
-
 const inputClass =
-  "block w-full min-h-12 rounded-xl border border-line bg-white px-4 text-base text-ink placeholder:text-slate-400 " +
-  "transition-[box-shadow,border-color] duration-150 focus:border-navy focus:outline-none focus:ring-2 focus:ring-navy/25 " +
-  "aria-[invalid=true]:border-red-500";
+  "block w-full min-h-12 rounded-2xl border-2 border-line bg-white px-4 text-base text-ink placeholder:text-ink-muted/60 " +
+  "transition-[box-shadow,border-color] duration-150 focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/15 " +
+  "aria-[invalid=true]:border-red-400";
 
 export default function LoginPage() {
   const storedTab = useSyncExternalStore(subscribeStorage, readStoredTab, () => null);
@@ -99,63 +99,61 @@ export default function LoginPage() {
 
   return (
     <main className="min-h-dvh bg-canvas text-ink lg:grid lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
-      {/* ───── 왼쪽: 학교·학습 분위기 패널 + 모션그래픽 ───── */}
+      {/* ───── 왼쪽: 따뜻한 학교 패널 + 모션그래픽 ───── */}
       <section
         aria-labelledby="login-title"
-        className="relative flex flex-col gap-5 bg-navy px-4 pb-6 pt-5 text-white sm:gap-7 sm:px-8 sm:pt-8 lg:min-h-dvh lg:justify-between lg:px-14 lg:py-12"
+        className="relative flex flex-col gap-5 overflow-hidden bg-[linear-gradient(160deg,var(--color-peach)_0%,var(--color-butter)_55%,var(--color-canvas)_100%)] px-4 pb-6 pt-5 sm:gap-7 sm:px-8 sm:pt-8 lg:min-h-dvh lg:justify-between lg:px-14 lg:py-12"
       >
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_50%_at_20%_0%,rgba(255,255,255,0.10),transparent_70%)]"
-        />
+        {/* 부드러운 배경 방울 */}
+        <div aria-hidden="true" className="pointer-events-none absolute -left-16 -top-20 h-64 w-64 rounded-full bg-sunny/30 blur-2xl" />
+        <div aria-hidden="true" className="pointer-events-none absolute -bottom-24 right-[-5rem] h-72 w-72 rounded-full bg-mint/40 blur-3xl" />
 
         <header className="relative flex items-center gap-3">
-          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white shadow-sm sm:h-14 sm:w-14">
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white shadow-[0_6px_16px_-6px_rgba(194,65,12,0.35)] sm:h-14 sm:w-14">
             <Image src="/posan.svg" alt="포산고등학교" width={44} height={44} priority className="h-10 w-10 sm:h-11 sm:w-11" />
           </span>
           <div className="min-w-0">
-            <p className="text-xs font-medium uppercase tracking-[0.18em] text-blue-200">포산고등학교</p>
-            <h1 id="login-title" className="text-xl font-bold leading-tight sm:text-2xl">
+            <p className="text-xs font-semibold tracking-[0.16em] text-primary">포산고등학교</p>
+            <h1 id="login-title" className="text-xl font-bold leading-tight text-ink sm:text-2xl">
               자율학습 출석부
             </h1>
           </div>
           {today && (
-            <p className="ml-auto hidden text-right text-sm text-blue-100 sm:block" aria-label={`오늘은 ${today}`}>
+            <p className="ml-auto hidden rounded-full bg-white/70 px-3 py-1 text-right text-sm text-ink-muted sm:block" aria-label={`오늘은 ${today}`}>
               {today}
             </p>
           )}
         </header>
 
         <div className="relative hidden lg:block">
-          <p className="text-3xl font-bold leading-snug [text-wrap:balance]">
-            집중하는 시간,
+          <p className="text-3xl font-bold leading-snug text-ink [text-wrap:balance]">
+            오늘도 차분하게,
             <br />
-            정확한 기록.
+            함께 자습해요.
           </p>
-          <p className="mt-3 max-w-md text-base leading-relaxed text-blue-100">
-            학생은 자리에서 학습에 집중하고, 선생님은 좌석표를 한 번 눌러 출석을 확인합니다. 오후·야간 자습의 출결이 한곳에
-            모입니다.
+          <p className="mt-3 max-w-md text-base leading-relaxed text-ink-muted">
+            자리에 앉으면 선생님이 좌석표를 톡 눌러 출석을 확인해요. 오후·야간 자습 기록이 한곳에 차곡차곡 모입니다.
           </p>
         </div>
 
         <figure className="relative mx-auto w-full max-w-xl">
-          <div className="rounded-2xl bg-white/[0.06] p-3 ring-1 ring-white/10 sm:p-5">
+          <div className="rounded-3xl bg-white/75 p-3 shadow-[0_20px_50px_-24px_rgba(194,65,12,0.35)] ring-1 ring-white sm:p-5">
             <LoginScene paused={paused} className="h-auto w-full" />
           </div>
-          <figcaption className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-blue-100">
+          <figcaption className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-ink-muted">
             <span className="inline-flex items-center gap-2">
-              <span aria-hidden="true" className="h-2 w-2 rounded-full bg-lamp" />
-              학생은 자리에서 학습 중
+              <span aria-hidden="true" className="h-2.5 w-2.5 rounded-full bg-sunny" />
+              책상 앞에선 집중 모드
             </span>
             <span className="inline-flex items-center gap-2">
-              <span aria-hidden="true" className="h-2 w-2 rounded-full bg-seat-present" />
-              교사는 좌석표로 출석 확인
+              <span aria-hidden="true" className="h-2.5 w-2.5 rounded-full bg-seat-present" />
+              출석은 톡, 한 번이면 끝
             </span>
             <button
               type="button"
               onClick={() => setPaused((p) => !p)}
               aria-pressed={paused}
-              className="ml-auto inline-flex min-h-11 cursor-pointer items-center gap-1.5 rounded-lg px-2.5 text-sm font-medium text-white/90 transition-colors hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+              className="ml-auto inline-flex min-h-11 cursor-pointer items-center gap-1.5 rounded-full px-3 text-sm font-medium text-ink-muted transition-colors hover:bg-white/80 hover:text-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
               {paused ? (
                 <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4" fill="currentColor">
@@ -171,17 +169,17 @@ export default function LoginPage() {
           </figcaption>
         </figure>
 
-        <p className="relative hidden text-xs text-blue-200/80 lg:block">자율학습 출석 관리 시스템 · 포산고등학교</p>
+        <p className="relative hidden text-xs text-ink-muted lg:block">오늘도 수고했어요 · 포산고등학교 자율학습</p>
       </section>
 
       {/* ───── 오른쪽: 로그인 카드 ───── */}
       <section aria-label="로그인" className="flex items-start justify-center px-4 py-8 sm:px-8 lg:min-h-dvh lg:items-center lg:px-14">
-        <div className="w-full max-w-sm rounded-2xl border border-line bg-white p-6 shadow-sm sm:p-8">
-          <h2 className="text-xl font-bold">로그인</h2>
-          <p className="mt-1 text-sm text-ink-muted">역할을 고르고 정보를 입력하세요.</p>
+        <div className="w-full max-w-sm rounded-3xl border-2 border-line bg-white p-6 shadow-[0_24px_60px_-28px_rgba(194,65,12,0.4)] sm:p-8">
+          <h2 className="text-2xl font-bold">반가워요!</h2>
+          <p className="mt-1 text-sm text-ink-muted">역할을 고르고 로그인하세요.</p>
 
           {/* 역할 탭 */}
-          <div role="tablist" aria-label="로그인 유형" className="mt-5 grid grid-cols-2 gap-1 rounded-xl bg-slate-100 p-1">
+          <div role="tablist" aria-label="로그인 유형" className="mt-5 grid grid-cols-2 gap-1 rounded-2xl bg-butter p-1">
             {TABS.map((t) => {
               const selected = tab === t.id;
               return (
@@ -198,8 +196,8 @@ export default function LoginPage() {
                   tabIndex={selected ? 0 : -1}
                   onClick={() => selectTab(t.id)}
                   onKeyDown={handleTabKeyDown}
-                  className={`min-h-11 cursor-pointer rounded-lg text-sm font-semibold transition-[background-color,color,box-shadow] duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-navy focus-visible:ring-offset-2 ${
-                    selected ? "bg-white text-navy shadow-sm" : "text-ink-muted hover:text-ink"
+                  className={`min-h-11 cursor-pointer rounded-xl text-sm font-semibold transition-[background-color,color,box-shadow] duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
+                    selected ? "bg-white text-primary shadow-sm" : "text-ink-muted hover:text-ink"
                   }`}
                 >
                   {t.label} 로그인
@@ -213,7 +211,7 @@ export default function LoginPage() {
             <div
               id={errorId}
               role="alert"
-              className="mt-4 flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-800"
+              className="mt-4 flex items-start gap-2 rounded-2xl border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-800"
             >
               <svg aria-hidden="true" viewBox="0 0 20 20" className="mt-0.5 h-4 w-4 shrink-0" fill="currentColor">
                 <path
@@ -277,7 +275,7 @@ export default function LoginPage() {
                       onClick={() => setShowPassword((v) => !v)}
                       aria-pressed={showPassword}
                       aria-label={showPassword ? "비밀번호 숨기기" : "비밀번호 표시"}
-                      className="absolute inset-y-0 right-0 flex w-12 cursor-pointer items-center justify-center rounded-r-xl text-ink-muted transition-colors hover:text-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-navy"
+                      className="absolute inset-y-0 right-0 flex w-12 cursor-pointer items-center justify-center rounded-r-2xl text-ink-muted transition-colors hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                     >
                       {showPassword ? (
                         <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
@@ -340,7 +338,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={isPending}
-              className="mt-2 inline-flex min-h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-navy text-base font-semibold text-white shadow-sm transition-[background-color,transform] duration-150 hover:bg-navy-deep focus:outline-none focus-visible:ring-2 focus-visible:ring-navy focus-visible:ring-offset-2 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+              className="mt-2 inline-flex min-h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-2xl bg-primary text-base font-semibold text-white shadow-[0_10px_24px_-10px_rgba(194,65,12,0.7)] transition-[background-color,transform,box-shadow] duration-150 hover:bg-primary-deep focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isPending && (
                 <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5 motion-safe:animate-spin" fill="none">
@@ -355,7 +353,7 @@ export default function LoginPage() {
           <div className="mt-6 flex items-center justify-between border-t border-line pt-4 text-sm">
             <a
               href="/help"
-              className="inline-flex min-h-11 items-center gap-1 rounded-lg px-1 text-ink-muted transition-colors hover:text-navy focus:outline-none focus-visible:ring-2 focus-visible:ring-navy"
+              className="inline-flex min-h-11 items-center gap-1 rounded-lg px-1 text-ink-muted transition-colors hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
               사용 안내 보기
               <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4" fill="currentColor">

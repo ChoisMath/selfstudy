@@ -115,6 +115,15 @@ css += `.clockHand { transform-box: fill-box; transform-origin: 50% 100%; animat
 css += `@keyframes lampGlow { from { opacity: .28; } to { opacity: .5; } }\n`;
 css += `.glow { opacity: .4; animation: lampGlow 3.2s ease-in-out infinite alternate; }\n`;
 
+/* ---------- 머그컵 김 3가닥, 눈 깜빡임 (작고 느린 장식 모션) ---------- */
+css += `@keyframes steam { 0% { transform: translateY(0) scaleX(1); opacity: 0; } 30% { opacity: .7; } 100% { transform: translateY(-9px) scaleX(1.25); opacity: 0; } }\n`;
+for (let k = 0; k < 3; k++) {
+  css += `.steam${k} { opacity: 0; transform-box: fill-box; transform-origin: center bottom; animation: steam 2.8s ease-out ${(k * 0.9).toFixed(1)}s infinite; }\n`;
+}
+css += `@keyframes blink { 0%, 92%, 100% { transform: scaleY(1); } 95%, 97% { transform: scaleY(.1); } }\n`;
+css += `.blink { transform-box: fill-box; transform-origin: center; animation: blink 4.6s linear infinite; }\n`;
+css += `.blinkLate { transform-box: fill-box; transform-origin: center; animation: blink 5.3s linear 1.7s infinite; }\n`;
+
 /* ---------- 일시정지·감속 모션: 정지하면 기본(완료) 상태가 보인다 ---------- */
 css += `.paused, .paused * { animation-play-state: paused; }\n`;
 css += `@media (prefers-reduced-motion: reduce) {\n  .scene, .scene * { animation: none !important; }\n}\n`;

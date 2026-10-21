@@ -67,6 +67,6 @@ assert.match(scene, /const SHOULDER = \{ x: 126, y: 131 \};\s*const UPPER_ARM = 
 
 // 디자인 토큰은 globals 의 static 테마에 있어야 CSS 모듈·SVG 의 var() 가 항상 해석된다
 assert.match(globals, /@theme static \{[^}]*--color-seat-present: #bbf7d0;/, "seat-present 토큰 누락");
-assert.match(globals, /--color-navy: #1e3a5f;/, "navy 토큰 누락");
+assert.match(globals, /--color-primary: #c2410c;/, "primary 토큰 누락");
 
 console.log("login-page checks passed");
