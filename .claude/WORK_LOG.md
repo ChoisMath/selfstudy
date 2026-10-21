@@ -2,6 +2,38 @@
 
 최신 항목을 위에 추가한다. 날짜·도구·변경 이유·파일·실제로 실행한 검증·남은 작업을 기록한다. 기존 상세 이력은 `.claude/PROJECT_MAP.md`, `docs/superpowers/`, `.plans/`, Git 및 Claude 세션 원문에 그대로 남아 있다.
 
+## 2026-10-21 — Claude Code(클라우드) — 2단계: 출석체크·담임·관리자·학생 화면 사용성 개선
+
+- 요청: 로그인 톤 확정 후 "이 톤으로 2단계 진행". `/web-design-guidelines`(Vercel Web Interface Guidelines, 리뷰 시점에 원문 fetch)로 출석체크·담임·관리자·학년관리자 화면을 점검하고 같은 토큰으로 개선. 브랜치 `claude/upbeat-volta-8a7ixx`.
+- 점검: 서브에이전트 2개가 `src/app/{attendance,homeroom,admin,grade-admin}` + 관련 컴포넌트를 가이드라인 전 규칙으로 읽어 `file:line` 목록 약 120건 보고. 주요 유형: 44px 미만 터치 대상(py-1/py-1.5 버튼, 화살표, 누계, 승인/반려, 행 select), 아이콘 버튼 `aria-label` 누락, 라벨 없는 input/select/checkbox, 모달의 role/Escape/포커스/overscroll 누락, `alert()`, 수기 날짜 포맷과 `new Date("YYYY-MM-DD")` UTC 파싱, `transition-all`, "...", `<div onClick>`.
+- 공용 기반(직접): `src/components/ui/chrome.ts`(셸·탭·칩·버튼·입력·알림·카드 클래스), `src/components/ui/Dialog.tsx`(접근 가능한 모달), `src/lib/format-date.ts`(Intl ko-KR/Asia/Seoul). 출석·담임·관리자·학년관리자·학생 레이아웃과 `AdminNav`·`GuideHelpButton`·`NotificationBell`을 크림·코랄 셸로 통일, AdminNav 는 폰에서 담임처럼 2행 탭(`[--header-h:6.25rem]`), `navLink` 에서 display 제거(`hidden lg:inline-flex` 와 충돌해 폰에 첫 링크가 보이던 문제). `layout.tsx` themeColor·manifest 를 `#fff7ea`로. 로딩 문구 "..."→"…" 일괄(25파일).
+- 출석 그리드(직접, `src/app/attendance/[grade]/page.tsx`): SeatCell 을 래퍼 div + 본체 `<button>`(aria-label=이름·학급·상태, min-h-11, touch-manipulation, focus-visible 링, Shift+Enter→`onActivateToggle` 로 길게 누르기 대안) + 형제 정보 버튼(20–26px, aria-label)으로 재구성(중첩 버튼 없음). 상단 바 그라데이션 코랄, 날짜 버튼 aria-expanded/haspopup, 카운터 tabular-nums, 블록 탭 role=tablist/tab, 필터 chip aria-pressed·44px, 일괄승인·승인/반려 44px + aria-label, 불참 목록 날짜 `formatMonthDay`, 주간 팝업 "N월 N주차" `formatWeekOfMonth`, 비고 input aria-label·autoComplete off, 일괄승인·학년 모달 Escape 효과 + aria-labelledby + overscroll-contain, 좌석 로딩("불러오는 중…")·오류("다시 시도") 상태(`seatsError`). `AttendanceDatePicker` role=dialog, 셀 aria-label/aria-pressed/aria-current, 월 제목 Intl, 코랄 선택색. 테스트 핀(`aspect-square min-h-11`, onClick 직후 className, z-[150] 오버레이)은 유지.
+- 담임 7화면 + `SupervisorSummaryModal`(서브에이전트): 툴팁 span→버튼, 주/월 화살표 aria-label·44px, Excel 내려받기 상태, 범례 토글 aria-expanded, 참여설정 체크박스/요일 버튼 aria-label·aria-pressed, 불참사유 fieldset/legend + htmlFor, 불참신청 승인/반려 44px·날짜 Intl, 감독일정 교체 모달 dialog 속성·포커스 트랩·Escape(테스트가 패딩 문자열을 고정해 Dialog 컴포넌트 대신 인라인 구현)·검색 콤보박스 ARIA, 비밀번호 name/autoComplete/첫 오류 포커스, 감독 누계 모달을 Dialog 로 재구성. `alert()`→`aria-live` 인라인 알림.
+- 관리자·학년관리자 16화면(서브에이전트): 오늘출결 `grid-cols-2 sm:grid-cols-4`·tabular-nums·fetch ok 검사, 사용자관리 탭 tablist·교사 모달 Dialog+`<form>`+autocomplete·행 select aria-label 44px·행 저장 표시/오류 알림, 통계 폼 라벨·빈 상태·Excel 비활성·오류 알림, 교체이력 `table-scroll` 래퍼·오류, 좌석·감독 탭/토글 44px·aria, 참여설정 라벨·aria, 월간출결 화살표 aria·Intl, Excel 업로드 모달 Dialog 재구성(드롭존을 label+sr-only input 으로 키보드 접근).
+- 검증: ① `npx eslint`(전체) 0 오류·경고 6건(기존 `<img>`) ② `npx tsc --noEmit` 통과 ③ `tests/*.test.ts` 45개 전부 통과 ④ 로컬 `next dev`(더미 DATABASE_URL) + `next-auth/jwt` `encode` 로 만든 개발용 세션 쿠키(관리자+담임+감독 역할 / 감독만)로 Playwright 스크린샷 13화면 × 375·1280px: HTTP 200, 가로 넘침 0, 44px 미만 실제 대상 0(라디오 sr-only input 1px 만 검출), 페이지 스크립트 오류 0. DB 가 없어 데이터 표시 상태는 미확인(오류·빈 상태 화면으로 셸 확인) ⑤ 프로덕션 빌드: 아래 줄.
+- 빌드: 전체 변경 후 `npx next build`(더미 DATABASE_URL·AUTH_SECRET) 종료 코드 0 — 컴파일·정적 페이지 생성 완료, 기존 middleware→proxy deprecation 경고만. 배포 미실행.
+- 기록: `project-map-updater`·`responsive-ui-reviewer` 에이전트 대신 직접 지도 갱신·Playwright 점검. 서브에이전트가 `git stash`/`pop` 으로 원인 확인 1회(작업 트리 복원 확인). `pkill -f` 자기 종료 문제는 스크립트 파일 + `$PPID` 제외로 회피.
+- 남은 작업: URL 상태 동기화, 탭 화살표 키, 교사 행 select 되돌리기, 실제 데이터 환경 시각 확인, 학생 화면 본문 점검. 배포는 사용자 승인 후.
+
+## 2026-10-21 — Claude Code(클라우드) — 로그인 페이지를 밝고 따뜻한 톤으로 조정
+
+- 요청: 첫 navy 시안에 대해 "조금 더 밝고 따뜻하게, 학생들이 귀엽다고 느끼고 자습에 참여하고 싶게". 브랜치 `claude/upbeat-volta-8a7ixx`.
+- 변경: `globals.css` 토큰을 navy 계열에서 크림 `#fff7ea`·피치·버터 배경, 코랄 `#c2410c` 기본(흰 글자 대비 5.2), 코코아 `#43302b` 본문(대비 11.6), 민트·하늘·피부·볼터치·나무 색으로 교체(`navy*` 토큰 제거, `primary*`·`peach`·`butter`·`sunny`·`mint`·`sky`·`skin`·`blush`·`wood*`·`cocoa`·`check` 추가). `LoginScene.tsx`: 둥근 얼굴 컴포넌트(머리·눈·볼터치·미소, 교사는 머리 묶음), 민트 후드·하늘색 가디건, 나무 책상, 코랄 스탠드(왼쪽으로 이동), 머그컵 + 김 3가닥, 햇살·반짝임 배경, 연필을 노랑·분홍으로. 생성기에 `steam`·`blink`·`blinkLate` 키프레임 추가 후 재생성. `page.tsx`: 피치→버터→크림 그라데이션 패널, 흰 반투명 장면 카드, 코랄 CTA·탭, 둥근 2xl/3xl 모서리, 문구("오늘도 차분하게, 함께 자습해요.", "반가워요!", "책상 앞에선 집중 모드 / 출석은 톡, 한 번이면 끝"). `tests/login-page.test.ts` 토큰 단언을 `--color-primary`로 갱신.
+- 검증: ESLint·`tsc --noEmit`·`tests/login-page.test.ts` 통과. 로컬 dev + Playwright: 375·1024·1440px, 가로 넘침 없음, 44px 미만 대상 없음, 콘솔 오류 없음, 애니메이션 43개 running / 일시정지 paused / 감속 모션 0개, 새 서버 첫 로드에서 hydration 경고 없음. 프로덕션 빌드는 이번 조정 후 다시 돌리지 않음(직전 빌드 통과, 변경은 CSS 토큰·SVG·클래스).
+- 남은 작업: 사용자 확인 후 2단계(출석체크·교사·관리자 `/web-design-guidelines` 검토·개선). 배포 미실행.
+
+## 2026-10-21 — Claude Code(클라우드) — 로그인 페이지 재설계 + 학습·출석 모션그래픽
+
+- 요청: 로그인·출석체크·교사·관리자 전체 사용성 개선의 1단계. `ui-ux-pro-max`로 로그인 페이지를 학습 분위기의 전문적인 디자인으로 바꾸고, 학생이 학습하고 교사가 출석체크하는 모션그래픽 삽입. 포산고 로고·로그인 기능 유지. 브랜치 `claude/upbeat-volta-8a7ixx`.
+- 디자인 근거: `search.py --design-system` 1차 결과(Claymorphism·Baloo 2)는 아동용이라 기각, 재질의로 Minimalism & Swiss(기본 `#1E3A5F` navy, 보조 `#2563EB`, 배경 `#F8FAFC`, 강조 `#059669`)를 채택. 장면의 좌석 색은 출석 그리드의 `#dbeafe`(미체크)·`#bbf7d0`(출석)을 그대로 사용. UX 검색 근거: 접근 가능한 인증(autocomplete·붙여넣기 허용), 비밀번호 표시 토글, 감속 모션, 움직이는 콘텐츠의 일시정지 제어.
+- 변경 파일: `src/app/login/page.tsx`(재작성: lg 2열, tablist 탭 + 화살표 키, 마지막 탭 localStorage, 단일 submit 핸들러, autocomplete, 비밀번호 토글, `role="alert"` + 첫 입력칸 포커스, 44px 이상 터치 영역, `useSyncExternalStore`로 날짜·저장 탭), `src/app/login/LoginScene.tsx`(신규 SVG 장면), `src/app/login/login-scene.module.css`(신규·자동 생성), `scripts/login-scene-css.mjs`(신규 생성기: 좌석 12칸 순차 탭·물결·체크·진행 막대, 노트 5줄 필기, 2관절 팔 역기구학, 시계·스탠드, 12초 루프), `src/app/globals.css`(`@theme static` 토큰 12개), `tests/login-page.test.ts`(신규), `.claude/PROJECT_MAP.md`·`.claude/HANDOFF.md`.
+- 유지한 것: `actions.ts`와 formData 키(`loginId`·`password`·`name`·`studentCode`), 성공 시 `window.location.href = "/"`, `/posan.svg` 로고(`next/image`, svg 라 자동 unoptimized), `/help` 링크.
+- 검증: ① `npx eslint src/app/login/ tests/login-page.test.ts scripts/login-scene-css.mjs` 통과(처음 `react-hooks/set-state-in-effect` 오류 → `useSyncExternalStore`로 수정) ② `npx tsc --noEmit` 통과(테스트의 정규식 `s` 플래그가 target ES2017 에서 오류 → 제거) ③ `tsx tests/login-page.test.ts` 통과 ④ 로컬 `next dev`(더미 DATABASE_URL) + Playwright(`/opt/node-tools` playwright-core, `/opt/pw-browsers/chromium`): 375·1024·1440px 스크린샷, 가로 넘침 없음, 44px 미만 대상 없음, 콘솔 오류 없음, 애니메이션 36개 running / 일시정지 시 paused / `reducedMotion: reduce`에서 0개, 학생 탭 로그인 실패 시 `role=alert` 표시 + 이름 칸 포커스 ⑤ 파일 수정 중 HMR 로 서버 번들이 낡아 hydration 경고가 1회 보였으나 서버 재시작 후 재현 없음 ⑥ 프로덕션 빌드 결과는 아래 줄.
+- 빌드: `npx next build`(더미 DATABASE_URL·AUTH_SECRET) 종료 코드 0 — Prisma generate·컴파일·정적 페이지 67개 생성, `/login` 정적(○). 기존 middleware→proxy deprecation 경고만 있음. 배포 미실행.
+- 기록: `project-map-updater` 에이전트 대신 `.claude/PROJECT_MAP.md`를 직접 갱신(login 트리·scripts·주의사항·수정 이력). `responsive-ui-reviewer` 에이전트는 이 환경에 없어 위 Playwright 점검으로 대체.
+- 주의: `pkill -f 'next dev …'` 를 Bash 도구 명령 안에 쓰면 패턴이 래퍼 셸 argv 에 들어가 자기 자신을 죽인다(exit 144) → 스크립트 파일로 분리하고 `$$`·`$PPID` 제외.
+- 남은 작업: `/web-design-guidelines`로 출석체크·교사·관리자 화면 사용성 검토·개선(2단계). 배포는 사용자 승인 후.
+
 ## 2026-10-21 — Claude Code(클라우드) — 클라우드 세션용 스킬·SessionStart 훅·MCP 설정 추가
 
 - 요청: ChoisMath/MathChois 공개 레포의 설정 핸드아웃대로 디자인 스킬 3종·MCP 런처·`.mcp.json`을 가져오고, `.claude/settings.json`·`.claude/hooks/session-start.sh`는 이 레포 스택에 맞게 새로 작성. 브랜치 `claude/peaceful-galileo-lxzu81`.

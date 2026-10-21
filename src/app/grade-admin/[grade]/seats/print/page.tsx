@@ -139,7 +139,7 @@ function SeatPrintView() {
   const visibleGroups = groups.filter((group) => !excluded.has(group.key));
 
   if (isLoading) {
-    return <div className="py-12 text-center text-gray-500">불러오는 중...</div>;
+    return <div className="py-12 text-center text-gray-500">불러오는 중…</div>;
   }
 
   if (groups.length === 0) {
@@ -238,7 +238,7 @@ function SeatPrintView() {
 
 export default function SeatPrintPage() {
   return (
-    <Suspense fallback={<div className="py-12 text-center text-gray-500">불러오는 중...</div>}>
+    <Suspense fallback={<div className="py-12 text-center text-gray-500">불러오는 중…</div>}>
       <SeatPrintView />
     </Suspense>
   );

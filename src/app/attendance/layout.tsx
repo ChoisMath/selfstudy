@@ -4,6 +4,7 @@ import Link from "next/link";
 import { signOut, useSession } from "next-auth/react";
 import { GuideHelpButton } from "@/components/guide/GuideHelpButton";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
+import { chrome } from "@/components/ui/chrome";
 
 export default function AttendanceLayout({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession();
@@ -14,14 +15,14 @@ export default function AttendanceLayout({ children }: { children: React.ReactNo
   const primaryGrade = session?.user?.primaryGrade;
 
   return (
-    <div className="min-h-dvh bg-gray-50">
-      <header className="bg-white border-b border-gray-200 px-2 sm:px-4 py-2 flex items-center justify-between flex-nowrap">
+    <div className={chrome.page}>
+      <header className={`${chrome.navStatic} px-2 sm:px-4 py-2 flex items-center justify-between flex-nowrap`}>
         <Link
           href={primaryGrade ? `/attendance/${primaryGrade}` : "/attendance"}
-          className="flex items-center gap-1.5 sm:gap-2 font-bold text-gray-900 shrink-0 whitespace-nowrap"
+          className={chrome.brand}
         >
-          <img src="/posan.svg" alt="포산고등학교" className="w-7 h-7 sm:w-8 sm:h-8" />
-          <span className="text-sm sm:text-base">출석부</span>
+          <img src="/posan.svg" alt="포산고등학교" width={32} height={32} className="w-7 h-7 sm:w-8 sm:h-8" />
+          <span className={chrome.brandText}>출석부</span>
         </Link>
         {status !== "loading" && (
           <div className="flex items-center gap-2 sm:gap-3 flex-nowrap min-w-0 overflow-x-auto">
@@ -29,7 +30,7 @@ export default function AttendanceLayout({ children }: { children: React.ReactNo
             {roles?.includes("admin") && (
               <Link
                 href="/admin"
-                className="inline-flex min-h-11 items-center px-1.5 sm:px-3 text-[11px] sm:text-xs font-medium text-purple-700 bg-purple-50 border border-purple-200 rounded-md hover:bg-purple-100 transition-colors whitespace-nowrap"
+                className={chrome.roleChip("admin")}
               >
                 관리자
               </Link>
@@ -38,7 +39,7 @@ export default function AttendanceLayout({ children }: { children: React.ReactNo
               <Link
                 key={g}
                 href={`/grade-admin/${g}`}
-                className="inline-flex min-h-11 items-center px-1.5 sm:px-3 text-[11px] sm:text-xs font-medium text-green-700 bg-green-50 border border-green-200 rounded-md hover:bg-green-100 transition-colors whitespace-nowrap"
+                className={chrome.roleChip("grade")}
               >
                 {g}학년 관리
               </Link>
@@ -46,16 +47,17 @@ export default function AttendanceLayout({ children }: { children: React.ReactNo
             {isTeacher && (
               <Link
                 href={isHomeroom ? "/homeroom" : "/homeroom/schedule"}
-                className="inline-flex min-h-11 items-center px-1.5 sm:px-3 text-[11px] sm:text-xs font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-md hover:bg-blue-100 transition-colors whitespace-nowrap"
+                className={chrome.roleChip("teacher")}
               >
                 {isHomeroom ? "담임교사" : "감독일정"}
               </Link>
             )}
             <NotificationBell />
-            <span className="text-xs sm:text-sm text-gray-600 whitespace-nowrap">{session?.user?.name}</span>
+            <span className={chrome.userName}>{session?.user?.name}</span>
             <button
+              type="button"
               onClick={() => signOut({ callbackUrl: "/login" })}
-              className="min-h-11 px-2 text-xs sm:text-sm text-gray-600 hover:text-gray-700 whitespace-nowrap"
+              className={chrome.ghostButton}
             >
               로그아웃
             </button>

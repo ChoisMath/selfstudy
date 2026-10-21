@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect } from "react";
 import useSWR from "swr";
+import { Dialog } from "@/components/ui/Dialog";
+import { chrome } from "@/components/ui/chrome";
 
 type SummaryTeacher = {
   id: number;
@@ -17,13 +18,23 @@ type SummaryResponse = {
   teachers: SummaryTeacher[];
 };
 
-const fetcher = (url: string) => fetch(url).then((r) => r.json());
+const fetcher = async (url: string) => {
+  const res = await fetch(url);
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.error || `${res.status} 오류가 발생했습니다.`);
+  }
+  return res.json();
+};
 
 function formatMonthLabel(monthKey: string) {
   const m = parseInt(monthKey.split("-")[1], 10);
   return `${m}월`;
 }
 
+/**
+ * 감독 누계 모달. 부모가 조건부로 렌더하므로 항상 open — Dialog 가 role·Escape·포커스 트랩·배경 스크롤 잠금을 맡는다.
+ */
 export default function SupervisorSummaryModal({
   onClose,
   filterGrade,
@@ -34,24 +45,7 @@ export default function SupervisorSummaryModal({
   const apiUrl = filterGrade
     ? `/api/homeroom/schedule/summary?grade=${filterGrade}`
     : "/api/homeroom/schedule/summary";
-  const { data, isLoading } = useSWR<SummaryResponse>(apiUrl, fetcher);
-
-  // ESC 키로 닫기
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, [onClose]);
-
-  // 배경 스크롤 방지
-  useEffect(() => {
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, []);
+  const { data, error, isLoading } = useSWR<SummaryResponse>(apiUrl, fetcher);
 
   const currentUserId = data?.currentUserId ?? 0;
   const months = data?.months ?? [];
@@ -63,102 +57,100 @@ export default function SupervisorSummaryModal({
     .sort((a, b) => a.name.localeCompare(b.name, "ko"));
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
+    <Dialog
+      open
+      onClose={onClose}
+      title="감독 누계"
+      description={filterGrade ? `${filterGrade}학년 감독 배정 횟수 (월별·총계)` : "감독 배정 횟수 (월별·총계)"}
+      panelClassName="max-w-2xl"
     >
-      <div className="bg-white rounded-lg shadow-xl flex flex-col m-2 max-h-[calc(100vh-1rem)] w-full max-w-[calc(100vw-1rem)] sm:max-w-2xl">
-        {/* 닫기 버튼 */}
-        <div className="flex justify-end p-2 pb-0 shrink-0">
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 text-xl leading-none px-1"
-          >
-            &times;
-          </button>
+      {isLoading ? (
+        <div className="py-8 text-center text-sm text-ink-muted" role="status" aria-live="polite">
+          로딩 중…
         </div>
-
-        {isLoading ? (
-          <div className="text-center py-8 text-sm text-gray-400">
-            로딩 중...
-          </div>
-        ) : (
-          <div className="overflow-auto flex-1 px-2 pb-2">
-            <table className="border-collapse w-full">
-              <thead className="sticky top-0 z-20 bg-gray-50">
-                <tr>
-                  <th className="sticky left-0 z-30 bg-gray-50 px-3 py-2 text-left text-xs font-semibold text-gray-600 border-b border-r border-gray-200 whitespace-nowrap">
-                    교사명
+      ) : error ? (
+        <div role="alert" className={chrome.notice("error")}>{error.message}</div>
+      ) : (
+        <div className="max-h-[65dvh] overflow-auto overscroll-contain rounded-xl border border-line">
+          <table className="w-full border-collapse">
+            <thead className={`${chrome.tableHead} sticky top-0 z-20`}>
+              <tr>
+                <th className="sticky left-0 z-30 whitespace-nowrap border-b border-r border-line bg-butter px-3 py-2 text-left text-xs font-semibold">
+                  교사명
+                </th>
+                {months.map((m) => (
+                  <th
+                    key={m}
+                    className="whitespace-nowrap border-b border-line px-3 py-2 text-center text-xs font-semibold"
+                  >
+                    {formatMonthLabel(m)}
                   </th>
-                  {months.map((m) => (
-                    <th
-                      key={m}
-                      className="px-3 py-2 text-center text-xs font-semibold text-gray-600 border-b border-gray-200 whitespace-nowrap"
-                    >
-                      {formatMonthLabel(m)}
-                    </th>
-                  ))}
-                  <th className="px-3 py-2 text-center text-xs font-bold text-gray-800 border-b border-l border-gray-200 whitespace-nowrap">
-                    총계
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {/* 본인 행 - sticky */}
-                {myTeacher && (
-                  <tr className="sticky top-[33px] z-10 bg-yellow-50 font-bold">
-                    <td className="sticky left-0 z-20 bg-yellow-50 px-3 py-2 text-sm text-gray-900 border-b border-r border-yellow-200 whitespace-nowrap">
-                      {myTeacher.name}
-                      {myTeacher.primaryGrade != null && (
-                        <span className="text-xs font-normal text-gray-500 ml-1">
-                          ({myTeacher.primaryGrade})
-                        </span>
-                      )}
-                    </td>
-                    {months.map((m) => (
-                      <td
-                        key={m}
-                        className="px-3 py-2 text-center text-sm text-gray-900 border-b border-yellow-200 whitespace-nowrap"
-                      >
-                        {myTeacher.monthlyCounts[m] || 0}
-                      </td>
-                    ))}
-                    <td className="px-3 py-2 text-center text-sm text-gray-900 border-b border-l border-yellow-200 whitespace-nowrap">
-                      {myTeacher.total}
-                    </td>
-                  </tr>
-                )}
-                {/* 나머지 교사 */}
-                {otherTeachers.map((t) => (
-                  <tr key={t.id} className="hover:bg-gray-50">
-                    <td className="sticky left-0 z-[5] bg-white px-3 py-2 text-sm text-gray-700 border-b border-r border-gray-100 whitespace-nowrap">
-                      {t.name}
-                      {t.primaryGrade != null && (
-                        <span className="text-xs text-gray-400 ml-1">
-                          ({t.primaryGrade})
-                        </span>
-                      )}
-                    </td>
-                    {months.map((m) => (
-                      <td
-                        key={m}
-                        className="px-3 py-2 text-center text-sm text-gray-600 border-b border-gray-100 whitespace-nowrap"
-                      >
-                        {t.monthlyCounts[m] || 0}
-                      </td>
-                    ))}
-                    <td className="px-3 py-2 text-center text-sm font-medium text-gray-700 border-b border-l border-gray-100 whitespace-nowrap">
-                      {t.total}
-                    </td>
-                  </tr>
                 ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-    </div>
+                <th className="whitespace-nowrap border-b border-l border-line px-3 py-2 text-center text-xs font-bold text-ink">
+                  총계
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {/* 본인 행 - sticky */}
+              {myTeacher && (
+                <tr className="sticky top-[33px] z-10 bg-yellow-50 font-bold">
+                  <td className="sticky left-0 z-20 whitespace-nowrap border-b border-r border-yellow-200 bg-yellow-50 px-3 py-2 text-sm text-ink">
+                    {myTeacher.name}
+                    {myTeacher.primaryGrade != null && (
+                      <span className="ml-1 text-xs font-normal text-ink-muted">
+                        ({myTeacher.primaryGrade})
+                      </span>
+                    )}
+                  </td>
+                  {months.map((m) => (
+                    <td
+                      key={m}
+                      className="whitespace-nowrap border-b border-yellow-200 px-3 py-2 text-center text-sm text-ink tabular-nums"
+                    >
+                      {myTeacher.monthlyCounts[m] || 0}
+                    </td>
+                  ))}
+                  <td className="whitespace-nowrap border-b border-l border-yellow-200 px-3 py-2 text-center text-sm text-ink tabular-nums">
+                    {myTeacher.total}
+                  </td>
+                </tr>
+              )}
+              {/* 나머지 교사 */}
+              {otherTeachers.map((t) => (
+                <tr key={t.id} className={chrome.tableRowHover}>
+                  <td className="sticky left-0 z-[5] whitespace-nowrap border-b border-r border-line/60 bg-white px-3 py-2 text-sm text-ink">
+                    {t.name}
+                    {t.primaryGrade != null && (
+                      <span className="ml-1 text-xs text-ink-muted">
+                        ({t.primaryGrade})
+                      </span>
+                    )}
+                  </td>
+                  {months.map((m) => (
+                    <td
+                      key={m}
+                      className="whitespace-nowrap border-b border-line/60 px-3 py-2 text-center text-sm text-ink-muted tabular-nums"
+                    >
+                      {t.monthlyCounts[m] || 0}
+                    </td>
+                  ))}
+                  <td className="whitespace-nowrap border-b border-l border-line/60 px-3 py-2 text-center text-sm font-medium text-ink tabular-nums">
+                    {t.total}
+                  </td>
+                </tr>
+              ))}
+              {otherTeachers.length === 0 && !myTeacher && (
+                <tr>
+                  <td colSpan={months.length + 2} className="px-3 py-6 text-center text-sm text-ink-muted">
+                    배정 기록이 없습니다.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </Dialog>
   );
 }

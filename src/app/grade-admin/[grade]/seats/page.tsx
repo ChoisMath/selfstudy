@@ -3,11 +3,12 @@
 import { useState } from "react";
 import { useParams } from "next/navigation";
 import dynamic from "next/dynamic";
-import { type SeatSessionType } from "@/lib/sessions";
+import { SEAT_SESSION_TYPES, SEAT_SESSION_META, type SeatSessionType } from "@/lib/sessions";
+import { chrome } from "@/components/ui/chrome";
 
 const SeatingEditor = dynamic(() => import("@/components/seats/SeatingEditor"), {
   ssr: false,
-  loading: () => <div className="text-center py-12 text-gray-400">불러오는 중...</div>,
+  loading: () => <div className="text-center py-12 text-ink-muted">불러오는 중…</div>,
 });
 
 export default function GradeAdminSeatsPage() {
@@ -17,29 +18,20 @@ export default function GradeAdminSeatsPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">좌석 배치</h1>
+      <h1 className="mb-6 text-2xl font-bold text-ink">좌석 배치</h1>
 
-      <div className="flex gap-1 mb-6 bg-gray-100 rounded-lg p-1 w-fit">
-        <button
-          onClick={() => setSessionType("afternoon")}
-          className={`px-4 py-2 text-sm rounded-md transition-colors ${
-            sessionType === "afternoon"
-              ? "bg-white text-blue-700 shadow-sm font-medium"
-              : "text-gray-600 hover:text-gray-900"
-          }`}
-        >
-          오후자습
-        </button>
-        <button
-          onClick={() => setSessionType("night")}
-          className={`px-4 py-2 text-sm rounded-md transition-colors ${
-            sessionType === "night"
-              ? "bg-white text-blue-700 shadow-sm font-medium"
-              : "text-gray-600 hover:text-gray-900"
-          }`}
-        >
-          야간자습
-        </button>
+      <div className="mb-6 flex flex-wrap gap-2">
+        {SEAT_SESSION_TYPES.map((t) => (
+          <button
+            key={t}
+            type="button"
+            aria-pressed={sessionType === t}
+            onClick={() => setSessionType(t)}
+            className={chrome.chip(sessionType === t)}
+          >
+            {SEAT_SESSION_META[t].label}
+          </button>
+        ))}
       </div>
 
       <SeatingEditor

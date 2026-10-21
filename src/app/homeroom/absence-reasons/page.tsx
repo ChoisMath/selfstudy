@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useRef, useState } from "react";
 import useSWR from "swr";
 import { SESSION_TYPES, SESSION_META, type SessionType } from "@/lib/sessions";
+import { chrome } from "@/components/ui/chrome";
 
 type StudentData = {
   id: number;
@@ -12,7 +13,14 @@ type StudentData = {
   studentNumber: number;
 };
 
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
+const fetcher = async (url: string) => {
+  const res = await fetch(url);
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.error || `${res.status} 오류가 발생했습니다.`);
+  }
+  return res.json();
+};
 
 const REASON_TYPES = [
   { value: "academy", label: "학원" },
@@ -21,13 +29,24 @@ const REASON_TYPES = [
   { value: "custom", label: "기타" },
 ] as const;
 
+/** 라디오를 감싼 칩 라벨 — 라디오는 sr-only, 라벨 전체(44px)가 히트 영역·포커스 링 대상 */
+const radioChip = (active: boolean) =>
+  `inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-full border px-4 text-sm font-semibold whitespace-nowrap transition-colors focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-1 ${
+    active ? "border-primary bg-primary text-white" : "border-line bg-butter text-ink-muted hover:bg-peach hover:text-ink"
+  }`;
+
 export default function AbsenceReasonsPage() {
-  const { data } = useSWR<{ students: StudentData[] }>(
+  const { data, error: loadError } = useSWR<{ students: StudentData[] }>(
     "/api/homeroom/students",
     fetcher
   );
 
   const students = data?.students ?? [];
+  const ids = useId();
+  const studentId = `${ids}-student`;
+  const dateId = `${ids}-date`;
+  const detailId = `${ids}-detail`;
+  const studentRef = useRef<HTMLSelectElement>(null);
 
   const [selectedStudent, setSelectedStudent] = useState<number | "">("");
   const [date, setDate] = useState(() => {
@@ -44,6 +63,7 @@ export default function AbsenceReasonsPage() {
     e.preventDefault();
     if (!selectedStudent) {
       setMessage({ type: "error", text: "학생을 선택하세요." });
+      studentRef.current?.focus();
       return;
     }
 
@@ -81,21 +101,24 @@ export default function AbsenceReasonsPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">불참사유 등록</h1>
+      <h1 className="mb-6 text-2xl font-bold text-ink text-balance">불참사유 등록</h1>
 
-      <div className="bg-white rounded-lg border border-gray-200 p-6 max-w-lg">
+      <div className={`${chrome.card} max-w-lg p-4 sm:p-6`}>
         <form onSubmit={handleSubmit} className="space-y-5">
           {/* 학생 선택 */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor={studentId} className={chrome.label}>
               학생
             </label>
             <select
+              id={studentId}
+              name="studentId"
+              ref={studentRef}
               value={selectedStudent}
               onChange={(e) =>
                 setSelectedStudent(e.target.value ? parseInt(e.target.value, 10) : "")
               }
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className={`${chrome.select} w-full`}
               required
             >
               <option value="">학생을 선택하세요</option>
@@ -105,37 +128,33 @@ export default function AbsenceReasonsPage() {
                 </option>
               ))}
             </select>
+            {loadError && (
+              <p role="alert" className="mt-1 text-xs text-red-700">학생 목록을 불러오지 못했습니다. 새로고침 후 다시 시도하세요.</p>
+            )}
           </div>
 
           {/* 날짜 */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor={dateId} className={chrome.label}>
               날짜
             </label>
             <input
+              id={dateId}
+              name="date"
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className={chrome.input}
               required
             />
           </div>
 
           {/* 세션 */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              자습 시간
-            </label>
-            <div className="flex gap-3 overflow-x-auto">
+          <fieldset>
+            <legend className={chrome.label}>자습 시간</legend>
+            <div className="flex gap-2 overflow-x-auto py-0.5">
               {SESSION_TYPES.map((t) => (
-                <label
-                  key={t}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-md border cursor-pointer transition-colors whitespace-nowrap min-h-11 ${
-                    sessionType === t
-                      ? "border-blue-500 bg-blue-50 text-blue-700"
-                      : "border-gray-300 text-gray-600 hover:bg-gray-50"
-                  }`}
-                >
+                <label key={t} className={radioChip(sessionType === t)}>
                   <input
                     type="radio"
                     name="sessionType"
@@ -144,27 +163,18 @@ export default function AbsenceReasonsPage() {
                     onChange={() => setSessionType(t)}
                     className="sr-only"
                   />
-                  <span className="text-sm font-medium">{SESSION_META[t].label}</span>
+                  <span>{SESSION_META[t].label}</span>
                 </label>
               ))}
             </div>
-          </div>
+          </fieldset>
 
           {/* 사유 타입 */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              사유 유형
-            </label>
-            <div className="flex flex-wrap gap-2">
+          <fieldset>
+            <legend className={chrome.label}>사유 유형</legend>
+            <div className="flex flex-wrap gap-2 py-0.5">
               {REASON_TYPES.map((rt) => (
-                <label
-                  key={rt.value}
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-md border cursor-pointer transition-colors ${
-                    reasonType === rt.value
-                      ? "border-blue-500 bg-blue-50 text-blue-700"
-                      : "border-gray-300 text-gray-600 hover:bg-gray-50"
-                  }`}
-                >
+                <label key={rt.value} className={radioChip(reasonType === rt.value)}>
                   <input
                     type="radio"
                     name="reasonType"
@@ -173,46 +183,41 @@ export default function AbsenceReasonsPage() {
                     onChange={(e) => setReasonType(e.target.value)}
                     className="sr-only"
                   />
-                  <span className="text-sm">{rt.label}</span>
+                  <span>{rt.label}</span>
                 </label>
               ))}
             </div>
-          </div>
+          </fieldset>
 
           {/* 상세 사유 */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor={detailId} className={chrome.label}>
               상세 사유 (선택)
             </label>
             <textarea
+              id={detailId}
+              name="detail"
               value={detail}
               onChange={(e) => setDetail(e.target.value)}
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-              placeholder="필요 시 상세 사유를 입력하세요"
+              autoComplete="off"
+              className={`${chrome.input} resize-none py-2`}
+              placeholder="예: 수학 학원 보강…"
             />
           </div>
 
           {/* 메시지 */}
-          {message && (
-            <div
-              className={`text-sm px-3 py-2 rounded-md ${
-                message.type === "success"
-                  ? "bg-green-50 text-green-700"
-                  : "bg-red-50 text-red-700"
-              }`}
-            >
-              {message.text}
-            </div>
-          )}
+          <div role="status" aria-live="polite">
+            {message && (
+              <div className={chrome.notice(message.type === "success" ? "ok" : "error")}>
+                {message.text}
+              </div>
+            )}
+          </div>
 
           {/* 제출 */}
-          <button
-            type="submit"
-            disabled={submitting}
-            className="w-full px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            {submitting ? "등록 중..." : "불참사유 등록"}
+          <button type="submit" disabled={submitting} aria-busy={submitting} className={`${chrome.primaryButton} w-full`}>
+            {submitting ? "등록 중…" : "불참사유 등록"}
           </button>
         </form>
       </div>

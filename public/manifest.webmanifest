@@ -4,8 +4,8 @@
   "description": "포산고 자율학습 출석 관리 시스템",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#1e40af",
+  "background_color": "#fff7ea",
+  "theme_color": "#fff7ea",
   "orientation": "portrait",
   "icons": [
     {

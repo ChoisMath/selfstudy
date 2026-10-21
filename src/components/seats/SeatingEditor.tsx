@@ -373,7 +373,7 @@ export default function SeatingEditor({
   }, [activeId, allStudents, seats]);
 
   if (layoutLoading) {
-    return <div className="text-center py-12 text-gray-500">불러오는 중...</div>;
+    return <div className="text-center py-12 text-gray-500">불러오는 중…</div>;
   }
 
   return (
@@ -407,7 +407,7 @@ export default function SeatingEditor({
             disabled={saving || dirty.size === 0}
             className="min-h-11 whitespace-nowrap px-4 text-sm text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {saving ? "저장 중..." : dirty.size > 0 ? `저장 (${dirty.size}개 교실 변경)` : "저장"}
+            {saving ? "저장 중…" : dirty.size > 0 ? `저장 (${dirty.size}개 교실 변경)` : "저장"}
           </button>
         </div>
       </div>

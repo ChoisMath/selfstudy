@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useRef, useState } from "react";
+import { chrome } from "@/components/ui/chrome";
 
 export default function PasswordPage() {
   const [currentPassword, setCurrentPassword] = useState("");
@@ -12,30 +13,27 @@ export default function PasswordPage() {
     text: string;
   } | null>(null);
 
+  const ids = useId();
+  const currentId = `${ids}-current`;
+  const newId = `${ids}-new`;
+  const confirmId = `${ids}-confirm`;
+  const currentRef = useRef<HTMLInputElement>(null);
+  const newRef = useRef<HTMLInputElement>(null);
+  const confirmRef = useRef<HTMLInputElement>(null);
+
+  const fail = (text: string, field: React.RefObject<HTMLInputElement | null>) => {
+    setMessage({ type: "error", text });
+    field.current?.focus();
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setMessage(null);
 
-    if (!currentPassword || !newPassword) {
-      setMessage({ type: "error", text: "모든 필드를 입력하세요." });
-      return;
-    }
-
-    if (newPassword !== confirmPassword) {
-      setMessage({
-        type: "error",
-        text: "새 비밀번호가 일치하지 않습니다.",
-      });
-      return;
-    }
-
-    if (newPassword.length < 4) {
-      setMessage({
-        type: "error",
-        text: "새 비밀번호는 4자 이상이어야 합니다.",
-      });
-      return;
-    }
+    if (!currentPassword) return fail("현재 비밀번호를 입력하세요.", currentRef);
+    if (!newPassword) return fail("새 비밀번호를 입력하세요.", newRef);
+    if (newPassword.length < 4) return fail("새 비밀번호는 4자 이상이어야 합니다.", newRef);
+    if (newPassword !== confirmPassword) return fail("새 비밀번호가 일치하지 않습니다. 같은 값을 다시 입력하세요.", confirmRef);
 
     setSubmitting(true);
 
@@ -59,6 +57,7 @@ export default function PasswordPage() {
       const msg =
         err instanceof Error ? err.message : "비밀번호 변경에 실패했습니다.";
       setMessage({ type: "error", text: msg });
+      currentRef.current?.focus();
     } finally {
       setSubmitting(false);
     }
@@ -66,69 +65,75 @@ export default function PasswordPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">비밀번호 변경</h1>
+      <h1 className="mb-6 text-2xl font-bold text-ink text-balance">비밀번호 변경</h1>
 
-      <div className="bg-white rounded-lg border border-gray-200 p-6 max-w-md">
+      <div className={`${chrome.card} max-w-md p-4 sm:p-6`}>
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor={currentId} className={chrome.label}>
               현재 비밀번호
             </label>
             <input
+              id={currentId}
+              ref={currentRef}
+              name="currentPassword"
               type="password"
+              autoComplete="current-password"
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className={chrome.input}
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor={newId} className={chrome.label}>
               새 비밀번호
             </label>
             <input
+              id={newId}
+              ref={newRef}
+              name="newPassword"
               type="password"
+              autoComplete="new-password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className={chrome.input}
+              aria-describedby={`${newId}-hint`}
               required
               minLength={4}
             />
+            <p id={`${newId}-hint`} className="mt-1 text-xs text-ink-muted">4자 이상</p>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor={confirmId} className={chrome.label}>
               새 비밀번호 확인
             </label>
             <input
+              id={confirmId}
+              ref={confirmRef}
+              name="confirmPassword"
               type="password"
+              autoComplete="new-password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className={chrome.input}
               required
               minLength={4}
             />
           </div>
 
-          {message && (
-            <div
-              className={`text-sm px-3 py-2 rounded-md ${
-                message.type === "success"
-                  ? "bg-green-50 text-green-700"
-                  : "bg-red-50 text-red-700"
-              }`}
-            >
-              {message.text}
-            </div>
-          )}
+          <div role="status" aria-live="polite">
+            {message && (
+              <div className={chrome.notice(message.type === "success" ? "ok" : "error")}>
+                {message.text}
+              </div>
+            )}
+          </div>
 
-          <button
-            type="submit"
-            disabled={submitting}
-            className="w-full px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            {submitting ? "변경 중..." : "비밀번호 변경"}
+          <button type="submit" disabled={submitting} aria-busy={submitting} className={`${chrome.primaryButton} w-full`}>
+            {submitting ? "변경 중…" : "비밀번호 변경"}
           </button>
         </form>
       </div>

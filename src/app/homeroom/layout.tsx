@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { GuideHelpButton } from "@/components/guide/GuideHelpButton";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
+import { chrome } from "@/components/ui/chrome";
 
 // 담임 전용 탭
 const homeroomItems = [
@@ -43,12 +44,12 @@ export default function HomeroomLayout({ children }: { children: React.ReactNode
 
   if (status === "loading") {
     return (
-      <div className="min-h-dvh bg-gray-50">
-        <nav className="bg-white border-b border-gray-200">
+      <div className={chrome.page}>
+        <nav className={chrome.navStatic}>
           <div className="max-w-7xl mx-auto px-2 md:px-3 lg:px-4">
             <div className="flex items-center gap-1.5 sm:gap-2 h-14">
-              <img src="/posan.svg" alt="포산고등학교" className="w-7 h-7 sm:w-8 sm:h-8" />
-              <span className="text-sm sm:text-lg font-bold text-gray-900 whitespace-nowrap">출석부</span>
+              <img src="/posan.svg" alt="포산고등학교" width={32} height={32} className="w-7 h-7 sm:w-8 sm:h-8" />
+              <span className={chrome.brandText}>출석부</span>
             </div>
             {/* 세션 확정 후 나타나는 모바일 탭 행(44px) 자리 — 헤더 높이가 튀지 않게 */}
             <div className="lg:hidden min-h-11" />
@@ -64,28 +65,25 @@ export default function HomeroomLayout({ children }: { children: React.ReactNode
 
   return (
     // lg 미만에서는 탭이 두 번째 줄로 내려가므로 table-scroll 이 쓰는 헤더 높이를 함께 키운다
-    <div className="min-h-dvh bg-gray-50 [--header-h:6.25rem] lg:[--header-h:3.5rem]">
-      <nav className="bg-white border-b border-gray-200 sticky top-0 z-50">
+    <div className={`${chrome.page} [--header-h:6.25rem] lg:[--header-h:3.5rem]`}>
+      <nav className={chrome.nav}>
         <div className="max-w-7xl mx-auto px-2 md:px-3 lg:px-4">
           <div className="flex items-center justify-between h-14">
             <div className="flex items-center gap-1 overflow-x-auto">
               <Link
                 href={attendanceHref}
-                className="flex items-center gap-1.5 sm:gap-2 shrink-0 min-h-11 mr-2 lg:mr-4"
+                className={`${chrome.brand} mr-2 lg:mr-4`}
               >
-                <img src="/posan.svg" alt="포산고등학교" className="w-7 h-7 sm:w-8 sm:h-8" />
-                <span className="text-sm sm:text-lg font-bold text-gray-900 whitespace-nowrap">출석부</span>
+                <img src="/posan.svg" alt="포산고등학교" width={32} height={32} className="w-7 h-7 sm:w-8 sm:h-8" />
+                <span className={chrome.brandText}>출석부</span>
               </Link>
 
               {navItems.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`hidden lg:inline-flex min-h-11 items-center px-3 text-sm font-medium rounded-md whitespace-nowrap transition-colors ${
-                    isActiveItem(item.href)
-                      ? "bg-blue-50 text-blue-700"
-                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-                  }`}
+                  className={`hidden lg:inline-flex ${chrome.navLink(isActiveItem(item.href))}`}
+                  aria-current={isActiveItem(item.href) ? "page" : undefined}
                 >
                   {item.label}
                 </Link>
@@ -94,16 +92,17 @@ export default function HomeroomLayout({ children }: { children: React.ReactNode
 
             <div className="flex items-center gap-2 sm:gap-3 shrink-0 ml-2 lg:ml-4">
               {assignmentText && (
-                <span className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded whitespace-nowrap">
+                <span className={chrome.badge} title="담당 학급">
                   {assignmentText}
                 </span>
               )}
               <NotificationBell />
-              <span className="text-sm text-gray-500 whitespace-nowrap">{user?.name}</span>
+              <span className={chrome.userName}>{user?.name}</span>
               <GuideHelpButton href="/help/homeroom" />
               <button
+                type="button"
                 onClick={() => signOut({ callbackUrl: "/login" })}
-                className="min-h-11 px-2 text-sm text-gray-500 hover:text-gray-700 whitespace-nowrap"
+                className={chrome.ghostButton}
               >
                 로그아웃
               </button>
@@ -118,11 +117,8 @@ export default function HomeroomLayout({ children }: { children: React.ReactNode
                   key={item.href}
                   href={item.href}
                   ref={isActive ? activeTabRef : undefined}
-                  className={`inline-flex min-h-11 items-center px-3 text-sm font-medium transition-colors whitespace-nowrap shrink-0 ${
-                    isActive
-                      ? "text-blue-700 border-b-2 border-blue-600"
-                      : "text-gray-600 hover:text-gray-900"
-                  }`}
+                  className={chrome.navTab(isActive)}
+                  aria-current={isActive ? "page" : undefined}
                 >
                   {item.label}
                 </Link>

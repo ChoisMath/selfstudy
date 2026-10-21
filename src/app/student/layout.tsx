@@ -4,6 +4,7 @@ import { useSession, signOut } from "next-auth/react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { GuideHelpButton } from "@/components/guide/GuideHelpButton";
+import { chrome } from "@/components/ui/chrome";
 
 export default function StudentLayout({
   children,
@@ -15,8 +16,8 @@ export default function StudentLayout({
 
   if (status === "loading") {
     return (
-      <div className="min-h-dvh bg-gray-50 flex items-center justify-center">
-        <p className="text-gray-400">로딩 중...</p>
+      <div className={`${chrome.page} flex items-center justify-center`}>
+        <p className="text-ink-muted" role="status" aria-live="polite">로딩 중…</p>
       </div>
     );
   }
@@ -33,15 +34,15 @@ export default function StudentLayout({
   ];
 
   return (
-    <div className="min-h-dvh bg-gray-50 [--header-h:7.625rem]">
+    <div className={`${chrome.page} [--header-h:7.625rem]`}>
       {/* 헤더 */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
+      <header className={chrome.nav}>
         <div className="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <img src="/posan.svg" alt="포산고등학교" className="w-8 h-8" />
-            <h1 className="text-lg font-bold text-gray-900">
+            <img src="/posan.svg" alt="포산고등학교" width={32} height={32} className="w-8 h-8" />
+            <h1 className="text-lg font-bold text-ink">
               {user.name}{" "}
-              <span className="text-sm font-normal text-gray-500">
+              <span className="text-sm font-normal text-ink-muted tabular-nums">
                 ({displayCode})
               </span>
             </h1>
@@ -49,8 +50,9 @@ export default function StudentLayout({
           <div className="flex items-center gap-1 shrink-0">
             <GuideHelpButton href="/help/student" />
             <button
+              type="button"
               onClick={() => signOut({ callbackUrl: "/login" })}
-              className="min-h-11 px-3 text-sm text-gray-500 hover:text-gray-700 rounded-md hover:bg-gray-100 transition-colors whitespace-nowrap"
+              className={`${chrome.ghostButton} px-3 hover:bg-butter`}
             >
               로그아웃
             </button>
@@ -69,11 +71,8 @@ export default function StudentLayout({
                 <Link
                   key={tab.href}
                   href={tab.href}
-                  className={`inline-flex min-h-11 items-center px-4 text-sm font-medium rounded-t-lg transition-colors whitespace-nowrap shrink-0 ${
-                    isActive
-                      ? "bg-gray-50 text-blue-600 border-b-2 border-blue-600"
-                      : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
-                  }`}
+                  className={`${chrome.navTab(isActive)} px-4`}
+                  aria-current={isActive ? "page" : undefined}
                 >
                   {tab.label}
                 </Link>
