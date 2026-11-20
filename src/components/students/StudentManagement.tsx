@@ -137,14 +137,14 @@ function StudentModal({
             <button
               type="button"
               onClick={onClose}
-              className="min-h-11 px-4 py-2 text-sm text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+              className="min-h-9 px-4 py-2 text-sm text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
             >
               취소
             </button>
             <button
               type="submit"
               disabled={isLoading}
-              className="min-h-11 px-4 py-2 text-sm text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 transition-colors"
+              className="min-h-9 px-4 py-2 text-sm text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 transition-colors"
             >
               {isLoading ? "처리 중..." : initialData ? "수정" : "추가"}
             </button>
@@ -314,12 +314,12 @@ export default function StudentManagement({ grade }: { grade: number }) {
   return (
     <div>
       {/* 헤더 */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
         <div className="flex items-center gap-3">
           <select
             value={classFilter}
             onChange={(e) => setClassFilter(e.target.value)}
-            className="min-h-11 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="min-h-9 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="">전체 반</option>
             {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
@@ -330,13 +330,13 @@ export default function StudentManagement({ grade }: { grade: number }) {
           </select>
           <button
             onClick={() => setShowExcelModal(true)}
-            className="min-h-11 px-4 py-2 text-sm text-green-700 bg-green-50 border border-green-200 rounded-md hover:bg-green-100 transition-colors"
+            className="min-h-9 px-4 py-2 text-sm text-green-700 bg-green-50 border border-green-200 rounded-md hover:bg-green-100 transition-colors"
           >
             Excel
           </button>
           <button
             onClick={handleAdd}
-            className="min-h-11 px-4 py-2 text-sm text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors"
+            className="min-h-9 px-4 py-2 text-sm text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors"
           >
             + 학생 추가
           </button>
@@ -443,7 +443,7 @@ export default function StudentManagement({ grade }: { grade: number }) {
                       <button
                         onClick={() => handleToggleHelper(student)}
                         disabled={!student.isActive}
-                        className={`min-h-11 min-w-11 px-2 py-0.5 rounded text-xs font-medium transition-colors ${
+                        className={`min-h-9 min-w-9 px-2 py-0.5 rounded text-xs font-medium transition-colors ${
                           student.isHelper
                             ? "bg-purple-100 text-purple-700 hover:bg-purple-200"
                             : "bg-gray-100 text-gray-400 hover:bg-gray-200"
@@ -456,21 +456,21 @@ export default function StudentManagement({ grade }: { grade: number }) {
                       <div className="flex items-center justify-end gap-2">
                         <button
                           onClick={() => handleEdit(student)}
-                          className="min-h-11 px-2.5 py-1 text-xs text-blue-600 bg-blue-50 rounded hover:bg-blue-100 transition-colors"
+                          className="min-h-9 px-2.5 py-1 text-xs text-blue-600 bg-blue-50 rounded hover:bg-blue-100 transition-colors"
                         >
                           수정
                         </button>
                         {student.isActive ? (
                           <button
                             onClick={() => handleDelete(student)}
-                            className="min-h-11 px-2.5 py-1 text-xs text-red-600 bg-red-50 rounded hover:bg-red-100 transition-colors"
+                            className="min-h-9 px-2.5 py-1 text-xs text-red-600 bg-red-50 rounded hover:bg-red-100 transition-colors"
                           >
                             삭제
                           </button>
                         ) : (
                           <button
                             onClick={() => handleRestore(student)}
-                            className="min-h-11 px-2.5 py-1 text-xs text-green-600 bg-green-50 rounded hover:bg-green-100 transition-colors"
+                            className="min-h-9 px-2.5 py-1 text-xs text-green-600 bg-green-50 rounded hover:bg-green-100 transition-colors"
                           >
                             복원
                           </button>

@@ -2,6 +2,27 @@
 
 최신 항목을 위에 추가한다. 날짜·도구·변경 이유·파일·실제로 실행한 검증·남은 작업을 기록한다. 기존 상세 이력은 `.claude/PROJECT_MAP.md`, `docs/superpowers/`, `.plans/`, Git 및 Claude 세션 원문에 그대로 남아 있다.
 
+## 2026-11-20 — Claude Code(클라우드) — 디자인 수정 5건: 높이 36px, 담임 불참신청 추가 창, 출석부 (i) 가운데 창
+
+- 요청: ① 로고·"출석부" 줄 버튼 상하 여백 축소 ② 학년관리·담임의 탭·드롭다운·Excel·학생추가 버튼 높이 축소 ③ `/homeroom` "불참사유등록" 탭 제거, 불참신청 탭에 + 버튼 → 오버레이 창으로 추가 ④ 출석부 (i) 정보 영역을 화면 내 같은 위치의 오버레이 창으로 ⑤ 학년관리 head 여백 축소. `/grilling`으로 7건 확인 후 구현.
+- 사용자 결정: 모든 화면 36px(로고 줄 44px) — 예전 "조밀한 UI에서도 44px 터치 영역 유지" 결정을 대체 / (+) 추가는 승인된 불참신청으로 기록 / 교시 여러 개 선택 / 대기·반려 건은 승인으로 바꾸고 이미 승인된 건은 그대로 / 과거 불참사유등록 기록은 그대로 / (i) 창은 화면 가운데(배경 어둡게) / 병합은 스크린샷 확인 후.
+- 높이: `AdminNav`·`homeroom/layout`(`[--header-h:5rem] lg:[--header-h:2.75rem]`, main `py-4`)·`attendance/layout`(헤더 `min-h-11`)·`globals.css`(`--header-h: 2.75rem`)·`GuideHelpButton`·`NotificationBell`·`grade-admin/[grade]/layout`(main `py-2`)·`page.tsx`(탭 `px-4 py-2`)·`participation/page.tsx`, `components/grade-admin/*`·`StudentManagement`·`ParticipationManagement`·`MonthlyCalendar`·`homeroom/*/page.tsx`·`SeatingEditor` 도구 줄에서 `min-h-11`→`min-h-9`, `h-11 w-11`→`h-9 w-9`, 도구 줄 여백 `mb-4/6`→`mb-3`. 학생 레이아웃·출석 페이지 내부·교실 구조 설정 모달·좌석 액션바는 그대로.
+- 담임 불참신청: `app/homeroom/absence-reasons/page.tsx`·`app/api/homeroom/absence-reasons/route.ts` 삭제, 탭 목록에서 제거. `POST /api/homeroom/absence-requests` 추가(자기 반 학생 검증, 트랜잭션으로 블록마다 AbsenceRequest upsert(approved) + Attendance absent + AbsenceReason upsert, 응답 `{created, updated, skipped}`). 신규 `components/homeroom/AbsenceRequestAddModal.tsx`(role=dialog, Escape, 바깥 클릭 닫기), `lib/absence-reasons.ts` `isReasonType`. 목록 페이지에 + 버튼·결과 안내(`role=status`).
+- 출석부: `renderWeeklyPopup`(lg 인라인 말풍선) 제거, 가운데 모달의 `lg:hidden` 제거 — 좌석 줄이 밀리지 않는다.
+- 도움말: `/help/homeroom` 탭 수(여섯 개)·5단계("불참신청 추가")·알아 둘 점 수정. 스틸 `05-absence-reason.webp`와 교사 안내 영상(`demo-video/src/teacher/*`)은 예전 화면 그대로 — 로컬에서 `/guide-page homeroom`으로 갱신 필요.
+- 테스트: 44px·탭 구조를 고정하던 8개(`absence-request-wiring`·`attendance-page-wiring`·`guide-components`·`notification-bell`·`guide-grade-admin`·`guide-seats`·`responsive-tables`·`seating-editor-responsive`)를 새 결정에 맞게 수정(결정 날짜를 주석으로 남김).
+- 검증: ① 테스트 45개 전부 통과 ② `tsc --noEmit` 통과 ③ ESLint 0 오류·경고 7건(`<img>`, 기존) ④ `npm run build` 통과 ⑤ 로컬 Postgres + `next dev` + Playwright(1280×800, 375×720): nav 45px(테두리 포함), 담임 폰 헤더 81px, 학년관리 학생 표 시작 150px, 담임 탭에 불참사유등록 없음·옛 주소 404, 빈 제출 시 "학생을 선택하세요.", 오후1·오후2 추가 → 목록에 승인 2건(처리자 이름), 같은 건 재추가 → "1건 추가, 이미 승인된 1건은 그대로", (i) 창이 화면 가운데·스크롤 위치 불변·Escape 닫힘, 가로 넘침 0, 스크립트 오류 0.
+- 미실행: 운영 반영(PR·main 병합·배포). DB 마이그레이션 없음. `responsive-ui-reviewer` 에이전트는 이 환경에 없어 375px 스크린샷·넘침 측정으로 대신했다. `.claude/memory/` 가 클라우드에 없어 "44px → 36px" 결정을 자동 메모리에 반영하지 못했다 — 로컬에서 `compact-ui-keep-44px-hit-area.md` 를 갱신할 것.
+
+## 2026-11-20 — Claude Code(클라우드) — 2026-10-21 디자인 개편(PR #1) 되돌림, 좌석 배치 공유 기능은 유지
+
+- 경위: PR #2(좌석 배치 공유)를 main 에 병합하자 Railway 가 main 을 배포했는데, main 에는 병합만 되고 배포되지 않았던 PR #1(2026-10-21 로그인 재설계·크림/코랄 셸·사용성 개선)이 들어 있어 운영 디자인이 함께 바뀌었다. 병합 전 운영 배포본은 `db6a5dd`였다(Railway 배포 이력으로 확인). 병합 전에 main 과 운영 배포 커밋의 차이를 확인하지 않은 것이 원인 — 다음부터 main 병합 전 `list-deployments`의 `commitHash`와 `origin/main`을 대조한다.
+- 요청: 예전 디자인으로 되돌리고 오후·야간 통합 자리배치 기능은 유지.
+- 변경: 브랜치를 `origin/main`(d682ab8)에서 다시 시작해 `git revert -m 1 1409316`. 충돌 5개 해결 — 기록 3개(`.claude/HANDOFF.md`·`WORK_LOG.md`는 이력을 지우지 않도록 현재본 유지, `PROJECT_MAP.md`는 개편 전 본문 + 공유 기능 변경 재적용 + 되돌림 이력), `grade-admin/[grade]/page.tsx`·`seats/page.tsx`(개편 전 본문 + `SeatSessionPanel`). `SeatSessionPanel`은 `chrome.chip` 대신 개편 전 좌석 탭의 파란 버튼 클래스(오후 자율학습 / 야간 자율학습)로 다시 작성.
+- 범위: PR #1 전체를 되돌렸다 — 색·로그인만이 아니라 그 PR 의 접근성·44px·`alert()`→인라인 알림·Intl 날짜·Dialog 수정도 함께 빠진다(운영이 원래 쓰던 상태로 복귀). 필요한 항목은 Git 이력에서 골라 다시 적용할 수 있다.
+- 검증: ① `git diff db6a5dd`의 `src`·`tests`·`public`·`scripts`·`prisma` 변경 파일 목록이 공유 기능(1409316..d682ab8) 파일 32개와 정확히 일치 ② 테스트 45개 전부 통과(`login-page.test.ts`는 되돌림으로 제거) ③ `tsc --noEmit` 통과 ④ ESLint 0 오류·경고 7건(`<img>`, 개편 전 상태와 동일 파일) ⑤ `npm run build` 통과 ⑥ 로컬 Postgres + `next dev` + Playwright: 예전 로그인 화면·학년관리 탭(파란 밑줄)·좌석 탭 버튼 확인, 체크 → "오후·야간자습" 하나·미래홀 도면·출석 API `seatSession=night`·인쇄 제목·학생 카드 → 해제 시 버튼 2개와 오후 교실 복귀, 스크립트 오류 0.
+- 미실행: 운영 반영(PR·main 병합·배포)은 사용자 확인 전이라 하지 않았다. DB 마이그레이션 변경 없음(공유 컬럼은 이미 운영에 적용됨).
+
 ## 2026-11-20 — Claude Code(클라우드) — 교실 구조 설정에 "야간자율학습 자리 배치와 동일하게 배치" 체크박스
 
 - 요청: `/grade-admin/2` 좌석 배치의 교실 구조 설정 모달에 체크박스를 두고, 체크하면 오후자습부터 야간자습까지 같은 페이지로 구성. `/grilling`으로 결정 8건을 확인한 뒤 구현. 브랜치 `claude/confident-newton-jfb1qh`.

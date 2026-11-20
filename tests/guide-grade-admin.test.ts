@@ -104,7 +104,7 @@ const host = read(HOST);
 assert.match(host, /<GuideHelpButton href="\/help\/grade-admin" \/>/, "학년관리 화면 ? 버튼이 안내 페이지를 가리킴");
 assert.match(
   host,
-  /<div className="flex border-b border-gray-200 mb-3">\s*<div className="flex min-w-0 flex-1 overflow-x-auto">/,
+  /<div className="flex items-center border-b border-gray-200 mb-2">\s*<div className="flex min-w-0 flex-1 overflow-x-auto">/,
   "탭 줄이 ? 버튼을 밖에 둔 채 탭만 가로 스크롤하지 않음"
 );
 assert.match(read("src/app/help/content.mdx"), new RegExp(`\\(/help/${PAGE}\\)`), "도움말 허브에서 링크");

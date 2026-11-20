@@ -9,7 +9,7 @@ export default function GradeAdminSeatsPage() {
 
   return (
     <div>
-      <h1 className="mb-6 text-2xl font-bold text-ink">좌석 배치</h1>
+      <h1 className="text-2xl font-bold text-gray-900 mb-6">좌석 배치</h1>
       <SeatSessionPanel grade={grade} tabsClassName="mb-6" />
     </div>
   );

@@ -11,3 +11,7 @@ export const REASON_LABELS: Record<ReasonType, string> = {
 export function reasonLabel(type: string): string {
   return (REASON_LABELS as Record<string, string>)[type] ?? type;
 }
+
+export function isReasonType(value: unknown): value is ReasonType {
+  return typeof value === "string" && (REASON_TYPES as readonly string[]).includes(value);
+}

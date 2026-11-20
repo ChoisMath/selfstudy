@@ -3,21 +3,23 @@
 import { useState } from "react";
 import dynamic from "next/dynamic";
 import useSWR from "swr";
-import { chrome } from "@/components/ui/chrome";
 import { seatLayoutsUrl } from "@/lib/seats/seat-layouts-url";
-import {
-  SEAT_SESSION_META,
-  SEAT_SESSION_TYPES,
-  SHARED_SEAT_SESSION_LABEL,
-  type SeatSessionType,
-} from "@/lib/sessions";
+import { SEAT_SESSION_TYPES, SHARED_SEAT_SESSION_LABEL, type SeatSessionType } from "@/lib/sessions";
 
 const SeatingEditor = dynamic(() => import("./SeatingEditor"), {
   ssr: false,
-  loading: () => <div className="text-center py-12 text-ink-muted">불러오는 중…</div>,
+  loading: () => <div className="text-center py-12 text-gray-400">불러오는 중...</div>,
 });
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
+
+const TAB_LABELS: Record<SeatSessionType, string> = {
+  afternoon: "오후 자율학습",
+  night: "야간 자율학습",
+};
+const TAB_BASE = "px-4 py-2 text-sm font-medium rounded-md transition-colors";
+const TAB_ACTIVE = "bg-blue-600 text-white";
+const TAB_IDLE = "bg-gray-100 text-gray-600 hover:bg-gray-200";
 
 // 좌석 세션 선택 + 좌석 편집기. 오후가 야간 배치를 함께 쓰는 학년은 선택 버튼 없이 한 페이지로 보여 준다.
 export default function SeatSessionPanel({
@@ -34,19 +36,17 @@ export default function SeatSessionPanel({
 
   return (
     <div>
-      <div className={`${tabsClassName} flex flex-wrap gap-2`}>
+      <div className={`${tabsClassName} flex gap-2`}>
         {shared ? (
-          <span className={`${chrome.chip(true)} cursor-default`}>{SHARED_SEAT_SESSION_LABEL}</span>
+          <span className={`${TAB_BASE} ${TAB_ACTIVE}`}>{SHARED_SEAT_SESSION_LABEL}</span>
         ) : (
           SEAT_SESSION_TYPES.map((t) => (
             <button
               key={t}
-              type="button"
-              aria-pressed={sessionType === t}
               onClick={() => setSessionType(t)}
-              className={chrome.chip(sessionType === t)}
+              className={`${TAB_BASE} ${sessionType === t ? TAB_ACTIVE : TAB_IDLE}`}
             >
-              {SEAT_SESSION_META[t].label}
+              {TAB_LABELS[t]}
             </button>
           ))
         )}

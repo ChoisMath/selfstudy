@@ -121,7 +121,7 @@ const host = read(HOST);
 assert.match(host, /<GuideHelpButton href="\/help\/seats" \/>/, "좌석 편집기 ? 버튼이 안내 페이지를 가리킴");
 assert.match(
   host,
-  /<div className="flex flex-wrap items-center justify-between gap-2 mb-4">\s*<div className="flex items-center gap-1">\s*<h2 [^>]*>좌석 편집<\/h2>\s*<GuideHelpButton/,
+  /<div className="flex flex-wrap items-center justify-between gap-2 mb-3">\s*<div className="flex items-center gap-1">\s*<h2 [^>]*>좌석 편집<\/h2>\s*<GuideHelpButton/,
   "? 버튼이 '좌석 편집' 제목 바로 옆(줄바꿈 가능한 헤더)에 있지 않음"
 );
 assert.match(host, /<div className="flex flex-wrap items-center gap-2">/, "헤더 버튼 묶음이 좁은 화면에서 줄을 접지 않음");

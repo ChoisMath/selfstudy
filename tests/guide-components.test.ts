@@ -16,8 +16,9 @@ for (const name of ["GuideArticle", "GuideToc", "GuideChapter", "GuideStep", "Gu
 
 const button = read(`${GUIDE}/GuideHelpButton.tsx`);
 assert.match(button, /aria-label="사용 가이드"/);
-assert.match(button, /\bmin-h-11\b/);
-assert.match(button, /\bmin-w-11\b/);
+// 2026-11-20 사용자 결정: 버튼 높이 기준 44px → 36px
+assert.match(button, /\bmin-h-9\b/);
+assert.match(button, /\bmin-w-9\b/);
 assert.match(button, /target="_blank"/, "감독 중 출석부·저장 전 좌석 편집을 잃지 않도록 새 탭");
 assert.match(button, /rel="noopener"/);
 
