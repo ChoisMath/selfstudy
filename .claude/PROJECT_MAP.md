@@ -1,6 +1,6 @@
 # 자율학습 출석부 시스템 - 프로젝트 지도
 
-> 마지막 업데이트: 2026-10-21
+> 마지막 업데이트: 2026-11-20
 > 이 파일은 새 세션에서 코드베이스를 빠르게 파악하기 위한 참조 문서입니다.
 
 ## 개요
@@ -46,22 +46,22 @@ src/
 │   │   ├── layout.tsx          # AdminNav 포함
 │   │   ├── page.tsx            # 전학년 오늘출결 대시보드 (SWR + /api/admin/today-attendance)
 │   │   ├── users/page.tsx      # 통합 사용자관리 (교사/1~3학년 탭, 담당학년 드롭다운, 학생 초기화)
-│   │   ├── seats/page.tsx      # 6탭 좌석배치 (1~3학년 × 오자/야자) + SeatingEditor
+│   │   ├── seats/page.tsx      # 6탭 좌석배치 (1~3학년 × 오자/야자) + SeatingEditor (`SeatSessionPanel` 미사용 — 야간 배치 공유 학년은 오자·야자 탭이 같은 야간 배치를 편집)
 │   │   ├── supervisors/page.tsx # 감독배정 MonthlyCalendar (전학년 6슬롯 모드)
 │   │   ├── statistics/page.tsx # 출결 테이블뷰 + Excel 다운로드
 │   │   └── swap-history/page.tsx
 │   ├── grade-admin/[grade]/    # 서브관리자 (학년별)
 │   │   ├── layout.tsx          # AdminNav 포함
-│   │   ├── page.tsx            # 6탭 허브 (오늘출결, 학생관리, 참여설정, 좌석배치, 감독배정, 월간출결) + 탭 줄 끝에 `GuideHelpButton href="/help/grade-admin"`
+│   │   ├── page.tsx            # 6탭 허브 (오늘출결, 학생관리, 참여설정, 좌석배치, 감독배정, 월간출결 — 좌석배치 탭 본문은 `SeatSessionPanel`) + 탭 줄 끝에 `GuideHelpButton href="/help/grade-admin"`
 │   │   ├── students/page.tsx
 │   │   ├── participation/page.tsx
-│   │   ├── seats/page.tsx      # 2탭 (오후자습/야간자습) + SeatingEditor
-│   │   ├── seats/print/page.tsx # 인쇄 미리보기 (그룹별 가로/세로 + 체크박스)
+│   │   ├── seats/page.tsx      # 제목 + `SeatSessionPanel`(오후자습/야간자습 칩 + SeatingEditor, 야간 배치 공유 중이면 칩이 "오후·야간자습" 하나)
+│   │   ├── seats/print/page.tsx # 인쇄 미리보기 (그룹별 가로/세로 + 체크박스). SWR 키 `seatLayoutsUrl`, 그룹·용지 방향은 응답 `sessions[0].type`(실제 배치) 기준, 제목·그룹 이름은 `seatSessionLabel`(공유 중 "오후·야간자습")
 │   │   └── supervisors/page.tsx # MonthlyCalendar (단일학년 2슬롯 모드)
 │   ├── attendance/             # 감독교사
 │   │   ├── layout.tsx          # 모든 교사에게 이동 버튼 (담임교사/감독일정/학년관리) + NotificationBell + `GuideHelpButton href="/help/attendance"`
 │   │   ├── page.tsx            # 자동 학년 라우팅 / 학년 선택
-│   │   └── [grade]/page.tsx    # ★ 핵심: 좌석 출석 그리드 (4탭: 오후1/오후2/야간자습/불참신청, 오후 그룹은 buildPrintGroups 공용). 오후2 탭 "오후1 결과 복사" 버튼(`/api/attendance/copy-session`) + 불참신청 관리 UI. 오후 그룹 중 `group.classroom`이 있으면 카드 내부 격자를 `ClassroomFrame`(`overflow-x-auto` 래퍼로 좁은 화면 가로 스크롤)으로 감싸 자체 교탁 박스 대신 프레임 교탁 사용, 없으면(미래혜윰) 기존 렌더 유지. "좌석 배치가 설정되지 않았습니다." 안내는 `tab !== "absence"` 일 때만, 주간 팝업·다른학년 모달은 `z-[150]`(sticky 상단 바 `z-[100]` 위)
+│   │   └── [grade]/page.tsx    # ★ 핵심: 좌석 출석 그리드 (4탭: 오후1/오후2/야간자습/불참신청, 오후 그룹은 buildPrintGroups 공용). 배치 분기용 `seatSession`은 응답의 `seatSession` 우선(없으면 `seatSessionOf(tab)`) — 야간 배치 공유 학년은 오후1·오후2 탭도 야간 배치로 그림. 오후2 탭 "오후1 결과 복사" 버튼(`/api/attendance/copy-session`) + 불참신청 관리 UI. 오후 그룹 중 `group.classroom`이 있으면 카드 내부 격자를 `ClassroomFrame`(`overflow-x-auto` 래퍼로 좁은 화면 가로 스크롤)으로 감싸 자체 교탁 박스 대신 프레임 교탁 사용, 없으면(미래혜윰) 기존 렌더 유지. "좌석 배치가 설정되지 않았습니다." 안내는 `tab !== "absence"` 일 때만, 주간 팝업·다른학년 모달은 `z-[150]`(sticky 상단 바 `z-[100]` 위)
 │   ├── homeroom/               # 담임교사
 │   │   ├── layout.tsx          # 담임 5탭 + 공통 2탭 네비게이션 (세션 로딩 처리) + NotificationBell + `GuideHelpButton href="/help/homeroom"`(로그아웃 앞)
 │   │   ├── page.tsx            # 자기반 학생 + 주간출석 (날짜당 3셀: 오후1/오후2/야간)
@@ -84,7 +84,7 @@ src/
 │   │   ├── homeroom/           # **신규.** `/help/homeroom` — page.tsx + content.mdx(출결 확인/참여와 사유/신청과 계정 3장, 스틸 7장, 교사 영상의 담임 구간 `videoKey="teacher" start={313}`)
 │   │   ├── student/            # **신규.** `/help/student` — page.tsx + content.mdx(확인/신청/도우미 3장, 폰 스틸 8장, `GuideVideo videoKey="student"`)
 │   │   ├── grade-admin/        # **신규.** `/help/grade-admin` — page.tsx + content.mdx(현황/명단/운영 3장, PC 스틸 9장, `videoKey="gradeAdmin"`)
-│   │   └── seats/              # **신규.** `/help/seats` — page.tsx + content.mdx(구조와 배정/출력 2장, PC 스틸 5장, 학년관리자 영상의 좌석 구간 `videoKey="gradeAdmin" start={206}`)
+│   │   └── seats/              # **신규.** `/help/seats` — page.tsx + content.mdx(구조와 배정/출력 2장, PC 스틸 5장, 구조 설정 단계에 "야간자율학습 자리 배치와 동일하게 배치" 안내 문단 + 주의 "야간과 동일" — 문구는 `tests/guide-seats.test.ts`가 고정, 학년관리자 영상의 좌석 구간 `videoKey="gradeAdmin" start={206}`)
 │   └── api/                    # API 라우트 (아래 별도 섹션)
 │
 ├── components/
@@ -115,20 +115,21 @@ src/
 │   ├── homeroom/
 │   │   └── SupervisorSummaryModal.tsx  # 학년도 기준 교사별 월별 감독횟수 집계 모달 (`/api/homeroom/schedule/summary`, 본인 행 sticky 강조)
 │   ├── seats/
-│   │   ├── SeatingEditor.tsx       # DndContext + 저장 + 출력 버튼 (props: grade, sessionType). 미배정 목록은 `participatesInSeatSession` 으로 필터. 좌석 해제: `selectedSeat` 선택 → 루트 마지막 자식 `sticky bottom-2` 액션바(배정 해제/취소/Escape), 또는 좌석→미배정 패널 드롭. 충돌 감지 커스텀(패널은 `getBoundingClientRect()` 실시간, 나머지는 패널 제외 `closestCenter`). "좌석 편집" 제목 줄에 `GuideHelpButton href="/help/seats"`. 오후(`sessionType==="afternoon"`) 헤더에 "교실 구조 설정" 버튼(`min-h-11`, 미저장 변경 있으면 확인창) → `ClassroomConfigModal`. 오후 그룹 중 `group.classroom`이 있으면 `ClassroomFrame variant="screen"`으로 감싸고 각 `RoomGrid`에 `hideTeacherDesk`(프레임이 교탁을 대신 그림), 없으면(미래혜윰) 기존 렌더 유지
+│   │   ├── SeatingEditor.tsx       # DndContext + 저장 + 출력 버튼 (props: grade, sessionType). 좌석 SWR 키는 `seatLayoutsUrl`, 응답의 `sharesNightLayout`(=`shared`)·`sessions[0].type`(=`layoutSeat`, 실제 배치)로 분기 — 미래홀/오후 렌더와 인쇄 링크(`?session=`)는 `layoutSeat` 기준, 공유 중이면 상단에 "오후·야간자습 공용 배치" 안내 배너. 미배정 목록은 `participatesInSeatSession`(공유 중이면 세 블록 기준 `participatesInSharedSeatLayout`) 으로 필터. 좌석 해제: `selectedSeat` 선택 → 루트 마지막 자식 `sticky bottom-2` 액션바(배정 해제/취소/Escape), 또는 좌석→미배정 패널 드롭. 충돌 감지 커스텀(패널은 `getBoundingClientRect()` 실시간, 나머지는 패널 제외 `closestCenter`). "좌석 편집" 제목 줄에 `GuideHelpButton href="/help/seats"`. 오후(`sessionType==="afternoon"`) 또는 공유 중(`shared`) 헤더에 "교실 구조 설정" 버튼(`min-h-11`, 미저장 변경 있으면 확인창) → `ClassroomConfigModal`. 오후 그룹 중 `group.classroom`이 있으면 `ClassroomFrame variant="screen"`으로 감싸고 각 `RoomGrid`에 `hideTeacherDesk`(프레임이 교탁을 대신 그림), 없으면(미래혜윰) 기존 렌더 유지
+│   │   ├── SeatSessionPanel.tsx    # **신규.** 좌석 세션 선택 칩 + `SeatingEditor`(dynamic, `key={grade-sessionType}`). props `{grade, tabsClassName?}`. 편집기와 같은 SWR 키(`seatLayoutsUrl`)로 `sharesNightLayout`을 읽어 공유 중이면 칩이 "오후·야간자습" 하나(선택 불가). `/grade-admin/[grade]` 좌석 탭과 `/grade-admin/[grade]/seats`가 사용
 │   │   ├── RoomGrid.tsx            # 교실 격자 (droppable/draggable 셀). X(해제) 버튼 없음 — props `selectedSeatKey?`/`onSelectSeat?(SeatRef|null)`(`export type SeatRef`)로 좌석 탭 선택(ring), 핸들 Delete/Backspace도 선택. `preserveSeatWidth` prop: 오후 분기 전용 최소 셀 폭(`MIN_SEAT_WIDTH=52`) — 셀을 찌그러뜨리지 않고 래퍼가 가로 스크롤. `hideTeacherDesk` prop: true면 자체 교탁 박스를 그리지 않음(학급 그룹은 `ClassroomFrame`이 대신 그림)
 │   │   ├── ClassroomFrame.tsx      # **신규.** 학급 분단 격자를 감싸는 공용 프레임(dnd-kit 비의존, 화면/인쇄 공용). props `{corridorSide, variant:"screen"|"print", showTeacherDesk=true, children}` — 좌우에 `corridorLabels()` 기반 세로("`writing-mode: vertical-rl`") "복도"/"창문" 라벨 + 하단 "교탁". `variant="print"`는 고정 px(라벨 20px=`PRINT_SIDE_LABEL_WIDTH`)만 사용해 `PrintPageFitter` 실측과 맞춤, `variant="screen"`은 `minmax(min-content,1fr)`이라 호출부가 `overflow-x-auto` 래퍼를 제공해야 함
-│   │   ├── ClassroomConfigModal.tsx # **신규.** 학년관리자용 학급 구조 설정 모달 (props `{grade, onClose, onChanged}`). `useSWR`로 `/api/grade-admin/[grade]/classrooms` 목록(반/유형/복도/행 수/좌석 수/배정 수, `overflow-x-auto` + sticky 헤더) + 추가/수정 폼(반 번호·복도 라디오·유형 라디오·분단별 행 수) + 자체 `LayoutPreview` 미리보기(12px 박스 미니 격자 + 총 좌석 수). 기하 변경(`isGeometryChanged`)이고 `assignedCount>0`이면 `confirm()`으로 "좌석이 초기화됩니다" 확인, 삭제도 confirm. 저장/삭제 성공 시 목록 `mutate()` + `onChanged()`(SeatingEditor의 좌석 SWR 갱신)
+│   │   ├── ClassroomConfigModal.tsx # **신규.** 학년관리자용 학급 구조 설정 모달 (props `{grade, onClose, onChanged}`). `useSWR`로 `/api/grade-admin/[grade]/classrooms` 목록(반/유형/복도/행 수/좌석 수/배정 수, `overflow-x-auto` + sticky 헤더) + 추가/수정 폼(반 번호·복도 라디오·유형 라디오·분단별 행 수) + 자체 `LayoutPreview` 미리보기(12px 박스 미니 격자 + 총 좌석 수). 기하 변경(`isGeometryChanged`)이고 `assignedCount>0`이면 `confirm()`으로 "좌석이 초기화됩니다" 확인, 삭제도 confirm. 저장/삭제 성공 시 목록 `mutate()` + `onChanged()`(SeatingEditor의 좌석 SWR 갱신). 목록 위 체크박스 "야간자율학습 자리 배치와 동일하게 배치"(목록 응답 `sharesNightLayout`, 로딩 중에는 그리지 않음) → `confirm()` 후 `PUT …/seat-sharing` → 같은 갱신. 공유 중에는 학급 추가·수정·삭제 버튼 disabled(오후 배치는 보관만)
 │   │   ├── MiraeHallLayout.tsx     # 2학년 야간 미래홀 도면 (fitContent 옵션)
 │   │   ├── PrintRoomGrid.tsx       # 인쇄용 읽기전용 좌석 격자 (dnd 없음, 고정 셀 크기)
 │   │   ├── StudentSeatGrid.tsx     # 학생용 읽기 전용 좌석 격자 (dnd 없음, `minmax(52px,1fr)` 최소 폭, 내 자리 `aria-current` + 파란 강조, props `{room, mySeat, gapAfterRows?}`)
-│   │   ├── SeatPrintGroup.tsx      # 인쇄 그룹 1개 (제목 + kind별 배치 + 교탁). `group.classroom`이 있으면 `ClassroomFrame variant="print"`로 각 `PrintRoomGrid`를 감싸고 자체 교탁 박스는 생략(`showTeacherDesk = isDivisions && !group.classroom`), 없으면(미래혜윰/야간) 기존 교탁 박스 유지
+│   │   ├── SeatPrintGroup.tsx      # 인쇄 그룹 1개 (제목 + kind별 배치 + 교탁). props `{group, grade, sessionLabel, seatsByRoom}` — 세션 이름은 호출부가 `seatSessionLabel`로 만들어 넘김(구 `sessionType` prop 제거). `group.classroom`이 있으면 `ClassroomFrame variant="print"`로 각 `PrintRoomGrid`를 감싸고 자체 교탁 박스는 생략(`showTeacherDesk = isDivisions && !group.classroom`), 없으면(미래혜윰/야간) 기존 교탁 박스 유지
 │   │   ├── PrintPageFitter.tsx     # A4 페이지 박스 + 콘텐츠 실측 후 scale
 │   │   └── UnassignedStudents.tsx  # 미배정 학생 풀 (검색/반별 그룹). `export const UNASSIGNED_DROP_ID = "unassigned"` + `useDroppable` — 좌석을 끌어다 놓으면 해제(좌석 드래그 중에만 isOver 링)
 │   ├── student/
 │   │   ├── ParticipationScheduleCard.tsx  # 참여일정 3행 격자 (인덱스 오후1/오후2/야간 + 월~금, `grid-cols-[auto_repeat(5,1fr)]`). 활성 셀은 button → `onSelectDay(sessionType, nextDateForWeekday(today, wd))`, 오늘 열 `border-2` 강조 + "오늘" 캡션, 다음 주로 넘어간 셀 "다음주"
 │   │   ├── AbsenceRequestForm.tsx         # 불참 신청 폼 (헤더 "불참 신청하기" + 닫기). 세션 버튼은 날짜 요일의 `activeSessionTypesOn` 밖이면 disabled, [전체] = 활성 세션 전부 토글, 사유 4열 한 행, 상세 사유는 기타일 때만 표시·전송. props `{initialDate, initialSessionTypes, today, participationDays, onClose, onSubmitted}`
-│   │   └── SeatCheckCard.tsx              # 좌석 확인 카드 — SWR `/api/student/seats`, 오후/야간 탭(기본 탭은 렌더 파생 `picked ?? firstWithGroup ?? "afternoon"`), classroom 은 `ClassroomFrame variant="screen"` 안에 분단 가로 배치, room 은 세로 스택(`GAP_CONFIG` 재사용, 교탁은 오후만). 미참가/좌석 없음 문구 분기
+│   │   └── SeatCheckCard.tsx              # 좌석 확인 카드 — SWR `/api/student/seats`, 오후/야간 탭(기본 탭은 렌더 파생 `picked ?? firstWithGroup ?? "afternoon"`), 응답 `sharesNightLayout`이면 탭 없이 "오후·야간자습" 라벨 하나(야간 묶음 고정, 미참가 판정은 `SESSION_TYPES` 세 블록), classroom 은 `ClassroomFrame variant="screen"` 안에 분단 가로 배치, room 은 세로 스택(`GAP_CONFIG` 재사용, 교탁은 오후만). 미참가/좌석 없음 문구 분기
 │   └── students/
 │       └── StudentManagement.tsx   # 학생 목록 + CRUD 모달 + ExcelUploadModal. 모달은 열려 있을 때만 마운트(`{modalOpen && <StudentModal/>}`, 마운트 시 initialData 로 초기화)
 │
@@ -137,7 +138,7 @@ src/
 │   ├── api-auth.ts     # withAuth (+ "teacher" 의사역할: 모든 교사 허용), withGradeAuth, withHomeroomAuth 래퍼
 │   ├── calendar.ts     # KST 안전 순수 날짜 유틸 (getKstTodayString/formatDateValue/parseDateValue/formatDateLabel/formatDateWithWeekday/shiftMonth/buildMonthCells/weekdayOf/addDays/nextDateForWeekday/mondayOf, toISOString 미사용)
 │   ├── format-date.ts      # **신규.** Intl(ko-KR, Asia/Seoul) 날짜 표시 — `formatMonthDay`(10/21(화)), `formatMonthDayDots`(10.21), `formatYearMonth`, `formatFullDate`, `formatWeekOfMonth`, `parseKstDate`("YYYY-MM-DD" 는 KST 정오로 해석; `new Date("YYYY-MM-DD")` UTC 파싱 금지)
-│   ├── sessions.ts     # ★ 세션 진실 공급원 — SESSION_TYPES(afternoon1/afternoon2/night)/SEAT_SESSION_TYPES(afternoon/night)/SESSION_META/SEAT_SESSION_META/REPRESENTATIVE_SESSION_TYPE("afternoon1")/isSessionType/isSeatSessionType/seatSessionOf/sessionTypesOfSeat/attendanceMinutes/emptySessionRecord. `"afternoon"`/`"night"` 리터럴·`100` 상수는 이 모듈 밖 사용 금지(session-literal-guard 테스트로 고정)
+│   ├── sessions.ts     # ★ 세션 진실 공급원 — SESSION_TYPES(afternoon1/afternoon2/night)/SEAT_SESSION_TYPES(afternoon/night)/SESSION_META/SEAT_SESSION_META/REPRESENTATIVE_SESSION_TYPE("afternoon1")/isSessionType/isSeatSessionType/seatSessionOf/sessionTypesOfSeat/attendanceMinutes/emptySessionRecord + 야간 배치 공유용 `SHARED_SEAT_SESSION_LABEL`("오후·야간자습")/`effectiveSeatSession(seat, shared)`(공유 중 afternoon→night)/`seatSessionLabel(seat, shared)`. `"afternoon"`/`"night"` 리터럴·`100` 상수는 이 모듈 밖 사용 금지(session-literal-guard 테스트로 고정)
 │   ├── absence-reasons.ts  # REASON_TYPES/REASON_LABELS(한글)/reasonLabel — 기존 7곳에 중복되던 사유 라벨 맵의 단일 출처(수정한 파일만 교체)
 │   ├── participation-days.ts  # 학생 화면용 요일 헬퍼 — WEEKDAY_KEYS/WEEKDAY_LABELS/DaySettings/ParticipationDaysMap, weekdayKeyOf(주말 null), isActiveOn(레코드 없음 = 비활성), activeSessionTypesOn(days, date), activeDayCount
 │   ├── academic-year.ts    # 학년도(3월~익년2월) 범위 계산 + 학년 내 자습시간 랭킹(getGradeRankingMap, 모듈 인메모리 캐시 TTL 60초) — raw SQL로 `COALESCE(duration_minutes, CASE session_type WHEN 'night' THEN 100 ELSE 50 END)` 집계
@@ -150,10 +151,12 @@ src/
 │   │   └── client.ts          # 브라우저 구독/해제 + VAPID base64 변환 + iOS standalone 감지
 │   ├── seats/
 │   │   ├── print-groups.ts   # 방 목록 → 인쇄 그룹 분해 (화면/인쇄 공용, 타입은 SeatSessionType). `classroom` 메타(`ClassroomMeta`)가 있는 Room은 학급 단위(반 번호=`sortOrder`→`id` 순)로 먼저 묶고(`buildClassroomGroups`, `kind:"divisions-row"`), 없는 Room(미래혜윰 등)은 기존 접두사 규칙(`buildPrefixGroups`)으로 뒤에 붙임. `classroomTitle(grade,classNumber)` = `"{grade}-{classNumber}반"`. 야간 분기는 변경 없음
-│   │   ├── classroom-config.ts  # **신규.** 학급 구조 순수 로직 — `CORRIDOR_SIDES`/`LAYOUT_TYPES`(+라벨), `COLS_BY_LAYOUT`(division=2/single=1), `CLASSROOM_LIMITS`(classNumber 1~20/divisions 1~6/rows 1~10), `planClassroomRooms(grade,config)`(→Room명·cols·rows·sortOrder 목록), `isGeometryChanged(existingRooms,config)`(유형·분단수·행수 중 하나라도 다르면 true, 순서 무관), `seatCountOf`, `corridorLabels(side)`(반대쪽에 "창문"), `parseClassroomConfig(input)`(zod 미사용 손 검증, 한국어 에러)
+│   │   ├── classroom-config.ts  # **신규.** 학급 구조 순수 로직 — `CORRIDOR_SIDES`/`LAYOUT_TYPES`(+라벨), `COLS_BY_LAYOUT`(division=2/single=1), `CLASSROOM_LIMITS`(classNumber 1~20/divisions 1~6/rows 1~10), `planClassroomRooms(grade,config)`(→Room명·cols·rows·sortOrder 목록), `isGeometryChanged(existingRooms,config)`(유형·분단수·행수 중 하나라도 다르면 true, 순서 무관), `seatCountOf`, `corridorLabels(side)`(반대쪽에 "창문"), `parseClassroomConfig(input)`(zod 미사용 손 검증, 한국어 에러), `SHARED_LAYOUT_LOCK_ERROR`(야간 배치 공유 중 학급 변경 409 문구)
 │   │   ├── print-layout.ts   # A4 기하 상수 + 방향 추천/배율 계산
-│   │   ├── seat-participation.ts  # participatesInSeatSession: 좌석 세션의 블록 중 하나라도 참여(레코드 없으면 기본 참여)면 자리 필요
-│   │   └── student-seat-group.ts  # selectSeatGroupRooms(myRoom, sessionRooms, grade): classroomId 있으면 그 Classroom 의 Room 전부(kind "classroom", 제목 classroomTitle), 없으면 같은 roomPrefix 의 Room(kind "room"). API 응답 타입 StudentSeatGroup/StudentSeatsResponse 도 여기
+│   │   ├── seat-participation.ts  # participatesInSeatSession: 좌석 세션의 블록 중 하나라도 참여(레코드 없으면 기본 참여)면 자리 필요. `participatesInSharedSeatLayout`: 야간 배치 공유 중 — 세 블록(오후1·오후2·야간) 중 하나라도 참여면 자리 필요
+│   │   ├── shared-layout.ts  # **신규.** `isNightLayoutShared(grade)` — 그 학년 오후 세션 행의 `sharesNightLayout` 조회(서버 전용, prisma)
+│   │   ├── seat-layouts-url.ts  # **신규.** `seatLayoutsUrl(grade, seat)` — 좌석 편집기·좌석 탭(`SeatSessionPanel`)·인쇄가 같은 SWR 키를 쓰게 하는 주소 생성
+│   │   └── student-seat-group.ts  # selectSeatGroupRooms(myRoom, sessionRooms, grade): classroomId 있으면 그 Classroom 의 Room 전부(kind "classroom", 제목 classroomTitle), 없으면 같은 roomPrefix 의 Room(kind "room"). API 응답 타입 StudentSeatGroup/StudentSeatsResponse(좌석 세션별 묶음 + `sharesNightLayout`) 도 여기
 │   └── prisma.ts       # PrismaClient 싱글톤 (PrismaPg 어댑터)
 │
 ├── middleware.ts       # 라우트 보호 (getToken + 명시적 cookieName/salt, /homeroom·/attendance 모든 교사 허용)
@@ -238,11 +241,11 @@ CLAUDE.md              # 기존 Claude 프로젝트 지침 + @AGENTS.md import
 ### 출석 (`/api/attendance/`)
 | 메서드 | 경로 | 설명 |
 |--------|------|------|
-| GET | `/api/attendance?date&session&grade` | 좌석+출석 현황 조회 (`session`은 `SessionType`, 좌석/교실은 `seatSessionOf(session)`으로 조회. 학생별 `hasPendingAbsenceRequest` 포함). `rooms[]`에 `classroom: ClassroomMeta \| null` 포함(`include: { classroom: true }`) |
+| GET | `/api/attendance?date&session&grade` | 좌석+출석 현황 조회 (`session`은 `SessionType`, 좌석/교실은 `effectiveSeatSession(seatSessionOf(session), isNightLayoutShared(grade))`로 조회 — 야간 배치 공유 학년은 오후1·오후2 도 야간 교실. 응답에 `seatSession`(실제 배치 종류) 포함. 학생별 `hasPendingAbsenceRequest` 포함). `rooms[]`에 `classroom: ClassroomMeta \| null` 포함(`include: { classroom: true }`) |
 | GET | `/api/attendance/supervisor?date&grade` | **신규.** 해당 날짜·학년의 감독교사만 조회, 응답 `{ supervisor: { id, name } \| null }`. 감독 배정은 3블록이 같은 교사이므로 `REPRESENTATIVE_SESSION_TYPE` 대표행만 `findUnique`. 세션이 특정되지 않는 불참신청 탭의 감독 칩 전용 |
 | POST | `/api/attendance/toggle` | 출석 상태 순환 토글 (`sessionType`을 `isSessionType`으로 검증) |
 | PUT | `/api/attendance/[id]` | 상태 직접 수정 (`sessionType` 검증 추가) |
-| POST | `/api/attendance/copy-session` | **신규.** `{grade,date,from,to}`(같은 좌석 세션의 서로 다른 블록만) — `from`(보통 오후1) 결과를 `to`(오후2) 미체크·참여·불참신청無 학생에게 복사(`planSessionCopy`). 응답 `{copied,skipped}` |
+| POST | `/api/attendance/copy-session` | **신규.** `{grade,date,from,to}`(같은 좌석 세션의 서로 다른 블록만) — `from`(보통 오후1) 결과를 `to`(오후2) 미체크·참여·불참신청無 학생에게 복사(`planSessionCopy`). 좌석 배정 학생 조회는 야간 배치 공유 해석(`effectiveSeatSession`) 적용. 응답 `{copied,skipped}` |
 | GET | `/api/attendance/weekly?studentId&date` | 주간 출석. `weekly[].sessions: Record<SessionType,…>`(status/reason/participating/afterSchool/note/`isApprovedAbsence`/`approvedReason`) — 승인된 `AbsenceRequest`를 주간 범위로 조회해 팝업에 불참승인 노란색+한글 사유 반영. `totals`/`ranking` 형태 불변 |
 | GET | `/api/attendance/absence-requests?grade&status` | 학년별 불참신청 목록 조회 (감독교사용) |
 | POST | `/api/attendance/absence-requests/bulk-approve` | 감독교사 배정 검증 후 해당 날짜/학년/세션의 pending 불참신청 일괄승인 |
@@ -269,9 +272,10 @@ CLAUDE.md              # 기존 Claude 프로젝트 지침 + @AGENTS.md import
 | GET | `students/template` | 학생 Excel 업로드 템플릿(`withGradeAuth`, 예시 행의 학년은 경로 학년). 구 경로 `/api/admin/students/template`에서 이동 — middleware 가 `/api/admin/*`을 메인관리자 전용으로 막아 학년관리자가 받지 못했음 |
 | POST | `students/bulk-upload` | Excel 일괄업로드 (기존 비활성화 + 새 생성) |
 | GET/PUT | `participation-days` | 참여설정. GET `students[].sessions: Record<SessionType, DaySettings>`(세션 3 × 참가+5요일 = 18열), PUT 검증 `isSessionType` |
-| GET/POST | `seat-layouts` | 좌석 배치 조회/저장(트랜잭션, roomId 기반, `sessionType`은 `SeatSessionType` — `isSeatSessionType` 검증). GET `rooms[]`에 `classroom: ClassroomMeta \| null` 포함 |
-| GET/POST | `classrooms` | **신규.** 오후 학급 교실 구조 목록/추가(`withGradeAuth`). GET: 오후 세션 없으면 `{classrooms:[]}` 200(있으면 각 항목에 `rowsPerDivision`/`seatCount`/`assignedCount` 계산 포함); POST: `ClassroomConfig`(`parseClassroomConfig`) 검증 400, 같은 반 번호 존재 시 409, 세션 없으면 404, 성공 시 트랜잭션(Classroom 생성→`planClassroomRooms`로 Room 일괄 생성) 201 `{classroom}` |
-| PUT/DELETE | `classrooms/[id]` | **신규.** 학급 구조 수정/삭제(`withGradeAuth`, 다른 학년 id는 404). PUT: `isGeometryChanged`(유형·분단수·행수 변경)면 해당 Room들의 SeatLayout→Room을 지우고 재생성(좌석 초기화), 아니면 반 번호 변경 시 Room 이름만 갱신 — 응답 `{classroom, reset:boolean}`. DELETE: 트랜잭션으로 SeatLayout→Room→Classroom 순서 삭제, `{success:true}` |
+| GET/POST | `seat-layouts` | 좌석 배치 조회/저장(트랜잭션, roomId 기반, `sessionType`은 `SeatSessionType` — `isSeatSessionType` 검증). GET 응답 `{ sessions, sharesNightLayout }` — 야간 배치 공유 중이면 `sessionType=afternoon` 요청에도 야간 세션 반환(`sessions[0].type`이 실제 배치). `rooms[]`에 `classroom: ClassroomMeta \| null` 포함 |
+| GET/POST | `classrooms` | **신규.** 오후 학급 교실 구조 목록/추가(`withGradeAuth`). GET: `{classrooms, sharesNightLayout}` — 오후 세션 없으면 `{classrooms:[], sharesNightLayout:false}` 200(있으면 각 항목에 `rowsPerDivision`/`seatCount`/`assignedCount` 계산 포함); POST: `ClassroomConfig`(`parseClassroomConfig`) 검증 400, 같은 반 번호 존재 시 409, 세션 없으면 404, 야간 배치 공유 중이면 409(`SHARED_LAYOUT_LOCK_ERROR`), 성공 시 트랜잭션(Classroom 생성→`planClassroomRooms`로 Room 일괄 생성) 201 `{classroom}` |
+| PUT/DELETE | `classrooms/[id]` | **신규.** 학급 구조 수정/삭제(`withGradeAuth`, 다른 학년 id는 404). PUT: `isGeometryChanged`(유형·분단수·행수 변경)면 해당 Room들의 SeatLayout→Room을 지우고 재생성(좌석 초기화), 아니면 반 번호 변경 시 Room 이름만 갱신 — 응답 `{classroom, reset:boolean}`. DELETE: 트랜잭션으로 SeatLayout→Room→Classroom 순서 삭제, `{success:true}`. PUT·DELETE 모두 야간 배치 공유 중이면 409(`SHARED_LAYOUT_LOCK_ERROR`) |
+| PUT | `seat-sharing` | **신규.** 오후가 야간 좌석 배치를 함께 쓸지 설정(`withGradeAuth`). 본문 `{ sharesNightLayout: boolean }`(아니면 400) → 오후 세션 행의 플래그만 갱신(교실·배정 삭제 없음). 오후 세션 없으면 404, 켤 때 야간 세션 없으면 409. 응답 `{ sharesNightLayout }` |
 | GET/POST | `supervisor-assignments` | 감독 배정 (POST: `SESSION_TYPES` 3행 동시 upsert, 응답 `{ assignment: 대표행(afternoon1), assignments: [3행] }`) |
 | DELETE | `supervisor-assignments/[id]` | 배정 해제 (3행 동시 삭제) |
 | GET | `today-attendance` | 학년별 오늘 출결 현황. `sessions: Record<SessionType, SessionStats>`(출석/결석/사유결석/방과후 집계) |
@@ -285,7 +289,7 @@ CLAUDE.md              # 기존 Claude 프로젝트 지침 + @AGENTS.md import
 | GET/POST | `absence-requests` | 불참신청 조회/생성. POST 입력 `sessionTypes: SessionType[]`(1개 이상, "오후 전체" 지원) → `createMany({skipDuplicates})`, 응답 `{created,skipped}` |
 | GET | `attendance?type&date/month` | 주간/월간 출결 (3세션 루프) |
 | GET | `participation-days` | 참여일정. `monthlyStudyHours`/`yearlyStudyHours`는 `attendanceMinutes()` 합산 |
-| GET | `seats` | **신규.** 내 좌석 그룹. `Record<SeatSessionType, StudentSeatGroup|null>` — 학급 교실이면 분단 Room 전부 + `corridorSide`, 별도 교실이면 같은 접두사 Room 묶음. 각 Room 의 좌석에 같은 교실 학생 `{id,name,classNumber,studentNumber}` 포함, `mySeat{roomId,rowIndex,colIndex}` |
+| GET | `seats` | **신규.** 내 좌석 그룹. `Record<SeatSessionType, StudentSeatGroup|null>` + `sharesNightLayout: boolean`(학년이 야간 배치 공유 중이면 true — 이때 afternoon 도 야간 묶음이고 보관 중인 오후 학급 좌석은 무시) — 학급 교실이면 분단 Room 전부 + `corridorSide`, 별도 교실이면 같은 접두사 Room 묶음. 각 Room 의 좌석에 같은 교실 학생 `{id,name,classNumber,studentNumber}` 포함, `mySeat{roomId,rowIndex,colIndex}` |
 | GET | `batch-absence` | **신규(맵 누락분 반영).** 도우미 학생 전용 — 같은 반 학생별 오늘 `participating: Record<SessionType,boolean>` + `existingRequests: Partial<Record<SessionType,string>>` |
 | POST | `batch-absence` | **신규(맵 누락분 반영).** 도우미 학생이 반 전체 불참신청 일괄 등록. `sessionType`은 `isSessionType` 검증, `createMany({skipDuplicates})`, 응답 `{created,total,skipped}` |
 
@@ -333,6 +337,7 @@ Student ──< Attendance (+ durationMinutes?, durationNote?) >── Teacher (
   └──< SeatLayout >── Room >── StudySession
          (unique: roomId + rowIndex + colIndex)
          StudySession.type: SeatSessionType (afternoon/night) — 좌석 배치·인쇄 전용, 오후1·오후2 는 같은 "오후" 좌석을 공유
+         StudySession.sharesNightLayout(Boolean, 기본 false, `shares_night_layout`) — 오후 세션 행에서만 의미. true 면 그 학년 오후1·오후2 가 야간 세션의 교실·배정을 그대로 사용(오후 Classroom/Room/SeatLayout 은 보관)
          Room.classroomId?(nullable) >── Classroom >── StudySession
            (Classroom: sessionId+classNumber @@unique, corridorSide: CorridorSide, layoutType: ClassroomLayoutType, sortOrder=classNumber)
            일반 학급 교실(4·5·6반)만 연결. 미래혜윰·야간 Room은 classroomId=null로 불변
@@ -355,7 +360,7 @@ SupervisorReminderLog: teacherId, grade, date(@db.Date), sentAt — @@unique([te
 
 ### 주요 Enum
 - `Role`: admin, supervisor, homeroom
-- `SeatSessionType`: afternoon, night — `StudySession.type` 전용 (좌석 배치·인쇄), 오후1·오후2 는 "afternoon" 좌석을 공유
+- `SeatSessionType`: afternoon, night — `StudySession.type` 전용 (좌석 배치·인쇄), 오후1·오후2 는 "afternoon" 좌석을 공유(학년별 `StudySession.sharesNightLayout`이 켜지면 "night" 좌석 사용)
 - `SessionType`: afternoon1, afternoon2, night — `Attendance`/`AbsenceRequest`/`ParticipationDay`/`AttendanceNote`/`SupervisorAssignment.sessionType` (출석 블록 단위). 진실 공급원은 `src/lib/sessions.ts`
 - `AttendanceStatus`: unchecked, present, absent
 - `ReasonType`: academy, afterschool, illness, custom
@@ -419,11 +424,11 @@ SupervisorReminderLog: teacherId, grade, date(@db.Date), sentAt — @@unique([te
 - 좌석 세션(`SeatSessionType`: afternoon/night, `StudySession.type`)과 출석 블록(`SessionType`: afternoon1/afternoon2/night, `Attendance` 등)은 별개 enum. `seatSessionOf(session)`으로 블록→좌석 매핑, `sessionTypesOfSeat(seat)`으로 역매핑(오후 → `[afternoon1, afternoon2]`)
 - 기본 소요시간은 `SESSION_META[t].defaultMinutes`(afternoon1/afternoon2 = 50분, night = 100분), `durationMinutes`가 있으면 그 값 우선(`attendanceMinutes()`가 유일한 계산 지점)
 - 감독배정은 (date,grade)당 `SESSION_TYPES` 3행이 항상 같은 교사 — "하루 1건"으로 다뤄야 하는 조회(담임 일정, 감독횟수 요약, 감독 Excel, 달력 슬롯)는 `REPRESENTATIVE_SESSION_TYPE`("afternoon1")로 필터
-- `"afternoon"`/`"night"` 문자열 리터럴과 `100`/`?? 100` 매직넘버는 `src/lib/sessions.ts`와 좌석 컨텍스트 파일(좌석·인쇄, 출석 화면의 `seatSession` 분기, 학생 좌석 확인 카드의 기본 탭 폴백) 밖에서 금지 — `tests/session-literal-guard.test.ts`가 src 전체를 스캔해 회귀 차단
-- 좌석 편집기의 참여 판정은 `participatesInSeatSession`(`src/lib/seats/seat-participation.ts`, 블록 중 하나라도 참여) — 좌석 세션 값을 `ParticipationDay.sessionType`과 직접 비교하면 오후는 항상 불일치하므로 금지. `tests/seat-participation.test.ts`가 회귀 차단
+- `"afternoon"`/`"night"` 문자열 리터럴과 `100`/`?? 100` 매직넘버는 `src/lib/sessions.ts`와 좌석 컨텍스트 파일(좌석·인쇄, 출석 화면의 `seatSession` 분기, 학생 좌석 확인 카드의 기본 탭 폴백, 좌석 세션 선택 `SeatSessionPanel`, 공유 설정 `lib/seats/shared-layout.ts`·`seat-sharing` 라우트) 밖에서 금지 — `tests/session-literal-guard.test.ts`가 src 전체를 스캔해 회귀 차단
+- 좌석 편집기의 참여 판정은 `participatesInSeatSession`(`src/lib/seats/seat-participation.ts`, 블록 중 하나라도 참여) — 좌석 세션 값을 `ParticipationDay.sessionType`과 직접 비교하면 오후는 항상 불일치하므로 금지. `tests/seat-participation.test.ts`가 회귀 차단. 야간 배치 공유 중에는 `participatesInSharedSeatLayout`(세 블록 중 하나라도 참여)
 
 ### 9. "오후1 결과 복사" (`POST /api/attendance/copy-session`)
-- 대상: from/to가 공유하는 좌석 세션에 배정된 학생 중 — to 블록에 이미 출석 기록이 없고, to 블록+해당 요일 참여 중이고, to 블록에 pending/approved 불참신청이 없는 학생만
+- 대상: from/to가 공유하는 좌석 세션(야간 배치 공유 학년은 `effectiveSeatSession`으로 야간 세션)에 배정된 학생 중 — to 블록에 이미 출석 기록이 없고, to 블록+해당 요일 참여 중이고, to 블록에 pending/approved 불참신청이 없는 학생만
 - from이 `present` → `present` 그대로 복사; `absent`이고 사유 없음 → `absent` 복사; 그 외(미체크, 사유 있는 결석)는 건너뜀. 이미 체크된 to 레코드는 어떤 경우에도 덮어쓰지 않음
 - 규칙은 순수 함수 `planSessionCopy()`(`src/lib/attendance/copy-session.ts`)로 분리, API는 후보 조회 + `attendance.createMany({skipDuplicates:true})`만 담당. 오후2 탭에서만 노출, 감독 배정 여부는 요구하지 않음(`["teacher"]` 권한)
 
@@ -431,6 +436,14 @@ SupervisorReminderLog: teacherId, grade, date(@db.Date), sentAt — @@unique([te
 - `summarizeWeeklyCell()` 우선순위: 비참여("-") › 불참승인("불참승인", 노랑 `#fef9c3`) › 방과후(상태 미체크일 때만, 노랑) › 출석(초록) › 결석(빨강) › 미체크("-") — 좌석 그리드(SeatCell)와 동일한 우선순위
 - 오후 탭이면 오후1·오후2 두 행, 야간 탭이면 한 행(`sessionTypesOfSeat(seatSessionOf(tab))` 순서). 비고 입력은 현재 탭 블록 기준으로 저장
 - 주간 API가 승인된 `AbsenceRequest`를 같은 주간 범위로 함께 조회해 `isApprovedAbsence`/`approvedReason`을 제공 — 과거엔 `Attendance.status`만 봐서 팝업이 빨간 "결석"+영문 사유로만 보이던 버그를 수정(그리드는 이미 정상 동작 중이었음)
+
+### 11. 오후·야간 좌석 배치 공유 (`StudySession.sharesNightLayout`)
+- 학년별 설정 "야간자율학습 자리 배치와 동일하게 배치". 오후 좌석 세션 행의 플래그가 true 면 그 학년 오후1·오후2 가 야간 좌석 세션의 교실·배정을 그대로 읽는다(복사가 아닌 실시간 공유). 켜고 끄기는 `ClassroomConfigModal` 체크박스 → `PUT /api/grade-admin/[grade]/seat-sharing`
+- 오후 세션의 Classroom/Room/SeatLayout 은 삭제하지 않고 보관, 끄면 그대로 복귀. 보관 중 학급 교실 POST/PUT/DELETE 는 409(`SHARED_LAYOUT_LOCK_ERROR`), 모달 버튼도 disabled
+- 좌석을 읽는 서버 경로는 모두 `effectiveSeatSession(seat, await isNightLayoutShared(grade))`로 좌석 세션을 정한다 — `GET seat-layouts`, `GET /api/attendance`, `POST /api/attendance/copy-session`, `GET /api/student/seats`. 하나라도 빠지면 보관 중인 오후 좌석이 다시 보인다(`tests/shared-night-layout.test.ts`가 고정)
+- 클라이언트는 요청한 탭이 아니라 응답의 실제 배치로 그린다: 편집기·인쇄는 `sessions[0].type`, 출석 화면은 `seatSession`, 학생 카드는 `sharesNightLayout`. 이름은 `seatSessionLabel` → "오후·야간자습", 좌석 세션 칩/탭은 하나로 합침(`SeatSessionPanel`, `SeatCheckCard`)
+- 공유 배치의 미배정 목록·미참가 판정은 세 블록 중 하나라도 참여 기준(`participatesInSharedSeatLayout`). 출석 기록·불참신청·참여설정·감독배정은 그대로 3블록 단위 — 공유되는 것은 좌석 배치뿐
+- 편집기·좌석 탭 칩·인쇄는 `seatLayoutsUrl(grade, seat)` 같은 SWR 키 — 모달에서 설정을 바꾸면 편집기 재검증으로 칩도 함께 바뀜
 
 ## 인증/인가 흐름
 
@@ -458,12 +471,23 @@ SupervisorReminderLog: teacherId, grade, date(@db.Date), sentAt — @@unique([te
 - `RoomGrid`에는 X(해제) 버튼이 없음 — 해제는 좌석 탭→선택→`SeatingEditor` 하단 액션바, 또는 좌석→`UnassignedStudents` 패널 드롭(`UNASSIGNED_DROP_ID`). `tests/responsive-tables.test.ts`·`tests/seating-editor-responsive.test.ts`가 클래스/식별자를 src 스캔으로 고정하므로 관련 클래스(`min-h-11`, `z-20`, `table-scroll`, `ring-2 ring-blue-500` 등) 변경 시 테스트도 함께 갱신
 - **학급 구조 변경은 좌석 배정을 초기화함**: 배치 유형·분단 수·분단별 행 수 중 하나라도 바뀌면(`isGeometryChanged`) `PUT /api/grade-admin/[grade]/classrooms/[id]`가 그 학급의 SeatLayout을 전부 삭제하고 Room을 재생성 — 복도 위치(`corridorSide`)만 바꾸면 배정 보존. 클라이언트(`ClassroomConfigModal`)는 `assignedCount>0`이고 기하가 바뀔 때만 `confirm()` 경고
 - 미래혜윰실·야간 Room은 `classroomId=null`로 고정 — `Classroom`은 오후 자율학습의 **일반 학급 교실**(4·5·6반) 전용이며, 담임교사는 구조를 수정할 수 없음(학년관리자/메인관리자만)
+- **좌석을 읽는 서버 코드는 `seatSessionOf()` 결과를 그대로 쓰지 말 것**: 야간 배치 공유(`StudySession.sharesNightLayout`) 학년이 있으므로 `effectiveSeatSession(…, await isNightLayoutShared(grade))`를 거친다. 클라이언트도 요청 탭이 아니라 응답(`seatSession`/`sessions[0].type`/`sharesNightLayout`)으로 배치를 분기. 새 좌석 조회 경로를 만들면 `tests/shared-night-layout.test.ts`의 경로 목록에 추가. 설정을 끄면 예전 배치로 돌아와야 하므로 토글·공유 중 경로에서 오후 Classroom/Room/SeatLayout 삭제 금지
 - **출석 화면 전체 오버레이는 `z-[150]`**: `/attendance/[grade]`의 상단 날짜·탭 바가 sticky `z-[100]`이라 `z-50` 모달은 바 아래에 깔려 배경이 안 덮이고 바가 눌렸다. 주간 팝업·다른학년 모달은 `z-[150]`이며 `tests/attendance-page-wiring.test.ts`가 `fixed inset-0 … z-50` 재등장을 차단
 - **`demo-video/`는 루트 tsc/eslint/Tailwind에서 반드시 제외 유지**: 루트 `tsconfig.json` `exclude: ["node_modules", "demo-video"]`(include가 `**/*.ts`라 `demo-video/node_modules`까지 잡힘 — 제외 전 루트 tsc가 약 660개 파일을 읽음), `eslint.config.mjs` `globalIgnores`에 `"demo-video/**"`·`".claude/**"`(flat config는 dot 폴더를 기본 무시하지 않아 `.claude/skills`의 서드파티 예제 .ts/.tsx가 `npm run lint`를 92개 오류로 깨뜨림), `src/app/globals.css`에 `@source not "../../demo-video";`·`@source not "../../.claude";`. 새 도구 폴더를 루트에 추가할 때도 같은 3곳을 확인
 - **`HF_HUB_CACHE`는 Whisper STT 캐시 전용**: `narrate.mjs`가 TTS 워커(`tts_mlx.py`) 환경에서는 이 변수를 지우고 STT 워커에만 넘김 — TTS 모델은 `~/.cache/huggingface/hub`(Voicebox 앱이 받아 둔 캐시, `HF_HUB_OFFLINE=1`)를 써야 하므로 셸에서 `export` 하지 말 것
 - **내레이션 무음 트림은 앞 -40dB / 뒤 -45dB**(`narrate.mjs` ffmpeg `silenceremove`) — 앞머리 잡음을 제거하고 약한 끝 음절을 보존한다. 교사·학생·학년관리자 편은 마지막 0.5초 `qsin` 페이드 후 1초 무음(`narration.ts` 상수), 문장 간격 0.2초 유지(문장 사이 약 1.2초). 후처리만 바꾸면 `node scripts/narrate.mjs --guide <guide> --reprocess`로 원본 raw WAV에서 재처리한다(페이드 중첩·재합성 없음). 일반 생성은 fadeOut·trailing·processingVersion 캐시 조건 변경 시 재합성할 수 있으며, `--measure`는 오디오를 바꾸지 않는다
 
 ## 수정 이력 (주요 변경)
+
+### 2026-11-20 — 학년별 "야간자율학습 자리 배치와 동일하게 배치" 설정 (Claude Code 클라우드, 브랜치 `claude/confident-newton-jfb1qh`)
+
+- **목표**: 학년관리자가 켜면 그 학년 오후1·오후2 가 야간 좌석 세션의 교실·배정을 그대로 쓴다(실시간 공유). 오후 세션의 학급 교실·배정은 삭제하지 않고 보관, 끄면 복귀.
+- **스키마**: `StudySession.sharesNightLayout Boolean @default(false) @map("shares_night_layout")`(오후 세션 행에서만 의미). 마이그레이션 `prisma/migrations/20261120000000_add_shares_night_layout/`(컬럼 추가만, 기존 데이터 변경 없음). 모델·enum 수 불변.
+- **신규 API**: `PUT /api/grade-admin/[grade]/seat-sharing`. 응답 변화: `GET seat-layouts` → `{ sessions, sharesNightLayout }`, `GET /api/attendance` → `seatSession` 추가, `GET classrooms` → `sharesNightLayout` 추가, classrooms POST/PUT/DELETE 는 공유 중 409, `GET /api/student/seats` → `sharesNightLayout` 추가, `copy-session` 도 공유 해석.
+- **신규 lib·컴포넌트**: `lib/seats/shared-layout.ts`(`isNightLayoutShared`), `lib/seats/seat-layouts-url.ts`(`seatLayoutsUrl`), `components/seats/SeatSessionPanel.tsx`(학년관리 좌석 탭·좌석 페이지의 칩 + dynamic import 중복 제거). `lib/sessions.ts`에 `SHARED_SEAT_SESSION_LABEL`/`effectiveSeatSession`/`seatSessionLabel`, `seat-participation.ts`에 `participatesInSharedSeatLayout`, `classroom-config.ts`에 `SHARED_LAYOUT_LOCK_ERROR`.
+- **UI**: `ClassroomConfigModal` 상단 체크박스(공유 중 학급 추가·수정·삭제 비활성), `SeatingEditor`(`layoutSeat` 분기·공유 중 설정 버튼·안내 배너·세 블록 기준 미배정 목록), `SeatPrintGroup` prop `sessionType` → `sessionLabel`, 인쇄 제목 "오후·야간자습", `SeatCheckCard` 공유 중 탭 없이 하나, 출석 페이지는 응답 `seatSession`으로 배치 분기. `/help/seats` 본문에 안내 문단·주의 1건 추가(스틸·영상은 그대로).
+- **테스트**: 신규 `tests/shared-night-layout.test.ts`(순수 로직 + 스키마·마이그레이션 + 서버 경로·화면 배선 스캔). 갱신 `attendance-page-wiring`·`classroom-wiring`·`guide-seats`·`seat-print-wiring`·`student-schedule-wiring`·`session-literal-guard`(허용목록: 학년관리 페이지 2개 제거, `SeatSessionPanel`·`shared-layout.ts`·`seat-sharing` 라우트 추가). `tests/` 총 46개.
+- DB 마이그레이션 있음 — Railway `migrate deploy` 적용 필요
 
 ### 2026-10-21 — 출석체크·담임·관리자·학생 화면 사용성 개선 (Claude Code 클라우드, 브랜치 `claude/upbeat-volta-8a7ixx`)
 
@@ -814,5 +838,7 @@ SupervisorReminderLog: teacherId, grade, date(@db.Date), sentAt — @@unique([te
 - 미래201: 3열×2행 (6석)
 - 미래예술실1: 5열×10행 (50석)
 
+**오후·야간 공유** (2026-11-20, 기본 꺼짐): 학년관리자가 `ClassroomConfigModal`에서 "야간자율학습 자리 배치와 동일하게 배치"를 켠 학년은 오후1·오후2 도 위 야간 교실·배정을 쓴다. 오후 학급 교실은 보관되며 끄면 복귀.
+
 ---
-마지막 업데이트: 2026-09-19
+마지막 업데이트: 2026-11-20
