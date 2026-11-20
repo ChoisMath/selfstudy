@@ -6,29 +6,26 @@ import SupervisorSummaryModal from "@/components/homeroom/SupervisorSummaryModal
 import { GuideHelpButton } from "@/components/guide/GuideHelpButton";
 import dynamic from "next/dynamic";
 import SeatSessionPanel from "@/components/seats/SeatSessionPanel";
-import { chrome } from "@/components/ui/chrome";
-
-const loadingBox = () => <div className="text-center py-12 text-ink-muted">불러오는 중…</div>;
 
 const StudentManagement = dynamic(() => import("@/components/students/StudentManagement"), {
   ssr: false,
-  loading: loadingBox,
+  loading: () => <div className="text-center py-12 text-gray-400">불러오는 중...</div>,
 });
 const ParticipationManagement = dynamic(() => import("@/components/admin-shared/ParticipationManagement"), {
   ssr: false,
-  loading: loadingBox,
+  loading: () => <div className="text-center py-12 text-gray-400">불러오는 중...</div>,
 });
 const MonthlyCalendar = dynamic(() => import("@/components/admin-shared/MonthlyCalendar"), {
   ssr: false,
-  loading: loadingBox,
+  loading: () => <div className="text-center py-12 text-gray-400">불러오는 중...</div>,
 });
 const TodayAttendanceDashboard = dynamic(
   () => import("@/components/grade-admin/TodayAttendanceDashboard"),
-  { ssr: false, loading: loadingBox }
+  { ssr: false, loading: () => <div className="text-center py-12 text-gray-400">불러오는 중...</div> }
 );
 const GradeMonthlyAttendance = dynamic(
   () => import("@/components/grade-admin/GradeMonthlyAttendance"),
-  { ssr: false, loading: loadingBox }
+  { ssr: false, loading: () => <div className="text-center py-12 text-gray-400">불러오는 중...</div> }
 );
 
 const TABS = [
@@ -49,7 +46,7 @@ export default function GradeAdminPage() {
   const [showSummary, setShowSummary] = useState(false);
 
   if (isNaN(grade) || grade < 1 || grade > 3) {
-    return <div className="text-center py-12 text-ink-muted">잘못된 학년입니다.</div>;
+    return <div className="text-center py-12 text-gray-500">잘못된 학년입니다.</div>;
   }
 
   return (
@@ -57,50 +54,49 @@ export default function GradeAdminPage() {
       {/* 탭 — 탭 줄만 스크롤하고 ? 버튼은 밖에 둬야 좁은 화면에서도 화면 안에 남는다 */}
       <div className="flex border-b border-gray-200 mb-3">
         <div className="flex min-w-0 flex-1 overflow-x-auto">
-          <div role="tablist" aria-label={`${grade}학년 관리 메뉴`} className="flex gap-1 pb-2">
-            {TABS.map((tab) => (
-              <button
-                key={tab.key}
-                type="button"
-                role="tab"
-                aria-selected={activeTab === tab.key}
-                aria-controls={`grade-admin-panel-${tab.key}`}
-                onClick={() => setActiveTab(tab.key)}
-                className={chrome.tab(activeTab === tab.key)}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
+          {TABS.map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={`px-5 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px whitespace-nowrap ${
+                activeTab === tab.key
+                  ? "border-blue-600 text-blue-600"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
         </div>
         <GuideHelpButton href="/help/grade-admin" />
       </div>
 
       {/* 탭 콘텐츠 */}
-      <div id={`grade-admin-panel-${activeTab}`} role="tabpanel">
-        {activeTab === "today" && <TodayAttendanceDashboard grade={grade} />}
-        {activeTab === "students" && <StudentManagement grade={grade} />}
-        {activeTab === "participation" && <ParticipationManagement grade={grade} />}
-        {activeTab === "seats" && <SeatSessionPanel grade={grade} />}
-        {activeTab === "supervisors" && (
-          <div>
-            <div className="mb-3 flex justify-end">
-              <button type="button" onClick={() => setShowSummary(true)} className={chrome.secondaryButton}>
-                누계
-              </button>
-            </div>
-            <MonthlyCalendar
-              grade={grade}
-              apiBasePath={`/api/grade-admin/${grade}/supervisor-assignments`}
-              excelHref={`/api/grade-admin/${grade}/supervisor-assignments/export`}
-            />
-            {showSummary && (
-              <SupervisorSummaryModal onClose={() => setShowSummary(false)} filterGrade={grade} />
-            )}
+      {activeTab === "today" && <TodayAttendanceDashboard grade={grade} />}
+      {activeTab === "students" && <StudentManagement grade={grade} />}
+      {activeTab === "participation" && <ParticipationManagement grade={grade} />}
+      {activeTab === "seats" && <SeatSessionPanel grade={grade} />}
+      {activeTab === "supervisors" && (
+        <div>
+          <div className="flex justify-end mb-3">
+            <button
+              onClick={() => setShowSummary(true)}
+              className="px-2.5 py-1 text-xs rounded-md border border-gray-200 bg-gray-50 text-gray-500 hover:bg-gray-100 transition-colors whitespace-nowrap"
+            >
+              누계
+            </button>
           </div>
-        )}
-        {activeTab === "monthly" && <GradeMonthlyAttendance grade={grade} />}
-      </div>
+          <MonthlyCalendar
+            grade={grade}
+            apiBasePath={`/api/grade-admin/${grade}/supervisor-assignments`}
+            excelHref={`/api/grade-admin/${grade}/supervisor-assignments/export`}
+          />
+          {showSummary && (
+            <SupervisorSummaryModal onClose={() => setShowSummary(false)} filterGrade={grade} />
+          )}
+        </div>
+      )}
+      {activeTab === "monthly" && <GradeMonthlyAttendance grade={grade} />}
     </div>
   );
 }

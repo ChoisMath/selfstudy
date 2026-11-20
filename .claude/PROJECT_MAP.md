@@ -34,13 +34,11 @@
 src/
 ├── app/
 │   ├── layout.tsx              # 루트 (Providers 래핑)
-│   ├── globals.css             # Tailwind 진입 + `:root --header-h: 3.5rem`(sticky nav h-14) + `@utility table-scroll`(표 래퍼 내부 스크롤포트) + `@theme static` 밝고 따뜻한 학습 분위기 토큰(`--color-ink/ink-muted/primary(#c2410c)/primary-deep/primary-soft/canvas(#fff7ea)/peach/butter/line/sunny/mint/sky/skin/blush/wood/wood-deep/cocoa/seat-blank/seat-present/seat-absent/ok/check` → `bg-primary`·`text-ink`·`bg-canvas` 등. static 이라 CSS 모듈·SVG 의 var() 에서도 항상 존재. 대비: ink/canvas 11.6, ink-muted/canvas 6.4, white/primary 5.2)
+│   ├── globals.css             # Tailwind 진입 + `:root --header-h: 3.5rem`(sticky nav h-14) + `@utility table-scroll`(표 래퍼 내부 스크롤포트)
 │   ├── page.tsx                # / → admin→/admin, 기타 교사→/attendance
 │   ├── providers.tsx           # SessionProvider
 │   ├── login/
-│   │   ├── page.tsx            # 로그인 UI — lg 2열(왼쪽 navy 학교 패널 + `LoginScene` 모션그래픽 / 오른쪽 카드). 교사·학생 `role="tablist"` 탭(화살표 키, 마지막 탭 localStorage `selfstudy.login.tab`), 단일 `handleSubmit`이 탭에 따라 `loginTeacher`/`loginStudent` 호출(formData 키 `loginId`·`password`·`name`·`studentCode` 불변), `autoComplete`·비밀번호 표시 토글·`role="alert"` 오류 + 첫 입력칸 포커스, 날짜·저장 탭은 `useSyncExternalStore`(hydration 불일치 없음). `tests/login-page.test.ts`가 고정
-│   │   ├── LoginScene.tsx      # **신규.** 학생 필기 + 교사 좌석표 탭 장면 SVG(`role="img"`). 좌표 상수(LINE_X0/X1, SHOULDER, UPPER_ARM/FOREARM)는 생성기와 동일해야 함. `paused` prop → `.paused` 클래스
-│   │   ├── login-scene.module.css # **신규·자동 생성.** `node scripts/login-scene-css.mjs > …` 산출물(손으로 수정 금지, 테스트가 생성기 출력과 비교). 12초 루프, transform/opacity/fill 만 애니메이션, 기본 상태 = 완료 화면이라 `prefers-reduced-motion`·일시정지에서 정지 화면
+│   │   ├── page.tsx            # 로그인 UI (교사/학생 탭)
 │   │   └── actions.ts          # Server Action (signIn 호출)
 │   ├── admin/                  # 메인관리자 전용
 │   │   ├── layout.tsx          # AdminNav 포함
@@ -55,7 +53,7 @@ src/
 │   │   ├── page.tsx            # 6탭 허브 (오늘출결, 학생관리, 참여설정, 좌석배치, 감독배정, 월간출결 — 좌석배치 탭 본문은 `SeatSessionPanel`) + 탭 줄 끝에 `GuideHelpButton href="/help/grade-admin"`
 │   │   ├── students/page.tsx
 │   │   ├── participation/page.tsx
-│   │   ├── seats/page.tsx      # 제목 + `SeatSessionPanel`(오후자습/야간자습 칩 + SeatingEditor, 야간 배치 공유 중이면 칩이 "오후·야간자습" 하나)
+│   │   ├── seats/page.tsx      # 제목 + `SeatSessionPanel`(오후 자율학습·야간 자율학습 버튼 + SeatingEditor, 야간 배치 공유 중이면 버튼 대신 "오후·야간자습" 하나)
 │   │   ├── seats/print/page.tsx # 인쇄 미리보기 (그룹별 가로/세로 + 체크박스). SWR 키 `seatLayoutsUrl`, 그룹·용지 방향은 응답 `sessions[0].type`(실제 배치) 기준, 제목·그룹 이름은 `seatSessionLabel`(공유 중 "오후·야간자습")
 │   │   └── supervisors/page.tsx # MonthlyCalendar (단일학년 2슬롯 모드)
 │   ├── attendance/             # 감독교사
@@ -88,11 +86,8 @@ src/
 │   └── api/                    # API 라우트 (아래 별도 섹션)
 │
 ├── components/
-│   ├── ui/                     # **신규.** 교사·관리자·학생 공용 셸
-│   │   ├── chrome.ts           # 공용 클래스 문자열 — page/nav/navStatic/brand/navLink(display 는 호출부: `hidden lg:inline-flex`)/navTab/roleChip/badge/ghostButton/iconButton/tab/chip/label/input/select/notice/tableHead/card/primaryButton/secondaryButton. 색은 globals `@theme static` 토큰(primary 코랄·canvas 크림·butter·peach·ink)
-│   │   └── Dialog.tsx          # 접근 가능한 모달 — role=dialog·aria-modal·제목 연결, Escape, Tab 순환, 열릴 때 첫 컨트롤 포커스·닫힐 때 복귀, body 스크롤 잠금, overscroll-contain, `closeDisabled`, `zClassName`. 사용: SupervisorSummaryModal·ExcelUploadModal·admin/users 교사 모달
 │   ├── attendance/
-│   │   └── AttendanceDatePicker.tsx  # 커스텀 월간 달력 팝오버 (props: value/today/onChange, "오늘로" 버튼, @/lib/calendar 의존). role=dialog, 날짜 셀 aria-label(전체 날짜)·aria-pressed·aria-current, 월 제목 `formatYearMonth`
+│   │   └── AttendanceDatePicker.tsx  # 커스텀 월간 달력 팝오버 (props: value/today/onChange, "오늘로" 버튼, @/lib/calendar 의존)
 │   ├── notifications/
 │   │   └── NotificationBell.tsx # 공통 네비 알림 벨 (구독 토글 + iOS "홈 화면에 추가" 안내, BellState 분기)
 │   ├── admin-shared/
@@ -116,7 +111,7 @@ src/
 │   │   └── SupervisorSummaryModal.tsx  # 학년도 기준 교사별 월별 감독횟수 집계 모달 (`/api/homeroom/schedule/summary`, 본인 행 sticky 강조)
 │   ├── seats/
 │   │   ├── SeatingEditor.tsx       # DndContext + 저장 + 출력 버튼 (props: grade, sessionType). 좌석 SWR 키는 `seatLayoutsUrl`, 응답의 `sharesNightLayout`(=`shared`)·`sessions[0].type`(=`layoutSeat`, 실제 배치)로 분기 — 미래홀/오후 렌더와 인쇄 링크(`?session=`)는 `layoutSeat` 기준, 공유 중이면 상단에 "오후·야간자습 공용 배치" 안내 배너. 미배정 목록은 `participatesInSeatSession`(공유 중이면 세 블록 기준 `participatesInSharedSeatLayout`) 으로 필터. 좌석 해제: `selectedSeat` 선택 → 루트 마지막 자식 `sticky bottom-2` 액션바(배정 해제/취소/Escape), 또는 좌석→미배정 패널 드롭. 충돌 감지 커스텀(패널은 `getBoundingClientRect()` 실시간, 나머지는 패널 제외 `closestCenter`). "좌석 편집" 제목 줄에 `GuideHelpButton href="/help/seats"`. 오후(`sessionType==="afternoon"`) 또는 공유 중(`shared`) 헤더에 "교실 구조 설정" 버튼(`min-h-11`, 미저장 변경 있으면 확인창) → `ClassroomConfigModal`. 오후 그룹 중 `group.classroom`이 있으면 `ClassroomFrame variant="screen"`으로 감싸고 각 `RoomGrid`에 `hideTeacherDesk`(프레임이 교탁을 대신 그림), 없으면(미래혜윰) 기존 렌더 유지
-│   │   ├── SeatSessionPanel.tsx    # **신규.** 좌석 세션 선택 칩 + `SeatingEditor`(dynamic, `key={grade-sessionType}`). props `{grade, tabsClassName?}`. 편집기와 같은 SWR 키(`seatLayoutsUrl`)로 `sharesNightLayout`을 읽어 공유 중이면 칩이 "오후·야간자습" 하나(선택 불가). `/grade-admin/[grade]` 좌석 탭과 `/grade-admin/[grade]/seats`가 사용
+│   │   ├── SeatSessionPanel.tsx    # **신규.** 좌석 세션 선택 버튼(개편 전 파란 버튼 모양) + `SeatingEditor`(dynamic, `key={grade-sessionType}`). props `{grade, tabsClassName?}`. 편집기와 같은 SWR 키(`seatLayoutsUrl`)로 `sharesNightLayout`을 읽어 공유 중이면 칩이 "오후·야간자습" 하나(선택 불가). `/grade-admin/[grade]` 좌석 탭과 `/grade-admin/[grade]/seats`가 사용
 │   │   ├── RoomGrid.tsx            # 교실 격자 (droppable/draggable 셀). X(해제) 버튼 없음 — props `selectedSeatKey?`/`onSelectSeat?(SeatRef|null)`(`export type SeatRef`)로 좌석 탭 선택(ring), 핸들 Delete/Backspace도 선택. `preserveSeatWidth` prop: 오후 분기 전용 최소 셀 폭(`MIN_SEAT_WIDTH=52`) — 셀을 찌그러뜨리지 않고 래퍼가 가로 스크롤. `hideTeacherDesk` prop: true면 자체 교탁 박스를 그리지 않음(학급 그룹은 `ClassroomFrame`이 대신 그림)
 │   │   ├── ClassroomFrame.tsx      # **신규.** 학급 분단 격자를 감싸는 공용 프레임(dnd-kit 비의존, 화면/인쇄 공용). props `{corridorSide, variant:"screen"|"print", showTeacherDesk=true, children}` — 좌우에 `corridorLabels()` 기반 세로("`writing-mode: vertical-rl`") "복도"/"창문" 라벨 + 하단 "교탁". `variant="print"`는 고정 px(라벨 20px=`PRINT_SIDE_LABEL_WIDTH`)만 사용해 `PrintPageFitter` 실측과 맞춤, `variant="screen"`은 `minmax(min-content,1fr)`이라 호출부가 `overflow-x-auto` 래퍼를 제공해야 함
 │   │   ├── ClassroomConfigModal.tsx # **신규.** 학년관리자용 학급 구조 설정 모달 (props `{grade, onClose, onChanged}`). `useSWR`로 `/api/grade-admin/[grade]/classrooms` 목록(반/유형/복도/행 수/좌석 수/배정 수, `overflow-x-auto` + sticky 헤더) + 추가/수정 폼(반 번호·복도 라디오·유형 라디오·분단별 행 수) + 자체 `LayoutPreview` 미리보기(12px 박스 미니 격자 + 총 좌석 수). 기하 변경(`isGeometryChanged`)이고 `assignedCount>0`이면 `confirm()`으로 "좌석이 초기화됩니다" 확인, 삭제도 confirm. 저장/삭제 성공 시 목록 `mutate()` + `onChanged()`(SeatingEditor의 좌석 SWR 갱신). 목록 위 체크박스 "야간자율학습 자리 배치와 동일하게 배치"(목록 응답 `sharesNightLayout`, 로딩 중에는 그리지 않음) → `confirm()` 후 `PUT …/seat-sharing` → 같은 갱신. 공유 중에는 학급 추가·수정·삭제 버튼 disabled(오후 배치는 보관만)
@@ -137,7 +132,6 @@ src/
 │   ├── auth.ts         # NextAuth 설정 (Credentials×2 + Google, JWT 콜백)
 │   ├── api-auth.ts     # withAuth (+ "teacher" 의사역할: 모든 교사 허용), withGradeAuth, withHomeroomAuth 래퍼
 │   ├── calendar.ts     # KST 안전 순수 날짜 유틸 (getKstTodayString/formatDateValue/parseDateValue/formatDateLabel/formatDateWithWeekday/shiftMonth/buildMonthCells/weekdayOf/addDays/nextDateForWeekday/mondayOf, toISOString 미사용)
-│   ├── format-date.ts      # **신규.** Intl(ko-KR, Asia/Seoul) 날짜 표시 — `formatMonthDay`(10/21(화)), `formatMonthDayDots`(10.21), `formatYearMonth`, `formatFullDate`, `formatWeekOfMonth`, `parseKstDate`("YYYY-MM-DD" 는 KST 정오로 해석; `new Date("YYYY-MM-DD")` UTC 파싱 금지)
 │   ├── sessions.ts     # ★ 세션 진실 공급원 — SESSION_TYPES(afternoon1/afternoon2/night)/SEAT_SESSION_TYPES(afternoon/night)/SESSION_META/SEAT_SESSION_META/REPRESENTATIVE_SESSION_TYPE("afternoon1")/isSessionType/isSeatSessionType/seatSessionOf/sessionTypesOfSeat/attendanceMinutes/emptySessionRecord + 야간 배치 공유용 `SHARED_SEAT_SESSION_LABEL`("오후·야간자습")/`effectiveSeatSession(seat, shared)`(공유 중 afternoon→night)/`seatSessionLabel(seat, shared)`. `"afternoon"`/`"night"` 리터럴·`100` 상수는 이 모듈 밖 사용 금지(session-literal-guard 테스트로 고정)
 │   ├── absence-reasons.ts  # REASON_TYPES/REASON_LABELS(한글)/reasonLabel — 기존 7곳에 중복되던 사유 라벨 맵의 단일 출처(수정한 파일만 교체)
 │   ├── participation-days.ts  # 학생 화면용 요일 헬퍼 — WEEKDAY_KEYS/WEEKDAY_LABELS/DaySettings/ParticipationDaysMap, weekdayKeyOf(주말 null), isActiveOn(레코드 없음 = 비활성), activeSessionTypesOn(days, date), activeDayCount
@@ -164,7 +158,6 @@ src/
 └── generated/prisma/   # Prisma 자동 생성 (gitignore)
 
 scripts/
-├── login-scene-css.mjs      # **신규.** 로그인 모션그래픽 키프레임 생성기(2관절 팔 역기구학 포함). `node scripts/login-scene-css.mjs > src/app/login/login-scene.module.css`
 └── trigger-supervisor-reminders.mjs  # Railway Cron 서비스가 호출 → APP_URL + Bearer CRON_SECRET 로 /api/cron/supervisor-reminders POST
 
 public/
@@ -464,8 +457,6 @@ SupervisorReminderLog: teacherId, grade, date(@db.Date), sentAt — @@unique([te
 
 ## 주의사항 / 특이 패턴
 
-- **교사·관리자 화면 공용 셸은 `src/components/ui/chrome.ts`**: 새 버튼·탭·칩·입력·카드는 `chrome.*` 클래스와 `@theme static` 토큰(primary/canvas/butter/peach/ink)을 쓰고 파란 CTA(`bg-blue-600` 등)를 새로 넣지 않는다. 모달은 `components/ui/Dialog.tsx`. 날짜 표시는 `lib/format-date.ts`(Intl). 로딩 문구는 "…"(U+2026). 터치 대상 44px(`min-h-11`), 아이콘 버튼 `aria-label`, 탭 `role="tab"`+`aria-selected`, 토글 `aria-pressed`, 상태 메시지 `aria-live`/`role="status"` — `/web-design-guidelines` 점검 기준
-- **로그인 장면 CSS는 생성기 산출물**: `src/app/login/login-scene.module.css`를 직접 고치지 말고 `scripts/login-scene-css.mjs`를 수정한 뒤 재생성한다(`tests/login-page.test.ts`가 산출물과 생성기 출력의 일치, 좌표 상수 일치, transform/opacity/fill 외 속성 애니메이션 금지를 검사). 장면 색은 `globals.css`의 `@theme static` 토큰을 `var()`로 참조한다
 - `react-hooks/set-state-in-effect`는 eslint 오류(빌드 게이트 아님)이며 "이전 값 저장 후 렌더 중 상태 조정" 패턴으로 대응 — `eslint-disable` 금지. 검수(tsc/eslint/build)는 `~/dev/selfstudy` 로컬 클론에서 실행(Google Drive 트리는 I/O로 정지)
 - 표 래퍼는 `overflow-x-auto table-scroll`(`globals.css` `@utility`, `--header-h` 기반 내부 스크롤포트) + thead `sticky top-0 z-20` / thead 안 인덱스 th `z-30` / 본문 인덱스 td `z-10` 관행 — 래퍼에 `overflow-x-auto`만 두면 높이 제한이 없어 sticky thead가 붙지 않음. 새 표는 이 구조를 따르고 `tests/responsive-tables.test.ts`의 `TABLE_FILES`에 추가. 헤더가 다른 레이아웃은 루트에 `[--header-h:…]` 재정의(학생 `7.625rem`, 담임 `6.25rem` + `lg:[--header-h:3.5rem]` — lg 미만에서 탭이 2행째로 내려감)
 - `RoomGrid`에는 X(해제) 버튼이 없음 — 해제는 좌석 탭→선택→`SeatingEditor` 하단 액션바, 또는 좌석→`UnassignedStudents` 패널 드롭(`UNASSIGNED_DROP_ID`). `tests/responsive-tables.test.ts`·`tests/seating-editor-responsive.test.ts`가 클래스/식별자를 src 스캔으로 고정하므로 관련 클래스(`min-h-11`, `z-20`, `table-scroll`, `ring-2 ring-blue-500` 등) 변경 시 테스트도 함께 갱신
@@ -479,6 +470,12 @@ SupervisorReminderLog: teacherId, grade, date(@db.Date), sentAt — @@unique([te
 
 ## 수정 이력 (주요 변경)
 
+### 2026-11-20 — 2026-10-21 디자인 개편 되돌림 (Claude Code 클라우드, 브랜치 `claude/confident-newton-jfb1qh`)
+
+- 사용자 요청: PR #2 병합으로 처음 운영에 배포된 2026-10-21 개편(PR #1, 커밋 e0d9e7d…1c1fb95)을 예전 디자인으로 되돌리되 오후·야간 좌석 배치 공유 기능은 유지.
+- `git revert -m 1 1409316`: 로그인 재설계(`LoginScene.tsx`·`login-scene.module.css`·`scripts/login-scene-css.mjs`), 크림·코랄 공용 셸(`components/ui/chrome.ts`·`Dialog.tsx`), `lib/format-date.ts`, `globals.css` 토큰, 출석·담임·관리자·학생 화면의 접근성·44px 수정, `tests/login-page.test.ts` 를 모두 제거·원복했다. 이 파일들은 지금 저장소에 없다 — 다시 쓰려면 Git 이력(PR #1)에서 가져온다.
+- 공유 기능 쪽 조정: `SeatSessionPanel` 은 개편 전 학년관리 좌석 탭의 파란 버튼(오후 자율학습 / 야간 자율학습)으로 그리고 공유 중에는 "오후·야간자습" 하나. 나머지 공유 로직·API·스키마는 그대로.
+
 ### 2026-11-20 — 학년별 "야간자율학습 자리 배치와 동일하게 배치" 설정 (Claude Code 클라우드, 브랜치 `claude/confident-newton-jfb1qh`)
 
 - **목표**: 학년관리자가 켜면 그 학년 오후1·오후2 가 야간 좌석 세션의 교실·배정을 그대로 쓴다(실시간 공유). 오후 세션의 학급 교실·배정은 삭제하지 않고 보관, 끄면 복귀.
@@ -489,14 +486,14 @@ SupervisorReminderLog: teacherId, grade, date(@db.Date), sentAt — @@unique([te
 - **테스트**: 신규 `tests/shared-night-layout.test.ts`(순수 로직 + 스키마·마이그레이션 + 서버 경로·화면 배선 스캔). 갱신 `attendance-page-wiring`·`classroom-wiring`·`guide-seats`·`seat-print-wiring`·`student-schedule-wiring`·`session-literal-guard`(허용목록: 학년관리 페이지 2개 제거, `SeatSessionPanel`·`shared-layout.ts`·`seat-sharing` 라우트 추가). `tests/` 총 46개.
 - DB 마이그레이션 있음 — Railway `migrate deploy` 적용 필요
 
-### 2026-10-21 — 출석체크·담임·관리자·학생 화면 사용성 개선 (Claude Code 클라우드, 브랜치 `claude/upbeat-volta-8a7ixx`)
+### 2026-10-21 — 출석체크·담임·관리자·학생 화면 사용성 개선 (Claude Code 클라우드, 브랜치 `claude/upbeat-volta-8a7ixx`) — **2026-11-20 되돌림, 현재 코드에 없음**
 
 - `/web-design-guidelines` 점검(약 120건) 후 수정: 공용 셸 `components/ui/chrome.ts`·`Dialog.tsx`·`lib/format-date.ts` 신설, 출석·담임·관리자·학생 레이아웃을 로그인과 같은 크림·코랄 톤으로 통일(AdminNav 폰 2행 탭, `[--header-h:6.25rem] lg:[--header-h:3.5rem]`), `theme-color`·manifest `#fff7ea`.
 - 출석 그리드: 좌석 칸을 진짜 `<button>`(aria-label, 44px, `touch-manipulation`, 포커스 링)으로, 정보 버튼은 형제 요소, 길게 누르기 대안 Shift+Enter(`onActivateToggle`), 탭 `role=tab`, 필터·승인·반려·일괄승인 44px, 날짜 Intl, 로딩·오류(다시 시도) 상태, 모달 Escape·`overscroll-contain`.
 - 담임 7화면·관리자/학년관리자 16화면: 라벨 `htmlFor`, 아이콘 버튼 `aria-label`, 44px, `alert()`→인라인 `aria-live` 알림, 날짜 Intl, 빈 상태·오류 상태, 모달 Dialog화(교사 추가·Excel 업로드·감독 누계), 콤보박스 ARIA(감독 교체).
 - 미착수: 탭·필터·월 상태의 URL 동기화, 탭 화살표 키 이동, 교사 행 select 즉시 저장의 되돌리기.
 
-### 2026-10-21 — 로그인 페이지 재설계 (Claude Code 클라우드, 브랜치 `claude/upbeat-volta-8a7ixx`)
+### 2026-10-21 — 로그인 페이지 재설계 (Claude Code 클라우드, 브랜치 `claude/upbeat-volta-8a7ixx`) — **2026-11-20 되돌림, 현재 코드에 없음**
 
 - `ui-ux-pro-max`로 뽑은 체계를 사용자 피드백(더 밝고 따뜻하게, 학생이 귀엽다고 느끼도록)에 따라 크림·피치·코랄 `#C2410C` 기본 + 둥근 캐릭터(볼터치·깜빡임·머그컵 김)로 조정하고, 앱 좌석 색을 재사용해 `src/app/login/page.tsx`를 2열 레이아웃으로 재작성. 로고(`/posan.svg`)와 `actions.ts` 서버 액션·formData 키는 그대로.
 - `LoginScene.tsx` + 생성기 `scripts/login-scene-css.mjs` → `login-scene.module.css`: 학생 필기(2관절 팔)·교사 좌석표 탭 모션그래픽, 일시정지 버튼, `prefers-reduced-motion` 정지 화면.

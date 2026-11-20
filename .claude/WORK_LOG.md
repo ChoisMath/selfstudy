@@ -2,6 +2,15 @@
 
 최신 항목을 위에 추가한다. 날짜·도구·변경 이유·파일·실제로 실행한 검증·남은 작업을 기록한다. 기존 상세 이력은 `.claude/PROJECT_MAP.md`, `docs/superpowers/`, `.plans/`, Git 및 Claude 세션 원문에 그대로 남아 있다.
 
+## 2026-11-20 — Claude Code(클라우드) — 2026-10-21 디자인 개편(PR #1) 되돌림, 좌석 배치 공유 기능은 유지
+
+- 경위: PR #2(좌석 배치 공유)를 main 에 병합하자 Railway 가 main 을 배포했는데, main 에는 병합만 되고 배포되지 않았던 PR #1(2026-10-21 로그인 재설계·크림/코랄 셸·사용성 개선)이 들어 있어 운영 디자인이 함께 바뀌었다. 병합 전 운영 배포본은 `db6a5dd`였다(Railway 배포 이력으로 확인). 병합 전에 main 과 운영 배포 커밋의 차이를 확인하지 않은 것이 원인 — 다음부터 main 병합 전 `list-deployments`의 `commitHash`와 `origin/main`을 대조한다.
+- 요청: 예전 디자인으로 되돌리고 오후·야간 통합 자리배치 기능은 유지.
+- 변경: 브랜치를 `origin/main`(d682ab8)에서 다시 시작해 `git revert -m 1 1409316`. 충돌 5개 해결 — 기록 3개(`.claude/HANDOFF.md`·`WORK_LOG.md`는 이력을 지우지 않도록 현재본 유지, `PROJECT_MAP.md`는 개편 전 본문 + 공유 기능 변경 재적용 + 되돌림 이력), `grade-admin/[grade]/page.tsx`·`seats/page.tsx`(개편 전 본문 + `SeatSessionPanel`). `SeatSessionPanel`은 `chrome.chip` 대신 개편 전 좌석 탭의 파란 버튼 클래스(오후 자율학습 / 야간 자율학습)로 다시 작성.
+- 범위: PR #1 전체를 되돌렸다 — 색·로그인만이 아니라 그 PR 의 접근성·44px·`alert()`→인라인 알림·Intl 날짜·Dialog 수정도 함께 빠진다(운영이 원래 쓰던 상태로 복귀). 필요한 항목은 Git 이력에서 골라 다시 적용할 수 있다.
+- 검증: ① `git diff db6a5dd`의 `src`·`tests`·`public`·`scripts`·`prisma` 변경 파일 목록이 공유 기능(1409316..d682ab8) 파일 32개와 정확히 일치 ② 테스트 45개 전부 통과(`login-page.test.ts`는 되돌림으로 제거) ③ `tsc --noEmit` 통과 ④ ESLint 0 오류·경고 7건(`<img>`, 개편 전 상태와 동일 파일) ⑤ `npm run build` 통과 ⑥ 로컬 Postgres + `next dev` + Playwright: 예전 로그인 화면·학년관리 탭(파란 밑줄)·좌석 탭 버튼 확인, 체크 → "오후·야간자습" 하나·미래홀 도면·출석 API `seatSession=night`·인쇄 제목·학생 카드 → 해제 시 버튼 2개와 오후 교실 복귀, 스크립트 오류 0.
+- 미실행: 운영 반영(PR·main 병합·배포)은 사용자 확인 전이라 하지 않았다. DB 마이그레이션 변경 없음(공유 컬럼은 이미 운영에 적용됨).
+
 ## 2026-11-20 — Claude Code(클라우드) — 교실 구조 설정에 "야간자율학습 자리 배치와 동일하게 배치" 체크박스
 
 - 요청: `/grade-admin/2` 좌석 배치의 교실 구조 설정 모달에 체크박스를 두고, 체크하면 오후자습부터 야간자습까지 같은 페이지로 구성. `/grilling`으로 결정 8건을 확인한 뒤 구현. 브랜치 `claude/confident-newton-jfb1qh`.

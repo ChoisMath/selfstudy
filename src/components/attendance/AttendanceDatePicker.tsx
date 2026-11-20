@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { buildMonthCells, parseDateValue, shiftMonth } from "@/lib/calendar";
-import { formatFullDate, formatYearMonth } from "@/lib/format-date";
 
 const WEEKDAY_HEADERS = ["일", "월", "화", "수", "목", "금", "토"];
 
@@ -31,23 +30,23 @@ export default function AttendanceDatePicker({ value, today, onChange }: Attenda
   const cells = buildMonthCells(view.year, view.month);
 
   return (
-    <div role="dialog" aria-label="날짜 선택" className="bg-white border border-line rounded-2xl shadow-xl p-3 w-[min(100vw-1.5rem,344px)]">
+    <div className="bg-white border border-[#e2e8f0] rounded-xl shadow-xl p-3 w-[min(100vw-1.5rem,344px)]">
       <div className="flex items-center justify-between mb-2">
         <button
           type="button"
           onClick={() => setView((v) => shiftMonth(v.year, v.month, -1))}
-          className="w-11 h-11 flex items-center justify-center rounded-full text-ink-muted hover:bg-butter cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          className="w-11 h-11 flex items-center justify-center rounded-md text-[#475569] hover:bg-[#f1f5f9]"
           aria-label="이전 달"
         >
           ‹
         </button>
-        <span className="font-bold text-sm text-ink whitespace-nowrap" aria-live="polite">
-          {formatYearMonth(view.year, view.month)}
+        <span className="font-bold text-sm text-[#1e293b] whitespace-nowrap">
+          {view.year}년 {view.month}월
         </span>
         <button
           type="button"
           onClick={() => setView((v) => shiftMonth(v.year, v.month, 1))}
-          className="w-11 h-11 flex items-center justify-center rounded-full text-ink-muted hover:bg-butter cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          className="w-11 h-11 flex items-center justify-center rounded-md text-[#475569] hover:bg-[#f1f5f9]"
           aria-label="다음 달"
         >
           ›
@@ -59,7 +58,7 @@ export default function AttendanceDatePicker({ value, today, onChange }: Attenda
           <div
             key={w}
             className={`text-center text-[11px] font-semibold py-1 ${
-              i === 0 ? "text-[#dc2626]" : i === 6 ? "text-sky-700" : "text-ink-muted"
+              i === 0 ? "text-[#ef4444]" : i === 6 ? "text-[#2563eb]" : "text-[#94a3b8]"
             }`}
           >
             {w}
@@ -78,15 +77,12 @@ export default function AttendanceDatePicker({ value, today, onChange }: Attenda
               key={date}
               type="button"
               onClick={() => onChange(date)}
-              aria-label={formatFullDate(date)}
-              aria-pressed={isSelected}
-              aria-current={isToday ? "date" : undefined}
-              className={`aspect-square min-h-11 rounded-xl text-[13px] font-medium tabular-nums cursor-pointer touch-manipulation transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+              className={`aspect-square min-h-11 rounded-md text-[13px] font-medium transition-colors ${
                 isSelected
-                  ? "bg-primary text-white"
+                  ? "bg-[#2563eb] text-white"
                   : isToday
-                    ? "border-2 border-primary text-primary hover:bg-peach"
-                    : "text-ink hover:bg-butter"
+                    ? "border-2 border-[#2563eb] text-[#2563eb] hover:bg-[#eff6ff]"
+                    : "text-[#1e293b] hover:bg-[#f1f5f9]"
               }`}
             >
               {day}
@@ -99,7 +95,7 @@ export default function AttendanceDatePicker({ value, today, onChange }: Attenda
         <button
           type="button"
           onClick={() => onChange(today)}
-          className="px-4 rounded-xl text-xs font-semibold text-primary-deep bg-butter hover:bg-peach cursor-pointer whitespace-nowrap min-h-11 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          className="px-4 py-1.5 rounded-md text-xs font-semibold text-[#2563eb] bg-[#eff6ff] hover:bg-[#dbeafe] whitespace-nowrap min-h-11"
         >
           오늘로
         </button>
