@@ -2,6 +2,19 @@
 
 최신 항목을 위에 추가한다. 날짜·도구·변경 이유·파일·실제로 실행한 검증·남은 작업을 기록한다. 기존 상세 이력은 `.claude/PROJECT_MAP.md`, `docs/superpowers/`, `.plans/`, Git 및 Claude 세션 원문에 그대로 남아 있다.
 
+## 2026-11-20 — Claude Code(클라우드) — 교실 구조 설정에 "야간자율학습 자리 배치와 동일하게 배치" 체크박스
+
+- 요청: `/grade-admin/2` 좌석 배치의 교실 구조 설정 모달에 체크박스를 두고, 체크하면 오후자습부터 야간자습까지 같은 페이지로 구성. `/grilling`으로 결정 8건을 확인한 뒤 구현. 브랜치 `claude/confident-newton-jfb1qh`.
+- 사용자 결정: ① 실시간 공유(오후가 야간 좌석 배치를 참조, 복사 아님) ② 모든 학년 모달에 표시·학년별 설정 ③ 기존 오후 학급 교실·배정은 삭제하지 않고 보관, 해제 시 복귀 ④ 좌석 화면 세션 버튼은 "오후·야간자습" 하나로 합침 ⑤ 출석체크는 오후1·오후2·야간 탭과 교시별 기록 유지, 배치만 동일 ⑥ 야간 좌석 부족·야간 교실 구조 편집은 이번 범위 밖 ⑦ 학생 좌석 확인 카드도 탭 없이 하나 ⑧ 도움말은 글만 수정(스틸·영상은 남은 작업).
+- 스키마: `StudySession.sharesNightLayout Boolean @default(false) @map("shares_night_layout")`(오후 세션 행에서만 사용). 마이그레이션 `prisma/migrations/20261120000000_add_shares_night_layout/`(ADD COLUMN 1줄, 기존 데이터 변경 없음).
+- 서버: `src/lib/sessions.ts`에 `effectiveSeatSession`·`seatSessionLabel`·`SHARED_SEAT_SESSION_LABEL`, `src/lib/seats/shared-layout.ts`의 `isNightLayoutShared(grade)`. 좌석을 읽는 4개 경로(`seat-layouts` GET, `/api/attendance` GET, `copy-session`, `/api/student/seats`)가 모두 이것으로 좌석 세션을 정한다 — 하나라도 빠지면 보관 중인 오후 좌석이 다시 보인다. 응답에 `sharesNightLayout`(seat-layouts·classrooms·student/seats)과 `seatSession`(attendance) 추가. 신규 `PUT /api/grade-admin/[grade]/seat-sharing`(`withGradeAuth`, 플래그만 갱신). classrooms POST/PUT/DELETE 는 공유 중 409(`SHARED_LAYOUT_LOCK_ERROR`).
+- 화면: `ClassroomConfigModal` 상단 체크박스(확인 창 후 즉시 적용, 공유 중 학급 추가·수정·삭제 비활성, 불러오기 전에는 그리지 않음), `SeatingEditor`(`layoutSeat`=응답 세션 타입으로 배치 분기, 공유 중 설정 버튼·안내 배너·`participatesInSharedSeatLayout`), 신규 `SeatSessionPanel`(세션 칩 + 편집기 — 학년관리 좌석 탭과 `/grade-admin/[grade]/seats`의 중복 제거, 편집기와 같은 SWR 키 `seatLayoutsUrl`을 읽어 모달 토글 시 칩이 함께 바뀜. `sessionType`은 공유 중에도 바꾸지 않는다 — 키가 바뀌면 열려 있는 모달이 닫힘), 출석 페이지 `seatSession`을 응답 우선으로, `SeatCheckCard` 공유 중 단일 표시, 인쇄 페이지·`SeatPrintGroup`(prop `sessionType`→`sessionLabel`). `/help/seats/content.mdx` 본문·tip·알아 둘 점 1항목.
+- 테스트: 신규 `tests/shared-night-layout.test.ts`(순수 로직 + 스키마·마이그레이션 + 4개 읽기 경로·토글·잠금·화면 배선). 구현 문자열을 고정하던 기존 6개(`attendance-page-wiring`·`classroom-wiring`·`guide-seats`·`seat-print-wiring`·`session-literal-guard`·`student-schedule-wiring`)를 새 구조에 맞게 수정.
+- 검증: ① `npx tsx tests/*.test.ts` 46개 전부 통과 ② `npx tsc --noEmit` 통과 ③ `npx eslint` 0 오류·경고 6건(기존 `<img>`) ④ `npm run build` 통과 ⑤ 로컬 Postgres 16: `prisma db push` + 시드 후, 새 컬럼을 DROP 하고 마이그레이션 SQL 을 psql 로 다시 적용해 `boolean not null default false` 확인 ⑥ `next dev` + Playwright(1280px·375px): 관리자로 2학년 체크 → 모달 유지·학급 버튼 비활성·칩 "오후·야간자습"·미래홀 도면·오후만 참가 학생이 미배정 목록에 표시, 공유 중 classrooms POST 409, afternoon 요청에 night 세션 반환, 인쇄 제목 "2학년 오후·야간자습 — 미래홀", 출석 API 오후1·오후2·야간 모두 같은 교실(야간 불참 학생은 야간에서만 불참 표시), 학생(송예진) 좌석 카드 단일 표시, 해제 후 오후 14개 방 복귀·야간 배정 유지, 3학년 on/off, 학년관리자가 아닌 교사 403, 잘못된 본문 400, 가로 넘침 0, 스크립트 오류 0.
+- 미실행·주의: 운영 배포·운영 DB 마이그레이션은 하지 않았다. 저장소의 마이그레이션 이력은 빈 DB 에서 처음부터 재생되지 않는다(`20260826000000_split_afternoon_session`이 없는 `attendance_notes` 테이블을 참조 — 기존 문제, 이번에 건드리지 않음). 지정 에이전트 `prisma-migration-guardian`·`responsive-ui-reviewer`·`project-memory-keeper`는 이 환경에 없어 같은 점검(마이그레이션 SQL 직접 적용 확인, 375px 스크린샷·넘침 측정, 인계·일지 직접 작성)을 직접 했다. `.claude/memory/` 링크도 클라우드에는 없어 자동 메모리는 갱신하지 않았다. `project-map-updater`로 `.claude/PROJECT_MAP.md` 갱신.
+- 별도 커밋: 세션 시작 전부터 있던 `package-lock.json` 변경(패키지 25곳에 `"dev": true` 표시 추가, 버전 변경 없음)을 사용자 지시로 커밋했다.
+- 남은 작업: `.claude/HANDOFF.md` "다음 단계" 참조(운영 확인, `/guide-page seats` 스틸·영상 갱신).
+
 ## 2026-10-21 — Claude Code(클라우드) — 2단계: 출석체크·담임·관리자·학생 화면 사용성 개선
 
 - 요청: 로그인 톤 확정 후 "이 톤으로 2단계 진행". `/web-design-guidelines`(Vercel Web Interface Guidelines, 리뷰 시점에 원문 fetch)로 출석체크·담임·관리자·학년관리자 화면을 점검하고 같은 토큰으로 개선. 브랜치 `claude/upbeat-volta-8a7ixx`.

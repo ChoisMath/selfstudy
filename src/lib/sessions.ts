@@ -23,6 +23,18 @@ export const SEAT_SESSION_META: Record<SeatSessionType, { label: string }> = {
   night: { label: "야간자습" },
 };
 
+// 오후 좌석이 야간 좌석 배치를 함께 쓸 때(StudySession.sharesNightLayout) 좌석 화면·인쇄에 쓰는 이름
+export const SHARED_SEAT_SESSION_LABEL = "오후·야간자습";
+
+// 좌석 배치를 실제로 읽을 좌석 세션 — 공유 중이면 오후도 야간 배치를 쓴다.
+export function effectiveSeatSession(seat: SeatSessionType, sharesNightLayout: boolean): SeatSessionType {
+  return sharesNightLayout && seat === "afternoon" ? "night" : seat;
+}
+
+export function seatSessionLabel(seat: SeatSessionType, sharesNightLayout: boolean): string {
+  return sharesNightLayout ? SHARED_SEAT_SESSION_LABEL : SEAT_SESSION_META[seat].label;
+}
+
 export const REPRESENTATIVE_SESSION_TYPE: SessionType = "afternoon1";
 
 export function isSessionType(value: unknown): value is SessionType {

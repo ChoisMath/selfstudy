@@ -21,8 +21,9 @@ import ClassroomFrame from "./ClassroomFrame";
 import ClassroomConfigModal from "./ClassroomConfigModal";
 import { GuideHelpButton } from "@/components/guide/GuideHelpButton";
 import { buildPrintGroups, type ClassroomMeta } from "@/lib/seats/print-groups";
-import { participatesInSeatSession } from "@/lib/seats/seat-participation";
-import { type SeatSessionType } from "@/lib/sessions";
+import { participatesInSeatSession, participatesInSharedSeatLayout } from "@/lib/seats/seat-participation";
+import { seatLayoutsUrl } from "@/lib/seats/seat-layouts-url";
+import { SHARED_SEAT_SESSION_LABEL, type SeatSessionType } from "@/lib/sessions";
 
 type ParticipationDay = {
   sessionType: string;
@@ -96,10 +97,13 @@ export default function SeatingEditor({
     data: layoutData,
     isLoading: layoutLoading,
     mutate: layoutMutate,
-  } = useSWR<{ sessions: StudySession[] }>(
-    `/api/grade-admin/${grade}/seat-layouts?sessionType=${sessionType}`,
+  } = useSWR<{ sessions: StudySession[]; sharesNightLayout?: boolean }>(
+    seatLayoutsUrl(grade, sessionType),
     fetcher
   );
+
+  // 오후가 야간 좌석 배치를 함께 쓰는 학년이면 어느 탭에서 열어도 같은(야간) 배치를 편집한다
+  const shared = layoutData?.sharesNightLayout ?? false;
 
   // 학생 목록
   const { data: studentData } = useSWR<{ students: Student[] }>(
@@ -110,14 +114,18 @@ export default function SeatingEditor({
   const allStudents = useMemo(
     () => (studentData?.students ?? []).filter((s: Student & { isActive?: boolean }) => {
       if ((s as { isActive?: boolean }).isActive === false) return false;
-      return participatesInSeatSession(s.participationDays, sessionType);
+      return shared
+        ? participatesInSharedSeatLayout(s.participationDays)
+        : participatesInSeatSession(s.participationDays, sessionType);
     }),
-    [studentData, sessionType]
+    [studentData, sessionType, shared]
   );
 
   const sessions = layoutData?.sessions ?? [];
   const currentSession = sessions[0]; // 필터링 결과는 하나
   const rooms = currentSession?.rooms ?? [];
+  // 화면에 그릴 배치 종류 — 공유 중이면 오후로 열어도 서버가 야간 세션을 돌려준다
+  const layoutSeat: SeatSessionType = currentSession?.type ?? sessionType;
 
   // 데이터 로드 후 seats 상태 초기화
   useEffect(() => {
@@ -349,7 +357,7 @@ export default function SeatingEditor({
     ) {
       return;
     }
-    window.open(`/grade-admin/${grade}/seats/print?session=${sessionType}`, "_blank");
+    window.open(`/grade-admin/${grade}/seats/print?session=${layoutSeat}`, "_blank");
   };
 
   // 드래그 중인 아이템 정보
@@ -385,7 +393,7 @@ export default function SeatingEditor({
           <GuideHelpButton href="/help/seats" />
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          {sessionType === "afternoon" && (
+          {(sessionType === "afternoon" || shared) && (
             <button
               onClick={() => {
                 if (dirty.size > 0 && !confirm("저장하지 않은 좌석 변경이 있습니다. 구조 설정을 열면 변경이 사라질 수 있습니다. 계속할까요?")) return;
@@ -412,6 +420,12 @@ export default function SeatingEditor({
         </div>
       </div>
 
+      {shared && (
+        <p className="mb-4 break-keep rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-800">
+          {SHARED_SEAT_SESSION_LABEL} 공용 배치입니다. 오후1·오후2·야간이 이 좌석을 함께 씁니다.
+        </p>
+      )}
+
       {rooms.length === 0 ? (
         <div className="text-center py-12 text-gray-400 bg-white rounded-lg border">
           이 세션에 등록된 교실이 없습니다.
@@ -426,7 +440,7 @@ export default function SeatingEditor({
           <div className="grid grid-cols-1 xl:grid-cols-[1fr_280px] gap-6">
             {/* 교실 격자 — min-w-0: 1fr 트랙의 auto 최소폭이 격자 min-content 를 따라 커져 xl 에서 문서가 가로로 넘치는 것을 막는다 */}
             <div className="min-w-0">
-              {grade === 2 && sessionType === "night" ? (
+              {grade === 2 && layoutSeat === "night" ? (
                 <MiraeHallLayout
                   rooms={rooms}
                   renderRoom={(room) => (
@@ -441,7 +455,7 @@ export default function SeatingEditor({
                     />
                   )}
                 />
-              ) : sessionType === "afternoon" ? (
+              ) : layoutSeat === "afternoon" ? (
                 /* 오후 자습: 학급(Classroom) 그룹 우선, 미분류 Room 은 이름 접두사 그룹 */
                 <div className="space-y-6 overflow-x-auto">
                   {/* preserveSeatWidth: 폭이 부족하면 셀을 줄이지 않고 이 래퍼가 스크롤한다. 미래홀 도면은 자체 minWidth/스크롤이 있어 켜지 않는다. */}

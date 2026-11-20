@@ -8,7 +8,15 @@ import StudentSeatGrid from "@/components/seats/StudentSeatGrid";
 import type { ParticipationDaysMap } from "@/lib/participation-days";
 import { divisionLabel } from "@/lib/seats/print-groups";
 import type { StudentSeatGroup, StudentSeatsResponse } from "@/lib/seats/student-seat-group";
-import { SEAT_SESSION_META, SEAT_SESSION_TYPES, sessionTypesOfSeat, type SeatSessionType } from "@/lib/sessions";
+import {
+  SEAT_SESSION_META,
+  SEAT_SESSION_TYPES,
+  SESSION_TYPES,
+  SHARED_SEAT_SESSION_LABEL,
+  seatSessionLabel,
+  sessionTypesOfSeat,
+  type SeatSessionType,
+} from "@/lib/sessions";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -23,9 +31,12 @@ export default function SeatCheckCard({ participationDays }: { participationDays
   const [picked, setPicked] = useState<SeatSessionType | null>(null);
   // 데이터가 비동기로 오므로 기본 탭은 렌더에서 파생한다 (effect 안 setState 금지)
   const firstWithGroup = SEAT_SESSION_TYPES.find((seatSession) => data?.[seatSession]);
-  const tab: SeatSessionType = picked ?? firstWithGroup ?? "afternoon";
+  // 오후가 야간 좌석 배치를 함께 쓰는 학년은 좌석이 하나뿐이라 탭 없이 그 배치만 보여 준다
+  const shared = data?.sharesNightLayout ?? false;
+  const tab: SeatSessionType = shared ? "night" : picked ?? firstWithGroup ?? "afternoon";
   const group = data?.[tab] ?? null;
-  const participates = sessionTypesOfSeat(tab).some((sessionType) => participationDays[sessionType]?.isParticipating);
+  const blocks = shared ? SESSION_TYPES : sessionTypesOfSeat(tab);
+  const participates = blocks.some((sessionType) => participationDays[sessionType]?.isParticipating);
 
   function renderBody() {
     if (isLoading) return <p className="text-sm text-gray-400">불러오는 중...</p>;
@@ -33,7 +44,7 @@ export default function SeatCheckCard({ participationDays }: { participationDays
     if (!group) {
       return (
         <p className="text-sm text-gray-400">
-          {participates ? "배정된 좌석이 없습니다." : `${SEAT_SESSION_META[tab].label} 미참가`}
+          {participates ? "배정된 좌석이 없습니다." : `${seatSessionLabel(tab, shared)} 미참가`}
         </p>
       );
     }
@@ -82,20 +93,26 @@ export default function SeatCheckCard({ participationDays }: { participationDays
     <div className="mt-6 bg-white rounded-lg border border-gray-200 p-4">
       <div className="flex items-center justify-between gap-2 mb-3">
         <h3 className="text-sm font-medium text-gray-600 whitespace-nowrap">좌석 확인</h3>
-        <div className="flex gap-1">
-          {SEAT_SESSION_TYPES.map((seatSession) => (
-            <button
-              key={seatSession}
-              type="button"
-              onClick={() => setPicked(seatSession)}
-              className={`min-h-11 px-3 text-sm font-medium rounded-md whitespace-nowrap transition-colors ${
-                tab === seatSession ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-              }`}
-            >
-              {SEAT_SESSION_META[seatSession].label}
-            </button>
-          ))}
-        </div>
+        {shared ? (
+          <span className="flex min-h-11 items-center text-sm font-medium text-blue-700 whitespace-nowrap">
+            {SHARED_SEAT_SESSION_LABEL}
+          </span>
+        ) : (
+          <div className="flex gap-1">
+            {SEAT_SESSION_TYPES.map((seatSession) => (
+              <button
+                key={seatSession}
+                type="button"
+                onClick={() => setPicked(seatSession)}
+                className={`min-h-11 px-3 text-sm font-medium rounded-md whitespace-nowrap transition-colors ${
+                  tab === seatSession ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                }`}
+              >
+                {SEAT_SESSION_META[seatSession].label}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
       {renderBody()}
     </div>

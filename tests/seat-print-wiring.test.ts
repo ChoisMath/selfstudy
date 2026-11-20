@@ -94,7 +94,8 @@ assert.match(printPage, /seatPrintOrientation:/, "localStorage 방향 저장 키
 assert.match(printPage, /seat-print-mode/, "body 인쇄 모드 클래스 토글이 없음");
 assert.match(printPage, /window\.print\(\)/, "인쇄 실행이 없음");
 // 기존 API 재사용 — 새 엔드포인트를 만들지 않는다
-assert.match(printPage, /\/seat-layouts\?sessionType=/, "기존 좌석 API 를 쓰지 않음");
+assert.match(printPage, /seatLayoutsUrl\(grade, requestedSeat\)/, "기존 좌석 API 를 쓰지 않음");
+assert.match(read("../src/lib/seats/seat-layouts-url.ts"), /\/seat-layouts\?sessionType=/, "좌석 API 주소가 바뀜");
 
 // --- Task 8: SeatingEditor 출력 버튼 + 그룹핑 통합 ---
 const editor = read("../src/components/seats/SeatingEditor.tsx");

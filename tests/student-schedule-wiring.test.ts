@@ -32,7 +32,8 @@ assert.match(seatCard, /<div className="overflow-x-auto">/, "격자 래퍼에 �
 assert.match(seatCard, /GAP_CONFIG\[room\.name\]/, "야간 미래혜윰실 블록 간격을 재사용하지 않음");
 assert.match(seatCard, /내 자리: /, "내 자리 위치 문구가 없음");
 assert.match(seatCard, /배정된 좌석이 없습니다\./, "좌석 없음 문구가 없음");
-assert.match(seatCard, /sessionTypesOfSeat\(tab\)\.some/, "미참가 판정을 좌석 세션의 블록으로 하지 않음");
+// 야간 배치를 함께 쓰는 학년은 좌석이 하나라 세 블록 전체로 판정한다
+assert.match(seatCard, /const blocks = shared \? SESSION_TYPES : sessionTypesOfSeat\(tab\);\s*const participates = blocks\.some/, "미참가 판정을 좌석 세션의 블록으로 하지 않음");
 
 // --- 참여일정 카드: 인덱스 + 5요일 격자, 오늘 강조, 다음 돌아오는 요일로 신청 진입 ---
 const scheduleCard = read("../src/components/student/ParticipationScheduleCard.tsx");

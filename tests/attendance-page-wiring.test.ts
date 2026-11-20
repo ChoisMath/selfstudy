@@ -10,7 +10,8 @@ assert.match(page, /SESSION_TYPES\.map\(\(sessionType\) => \(/, "탭 버튼을 S
 assert.doesNotMatch(page, /오후자습\s*<\/button>/, "옛 오후자습 탭 버튼이 남아 있음");
 
 // 좌석 세션 분기
-assert.match(page, /const seatSession = tab === "absence" \? null : seatSessionOf\(tab\)/, "seatSession 파생값이 없음");
+// 좌석 배치 종류는 서버 응답(seatSession)이 우선 — 오후가 야간 배치를 함께 쓰는 학년은 오후 탭도 "night" 다
+assert.match(page, /tab === "absence" \? null : data\?\.seatSession \?\? seatSessionOf\(tab\)/, "seatSession 파생값이 없음");
 assert.match(page, /grade === 2 && seatSession === "night"/, "미래홀 분기가 seatSession 기준이 아님");
 assert.match(page, /buildPrintGroups\(rooms, seatSession, grade\)/, "그룹 분기가 seatSession 을 넘기지 않음");
 assert.doesNotMatch(page, /tab === "afternoon"/, "옛 tab === \"afternoon\" 비교가 남아 있음");

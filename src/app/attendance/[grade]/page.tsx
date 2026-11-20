@@ -10,7 +10,7 @@ import { formatMonthDay, formatWeekOfMonth } from "@/lib/format-date";
 import MiraeHallLayout, { GAP_CONFIG } from "@/components/seats/MiraeHallLayout";
 import ClassroomFrame from "@/components/seats/ClassroomFrame";
 import { buildPrintGroups, type ClassroomMeta } from "@/lib/seats/print-groups";
-import { SESSION_TYPES, SESSION_META, seatSessionOf, sessionTypesOfSeat, type SessionType } from "@/lib/sessions";
+import { SESSION_TYPES, SESSION_META, seatSessionOf, sessionTypesOfSeat, type SeatSessionType, type SessionType } from "@/lib/sessions";
 import { reasonLabel } from "@/lib/absence-reasons";
 import { summarizeWeeklyCell, type WeeklyDayRow, type WeeklyCellKind } from "@/lib/attendance/weekly-summary";
 
@@ -285,7 +285,9 @@ export default function AttendanceGradePage() {
       assignedSessionTypes.has(request.sessionType)
   );
 
-  const seatSession = tab === "absence" ? null : seatSessionOf(tab);
+  // 좌석 배치 종류는 서버가 정한다 — 오후가 야간 배치를 함께 쓰는 학년은 오후1·오후2 도 "night" 로 온다
+  const seatSession: SeatSessionType | null =
+    tab === "absence" ? null : data?.seatSession ?? seatSessionOf(tab);
   const rooms: Room[] = data?.rooms || [];
   const attendances: Record<number, AttendanceRecord> = data?.attendances || {};
   attendancesRef.current = attendances;

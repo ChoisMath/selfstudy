@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { withGradeAuth } from "@/lib/api-auth";
 import { prisma } from "@/lib/prisma";
-import { parseClassroomConfig, planClassroomRooms } from "@/lib/seats/classroom-config";
+import { SHARED_LAYOUT_LOCK_ERROR, parseClassroomConfig, planClassroomRooms } from "@/lib/seats/classroom-config";
 
 function parseGrade(gradeStr: string): number | null {
   const grade = parseInt(gradeStr, 10);
@@ -37,7 +37,7 @@ export async function GET(
     });
 
     if (!session) {
-      return NextResponse.json({ classrooms: [] });
+      return NextResponse.json({ classrooms: [], sharesNightLayout: false });
     }
 
     const classrooms = session.classrooms.map((classroom) => ({
@@ -51,7 +51,7 @@ export async function GET(
       assignedCount: classroom.rooms.reduce((sum, room) => sum + room._count.seatLayouts, 0),
     }));
 
-    return NextResponse.json({ classrooms });
+    return NextResponse.json({ classrooms, sharesNightLayout: session.sharesNightLayout });
   })(req);
 }
 
@@ -77,6 +77,9 @@ export async function POST(
     });
     if (!session) {
       return NextResponse.json({ error: "오후 자율학습 세션이 없습니다." }, { status: 404 });
+    }
+    if (session.sharesNightLayout) {
+      return NextResponse.json({ error: SHARED_LAYOUT_LOCK_ERROR }, { status: 409 });
     }
 
     const duplicate = await prisma.classroom.findUnique({
