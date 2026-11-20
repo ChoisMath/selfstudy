@@ -387,7 +387,7 @@ export default function SeatingEditor({
   return (
     <div>
       {/* 버튼 라벨이 길어 좁은 화면에서는 줄을 접는다 — 라벨을 줄이거나 문서를 가로로 넘기지 않기 위해 */}
-      <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+      <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
         <div className="flex items-center gap-1">
           <h2 className="whitespace-nowrap text-xl font-bold text-gray-900">좌석 편집</h2>
           <GuideHelpButton href="/help/seats" />
@@ -399,21 +399,21 @@ export default function SeatingEditor({
                 if (dirty.size > 0 && !confirm("저장하지 않은 좌석 변경이 있습니다. 구조 설정을 열면 변경이 사라질 수 있습니다. 계속할까요?")) return;
                 setConfigOpen(true);
               }}
-              className="min-h-11 whitespace-nowrap rounded-md border border-gray-300 px-4 text-sm text-gray-700 hover:bg-gray-50"
+              className="min-h-9 whitespace-nowrap rounded-md border border-gray-300 px-4 text-sm text-gray-700 hover:bg-gray-50"
             >
               교실 구조 설정
             </button>
           )}
           <button
             onClick={handlePrint}
-            className="min-h-11 whitespace-nowrap rounded-md border border-gray-300 px-4 text-sm text-gray-700 hover:bg-gray-50"
+            className="min-h-9 whitespace-nowrap rounded-md border border-gray-300 px-4 text-sm text-gray-700 hover:bg-gray-50"
           >
             출력
           </button>
           <button
             onClick={handleSave}
             disabled={saving || dirty.size === 0}
-            className="min-h-11 whitespace-nowrap px-4 text-sm text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="min-h-9 whitespace-nowrap px-4 text-sm text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {saving ? "저장 중..." : dirty.size > 0 ? `저장 (${dirty.size}개 교실 변경)` : "저장"}
           </button>

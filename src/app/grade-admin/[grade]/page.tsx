@@ -52,13 +52,13 @@ export default function GradeAdminPage() {
   return (
     <div>
       {/* 탭 — 탭 줄만 스크롤하고 ? 버튼은 밖에 둬야 좁은 화면에서도 화면 안에 남는다 */}
-      <div className="flex border-b border-gray-200 mb-3">
+      <div className="flex items-center border-b border-gray-200 mb-2">
         <div className="flex min-w-0 flex-1 overflow-x-auto">
           {TABS.map((tab) => (
             <button
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
-              className={`px-5 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px whitespace-nowrap ${
+              className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors -mb-px whitespace-nowrap ${
                 activeTab === tab.key
                   ? "border-blue-600 text-blue-600"
                   : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"

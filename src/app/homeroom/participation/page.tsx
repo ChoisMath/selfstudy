@@ -170,7 +170,7 @@ export default function HomeroomParticipationPage() {
                       return (
                         <React.Fragment key={t}>
                           <td className="px-2 py-1 text-center border-l border-gray-100">
-                            <label className="inline-flex h-11 w-11 cursor-pointer items-center justify-center">
+                            <label className="inline-flex h-9 w-9 cursor-pointer items-center justify-center">
                               <input
                                 type="checkbox"
                                 checked={settings.isParticipating}
@@ -184,7 +184,7 @@ export default function HomeroomParticipationPage() {
                               <button
                                 onClick={() => handleUpdate(student.id, t, day, !settings[day])}
                                 disabled={!settings.isParticipating}
-                                className={`h-11 w-11 rounded text-xs font-medium transition-colors ${
+                                className={`h-9 w-9 rounded text-xs font-medium transition-colors ${
                                   !settings.isParticipating
                                     ? "bg-gray-100 text-gray-300 cursor-not-allowed"
                                     : settings[day]
@@ -194,7 +194,7 @@ export default function HomeroomParticipationPage() {
                               >
                                 {DAY_LABELS[dayIdx]}
                               </button>
-                              <label className="mx-auto mt-2 flex h-11 w-11 cursor-pointer items-center justify-center">
+                              <label className="mx-auto mt-2 flex h-9 w-9 cursor-pointer items-center justify-center">
                                 <input
                                   type="checkbox"
                                   checked={settings[AFTER_SCHOOL_KEYS[dayIdx]]}

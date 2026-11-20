@@ -9,7 +9,8 @@ const seatingEditor = read("../src/components/seats/SeatingEditor.tsx");
 
 const saveButtonClass = seatingEditor.match(/<button\s+onClick=\{handleSave\}[\s\S]*?className="([^"]+)"/)?.[1];
 assert.ok(saveButtonClass, "저장 버튼을 찾지 못함");
-assert.match(saveButtonClass, /\bmin-h-11\b/, "저장 버튼 터치 타겟이 44px 미만 (min-h-11 없음)");
+// 2026-11-20 사용자 결정: 도구 줄 버튼은 36px (좌석 선택 액션바·미배정 칩은 44px 유지)
+assert.match(saveButtonClass, /\bmin-h-9\b/, "저장 버튼 높이가 36px 기준(min-h-9)이 아님");
 assert.match(saveButtonClass, /\bwhitespace-nowrap\b/, "저장 버튼 라벨 '저장 (N개 교실 변경)' 이 줄바꿈될 수 있음");
 
 const dragChipClass = seatingEditor.match(/<DragOverlay>[\s\S]*?className="([^"]+)"/)?.[1];

@@ -45,7 +45,9 @@ assert.match(page, /const supervisor =\s*tab === "absence" \? absenceSupervisorD
 assert.match(page, /\{tab !== "absence" && rooms\.length === 0 && \(/, "불참신청 탭에서 '좌석 배치가 설정되지 않았습니다.' 가 함께 보임");
 
 // 상단 날짜 바·탭(sticky z-[100]) 위로 전체 화면 모달이 덮여야 배경과 함께 가려진다.
-assert.match(page, /lg:hidden fixed inset-0 z-\[150\]/, "주간 팝업 모달이 상단 바(z-[100]) 아래에 깔림");
+assert.match(page, /className="fixed inset-0 z-\[150\] flex items-center justify-center p-4"/, "주간 출석 창이 상단 바(z-[100]) 아래에 깔림");
+// 주간 출석 창은 모든 화면 폭에서 화면 가운데 창 하나다 — 좌석 줄 아래에 끼어드는 말풍선은 없앴다 (2026-11-20 사용자 결정)
+assert.doesNotMatch(page, /renderWeeklyPopup|lg:hidden fixed inset-0/, "PC 전용 인라인 말풍선이 남아 있음");
 assert.match(page, /fixed inset-0 bg-black\/50 flex items-center justify-center z-\[150\]/, "다른학년 모달이 상단 바(z-[100]) 아래에 깔림");
 assert.doesNotMatch(page, /fixed inset-0[^"]*\bz-50\b/, "상단 바보다 낮은 z-50 전체 화면 오버레이가 남아 있음");
 

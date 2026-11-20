@@ -85,7 +85,7 @@ export default function MonthlyAttendancePage() {
   return (
     <div>
       {/* 헤더 */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-3">
           <button onClick={prevMonth} className="px-3 py-2 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50">
             &larr;

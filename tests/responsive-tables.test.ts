@@ -7,7 +7,7 @@ const read = (rel: string) => readFileSync(new URL(rel, import.meta.url), "utf8"
 // tsconfig target ES2017 — 정규식 s 플래그·lookbehind 사용 금지
 
 const globals = read("../src/app/globals.css");
-assert.match(globals, /--header-h:\s*3\.5rem/, "globals.css 에 --header-h 기본값(3.5rem = nav h-14) 없음");
+assert.match(globals, /--header-h:\s*2\.75rem/, "globals.css 에 --header-h 기본값(2.75rem = nav h-11) 없음");
 assert.match(
   globals,
   /@utility table-scroll\s*\{[\s\S]*?max-height:\s*calc\(100dvh - var\(--header-h\)\)[\s\S]*?overflow:\s*auto[\s\S]*?\}/,
@@ -47,10 +47,10 @@ for (const rel of [
 ]) {
   const src = read(rel);
   assert.doesNotMatch(src, /\bw-7 h-7\b/, `${rel}: 요일 토글이 28px(w-7 h-7)`);
-  assert.match(src, /<button[\s\S]*?className=\{`h-11 w-11 /, `${rel}: 요일 토글이 h-11 w-11 이 아님`);
+  assert.match(src, /<button[\s\S]*?className=\{`h-9 w-9 /, `${rel}: 요일 토글이 h-9 w-9(36px) 가 아님`);
   assert.match(
     src,
-    /<label className="[^"]*\bh-11 w-11\b[^"]*"[^>]*>\s*<input\s+type="checkbox"/,
+    /<label className="[^"]*\bh-9 w-9\b[^"]*"[^>]*>\s*<input\s+type="checkbox"/,
     `${rel}: 체크박스가 44px label 로 감싸이지 않음`
   );
   assert.match(src, /<th[^>]*className="[^"]*\bsticky left-0 z-30\b[^"]*bg-gray-50/, `${rel}: 이름 헤더 셀이 sticky 인덱스(z-30, 배경) 가 아님`);
@@ -63,7 +63,7 @@ for (const rel of [
   "../src/components/admin-shared/ParticipationManagement.tsx",
   "../src/app/homeroom/participation/page.tsx",
 ]) {
-  assert.match(read(rel), /<label className="mx-auto mt-2 flex h-11 w-11 /, `${rel}: 방과후 label 이 블록 flex + 중앙 정렬이 아님`);
+  assert.match(read(rel), /<label className="mx-auto mt-2 flex h-9 w-9 /, `${rel}: 방과후 label 이 블록 flex + 중앙 정렬이 아님`);
 }
 
 // --- 월 이동/도구 버튼 44px ---
@@ -74,14 +74,15 @@ for (const [name, src] of [["MonthlyCalendar", monthlyCalendar], ["GradeMonthlyA
   for (const handler of ["prevMonth", "nextMonth", "goToday"]) {
     const cls = src.match(new RegExp(`<button\\s+onClick=\\{${handler}\\}[^>]*className="([^"]+)"`))?.[1];
     assert.ok(cls, `${name}: onClick={${handler}} 버튼을 찾지 못함`);
-    assert.match(cls, /\bmin-h-11\b/, `${name}: ${handler} 버튼 터치 타겟이 44px 미만`);
+    // 2026-11-20 사용자 결정: 학년관리·담임 화면의 버튼 높이 기준 44px → 36px
+    assert.match(cls, /\bmin-h-9\b/, `${name}: ${handler} 버튼이 36px 기준(min-h-9)이 아님`);
   }
 }
 assert.match(monthlyCalendar, /openUpward/, "MonthlyCalendar: 하단 행 드롭다운이 위로 펼쳐지지 않음(래퍼 max-height 안에서 잘림)");
 
 // 감독일정 슬롯 행: 9px '교체' 텍스트 버튼 대신 행 전체가 44px 버튼
 assert.doesNotMatch(schedule, /<button[^>]*className="shrink-0 text-\[9px\]/, "homeroom/schedule: 9px 교체 버튼이 남아 있음");
-assert.match(schedule, /const rowClass = `flex min-h-11 /, "homeroom/schedule: 슬롯 행 공통 클래스에 min-h-11 없음");
+assert.match(schedule, /const rowClass = `flex min-h-9 /, "homeroom/schedule: 슬롯 행 공통 클래스에 min-h-9 없음");
 assert.match(schedule, /<button[\s\S]*?aria-label=\{`\$\{slot\.grade\}학년[\s\S]*?className=\{`\$\{rowClass\} /, "homeroom/schedule: 슬롯 행이 rowClass(44px) 를 쓰는 버튼이 아님");
 
 // --- 학생관리 행 액션 ---
@@ -89,7 +90,7 @@ const studentMgmt = read("../src/components/students/StudentManagement.tsx");
 for (const handler of ["handleEdit\\(student\\)", "handleDelete\\(student\\)", "handleRestore\\(student\\)", "handleToggleHelper\\(student\\)"]) {
   const cls = studentMgmt.match(new RegExp(`onClick=\\{\\(\\) => ${handler}\\}[\\s\\S]*?className=(?:\\{\`|")([^\`"]+)`))?.[1];
   assert.ok(cls, `StudentManagement: ${handler} 버튼을 찾지 못함`);
-  assert.match(cls, /\bmin-h-11\b/, `StudentManagement: ${handler} 버튼 터치 타겟이 44px 미만`);
+  assert.match(cls, /\bmin-h-9\b/, `StudentManagement: ${handler} 버튼이 36px 기준(min-h-9)이 아님`);
 }
 
 // --- 모달/카드 모바일 여백 ---

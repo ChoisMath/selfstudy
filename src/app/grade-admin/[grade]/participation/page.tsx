@@ -127,7 +127,7 @@ export default function ParticipationPage() {
           <select
             value={classFilter}
             onChange={(e) => setClassFilter(e.target.value)}
-            className="min-h-11 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="min-h-9 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="">전체 반</option>
             {classNumbers.map((n) => (
@@ -220,7 +220,7 @@ export default function ParticipationPage() {
                       return (
                         <React.Fragment key={t}>
                           <td className="px-2 py-1 text-center border-l border-gray-100">
-                            <label className="inline-flex h-11 w-11 cursor-pointer items-center justify-center">
+                            <label className="inline-flex h-9 w-9 cursor-pointer items-center justify-center">
                               <input
                                 type="checkbox"
                                 checked={settings.isParticipating}
@@ -234,7 +234,7 @@ export default function ParticipationPage() {
                               <button
                                 onClick={() => handleUpdate(student.id, t, day, !settings[day])}
                                 disabled={!settings.isParticipating}
-                                className={`h-11 w-11 rounded text-xs font-medium transition-colors ${
+                                className={`h-9 w-9 rounded text-xs font-medium transition-colors ${
                                   !settings.isParticipating
                                     ? "bg-gray-100 text-gray-300 cursor-not-allowed"
                                     : settings[day]

@@ -39,7 +39,7 @@ function StatCard({ label, value, color }: { label: string; value: number; color
 function SessionCard({ title, icon, stats }: { title: string; icon: string; stats: SessionStats }) {
   return (
     <div className="bg-white rounded-xl p-5 border border-gray-200">
-      <div className="flex justify-between items-center mb-4">
+      <div className="flex justify-between items-center mb-3">
         <span className="text-base font-semibold text-gray-700">{icon} {title}</span>
         {stats.supervisor && (
           <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-medium">

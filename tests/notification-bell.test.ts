@@ -22,6 +22,6 @@ assert.match(client, /isIosNonStandalone/);
 assert.match(bell, /"use client"/);
 assert.match(bell, /requestPermission/);
 assert.match(bell, /홈 화면에 추가/);
-assert.match(bell, /min-h-11/);
+assert.match(bell, /min-h-9/); // 2026-11-20 사용자 결정: 44px → 36px
 
 console.log("notification-bell checks passed");

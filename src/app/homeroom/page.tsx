@@ -151,7 +151,7 @@ export default function HomeroomPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6 gap-2">
+      <div className="flex items-center justify-between mb-3 gap-2">
         <button
           onClick={() => setWeekOffset(weekOffset - 1)}
           className="px-3 py-1.5 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50 flex-shrink-0"
@@ -182,7 +182,7 @@ export default function HomeroomPage() {
       </div>
 
       {/* 범례 */}
-      <div className="flex items-center gap-3 mb-4 text-xs text-gray-500 flex-wrap">
+      <div className="flex items-center gap-3 mb-3 text-xs text-gray-500 flex-wrap">
         <span className="flex items-center gap-1">
           <span className="text-green-700 font-extrabold text-sm">O</span> 출석
         </span>

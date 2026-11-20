@@ -495,9 +495,6 @@ export default function AttendanceGradePage() {
     return (
       <div className="p-[clamp(4px,1vw,8px)]">
         {Array.from({ length: room.rows }, (_, rowIndex) => {
-          const selectedInThisRow = room.seats.find(
-            (s) => s.rowIndex === rowIndex && s.student?.id === selectedSeat
-          );
           return (
             <div key={`row-${rowIndex}`}>
               <div
@@ -541,8 +538,6 @@ export default function AttendanceGradePage() {
                   );
                 })}
               </div>
-              {/* 주간 출석 팝업 */}
-              {selectedInThisRow && weeklyData.length > 0 && renderWeeklyPopup(room, selectedInThisRow)}
             </div>
           );
         })}
@@ -578,7 +573,7 @@ export default function AttendanceGradePage() {
     unchecked: "bg-[#f3f4f6] text-[#9ca3af]",
   };
 
-  // 주간 팝업/모달 공통 콘텐츠 (래퍼 없음)
+  // 주간 출석 창의 내용 (래퍼 없음) — 모든 화면 폭에서 화면 가운데 창 하나로 띄운다
   function renderWeeklyContent(selectedInThisRow: Seat) {
     if (tab === "absence") return null;
     const blockTypes = sessionTypesOfSeat(seatSessionOf(tab));
@@ -696,24 +691,6 @@ export default function AttendanceGradePage() {
           </div>
         )}
       </>
-    );
-  }
-
-  // 데스크톱 인라인 말풍선 래퍼 (>= lg)
-  function renderWeeklyPopup(room: Room, selectedInThisRow: Seat) {
-    return (
-      <div
-        className="hidden lg:block relative bg-[#eff6ff] border-2 border-[#2563eb] rounded-lg p-[clamp(8px,2vw,14px)]"
-        style={{ marginBottom: "clamp(3px, 0.8vw, 6px)" }}
-      >
-        <div
-          className="absolute -top-[8px] w-[14px] h-[14px] bg-[#eff6ff] border-l-2 border-t-2 border-[#2563eb] rotate-45"
-          style={{
-            left: `calc(${(selectedInThisRow.colIndex + 0.5) / room.cols * 100}% - 7px)`,
-          }}
-        />
-        {renderWeeklyContent(selectedInThisRow)}
-      </div>
     );
   }
 
@@ -1211,7 +1188,7 @@ export default function AttendanceGradePage() {
         if (!foundSeat) return null;
         return (
           <div
-            className="lg:hidden fixed inset-0 z-[150] flex items-center justify-center p-4"
+            className="fixed inset-0 z-[150] flex items-center justify-center p-4"
             onClick={() => {
               setSelectedSeat(null);
               setWeeklyTotals(null);

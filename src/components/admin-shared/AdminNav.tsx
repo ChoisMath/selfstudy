@@ -45,9 +45,9 @@ export function AdminNav() {
     return (
       <nav className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4">
-          <div className="flex items-center h-14">
-            <img src="/posan.svg" alt="포산고등학교" className="w-8 h-8 mr-2" />
-            <span className="text-lg font-bold text-gray-900">출석부</span>
+          <div className="flex items-center h-11">
+            <img src="/posan.svg" alt="포산고등학교" className="w-7 h-7 mr-2" />
+            <span className="text-base font-bold text-gray-900">출석부</span>
           </div>
         </div>
       </nav>
@@ -57,14 +57,14 @@ export function AdminNav() {
   return (
     <nav className="bg-white border-b border-gray-200 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4">
-        <div className="flex items-center justify-between h-14">
+        <div className="flex items-center justify-between h-11">
           <div className="flex items-center gap-1 overflow-x-auto">
             <Link
               href="/"
               className="flex items-center gap-2 shrink-0 mr-4"
             >
-              <img src="/posan.svg" alt="포산고등학교" className="w-8 h-8" />
-              <span className="text-lg font-bold text-gray-900">출석부</span>
+              <img src="/posan.svg" alt="포산고등학교" className="w-7 h-7" />
+              <span className="text-base font-bold text-gray-900">출석부</span>
             </Link>
 
             {adminItems.map((item) => {
@@ -75,7 +75,7 @@ export function AdminNav() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`inline-flex min-h-11 items-center px-3 text-sm font-medium rounded-md whitespace-nowrap transition-colors ${
+                  className={`inline-flex min-h-9 items-center px-3 text-sm font-medium rounded-md whitespace-nowrap transition-colors ${
                     isActive
                       ? "bg-blue-50 text-blue-700"
                       : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
@@ -94,7 +94,7 @@ export function AdminNav() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`inline-flex min-h-11 items-center px-3 text-sm font-medium rounded-md whitespace-nowrap transition-colors ${
+                className={`inline-flex min-h-9 items-center px-3 text-sm font-medium rounded-md whitespace-nowrap transition-colors ${
                   pathname.startsWith(item.href)
                     ? "bg-green-50 text-green-700"
                     : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
@@ -109,7 +109,7 @@ export function AdminNav() {
             {!isAdmin && (
               <Link
                 href={user?.roles?.includes("homeroom") ? "/homeroom" : "/homeroom/schedule"}
-                className="inline-flex min-h-11 items-center px-3 text-xs font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-md hover:bg-blue-100 transition-colors whitespace-nowrap"
+                className="inline-flex min-h-9 items-center px-3 text-xs font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-md hover:bg-blue-100 transition-colors whitespace-nowrap"
               >
                 {user?.roles?.includes("homeroom") ? "담임교사" : "감독일정"}
               </Link>
@@ -118,7 +118,7 @@ export function AdminNav() {
             <span className="text-sm text-gray-500 whitespace-nowrap">{user?.name}</span>
             <button
               onClick={() => signOut({ callbackUrl: "/login" })}
-              className="min-h-11 px-2 text-sm text-gray-500 hover:text-gray-700 whitespace-nowrap"
+              className="min-h-9 px-2 text-sm text-gray-500 hover:text-gray-700 whitespace-nowrap"
             >
               로그아웃
             </button>

@@ -86,7 +86,7 @@ export function NotificationBell() {
         disabled={busy}
         aria-label={label}
         title={label}
-        className="inline-flex min-h-11 min-w-11 items-center justify-center gap-1 rounded-md px-2 text-sm whitespace-nowrap disabled:opacity-50"
+        className="inline-flex min-h-9 min-w-9 items-center justify-center gap-1 rounded-md px-2 text-sm whitespace-nowrap disabled:opacity-50"
       >
         <span aria-hidden>{state === "subscribed" ? "🔔" : "🔕"}</span>
         <span className="hidden sm:inline whitespace-nowrap">{label}</span>

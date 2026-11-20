@@ -149,8 +149,8 @@ export default function SchedulePage() {
   return (
     <div>
       {/* 월 네비게이션 */}
-      <div className="flex items-center justify-between mb-4 gap-2">
-        <button onClick={prevMonth} className="min-h-11 min-w-11 px-3 py-2 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50 shrink-0">
+      <div className="flex items-center justify-between mb-3 gap-2">
+        <button onClick={prevMonth} className="min-h-9 min-w-9 px-3 py-2 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50 shrink-0">
           &larr;
         </button>
         <div className="flex items-center justify-center gap-2 flex-1">
@@ -158,12 +158,12 @@ export default function SchedulePage() {
             {year}.{String(month + 1).padStart(2, "0")}
           </span>
           {(year !== today.getFullYear() || month !== today.getMonth()) && (
-            <button onClick={goToday} className="min-h-11 px-3 py-1.5 text-xs bg-blue-50 text-blue-600 border border-blue-200 rounded-md hover:bg-blue-100 whitespace-nowrap">
+            <button onClick={goToday} className="min-h-9 px-3 py-1.5 text-xs bg-blue-50 text-blue-600 border border-blue-200 rounded-md hover:bg-blue-100 whitespace-nowrap">
               Now
             </button>
           )}
         </div>
-        <button onClick={nextMonth} className="min-h-11 min-w-11 px-3 py-2 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50 shrink-0">
+        <button onClick={nextMonth} className="min-h-9 min-w-9 px-3 py-2 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50 shrink-0">
           &rarr;
         </button>
       </div>
@@ -179,7 +179,7 @@ export default function SchedulePage() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setShowWeekend(!showWeekend)}
-            className={`min-h-11 px-2.5 py-1 text-xs rounded-md border transition-colors whitespace-nowrap ${
+            className={`min-h-9 px-2.5 py-1 text-xs rounded-md border transition-colors whitespace-nowrap ${
               showWeekend
                 ? "bg-blue-50 text-blue-600 border-blue-200"
                 : "bg-gray-50 text-gray-500 border-gray-200"
@@ -189,7 +189,7 @@ export default function SchedulePage() {
           </button>
           <button
             onClick={() => setShowSummary(true)}
-            className="min-h-11 px-2.5 py-1 text-xs rounded-md border border-gray-200 bg-gray-50 text-gray-500 hover:bg-gray-100 transition-colors whitespace-nowrap"
+            className="min-h-9 px-2.5 py-1 text-xs rounded-md border border-gray-200 bg-gray-50 text-gray-500 hover:bg-gray-100 transition-colors whitespace-nowrap"
           >
             누계
           </button>
@@ -248,7 +248,7 @@ export default function SchedulePage() {
                         const isFutureOrToday = formatDate(date) >= todayStr;
 
                         // 9px "교체" 글자 대신 행 전체가 44px 탭 타겟(responsive-ui §6)
-                        const rowClass = `flex min-h-11 items-center gap-0.5 sm:gap-1 px-1 py-0.5 sm:py-1 rounded text-[10px] sm:text-sm leading-tight ${
+                        const rowClass = `flex min-h-9 items-center gap-0.5 sm:gap-1 px-1 py-0.5 sm:py-1 rounded text-[10px] sm:text-sm leading-tight ${
                           isMine
                             ? "bg-yellow-100 border border-yellow-300 font-bold text-yellow-900"
                             : assignment
@@ -341,14 +341,14 @@ export default function SchedulePage() {
             <div className="flex items-center justify-end gap-2 mt-6">
               <button
                 onClick={() => setSwapTarget(null)}
-                className="min-h-11 px-4 py-2 text-sm text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+                className="min-h-9 px-4 py-2 text-sm text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
               >
                 취소
               </button>
               <button
                 onClick={handleSwapSubmit}
                 disabled={!selectedTeacher || processing}
-                className="min-h-11 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="min-h-9 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {processing
                   ? "처리 중..."

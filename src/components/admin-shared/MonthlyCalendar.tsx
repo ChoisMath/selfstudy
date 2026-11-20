@@ -213,10 +213,10 @@ export default function MonthlyCalendar({
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-3">
         <button
           onClick={prevMonth}
-          className="min-h-11 whitespace-nowrap px-3 py-2 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+          className="min-h-9 whitespace-nowrap px-3 py-2 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50"
         >
           &larr; 이전달
         </button>
@@ -226,14 +226,14 @@ export default function MonthlyCalendar({
           </span>
           <button
             onClick={goToday}
-            className="min-h-11 whitespace-nowrap px-3 py-1.5 text-xs bg-blue-50 text-blue-600 border border-blue-200 rounded-md hover:bg-blue-100"
+            className="min-h-9 whitespace-nowrap px-3 py-1.5 text-xs bg-blue-50 text-blue-600 border border-blue-200 rounded-md hover:bg-blue-100"
           >
             이번달
           </button>
           {excelHref && (
             <a
               href={`${excelHref}?month=${year}-${String(month + 1).padStart(2, "0")}`}
-              className="inline-flex items-center min-h-11 whitespace-nowrap px-3 py-1.5 text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-md hover:bg-emerald-100"
+              className="inline-flex items-center min-h-9 whitespace-nowrap px-3 py-1.5 text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-md hover:bg-emerald-100"
             >
               Excel
             </a>
@@ -241,7 +241,7 @@ export default function MonthlyCalendar({
         </div>
         <button
           onClick={nextMonth}
-          className="min-h-11 whitespace-nowrap px-3 py-2 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+          className="min-h-9 whitespace-nowrap px-3 py-2 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50"
         >
           다음달 &rarr;
         </button>
@@ -454,7 +454,7 @@ const CalendarTeacherSelect = memo(function CalendarTeacherSelect({
         >
           <li
             onMouseDown={() => select(null)}
-            className={`min-h-11 flex items-center px-2 cursor-pointer text-gray-400 hover:bg-gray-50 ${
+            className={`min-h-9 flex items-center px-2 cursor-pointer text-gray-400 hover:bg-gray-50 ${
               highlightIdx === -1 ? "bg-blue-50" : ""
             }`}
           >
@@ -465,7 +465,7 @@ const CalendarTeacherSelect = memo(function CalendarTeacherSelect({
               key={t.id}
               onMouseDown={() => select(t.id)}
               onMouseEnter={() => setHighlightIdx(idx)}
-              className={`min-h-11 flex items-center px-2 cursor-pointer ${
+              className={`min-h-9 flex items-center px-2 cursor-pointer ${
                 idx === highlightIdx ? "bg-blue-50 text-blue-700" : "text-gray-700 hover:bg-gray-50"
               } ${t.id === value ? "font-semibold" : ""} ${
                 idx === separatorAfter ? "border-b border-gray-200" : ""

@@ -4,6 +4,7 @@ import { useState, useCallback } from "react";
 import useSWR from "swr";
 import { SESSION_META, type SessionType } from "@/lib/sessions";
 import { reasonLabel } from "@/lib/absence-reasons";
+import AbsenceRequestAddModal from "@/components/homeroom/AbsenceRequestAddModal";
 
 type AbsenceRequestData = {
   id: number;
@@ -48,6 +49,8 @@ const STATUS_COLORS: Record<string, string> = {
 export default function AbsenceRequestsPage() {
   const [statusFilter, setStatusFilter] = useState<string>("");
   const [processingId, setProcessingId] = useState<number | null>(null);
+  const [adding, setAdding] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
 
   const apiUrl = statusFilter
     ? `/api/homeroom/absence-requests?status=${statusFilter}`
@@ -91,14 +94,28 @@ export default function AbsenceRequestsPage() {
 
   return (
     <div>
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">불참신청 관리</h1>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
         <div className="flex items-center gap-2">
+          <h1 className="text-xl font-bold text-gray-900 whitespace-nowrap">불참신청 관리</h1>
+          <button
+            type="button"
+            onClick={() => {
+              setNotice(null);
+              setAdding(true);
+            }}
+            aria-label="불참신청 추가"
+            title="불참신청 추가"
+            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-600 text-xl font-bold leading-none text-white hover:bg-blue-700"
+          >
+            +
+          </button>
+        </div>
+        <div className="flex items-center gap-2 overflow-x-auto">
           {["", "pending", "approved", "rejected"].map((status) => (
             <button
               key={status}
               onClick={() => setStatusFilter(status)}
-              className={`px-3 py-1.5 text-sm rounded-md border transition-colors ${
+              className={`min-h-9 px-3 text-sm rounded-md border transition-colors whitespace-nowrap ${
                 statusFilter === status
                   ? "border-blue-500 bg-blue-50 text-blue-700"
                   : "border-gray-300 text-gray-600 hover:bg-gray-50"
@@ -109,6 +126,12 @@ export default function AbsenceRequestsPage() {
           ))}
         </div>
       </div>
+
+      {notice && (
+        <p role="status" className="mb-3 break-keep rounded-md border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-800">
+          {notice}
+        </p>
+      )}
 
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
@@ -209,6 +232,17 @@ export default function AbsenceRequestsPage() {
           </div>
         )}
       </div>
+
+      {adding && (
+        <AbsenceRequestAddModal
+          onClose={() => setAdding(false)}
+          onAdded={(message) => {
+            setAdding(false);
+            setNotice(message);
+            mutate();
+          }}
+        />
+      )}
     </div>
   );
 }

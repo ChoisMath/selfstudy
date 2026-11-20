@@ -106,11 +106,11 @@ export default function ParticipationManagement({ grade }: { grade: number }) {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-3">
         <select
           value={classFilter}
           onChange={(e) => setClassFilter(e.target.value)}
-          className="min-h-11 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="min-h-9 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="">전체 반</option>
           {classNumbers.map((n) => (<option key={n} value={n}>{n}반</option>))}
@@ -144,7 +144,7 @@ export default function ParticipationManagement({ grade }: { grade: number }) {
                 {SESSION_TYPES.map((session) => [
                   <th key={`${session}-chk`} className="py-2 text-center text-xs font-medium text-gray-500 border-l border-gray-200">
                     <label
-                      className="inline-flex h-11 w-11 cursor-pointer items-center justify-center"
+                      className="inline-flex h-9 w-9 cursor-pointer items-center justify-center"
                       title={`${SESSION_META[session].shortLabel} 전체 참가 토글`}
                     >
                       <input
@@ -187,7 +187,7 @@ export default function ParticipationManagement({ grade }: { grade: number }) {
                       const settings = student.sessions[session];
                       return [
                         <td key={`${session}-chk`} className="py-1 text-center border-l border-gray-100">
-                          <label className="inline-flex h-11 w-11 cursor-pointer items-center justify-center">
+                          <label className="inline-flex h-9 w-9 cursor-pointer items-center justify-center">
                             <input
                               type="checkbox"
                               checked={settings.isParticipating}
@@ -201,7 +201,7 @@ export default function ParticipationManagement({ grade }: { grade: number }) {
                             <button
                               onClick={() => handleUpdate(student.id, session, day, !settings[day])}
                               disabled={!settings.isParticipating}
-                              className={`h-11 w-11 rounded text-xs font-medium transition-colors ${
+                              className={`h-9 w-9 rounded text-xs font-medium transition-colors ${
                                 !settings.isParticipating
                                   ? "bg-gray-100 text-gray-300 cursor-not-allowed"
                                   : settings[day]
@@ -211,7 +211,7 @@ export default function ParticipationManagement({ grade }: { grade: number }) {
                             >
                               {DAY_LABELS[dayIdx]}
                             </button>
-                            <label className="mx-auto mt-2 flex h-11 w-11 cursor-pointer items-center justify-center">
+                            <label className="mx-auto mt-2 flex h-9 w-9 cursor-pointer items-center justify-center">
                               <input
                                 type="checkbox"
                                 checked={settings[AFTER_SCHOOL_KEYS[dayIdx]]}
