@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { withAuth } from "@/lib/api-auth";
-import { SEAT_SESSION_TYPES, type SeatSessionType } from "@/lib/sessions";
+import { SEAT_SESSION_TYPES, effectiveSeatSession, type SeatSessionType } from "@/lib/sessions";
+import { isNightLayoutShared } from "@/lib/seats/shared-layout";
 import {
   selectSeatGroupRooms,
   type StudentSeatGroup,
@@ -24,6 +25,10 @@ export const GET = withAuth(["student"], async (_req: Request, user) => {
     },
     orderBy: [{ room: { sortOrder: "asc" } }, { rowIndex: "asc" }, { colIndex: "asc" }],
   });
+
+  // 오후가 야간 배치를 함께 쓰는 학년이면 보관 중인 오후 학급 좌석은 무시하고 야간 좌석을 오후에도 돌려준다
+  const student = await prisma.student.findUnique({ where: { id: user.userId }, select: { grade: true } });
+  const sharesNightLayout = student ? await isNightLayoutShared(student.grade) : false;
 
   async function buildGroup(seatSession: SeatSessionType): Promise<StudentSeatGroup | null> {
     const mine = myLayouts.find((layout) => layout.room.session.type === seatSession);
@@ -60,8 +65,11 @@ export const GET = withAuth(["student"], async (_req: Request, user) => {
   }
 
   const entries = await Promise.all(
-    SEAT_SESSION_TYPES.map(async (seatSession) => [seatSession, await buildGroup(seatSession)] as const)
+    SEAT_SESSION_TYPES.map(
+      async (seatSession) =>
+        [seatSession, await buildGroup(effectiveSeatSession(seatSession, sharesNightLayout))] as const
+    )
   );
-  const response = Object.fromEntries(entries) as StudentSeatsResponse;
+  const response = { ...Object.fromEntries(entries), sharesNightLayout } as StudentSeatsResponse;
   return NextResponse.json(response);
 });

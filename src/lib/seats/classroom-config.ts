@@ -15,6 +15,10 @@ export const CLASSROOM_LIMITS = {
   rows: { min: 1, max: 10 },
 } as const;
 
+// 오후가 야간 좌석 배치를 함께 쓰는 동안 학급 교실은 보관만 한다 (추가·수정·삭제 불가)
+export const SHARED_LAYOUT_LOCK_ERROR =
+  "야간자율학습 자리 배치를 함께 쓰는 동안에는 학급 교실 구조를 바꿀 수 없습니다.";
+
 export type ClassroomConfig = {
   classNumber: number;
   corridorSide: CorridorSide;

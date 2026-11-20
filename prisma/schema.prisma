@@ -163,6 +163,9 @@ model StudySession {
   name      String          @db.VarChar(50)
   timeStart String          @db.VarChar(10) @map("time_start")
   timeEnd   String          @db.VarChar(10) @map("time_end")
+  // 오후 세션에만 의미가 있다. true 면 오후1·오후2 가 같은 학년 야간 세션의 좌석 배치를 그대로 쓴다.
+  // 오후 세션의 학급 교실·배정은 지우지 않고 보관한다(끄면 그대로 돌아온다).
+  sharesNightLayout Boolean @default(false) @map("shares_night_layout")
 
   rooms      Room[]
   classrooms Classroom[]

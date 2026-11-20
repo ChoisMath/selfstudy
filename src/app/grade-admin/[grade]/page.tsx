@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 import SupervisorSummaryModal from "@/components/homeroom/SupervisorSummaryModal";
 import { GuideHelpButton } from "@/components/guide/GuideHelpButton";
 import dynamic from "next/dynamic";
-import { SEAT_SESSION_TYPES, SEAT_SESSION_META, type SeatSessionType } from "@/lib/sessions";
+import SeatSessionPanel from "@/components/seats/SeatSessionPanel";
 import { chrome } from "@/components/ui/chrome";
 
 const loadingBox = () => <div className="text-center py-12 text-ink-muted">불러오는 중…</div>;
@@ -15,10 +15,6 @@ const StudentManagement = dynamic(() => import("@/components/students/StudentMan
   loading: loadingBox,
 });
 const ParticipationManagement = dynamic(() => import("@/components/admin-shared/ParticipationManagement"), {
-  ssr: false,
-  loading: loadingBox,
-});
-const SeatingEditor = dynamic(() => import("@/components/seats/SeatingEditor"), {
   ssr: false,
   loading: loadingBox,
 });
@@ -50,7 +46,6 @@ export default function GradeAdminPage() {
   const params = useParams();
   const grade = parseInt(params.grade as string);
   const [activeTab, setActiveTab] = useState<TabKey>("today");
-  const [sessionType, setSessionType] = useState<SeatSessionType>("afternoon");
   const [showSummary, setShowSummary] = useState(false);
 
   if (isNaN(grade) || grade < 1 || grade > 3) {
@@ -86,24 +81,7 @@ export default function GradeAdminPage() {
         {activeTab === "today" && <TodayAttendanceDashboard grade={grade} />}
         {activeTab === "students" && <StudentManagement grade={grade} />}
         {activeTab === "participation" && <ParticipationManagement grade={grade} />}
-        {activeTab === "seats" && (
-          <div>
-            <div className="mb-4 flex flex-wrap gap-2">
-              {SEAT_SESSION_TYPES.map((t) => (
-                <button
-                  key={t}
-                  type="button"
-                  aria-pressed={sessionType === t}
-                  onClick={() => setSessionType(t)}
-                  className={chrome.chip(sessionType === t)}
-                >
-                  {SEAT_SESSION_META[t].label}
-                </button>
-              ))}
-            </div>
-            <SeatingEditor grade={grade} sessionType={sessionType} />
-          </div>
-        )}
+        {activeTab === "seats" && <SeatSessionPanel grade={grade} />}
         {activeTab === "supervisors" && (
           <div>
             <div className="mb-3 flex justify-end">

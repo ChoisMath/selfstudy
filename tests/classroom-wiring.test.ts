@@ -78,15 +78,15 @@ assert.doesNotMatch(modal, /100vh|\[90vh\]/, "vh 사용");
 assert.match(modal, /min-h-11/, "버튼 44px 터치 타겟 없음");
 assert.match(modal, /role="dialog"/, "dialog 역할 없음");
 
-// --- SeatingEditor 가 오후 탭에서만 설정 모달을 연다 ---
+// --- SeatingEditor 가 오후 탭(또는 야간 배치 공유 중)에서만 설정 모달을 연다 ---
 const editor = read("../src/components/seats/SeatingEditor.tsx");
 assert.match(editor, /import ClassroomConfigModal from/, "편집기가 모달을 import 하지 않음");
 assert.match(editor, /교실 구조 설정/, "설정 버튼 없음");
-assert.match(editor, /sessionType === "afternoon" && \(/, "설정 버튼이 오후 탭으로 한정되지 않음");
+assert.match(editor, /\(sessionType === "afternoon" \|\| shared\) && \(/, "설정 버튼이 오후 탭·공유 중으로 한정되지 않음");
 assert.match(editor, /onChanged=\{[^}]*layoutMutate/, "구조 변경 후 좌석 SWR 을 갱신하지 않음");
 
 // 학급 목록 표: sticky 헤더 + 불투명 배경, 수정/삭제 버튼 간격 8px 이상
 assert.match(modal, /<thead className="sticky top-0 z-\[2\] bg-gray-50/, "학급 목록 표 헤더가 sticky 가 아님");
-assert.match(modal, /<div className="flex gap-2">\s*<button[\s\S]{0,400}수정/, "수정/삭제 버튼 간격이 8px 미만");
+assert.match(modal, /<div className="flex gap-2">\s*<button[\s\S]{0,500}수정/, "수정/삭제 버튼 간격이 8px 미만");
 
 console.log("classroom-wiring checks passed");

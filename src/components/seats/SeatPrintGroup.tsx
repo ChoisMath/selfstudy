@@ -4,7 +4,6 @@ import MiraeHallLayout, { GAP_CONFIG } from "./MiraeHallLayout";
 import ClassroomFrame from "./ClassroomFrame";
 import PrintRoomGrid, { type PrintRoomSeats } from "./PrintRoomGrid";
 import { divisionLabel, type PrintBaseRoom, type PrintGroup } from "@/lib/seats/print-groups";
-import { SEAT_SESSION_META, type SeatSessionType } from "@/lib/sessions";
 
 const EMPTY_SEATS: PrintRoomSeats = new Map();
 const GROUP_GAP_PX = 16;
@@ -12,15 +11,14 @@ const GROUP_GAP_PX = 16;
 export default function SeatPrintGroup({
   group,
   grade,
-  sessionType,
+  sessionLabel,
   seatsByRoom,
 }: {
   group: PrintGroup<PrintBaseRoom>;
   grade: number;
-  sessionType: SeatSessionType;
+  sessionLabel: string;
   seatsByRoom: Map<number, PrintRoomSeats>;
 }) {
-  const sessionLabel = SEAT_SESSION_META[sessionType].label;
   const isDivisions = group.kind === "divisions-row" || group.kind === "divisions-column";
   const showTeacherDesk = isDivisions && !group.classroom;
 

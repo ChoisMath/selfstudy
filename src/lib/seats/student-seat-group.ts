@@ -64,4 +64,7 @@ export type StudentSeatGroup = {
   rooms: StudentSeatRoom[];
   mySeat: { roomId: number; rowIndex: number; colIndex: number };
 };
-export type StudentSeatsResponse = Record<SeatSessionType, StudentSeatGroup | null>;
+// sharesNightLayout 이면 afternoon 과 night 는 같은 묶음(야간 배치)이다
+export type StudentSeatsResponse = Record<SeatSessionType, StudentSeatGroup | null> & {
+  sharesNightLayout: boolean;
+};

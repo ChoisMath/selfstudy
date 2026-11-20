@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { withAuth } from "@/lib/api-auth";
-import { isSessionType, seatSessionOf } from "@/lib/sessions";
+import { effectiveSeatSession, isSessionType, seatSessionOf } from "@/lib/sessions";
+import { isNightLayoutShared } from "@/lib/seats/shared-layout";
 import { planSessionCopy } from "@/lib/attendance/copy-session";
 
 const DAY_FIELDS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
@@ -26,8 +27,10 @@ export const POST = withAuth(["teacher"], async (req: Request, user) => {
   const dayIndex = new Date(`${date}T12:00:00+09:00`).getDay();
   const todayField = DAY_FIELDS[dayIndex] as "mon" | "tue" | "wed" | "thu" | "fri" | undefined;
 
+  // 좌석이 있는 학생만 복사한다 — 오후가 야간 배치를 함께 쓰면 그 배치의 학생이 대상
+  const seatSession = effectiveSeatSession(seatSessionOf(from), await isNightLayoutShared(grade));
   const studySession = await prisma.studySession.findUnique({
-    where: { type_grade: { type: seatSessionOf(from), grade } },
+    where: { type_grade: { type: seatSession, grade } },
     include: { rooms: { select: { id: true } } },
   });
   if (!studySession) {

@@ -1,4 +1,4 @@
-import { sessionTypesOfSeat, type SeatSessionType } from "@/lib/sessions";
+import { SEAT_SESSION_TYPES, sessionTypesOfSeat, type SeatSessionType } from "@/lib/sessions";
 
 export type SeatParticipationInput = {
   sessionType: string;
@@ -13,4 +13,9 @@ export function participatesInSeatSession(
 ): boolean {
   const byType = new Map((participationDays ?? []).map((p) => [p.sessionType, p]));
   return sessionTypesOfSeat(seat).some((block) => byType.get(block)?.isParticipating ?? true);
+}
+
+// 오후가 야간 좌석 배치를 함께 쓰면 한 배치에 세 블록 학생이 모두 앉으므로, 어느 블록이든 참여하면 자리가 필요하다.
+export function participatesInSharedSeatLayout(participationDays: SeatParticipationInput[] | undefined): boolean {
+  return SEAT_SESSION_TYPES.some((seat) => participatesInSeatSession(participationDays, seat));
 }

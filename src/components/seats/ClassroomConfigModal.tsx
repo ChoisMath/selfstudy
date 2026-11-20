@@ -87,8 +87,13 @@ export default function ClassroomConfigModal({
   onChanged: () => void;
 }) {
   const listUrl = `/api/grade-admin/${grade}/classrooms`;
-  const { data, mutate, isLoading } = useSWR<{ classrooms: ClassroomSummary[] }>(listUrl, fetcher);
+  const { data, mutate, isLoading } = useSWR<{ classrooms: ClassroomSummary[]; sharesNightLayout?: boolean }>(
+    listUrl,
+    fetcher
+  );
   const classrooms = data?.classrooms ?? [];
+  // 오후가 야간 좌석 배치를 함께 쓰는 동안 학급 교실은 보관만 한다 (서버도 409 로 막는다)
+  const shared = data?.sharesNightLayout ?? false;
 
   const [editing, setEditing] = useState<ClassroomSummary | "new" | null>(null);
   const [form, setForm] = useState<FormState>(DEFAULT_FORM);
@@ -186,6 +191,31 @@ export default function ClassroomConfigModal({
     }
   };
 
+  const handleToggleShared = async (next: boolean) => {
+    const message = next
+      ? `${grade}학년 오후자습(오후1·오후2)이 야간자율학습 자리 배치를 함께 쓰게 됩니다. 지금의 오후 학급 교실 배치는 지워지지 않고 보관됩니다. 계속할까요?`
+      : `${grade}학년 오후자습이 보관해 둔 학급 교실 배치로 돌아갑니다. 야간자율학습 자리 배치는 그대로 남습니다. 계속할까요?`;
+    if (!confirm(message)) return;
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/grade-admin/${grade}/seat-sharing`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sharesNightLayout: next }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        alert(body.error ?? "설정을 바꾸지 못했습니다.");
+        return;
+      }
+      await notifyChanged();
+    } catch {
+      alert("네트워크 오류가 발생했습니다.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const divisionWord = form.layoutType === "division" ? "분단" : "열";
 
   return (
@@ -214,12 +244,36 @@ export default function ClassroomConfigModal({
         <div className="flex-1 overflow-y-auto p-4">
           {editing === null ? (
             <>
+              {/* 불러오기 전에는 그리지 않는다 — 켜져 있는 설정이 잠깐 꺼진 것처럼 보이지 않게 */}
+              {!isLoading && (
+                <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 px-3 py-1">
+                  <label className="flex min-h-11 cursor-pointer items-center gap-3">
+                    <input
+                      type="checkbox"
+                      className="h-5 w-5 shrink-0"
+                      checked={shared}
+                      disabled={busy}
+                      onChange={(e) => handleToggleShared(e.target.checked)}
+                    />
+                    <span className="break-keep text-sm font-medium text-gray-900">
+                      야간자율학습 자리 배치와 동일하게 배치
+                    </span>
+                  </label>
+                  <p className="break-keep pb-2 pl-8 text-xs text-gray-600">
+                    {shared
+                      ? "오후1·오후2·야간이 야간자율학습 좌석을 함께 씁니다. 아래 학급 교실 배치는 보관 중이며, 체크를 풀면 다시 쓸 수 있습니다."
+                      : "체크하면 오후1·오후2·야간이 야간자율학습 좌석을 함께 쓰고, 좌석 배치가 한 페이지로 합쳐집니다."}
+                  </p>
+                </div>
+              )}
+
               <div className="mb-3 flex items-center justify-between gap-2">
                 <p className="whitespace-nowrap text-sm text-gray-500">칠판·교탁은 항상 아래쪽입니다.</p>
                 <button
                   type="button"
+                  disabled={shared}
                   onClick={openNew}
-                  className="min-h-11 whitespace-nowrap rounded-md bg-blue-600 px-4 text-sm text-white hover:bg-blue-700"
+                  className="min-h-11 whitespace-nowrap rounded-md bg-blue-600 px-4 text-sm text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   학급 추가
                 </button>
@@ -256,16 +310,17 @@ export default function ClassroomConfigModal({
                             <div className="flex gap-2">
                               <button
                                 type="button"
+                                disabled={shared}
                                 onClick={() => openEdit(c)}
-                                className="min-h-11 whitespace-nowrap rounded-md border px-3 text-sm text-gray-700 hover:bg-gray-50"
+                                className="min-h-11 whitespace-nowrap rounded-md border px-3 text-sm text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
                               >
                                 수정
                               </button>
                               <button
                                 type="button"
-                                disabled={busy}
+                                disabled={busy || shared}
                                 onClick={() => handleDelete(c)}
-                                className="min-h-11 whitespace-nowrap rounded-md border border-red-200 px-3 text-sm text-red-600 hover:bg-red-50 disabled:opacity-50"
+                                className="min-h-11 whitespace-nowrap rounded-md border border-red-200 px-3 text-sm text-red-600 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
                               >
                                 삭제
                               </button>

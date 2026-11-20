@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { withAuth } from "@/lib/api-auth";
-import { isSessionType, seatSessionOf } from "@/lib/sessions";
+import { effectiveSeatSession, isSessionType, seatSessionOf } from "@/lib/sessions";
+import { isNightLayoutShared } from "@/lib/seats/shared-layout";
 
 // GET /api/attendance?date=2026-04-05&session=afternoon&grade=2
 export const GET = withAuth(
@@ -27,9 +28,10 @@ export const GET = withAuth(
     const dayFields = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
     const todayField = dayFields[dayIndex] as "mon" | "tue" | "wed" | "thu" | "fri" | undefined;
 
-    // 해당 학년 + 세션의 교실(Room) 목록
+    // 해당 학년 + 세션의 교실(Room) 목록 — 오후가 야간 배치를 함께 쓰면 오후1·오후2 도 야간 교실을 쓴다
+    const seatSession = effectiveSeatSession(seatSessionOf(session), await isNightLayoutShared(gradeNum));
     const studySession = await prisma.studySession.findUnique({
-      where: { type_grade: { type: seatSessionOf(session), grade: gradeNum } },
+      where: { type_grade: { type: seatSession, grade: gradeNum } },
       include: {
         rooms: { orderBy: { sortOrder: "asc" }, include: { classroom: true } },
       },
@@ -115,6 +117,7 @@ export const GET = withAuth(
     }
 
     return NextResponse.json({
+      seatSession,
       rooms: studySession.rooms.map((room) => ({
         id: room.id,
         name: room.name,

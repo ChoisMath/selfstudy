@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { withGradeAuth } from "@/lib/api-auth";
 import { prisma } from "@/lib/prisma";
-import { isSeatSessionType } from "@/lib/sessions";
+import { effectiveSeatSession, isSeatSessionType } from "@/lib/sessions";
+import { isNightLayoutShared } from "@/lib/seats/shared-layout";
 
 // GET: 학년 + 세션타입의 좌석 배치 조회
 export async function GET(
@@ -23,8 +24,11 @@ export async function GET(
       return NextResponse.json({ error: "sessionType은 afternoon 또는 night이어야 합니다." }, { status: 400 });
     }
 
+    // 오후가 야간 배치를 함께 쓰면 오후 요청에도 야간 세션을 돌려준다 (sessions[0].type 이 실제 배치)
+    const sharesNightLayout = await isNightLayoutShared(grade);
+
     const sessions = await prisma.studySession.findMany({
-      where: { grade, type: sessionType },
+      where: { grade, type: effectiveSeatSession(sessionType, sharesNightLayout) },
       include: {
         rooms: {
           orderBy: { sortOrder: "asc" },
@@ -49,7 +53,7 @@ export async function GET(
       },
     });
 
-    return NextResponse.json({ sessions });
+    return NextResponse.json({ sessions, sharesNightLayout });
   })(req);
 }
 

@@ -8,7 +8,8 @@ import type { PrintRoomSeats } from "@/components/seats/PrintRoomGrid";
 import SeatPrintGroup from "@/components/seats/SeatPrintGroup";
 import { buildPrintGroups, type PrintBaseRoom } from "@/lib/seats/print-groups";
 import type { Orientation } from "@/lib/seats/print-layout";
-import { SEAT_SESSION_META, type SeatSessionType } from "@/lib/sessions";
+import { seatLayoutsUrl } from "@/lib/seats/seat-layouts-url";
+import { seatSessionLabel, type SeatSessionType } from "@/lib/sessions";
 import "./print.css";
 
 type SeatStudent = {
@@ -54,13 +55,17 @@ function SeatPrintView() {
   const params = useParams();
   const searchParams = useSearchParams();
   const grade = Number(params.grade);
-  const sessionType: SeatSessionType =
+  const requestedSeat: SeatSessionType =
     searchParams.get("session") === "night" ? "night" : "afternoon";
 
-  const { data, isLoading } = useSWR<{ sessions: ApiSession[] }>(
-    `/api/grade-admin/${grade}/seat-layouts?sessionType=${sessionType}`,
+  const { data, isLoading } = useSWR<{ sessions: ApiSession[]; sharesNightLayout?: boolean }>(
+    seatLayoutsUrl(grade, requestedSeat),
     fetcher
   );
+
+  // 오후가 야간 배치를 함께 쓰는 학년은 오후로 열어도 야간 배치가 온다 — 실제 배치 종류로 그룹·용지 방향을 정한다
+  const sessionType: SeatSessionType = data?.sessions?.[0]?.type ?? requestedSeat;
+  const sessionLabel = seatSessionLabel(sessionType, data?.sharesNightLayout ?? false);
 
   const rooms = useMemo<ApiRoom[]>(() => data?.sessions?.[0]?.rooms ?? [], [data]);
   const groups = useMemo(
@@ -101,9 +106,8 @@ function SeatPrintView() {
   }, []);
 
   useEffect(() => {
-    const sessionLabel = SEAT_SESSION_META[sessionType].label;
     document.title = `${grade}학년 ${sessionLabel} 좌석배치`;
-  }, [grade, sessionType]);
+  }, [grade, sessionLabel]);
 
   const orientationOf = useCallback(
     (groupKey: string): Orientation => stored[groupKey] ?? suggested[groupKey] ?? "portrait",
@@ -226,7 +230,7 @@ function SeatPrintView() {
             <SeatPrintGroup
               group={group}
               grade={grade}
-              sessionType={sessionType}
+              sessionLabel={sessionLabel}
               seatsByRoom={seatsByRoom}
             />
           </PrintPageFitter>

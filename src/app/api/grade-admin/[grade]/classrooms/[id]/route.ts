@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { withGradeAuth } from "@/lib/api-auth";
 import { prisma } from "@/lib/prisma";
 import {
+  SHARED_LAYOUT_LOCK_ERROR,
   isGeometryChanged,
   parseClassroomConfig,
   planClassroomRooms,
@@ -43,6 +44,9 @@ export async function PUT(req: Request, { params }: RouteParams) {
     const classroom = await findOwnedClassroom(id, grade);
     if (!classroom) {
       return NextResponse.json({ error: "교실을 찾을 수 없습니다." }, { status: 404 });
+    }
+    if (classroom.session.sharesNightLayout) {
+      return NextResponse.json({ error: SHARED_LAYOUT_LOCK_ERROR }, { status: 409 });
     }
 
     if (config.classNumber !== classroom.classNumber) {
@@ -101,6 +105,9 @@ export async function DELETE(req: Request, { params }: RouteParams) {
     const classroom = await findOwnedClassroom(id, grade);
     if (!classroom) {
       return NextResponse.json({ error: "교실을 찾을 수 없습니다." }, { status: 404 });
+    }
+    if (classroom.session.sharesNightLayout) {
+      return NextResponse.json({ error: SHARED_LAYOUT_LOCK_ERROR }, { status: 409 });
     }
 
     const roomIds = classroom.rooms.map((room) => room.id);

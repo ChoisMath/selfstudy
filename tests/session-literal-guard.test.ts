@@ -10,8 +10,11 @@ const SEAT_CONTEXT_ALLOWLIST = new Set([
   "lib/seats/print-groups.ts",
   "components/seats/SeatingEditor.tsx",
   "app/grade-admin/[grade]/seats/print/page.tsx",
-  "app/grade-admin/[grade]/seats/page.tsx",
-  "app/grade-admin/[grade]/page.tsx",
+  // 좌석 세션 선택(기본 탭 "afternoon") — 학년관리 좌석 탭·좌석 페이지가 함께 쓴다
+  "components/seats/SeatSessionPanel.tsx",
+  // 야간 배치 공유 설정은 오후 좌석 세션 행에 있다
+  "lib/seats/shared-layout.ts",
+  "app/api/grade-admin/[grade]/seat-sharing/route.ts",
   "app/admin/seats/page.tsx",
   "app/api/grade-admin/[grade]/seat-layouts/route.ts",
   "app/api/grade-admin/[grade]/classrooms/route.ts",
